@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import type { SearchResult } from '@/lib/db'
+import { LabLogo } from './LabLogo'
 
 const TYPE_LABELS: Record<string, string> = {
   GE: 'Générique', 'Gé': 'Générique', RE: 'Référence',
@@ -52,7 +53,12 @@ export function DrugCard({ drug, type }: { drug: SearchResult; type: string }) {
 
       <div className="drug-meta">
         {drug.forme && <span>💊 <strong>{drug.forme}</strong>{drug.dosage ? ` — ${drug.dosage}` : ''}</span>}
-        {drug.labo && <span>🏭 {drug.labo}{drug.pays ? ` (${drug.pays})` : ''}</span>}
+        {drug.labo && (
+          <span>
+            <LabLogo labName={drug.labo} />
+            🏭 {drug.labo}{drug.pays ? ` (${drug.pays})` : ''}
+          </span>
+        )}
       </div>
 
       {isRetrait && drug.motif_retrait && (
