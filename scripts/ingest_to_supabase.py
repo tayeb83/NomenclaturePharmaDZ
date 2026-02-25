@@ -16,6 +16,7 @@ from pathlib import Path
 
 import pandas as pd
 import psycopg2
+from psycopg2 import errors
 from psycopg2.extras import execute_values
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
@@ -178,42 +179,39 @@ def ensure_schema_compatibility(cur):
     """
     Rend l'ingestion robuste face aux anciens schémas Supabase
     (colonnes historiques en VARCHAR(50), etc.).
+
+    On élargit automatiquement toutes les colonnes texte à longueur bornée
+    (varchar/char) des tables ingestées pour éviter les erreurs de troncature.
     """
+    tables = ("enregistrements", "retraits", "non_renouveles")
     cur.execute(
         """
-        ALTER TABLE IF EXISTS enregistrements
-          ALTER COLUMN n_enreg TYPE TEXT,
-          ALTER COLUMN dci TYPE TEXT,
-          ALTER COLUMN nom_marque TYPE TEXT,
-          ALTER COLUMN forme TYPE TEXT,
-          ALTER COLUMN dosage TYPE TEXT,
-          ALTER COLUMN conditionnement TYPE TEXT,
-          ALTER COLUMN obs TYPE TEXT,
-          ALTER COLUMN labo TYPE TEXT;
-
-        ALTER TABLE IF EXISTS retraits
-          ALTER COLUMN n_enreg TYPE TEXT,
-          ALTER COLUMN dci TYPE TEXT,
-          ALTER COLUMN nom_marque TYPE TEXT,
-          ALTER COLUMN forme TYPE TEXT,
-          ALTER COLUMN dosage TYPE TEXT,
-          ALTER COLUMN conditionnement TYPE TEXT,
-          ALTER COLUMN prescription TYPE TEXT,
-          ALTER COLUMN labo TYPE TEXT,
-          ALTER COLUMN motif_retrait TYPE TEXT;
-
-        ALTER TABLE IF EXISTS non_renouveles
-          ALTER COLUMN n_enreg TYPE TEXT,
-          ALTER COLUMN dci TYPE TEXT,
-          ALTER COLUMN nom_marque TYPE TEXT,
-          ALTER COLUMN forme TYPE TEXT,
-          ALTER COLUMN dosage TYPE TEXT,
-          ALTER COLUMN conditionnement TYPE TEXT,
-          ALTER COLUMN prescription TYPE TEXT,
-          ALTER COLUMN obs TYPE TEXT,
-          ALTER COLUMN labo TYPE TEXT;
-        """
+        SELECT table_name, column_name
+        FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = ANY(%s)
+          AND data_type IN ('character varying', 'character')
+          AND character_maximum_length IS NOT NULL
+        ORDER BY table_name, ordinal_position
+        """,
+        (list(tables),),
     )
+
+    for table, column in cur.fetchall():
+        savepoint = f"schema_compat_{table}_{column}"
+        cur.execute(f'SAVEPOINT "{savepoint}"')
+        try:
+            cur.execute(f'ALTER TABLE IF EXISTS "{table}" ALTER COLUMN "{column}" TYPE TEXT')
+        except errors.FeatureNotSupported as exc:
+            # Colonnes parfois référencées par des vues historiques (ex: v_stats)
+            # -> on garde le type existant et on poursuit l'ingestion.
+            cur.execute(f'ROLLBACK TO SAVEPOINT "{savepoint}"')
+            log(
+                f"Compat schéma ignorée pour {table}.{column}: {exc.pgerror.strip() if exc.pgerror else exc}",
+                "WARN",
+            )
+        finally:
+            cur.execute(f'RELEASE SAVEPOINT "{savepoint}"')
 
 
 def ingest(conn, current_file: Path, previous_file: Path | None, current_label: str, previous_label: str | None):
