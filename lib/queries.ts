@@ -6,6 +6,27 @@
 import { query, queryOne } from './db'
 import type { Enregistrement, Retrait, NonRenouvele, SearchResult, Stats } from './db'
 
+const schemaFeatureCache = new Map<string, boolean>()
+
+async function hasColumn(tableName: string, columnName: string): Promise<boolean> {
+  const cacheKey = `${tableName}.${columnName}`
+  if (schemaFeatureCache.has(cacheKey)) return schemaFeatureCache.get(cacheKey) ?? false
+
+  const row = await queryOne<{ exists: boolean }>(`
+    SELECT EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = $1
+        AND column_name = $2
+    ) AS "exists"
+  `, [tableName, columnName])
+
+  const exists = row?.exists ?? false
+  schemaFeatureCache.set(cacheKey, exists)
+  return exists
+}
+
 // ─── STATS ────────────────────────────────────────────────────
 export async function getStats(): Promise<Stats> {
   const row = await queryOne<Stats>(`SELECT * FROM v_stats`)
@@ -83,6 +104,17 @@ export async function searchMedicaments(
 
 
 export async function getLatestNouveautes(limit = 20): Promise<Enregistrement[]> {
+  const hasIsNewFlag = await hasColumn('enregistrements', 'is_new_vs_previous')
+  const hasSourceVersion = await hasColumn('enregistrements', 'source_version')
+
+  if (!hasIsNewFlag || !hasSourceVersion) {
+    return query<Enregistrement>(`
+      SELECT * FROM enregistrements
+      ORDER BY date_init DESC NULLS LAST, id DESC
+      LIMIT $1
+    `, [limit])
+  }
+
   return query<Enregistrement>(`
     SELECT * FROM enregistrements
     WHERE is_new_vs_previous = TRUE
