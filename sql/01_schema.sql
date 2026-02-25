@@ -10,7 +10,7 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 -- ─── TABLE ENREGISTREMENTS ───────────────────────────────────
 CREATE TABLE IF NOT EXISTS enregistrements (
   id              SERIAL PRIMARY KEY,
-  n_enreg         TEXT UNIQUE NOT NULL,          -- certains exports récents dépassent 30
+  n_enreg         TEXT NOT NULL,                 -- certains exports contiennent des doublons
   code            VARCHAR(15),                   -- max : 8
   dci             TEXT NOT NULL,                 -- max : 254
   nom_marque      TEXT NOT NULL,                 -- max : 37
@@ -152,40 +152,42 @@ RETURNS TABLE (
   date_final    DATE,
   similarity_score FLOAT
 ) LANGUAGE SQL STABLE AS $$
-  SELECT 'enregistrement'::TEXT, e.id, e.n_enreg, e.dci, e.nom_marque, e.forme, e.dosage,
-         e.labo, e.pays, e.type_prod, e.statut, e.annee,
-         NULL::DATE, NULL::TEXT, e.date_final,
-         GREATEST(similarity(lower(e.dci), lower(query)), similarity(lower(e.nom_marque), lower(query)))
-  FROM enregistrements e
-  WHERE (scope = 'all' OR scope = 'enregistrement')
-    AND (e.dci ILIKE '%' || query || '%' OR e.nom_marque ILIKE '%' || query || '%'
-         OR similarity(lower(e.dci), lower(query)) > 0.2
-         OR similarity(lower(e.nom_marque), lower(query)) > 0.2)
+  SELECT *
+  FROM (
+    SELECT 'enregistrement'::TEXT, e.id, e.n_enreg, e.dci, e.nom_marque, e.forme, e.dosage,
+           e.labo, e.pays, e.type_prod, e.statut, e.annee,
+           NULL::DATE, NULL::TEXT, e.date_final,
+           GREATEST(similarity(lower(e.dci), lower(query)), similarity(lower(e.nom_marque), lower(query)))
+    FROM enregistrements e
+    WHERE (scope = 'all' OR scope = 'enregistrement')
+      AND (e.dci ILIKE '%' || query || '%' OR e.nom_marque ILIKE '%' || query || '%'
+           OR similarity(lower(e.dci), lower(query)) > 0.2
+           OR similarity(lower(e.nom_marque), lower(query)) > 0.2)
 
-  UNION ALL
+    UNION ALL
 
-  SELECT 'retrait'::TEXT, r.id, r.n_enreg, r.dci, r.nom_marque, r.forme, r.dosage,
-         r.labo, r.pays, r.type_prod, r.statut, NULL::SMALLINT,
-         r.date_retrait, r.motif_retrait, NULL::DATE,
-         GREATEST(similarity(lower(r.dci), lower(query)), similarity(lower(r.nom_marque), lower(query)))
-  FROM retraits r
-  WHERE (scope = 'all' OR scope = 'retrait')
-    AND (r.dci ILIKE '%' || query || '%' OR r.nom_marque ILIKE '%' || query || '%'
-         OR similarity(lower(r.dci), lower(query)) > 0.2
-         OR similarity(lower(r.nom_marque), lower(query)) > 0.2)
+    SELECT 'retrait'::TEXT, r.id, r.n_enreg, r.dci, r.nom_marque, r.forme, r.dosage,
+           r.labo, r.pays, r.type_prod, r.statut, NULL::SMALLINT,
+           r.date_retrait, r.motif_retrait, NULL::DATE,
+           GREATEST(similarity(lower(r.dci), lower(query)), similarity(lower(r.nom_marque), lower(query)))
+    FROM retraits r
+    WHERE (scope = 'all' OR scope = 'retrait')
+      AND (r.dci ILIKE '%' || query || '%' OR r.nom_marque ILIKE '%' || query || '%'
+           OR similarity(lower(r.dci), lower(query)) > 0.2
+           OR similarity(lower(r.nom_marque), lower(query)) > 0.2)
 
-  UNION ALL
+    UNION ALL
 
-  SELECT 'non_renouvele'::TEXT, n.id, n.n_enreg, n.dci, n.nom_marque, n.forme, n.dosage,
-         n.labo, n.pays, n.type_prod, n.statut, NULL::SMALLINT,
-         NULL::DATE, NULL::TEXT, n.date_final,
-         GREATEST(similarity(lower(n.dci), lower(query)), similarity(lower(n.nom_marque), lower(query)))
-  FROM non_renouveles n
-  WHERE (scope = 'all' OR scope = 'non_renouvele')
-    AND (n.dci ILIKE '%' || query || '%' OR n.nom_marque ILIKE '%' || query || '%'
-         OR similarity(lower(n.dci), lower(query)) > 0.2
-         OR similarity(lower(n.nom_marque), lower(query)) > 0.2)
-
+    SELECT 'non_renouvele'::TEXT, n.id, n.n_enreg, n.dci, n.nom_marque, n.forme, n.dosage,
+           n.labo, n.pays, n.type_prod, n.statut, NULL::SMALLINT,
+           NULL::DATE, NULL::TEXT, n.date_final,
+           GREATEST(similarity(lower(n.dci), lower(query)), similarity(lower(n.nom_marque), lower(query)))
+    FROM non_renouveles n
+    WHERE (scope = 'all' OR scope = 'non_renouvele')
+      AND (n.dci ILIKE '%' || query || '%' OR n.nom_marque ILIKE '%' || query || '%'
+           OR similarity(lower(n.dci), lower(query)) > 0.2
+           OR similarity(lower(n.nom_marque), lower(query)) > 0.2)
+  ) AS unified_results
   ORDER BY similarity_score DESC
   LIMIT lim;
 $$;

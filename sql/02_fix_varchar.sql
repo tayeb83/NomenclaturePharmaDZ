@@ -13,6 +13,10 @@
 DROP VIEW IF EXISTS v_stats;
 
 -- ─── TABLE enregistrements ───────────────────────────────────
+
+ALTER TABLE enregistrements
+  DROP CONSTRAINT IF EXISTS enregistrements_n_enreg_key;
+
 ALTER TABLE enregistrements
   ALTER COLUMN n_enreg       TYPE TEXT,
   ALTER COLUMN code          TYPE VARCHAR(15),
