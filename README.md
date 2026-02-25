@@ -216,3 +216,14 @@ Le script calcule automatiquement les **nouveautés** par comparaison avec la ve
 - [ ] Compte Twitter créé + App developer configurée
 - [ ] Compte Brevo + liste newsletter créée
 - [ ] Premier post de lancement publié 🎉
+
+
+### Dépannage ingestion
+
+Si tu as l'erreur `value too long for type character varying(30)`, exécute la migration :
+
+```bash
+psql "$DATABASE_URL" -f sql/02_fix_varchar.sql
+```
+
+Puis relance l'ingestion.

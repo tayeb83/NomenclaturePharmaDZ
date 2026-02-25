@@ -43,6 +43,14 @@ def clean_date(val):
         return None
 
 
+def clean_n_enreg(val):
+    s = clean_str(val)
+    if not s:
+        return None
+    # Normaliser les espaces parasites qui existent dans certains exports MIPH
+    return " ".join(s.split())
+
+
 def parse_reference_date(label: str):
     months = {
         "janvier": 1, "fevrier": 2, "février": 2, "mars": 3, "avril": 4, "mai": 5,
@@ -92,7 +100,7 @@ def parse_enregistrements(filepath: Path):
     rows = []
     for _, r in df.iterrows():
         rows.append({
-            "n_enreg": clean_str(r[cols[1]]),
+            "n_enreg": clean_n_enreg(r[cols[1]]),
             "code": clean_str(r[cols[2]]),
             "dci": clean_str(r[cols[3]]),
             "nom_marque": clean_str(r[cols[4]]),
@@ -123,7 +131,7 @@ def parse_non_renouveles(filepath: Path):
     rows = []
     for _, r in df.iterrows():
         rows.append((
-            clean_str(r[cols[1]]), clean_str(r[cols[2]]), clean_str(r[cols[3]]), clean_str(r[cols[4]]),
+            clean_n_enreg(r[cols[1]]), clean_str(r[cols[2]]), clean_str(r[cols[3]]), clean_str(r[cols[4]]),
             clean_str(r[cols[5]]), clean_str(r[cols[6]]), clean_str(r[cols[7]]), clean_str(r[cols[8]]),
             clean_str(r[cols[9]]), clean_str(r[cols[11]] if len(cols) > 11 else None), clean_str(r[cols[12]] if len(cols) > 12 else None),
             clean_date(r[cols[13]] if len(cols) > 13 else None), clean_date(r[cols[14]] if len(cols) > 14 else None),
@@ -142,7 +150,7 @@ def parse_retraits(filepath: Path):
     rows = []
     for _, r in df.iterrows():
         rows.append((
-            clean_str(r[cols[1]]), clean_str(r[cols[2]]), clean_str(r[cols[3]]), clean_str(r[cols[4]]),
+            clean_n_enreg(r[cols[1]]), clean_str(r[cols[2]]), clean_str(r[cols[3]]), clean_str(r[cols[4]]),
             clean_str(r[cols[5]]), clean_str(r[cols[6]]), clean_str(r[cols[7]]), clean_str(r[cols[8]]),
             clean_str(r[cols[9]]), clean_str(r[cols[11]]), clean_str(r[cols[12]]),
             clean_date(r[cols[13]]), clean_str(r[cols[14]]), clean_str(r[cols[15]]),
@@ -186,6 +194,10 @@ def ingest(conn, current_file: Path, previous_file: Path | None, current_label: 
 
     retraits = parse_retraits(current_file)
     non_renouveles = parse_non_renouveles(current_file)
+
+    n_enreg_lengths = [len(r["n_enreg"]) for r in current_rows if r.get("n_enreg")]
+    if n_enreg_lengths:
+        log(f"Longueur max n_enreg détectée: {max(n_enreg_lengths)}")
 
     cur.execute("TRUNCATE TABLE enregistrements RESTART IDENTITY CASCADE")
     execute_values(cur, """

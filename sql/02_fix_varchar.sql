@@ -9,7 +9,7 @@
 
 -- ─── TABLE enregistrements ───────────────────────────────────
 ALTER TABLE enregistrements
-  ALTER COLUMN n_enreg       TYPE VARCHAR(30),
+  ALTER COLUMN n_enreg       TYPE TEXT,
   ALTER COLUMN code          TYPE VARCHAR(15),
   ALTER COLUMN dosage        TYPE TEXT,
   ALTER COLUMN conditionnement TYPE TEXT,
@@ -22,7 +22,7 @@ ALTER TABLE enregistrements
 
 -- ─── TABLE retraits ──────────────────────────────────────────
 ALTER TABLE retraits
-  ALTER COLUMN n_enreg       TYPE VARCHAR(30),
+  ALTER COLUMN n_enreg       TYPE TEXT,
   ALTER COLUMN code          TYPE VARCHAR(15),
   ALTER COLUMN dosage        TYPE TEXT,
   ALTER COLUMN conditionnement TYPE TEXT,
@@ -34,7 +34,7 @@ ALTER TABLE retraits
 
 -- ─── TABLE non_renouveles ────────────────────────────────────
 ALTER TABLE non_renouveles
-  ALTER COLUMN n_enreg       TYPE VARCHAR(30),
+  ALTER COLUMN n_enreg       TYPE TEXT,
   ALTER COLUMN code          TYPE VARCHAR(15),
   ALTER COLUMN dosage        TYPE TEXT,
   ALTER COLUMN conditionnement TYPE TEXT,

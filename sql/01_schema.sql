@@ -10,7 +10,7 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 -- ─── TABLE ENREGISTREMENTS ───────────────────────────────────
 CREATE TABLE IF NOT EXISTS enregistrements (
   id              SERIAL PRIMARY KEY,
-  n_enreg         VARCHAR(30) UNIQUE NOT NULL,  -- max observé : 18
+  n_enreg         TEXT UNIQUE NOT NULL,          -- certains exports récents dépassent 30
   code            VARCHAR(15),                   -- max : 8
   dci             TEXT NOT NULL,                 -- max : 254
   nom_marque      TEXT NOT NULL,                 -- max : 37
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS nomenclature_versions (
 -- ─── TABLE RETRAITS ──────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS retraits (
   id              SERIAL PRIMARY KEY,
-  n_enreg         VARCHAR(30),
+  n_enreg         TEXT,
   code            VARCHAR(15),
   dci             TEXT NOT NULL,
   nom_marque      TEXT NOT NULL,
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS retraits (
 -- ─── TABLE NON RENOUVELÉS ────────────────────────────────────
 CREATE TABLE IF NOT EXISTS non_renouveles (
   id              SERIAL PRIMARY KEY,
-  n_enreg         VARCHAR(30),
+  n_enreg         TEXT,
   code            VARCHAR(15),
   dci             TEXT NOT NULL,
   nom_marque      TEXT NOT NULL,                 -- max : 271
