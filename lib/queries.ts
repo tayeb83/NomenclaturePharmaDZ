@@ -8,6 +8,24 @@ import type { Enregistrement, Retrait, NonRenouvele, SearchResult, Stats } from 
 
 const schemaFeatureCache = new Map<string, boolean>()
 
+async function hasTable(tableName: string): Promise<boolean> {
+  const cacheKey = `table.${tableName}`
+  if (schemaFeatureCache.has(cacheKey)) return schemaFeatureCache.get(cacheKey) ?? false
+
+  const row = await queryOne<{ exists: boolean }>(`
+    SELECT EXISTS (
+      SELECT 1
+      FROM information_schema.tables
+      WHERE table_schema = 'public'
+        AND table_name = $1
+    ) AS "exists"
+  `, [tableName])
+
+  const exists = row?.exists ?? false
+  schemaFeatureCache.set(cacheKey, exists)
+  return exists
+}
+
 async function hasColumn(tableName: string, columnName: string): Promise<boolean> {
   const cacheKey = `${tableName}.${columnName}`
   if (schemaFeatureCache.has(cacheKey)) return schemaFeatureCache.get(cacheKey) ?? false
@@ -30,9 +48,18 @@ async function hasColumn(tableName: string, columnName: string): Promise<boolean
 // ─── STATS ────────────────────────────────────────────────────
 export async function getStats(): Promise<Stats> {
   const hasIsNewFlag = await hasColumn('enregistrements', 'is_new_vs_previous')
+  const hasVersionsTable = await hasTable('nomenclature_versions')
   const nouveautesCountExpr = hasIsNewFlag
     ? `(SELECT COUNT(*) FROM enregistrements WHERE is_new_vs_previous = TRUE)::INT`
     : `0::INT`
+  const lastVersionExpr = hasVersionsTable
+    ? `(
+        SELECT version_label
+        FROM nomenclature_versions
+        ORDER BY reference_date DESC NULLS LAST, created_at DESC
+        LIMIT 1
+      )`
+    : `NULL::TEXT`
 
   let row: Stats | null = null
   try {
@@ -51,12 +78,7 @@ export async function getStats(): Promise<Stats> {
       (SELECT COUNT(*) FROM enregistrements WHERE statut = 'F')::INT AS fabriques_algerie,
       (SELECT COUNT(DISTINCT dci) FROM enregistrements)::INT AS dci_uniques,
       (SELECT COUNT(*) FROM newsletter_subscribers WHERE confirmed = TRUE)::INT AS abonnes_newsletter,
-      (
-        SELECT version_label
-        FROM nomenclature_versions
-        ORDER BY reference_date DESC NULLS LAST, created_at DESC
-        LIMIT 1
-      ) AS last_version
+      ${lastVersionExpr} AS last_version
   `)
 
   if (row && row.total_enregistrements > 0) return row
@@ -147,6 +169,14 @@ export async function getLatestNouveautes(limit = 20): Promise<Enregistrement[]>
   const hasSourceVersion = await hasColumn('enregistrements', 'source_version')
 
   if (!hasIsNewFlag || !hasSourceVersion) {
+    return query<Enregistrement>(`
+      SELECT * FROM enregistrements
+      ORDER BY date_init DESC NULLS LAST, id DESC
+      LIMIT $1
+    `, [limit])
+  }
+
+  if (!await hasTable('nomenclature_versions')) {
     return query<Enregistrement>(`
       SELECT * FROM enregistrements
       ORDER BY date_init DESC NULLS LAST, id DESC
