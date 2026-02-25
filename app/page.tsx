@@ -34,7 +34,7 @@ export default async function HomePage() {
           </div>
           <div className="stat-card green">
             <div className="stat-icon">🆕</div>
-            <div className="stat-value">{stats?.total_nouveautes || '—'}</div>
+            <div className="stat-value">{stats?.total_nouveautes != null ? stats.total_nouveautes.toLocaleString('fr') : '—'}</div>
             <div className="stat-label">Nouveautés</div>
             <div className="stat-sub">vs version précédente</div>
           </div>
