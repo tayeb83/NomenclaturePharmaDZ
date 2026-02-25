@@ -1,4 +1,4 @@
-import { getAllEnregistrements, getStatsByYear } from '@/lib/queries'
+import { getAllEnregistrements, getAvailableAnnees, getStatsByYear } from '@/lib/queries'
 import { DrugCard } from '@/components/drug/DrugCard'
 import type { Metadata } from 'next'
 
@@ -6,7 +6,12 @@ export const metadata: Metadata = { title: 'Veille réglementaire' }
 export const revalidate = 3600
 
 export default async function VeillePage({ searchParams }: { searchParams: { annee?: string } }) {
-  const annee = parseInt(searchParams.annee || '2025')
+  const anneesDisponibles = await getAvailableAnnees(8)
+  const anneeDemandee = Number.parseInt(searchParams.annee || '', 10)
+  const annee = Number.isFinite(anneeDemandee)
+    ? anneeDemandee
+    : (anneesDisponibles[0] ?? new Date().getFullYear())
+
   const [drugs, stats] = await Promise.all([getAllEnregistrements(annee, 50), getStatsByYear(annee)])
   const typeLabels: Record<string, string> = { GE: 'Génériques', 'Gé': 'Génériques', RE: 'Réf. étrangères', BIO: 'Biologiques', I: 'Innovateurs', 'Ré': 'Réf. étrangères' }
 
@@ -21,8 +26,8 @@ export default async function VeillePage({ searchParams }: { searchParams: { ann
       <div className="page-body">
         <div className="container">
           {/* Tabs années */}
-          <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
-            {[2025, 2024].map(y => (
+          <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
+            {(anneesDisponibles.length > 0 ? anneesDisponibles : [annee]).map(y => (
               <a key={y} href={`/veille?annee=${y}`} style={{
                 padding: '8px 20px', borderRadius: 8, fontWeight: 700, fontSize: 14,
                 textDecoration: 'none', border: '1.5px solid',
