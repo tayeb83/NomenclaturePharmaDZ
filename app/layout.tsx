@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { Nav } from '@/components/layout/Nav'
 import { Footer } from '@/components/layout/Footer'
+import { getStats } from '@/lib/queries'
 
 export const metadata: Metadata = {
   title: { default: 'PharmaVeille DZ', template: '%s | PharmaVeille DZ' },
@@ -21,7 +22,16 @@ export const viewport = {
   themeColor: '#0f172a',
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Récupère la version courante côté serveur pour l'afficher dans la Nav
+  let currentVersion: string | null = null
+  try {
+    const stats = await getStats()
+    currentVersion = stats.last_version ?? null
+  } catch {
+    // Silencieux : la nav affiche le fallback si la DB est inaccessible
+  }
+
   return (
     <html lang="fr">
       <head>
@@ -36,7 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
-        <Nav />
+        <Nav currentVersion={currentVersion} />
         <main className="main-content">
           {children}
         </main>

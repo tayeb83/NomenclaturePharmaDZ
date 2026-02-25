@@ -12,7 +12,7 @@ const LINKS = [
   { href: '/a-propos', label: 'À propos' },
 ]
 
-export function Nav() {
+export function Nav({ currentVersion }: { currentVersion?: string | null }) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
 
@@ -23,7 +23,9 @@ export function Nav() {
           <div className="nav-logo-icon">💊</div>
           <div>
             <div className="nav-logo-text">PharmaVeille DZ</div>
-            <div className="nav-logo-sub">MIPH — Données officielles</div>
+            <div className="nav-logo-sub">
+              {currentVersion ? `Version ${currentVersion}` : 'MIPH — Données officielles'}
+            </div>
           </div>
         </Link>
 
@@ -40,6 +42,18 @@ export function Nav() {
             </Link>
           ))}
         </div>
+
+        {currentVersion && (
+          <span style={{
+            fontSize: 10.5, fontWeight: 700, color: 'rgba(255,255,255,0.5)',
+            background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)',
+            padding: '3px 9px', borderRadius: 20, whiteSpace: 'nowrap',
+            display: 'none',  // caché sur mobile via CSS responsive
+            flexShrink: 0,
+          }} className="nav-version-badge">
+            📋 {currentVersion}
+          </span>
+        )}
 
         <Link href="/newsletter" className="nav-newsletter-btn">
           📧 Newsletter
