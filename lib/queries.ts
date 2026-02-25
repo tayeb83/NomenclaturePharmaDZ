@@ -4,7 +4,7 @@
  */
 
 import { query, queryOne } from './db'
-import type { Enregistrement, Retrait, NonRenouvele, SearchResult, Stats } from './db'
+import type { Enregistrement, Retrait, NonRenouvele, SearchResult, Stats, MedicamentDetail } from './db'
 
 const schemaFeatureCache = new Map<string, boolean>()
 
@@ -368,4 +368,76 @@ export async function getConfirmedSubscribers() {
     FROM newsletter_subscribers
     WHERE confirmed = true
   `)
+}
+
+// ─── FICHE DÉTAIL ──────────────────────────────────────────
+export async function getMedicamentById(
+  source: string,
+  id: number
+): Promise<MedicamentDetail | null> {
+  if (!['enregistrement', 'retrait', 'non_renouvele'].includes(source)) return null
+
+  if (source === 'enregistrement') {
+    const row = await queryOne<any>(`SELECT * FROM enregistrements WHERE id = $1`, [id])
+    if (!row) return null
+    return {
+      source: 'enregistrement',
+      id: row.id, n_enreg: row.n_enreg, code: row.code ?? null,
+      dci: row.dci, nom_marque: row.nom_marque,
+      forme: row.forme ?? null, dosage: row.dosage ?? null,
+      conditionnement: row.conditionnement ?? null,
+      liste: row.liste ?? null, prescription: row.prescription ?? null,
+      obs: row.obs ?? null, labo: row.labo ?? null, pays: row.pays ?? null,
+      date_init: row.date_init ?? null, date_final: row.date_final ?? null,
+      type_prod: row.type_prod ?? null, statut: row.statut ?? null,
+      stabilite: row.stabilite ?? null, annee: row.annee ?? null,
+      source_version: row.source_version ?? null,
+      is_new_vs_previous: row.is_new_vs_previous ?? null,
+      date_retrait: null, motif_retrait: null,
+    }
+  }
+
+  if (source === 'retrait') {
+    const row = await queryOne<any>(`SELECT * FROM retraits WHERE id = $1`, [id])
+    if (!row) return null
+    return {
+      source: 'retrait',
+      id: row.id, n_enreg: row.n_enreg ?? null, code: row.code ?? null,
+      dci: row.dci, nom_marque: row.nom_marque,
+      forme: row.forme ?? null, dosage: row.dosage ?? null,
+      conditionnement: row.conditionnement ?? null,
+      liste: row.liste ?? null, prescription: row.prescription ?? null,
+      obs: null, labo: row.labo ?? null, pays: row.pays ?? null,
+      date_init: row.date_init ?? null, date_final: null,
+      type_prod: row.type_prod ?? null, statut: row.statut ?? null,
+      stabilite: null, annee: null, source_version: null, is_new_vs_previous: null,
+      date_retrait: row.date_retrait ?? null, motif_retrait: row.motif_retrait ?? null,
+    }
+  }
+
+  // non_renouvele
+  const row = await queryOne<any>(`SELECT * FROM non_renouveles WHERE id = $1`, [id])
+  if (!row) return null
+  return {
+    source: 'non_renouvele',
+    id: row.id, n_enreg: row.n_enreg ?? null, code: row.code ?? null,
+    dci: row.dci, nom_marque: row.nom_marque,
+    forme: row.forme ?? null, dosage: row.dosage ?? null,
+    conditionnement: row.conditionnement ?? null,
+    liste: row.liste ?? null, prescription: row.prescription ?? null,
+    obs: row.obs ?? null, labo: row.labo ?? null, pays: row.pays ?? null,
+    date_init: row.date_init ?? null, date_final: row.date_final ?? null,
+    type_prod: row.type_prod ?? null, statut: row.statut ?? null,
+    stabilite: null, annee: null, source_version: null, is_new_vs_previous: null,
+    date_retrait: null, motif_retrait: null,
+  }
+}
+
+export async function getAlternatifsDCI(dci: string, limit = 8): Promise<Enregistrement[]> {
+  return query<Enregistrement>(`
+    SELECT * FROM enregistrements
+    WHERE UPPER(dci) = UPPER($1)
+    ORDER BY nom_marque
+    LIMIT $2
+  `, [dci, limit])
 }

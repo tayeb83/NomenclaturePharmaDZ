@@ -173,3 +173,30 @@ export type Stats = {
   abonnes_newsletter: number
   last_version: string | null
 }
+
+export type MedicamentDetail = {
+  source: 'enregistrement' | 'retrait' | 'non_renouvele'
+  id: number
+  n_enreg: string | null
+  code: string | null
+  dci: string
+  nom_marque: string
+  forme: string | null
+  dosage: string | null
+  conditionnement: string | null
+  liste: string | null
+  prescription: string | null
+  obs: string | null
+  labo: string | null
+  pays: string | null
+  date_init: string | null
+  date_final: string | null
+  type_prod: string | null
+  statut: string | null
+  stabilite: string | null
+  annee: number | null
+  source_version: string | null
+  is_new_vs_previous: boolean | null
+  date_retrait: string | null
+  motif_retrait: string | null
+}
