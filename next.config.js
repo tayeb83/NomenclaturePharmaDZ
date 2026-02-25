@@ -4,8 +4,10 @@ const nextConfig = {
     domains: ['pharmaveille-dz.com'],
   },
   experimental: {
-    // Augmenter la limite pour l'upload des fichiers Excel MIPH (peuvent dépasser 4 Mo)
-    serverActionsBodySizeLimit: '50mb',
+    serverActions: {
+      // Augmenter la limite pour l'upload des fichiers Excel MIPH (peuvent dépasser 4 Mo)
+      bodySizeLimit: '50mb',
+    },
   },
 }
 
