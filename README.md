@@ -1,4 +1,4 @@
-# PharmaVeille DZ — Guide de déploiement complet
+# PharmaVeille DZ — Guide de déploiement (Recherche • Alertes • Substitution)
 
 ## Architecture
 
@@ -36,14 +36,14 @@ pip install psycopg2-binary pandas openpyxl
 
 # Copier tes XLSX dans le dossier data/
 mkdir data
-cp /chemin/vers/2024.xlsx data/
-cp /chemin/vers/2025.xlsx data/
-cp /chemin/vers/nomenclature-retrait.xlsx data/
-cp /chemin/vers/nomenclature-non-renouveles.xlsx data/
+cp /chemin/vers/nomenclature_decembre_2025.xlsx data/
+cp /chemin/vers/nomenclature_aout_2025.xlsx data/
 
-# Lancer l'ingestion
+# Lancer l'ingestion (comparaison automatique vs version précédente)
 export DATABASE_URL="postgresql://postgres:[PASSWORD]@db.[REF].supabase.co:5432/postgres"
-python scripts/ingest_to_supabase.py
+python scripts/ingest_to_supabase.py \
+  --current data/nomenclature_decembre_2025.xlsx \
+  --previous data/nomenclature_aout_2025.xlsx
 ```
 
 ---
@@ -149,12 +149,13 @@ Le fichier `vercel.json` configure l'envoi automatique **chaque lundi à 8h** :
 
 ## Étape 6 — Mise à jour des données
 
-Quand le MIPH publie de nouveaux fichiers :
+Quand le MIPH publie un nouveau fichier nomenclature (3 feuilles : Nomenclature, Non Renouvelés, Retraits) :
 ```bash
-# Remplacer les XLSX dans data/
-python scripts/ingest_to_supabase.py
-# La base est rechargée proprement (TRUNCATE + INSERT)
+python scripts/ingest_to_supabase.py \
+  --current data/nomenclature_decembre_2025.xlsx \
+  --previous data/nomenclature_version_precedente.xlsx
 ```
+Le script calcule automatiquement les **nouveautés** par comparaison avec la version précédente.
 
 ---
 
