@@ -8,20 +8,30 @@ export async function GET(request: NextRequest) {
   const labo = searchParams.get('labo') || ''
   const substance = searchParams.get('substance') || ''
   const activeOnly = searchParams.get('activeOnly') === '1'
+  const advancedRaw = searchParams.get('advanced') || '[]'
   const limit = Math.min(parseInt(searchParams.get('limit') || '30'), 80)
 
-  if (!q.trim() && !labo.trim() && !substance.trim()) {
+  let advanced: Array<{ field: string; operator: string; value: string; bool?: 'AND' | 'OR' }> = []
+  try {
+    const parsed = JSON.parse(advancedRaw)
+    if (Array.isArray(parsed)) advanced = parsed
+  } catch {
+    advanced = []
+  }
+
+  const hasAdvancedFilters = advanced.some((condition) => condition?.value?.trim())
+  if (!q.trim() && !labo.trim() && !substance.trim() && !hasAdvancedFilters) {
     return NextResponse.json({ results: [], count: 0 })
   }
 
   try {
-    const results = await searchMedicaments(q, scope, limit, { labo, substance, activeOnly })
+    const results = await searchMedicaments(q, scope, limit, { labo, substance, activeOnly, advanced })
     return NextResponse.json({
       results,
       count: results.length,
       query: q,
       scope,
-      filters: { labo, substance, activeOnly },
+      filters: { labo, substance, activeOnly, advanced },
     }, {
       headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' }
     })
