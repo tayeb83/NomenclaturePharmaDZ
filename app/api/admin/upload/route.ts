@@ -239,7 +239,7 @@ export async function POST(req: NextRequest) {
          total_retraits, total_non_renouveles, removed_count, uploaded_file)
       VALUES ($1, $2,
         (SELECT version_label FROM nomenclature_versions
-         WHERE version_label != $1
+         WHERE version_label != $9
          ORDER BY reference_date DESC NULLS LAST, created_at DESC LIMIT 1),
         $3, $4, $5, $6, $7, $8)
       ON CONFLICT (version_label) DO UPDATE SET
@@ -260,6 +260,7 @@ export async function POST(req: NextRequest) {
       nonRenouveles.length,
       removedCount,
       file.name,
+      versionLabel,
     ])
 
     await client.query('COMMIT')
