@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import type { SearchResult } from '@/lib/db'
 
 const TYPE_LABELS: Record<string, string> = {
@@ -63,6 +64,15 @@ export function DrugCard({ drug, type }: { drug: SearchResult; type: string }) {
           📋 AMM expirée — Date finale : {drug.date_final}
         </div>
       )}
+      <div className="drug-card-footer">
+        <Link
+          href={`/medicament/${drug.source || type}/${drug.id}`}
+          className="drug-detail-link"
+          onClick={e => e.stopPropagation()}
+        >
+          Voir la fiche →
+        </Link>
+      </div>
     </div>
   )
 }
