@@ -29,12 +29,23 @@ async function hasColumn(tableName: string, columnName: string): Promise<boolean
 
 // ─── STATS ────────────────────────────────────────────────────
 export async function getStats(): Promise<Stats> {
-  const row = await queryOne<Stats>(`SELECT * FROM v_stats`)
+  const hasIsNewFlag = await hasColumn('enregistrements', 'is_new_vs_previous')
+  const nouveautesCountExpr = hasIsNewFlag
+    ? `(SELECT COUNT(*) FROM enregistrements WHERE is_new_vs_previous = TRUE)::INT`
+    : `0::INT`
+
+  let row: Stats | null = null
+  try {
+    row = await queryOne<Stats>(`SELECT * FROM v_stats`)
+  } catch {
+    // Certaines bases legacy n'ont pas encore la vue (ou la vue référence un ancien schéma)
+    row = null
+  }
 
   const fallback = await queryOne<Stats>(`
     SELECT
       (SELECT COUNT(*) FROM enregistrements)::INT AS total_enregistrements,
-      (SELECT COUNT(*) FROM enregistrements WHERE is_new_vs_previous = TRUE)::INT AS total_nouveautes,
+      ${nouveautesCountExpr} AS total_nouveautes,
       (SELECT COUNT(*) FROM retraits)::INT AS total_retraits,
       (SELECT COUNT(*) FROM non_renouveles)::INT AS total_non_renouveles,
       (SELECT COUNT(*) FROM enregistrements WHERE statut = 'F')::INT AS fabriques_algerie,
