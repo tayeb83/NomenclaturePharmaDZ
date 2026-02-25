@@ -225,6 +225,20 @@ export async function getAllEnregistrements(annee: number, limit = 50): Promise<
   `, [annee, limit])
 }
 
+export async function getAvailableAnnees(limit = 6): Promise<number[]> {
+  const years = await query<{ annee: number | null }>(`
+    SELECT DISTINCT annee
+    FROM enregistrements
+    WHERE annee IS NOT NULL
+    ORDER BY annee DESC
+    LIMIT $1
+  `, [limit])
+
+  return years
+    .map((row) => row.annee)
+    .filter((annee): annee is number => typeof annee === 'number')
+}
+
 export async function getStatsByYear(annee: number) {
   const types = await query<{ type_prod: string; n: string }>(`
     SELECT type_prod, COUNT(*) as n
