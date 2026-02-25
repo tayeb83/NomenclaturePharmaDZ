@@ -111,14 +111,16 @@ export async function searchMedicaments(
     labo?: string
     substance?: string
     activeOnly?: boolean
+    advanced?: AdvancedSearchCondition[]
   }
 ): Promise<SearchResult[]> {
   const trimmedQuery = q.trim()
   const labo = filters?.labo?.trim() || ''
   const substance = filters?.substance?.trim() || ''
   const activeOnly = Boolean(filters?.activeOnly)
+  const advanced = filters?.advanced ?? []
 
-  if (!trimmedQuery && !labo && !substance) return []
+  if (!trimmedQuery && !labo && !substance && !advanced.some((condition) => condition.value?.trim())) return []
 
   // Construire la condition selon le scope
   const scopeConditions: Record<string, string> = {
@@ -133,6 +135,8 @@ export async function searchMedicaments(
   const searchPattern = `%${trimmedQuery}%`
   const laboPattern = `%${labo}%`
   const substancePattern = `%${substance}%`
+
+  const advancedClause = buildAdvancedSearchClause(advanced, 8)
 
   const results = await query<SearchResult>(`
     SELECT * FROM (
@@ -184,14 +188,96 @@ export async function searchMedicaments(
       AND ($3 = '' OR labo ILIKE $4)
       AND ($5 = '' OR dci ILIKE $6)
     ) AS combined
-    ${scopeFilter}
+    ${scopeFilter ? `${scopeFilter} ${advancedClause.sql ? 'AND' : ''}` : `${advancedClause.sql ? 'WHERE' : ''}`}
+    ${advancedClause.sql}
     ORDER BY
       CASE source WHEN 'enregistrement' THEN 1 WHEN 'retrait' THEN 2 ELSE 3 END,
       nom_marque
     LIMIT $7
-  `, [trimmedQuery, searchPattern, labo, laboPattern, substance, substancePattern, limit])
+  `, [trimmedQuery, searchPattern, labo, laboPattern, substance, substancePattern, limit, ...advancedClause.params])
 
   return results
+}
+
+type AdvancedSearchCondition = {
+  field: string
+  operator: string
+  value: string
+  bool?: 'AND' | 'OR'
+}
+
+const ADVANCED_STRING_FIELDS: Record<string, string> = {
+  n_enreg: 'combined.n_enreg',
+  dci: 'combined.dci',
+  nom_marque: 'combined.nom_marque',
+  forme: 'combined.forme',
+  dosage: 'combined.dosage',
+  labo: 'combined.labo',
+  pays: 'combined.pays',
+  type_prod: 'combined.type_prod',
+  statut: 'combined.statut',
+}
+
+const ADVANCED_NUMBER_FIELDS: Record<string, string> = {
+  annee: 'combined.annee::numeric',
+  dosage_num: `NULLIF(REPLACE((regexp_match(COALESCE(combined.dosage, ''), '([0-9]+(?:[\\.,][0-9]+)?)'))[1], ',', '.'), '')::numeric`,
+}
+
+function buildAdvancedSearchClause(conditions: AdvancedSearchCondition[], startIndex: number) {
+  const sqlParts: string[] = []
+  const params: Array<string | number> = []
+  let paramIndex = startIndex
+
+  for (let i = 0; i < conditions.length; i += 1) {
+    const condition = conditions[i]
+    const value = condition.value?.trim()
+    if (!value) continue
+
+    const boolJoin = condition.bool === 'OR' ? 'OR' : 'AND'
+    const prefix = sqlParts.length > 0 ? ` ${boolJoin} ` : ''
+
+    if (condition.field in ADVANCED_STRING_FIELDS) {
+      const fieldSql = ADVANCED_STRING_FIELDS[condition.field]
+      if (condition.operator === 'equals') {
+        sqlParts.push(`${prefix}COALESCE(${fieldSql}, '') ILIKE $${paramIndex}`)
+        params.push(value)
+        paramIndex += 1
+      } else if (condition.operator === 'starts_with') {
+        sqlParts.push(`${prefix}COALESCE(${fieldSql}, '') ILIKE $${paramIndex}`)
+        params.push(`${value}%`)
+        paramIndex += 1
+      } else {
+        sqlParts.push(`${prefix}COALESCE(${fieldSql}, '') ILIKE $${paramIndex}`)
+        params.push(`%${value}%`)
+        paramIndex += 1
+      }
+      continue
+    }
+
+    if (condition.field in ADVANCED_NUMBER_FIELDS) {
+      const parsedValue = Number(value.replace(',', '.'))
+      if (!Number.isFinite(parsedValue)) continue
+      const fieldSql = ADVANCED_NUMBER_FIELDS[condition.field]
+
+      const numericOperators: Record<string, string> = {
+        equals: '=',
+        gt: '>',
+        gte: '>=',
+        lt: '<',
+        lte: '<=',
+      }
+
+      const operatorSql = numericOperators[condition.operator]
+      if (!operatorSql) continue
+
+      sqlParts.push(`${prefix}${fieldSql} ${operatorSql} $${paramIndex}`)
+      params.push(parsedValue)
+      paramIndex += 1
+    }
+  }
+
+  if (!sqlParts.length) return { sql: '', params: [] as Array<string | number> }
+  return { sql: `(${sqlParts.join('')})`, params }
 }
 
 // ─── ENREGISTREMENTS ──────────────────────────────────────────

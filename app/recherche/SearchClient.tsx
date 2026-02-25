@@ -12,18 +12,81 @@ const SCOPES = [
   { value: 'non_renouvele', label: '⚠️ Non renouvelés' },
 ]
 
-function buildSearchParams(q: string, scope: string, labo: string, substance: string, activeOnly: boolean) {
+type AdvancedSearchCondition = {
+  field: string
+  operator: string
+  value: string
+  bool?: 'AND' | 'OR'
+}
+
+type FieldType = 'text' | 'number'
+
+const ADVANCED_FIELDS: Array<{ value: string; label: string; type: FieldType }> = [
+  { value: 'dci', label: 'Substance (DCI)', type: 'text' },
+  { value: 'nom_marque', label: 'Nom de marque', type: 'text' },
+  { value: 'forme', label: 'Forme', type: 'text' },
+  { value: 'dosage', label: 'Dosage (texte)', type: 'text' },
+  { value: 'dosage_num', label: 'Dosage (valeur numérique)', type: 'number' },
+  { value: 'labo', label: 'Laboratoire', type: 'text' },
+  { value: 'pays', label: 'Pays', type: 'text' },
+  { value: 'type_prod', label: 'Type produit', type: 'text' },
+  { value: 'statut', label: 'Statut', type: 'text' },
+  { value: 'n_enreg', label: 'N° enregistrement', type: 'text' },
+  { value: 'annee', label: 'Année', type: 'number' },
+]
+
+const TEXT_OPERATORS = [
+  { value: 'contains', label: 'contient' },
+  { value: 'equals', label: 'égal à' },
+  { value: 'starts_with', label: 'commence par' },
+]
+
+const NUMBER_OPERATORS = [
+  { value: 'equals', label: '=' },
+  { value: 'gt', label: '>' },
+  { value: 'gte', label: '>=' },
+  { value: 'lt', label: '<' },
+  { value: 'lte', label: '<=' },
+]
+
+function getFieldType(field: string): FieldType {
+  return ADVANCED_FIELDS.find(item => item.value === field)?.type || 'text'
+}
+
+function getDefaultOperator(field: string): string {
+  return getFieldType(field) === 'number' ? 'equals' : 'contains'
+}
+
+function hasAdvancedFilters(advanced: AdvancedSearchCondition[]) {
+  return advanced.some((condition) => condition.value?.trim())
+}
+
+function buildSearchParams(
+  q: string,
+  scope: string,
+  labo: string,
+  substance: string,
+  activeOnly: boolean,
+  advanced: AdvancedSearchCondition[],
+) {
   const params = new URLSearchParams()
   if (q.trim()) params.set('q', q)
   if (scope !== 'all') params.set('scope', scope)
   if (labo.trim()) params.set('labo', labo)
   if (substance.trim()) params.set('substance', substance)
   if (activeOnly) params.set('activeOnly', '1')
+  if (hasAdvancedFilters(advanced)) params.set('advanced', JSON.stringify(advanced))
   return params
 }
 
 export function SearchClient({
-  initialQuery, initialScope, initialResults, initialLabo, initialSubstance, initialActiveOnly,
+  initialQuery,
+  initialScope,
+  initialResults,
+  initialLabo,
+  initialSubstance,
+  initialActiveOnly,
+  initialAdvanced,
 }: {
   initialQuery: string
   initialScope: string
@@ -31,29 +94,31 @@ export function SearchClient({
   initialLabo: string
   initialSubstance: string
   initialActiveOnly: boolean
+  initialAdvanced: AdvancedSearchCondition[]
 }) {
   const [query, setQuery] = useState(initialQuery)
   const [scope, setScope] = useState(initialScope)
   const [labo, setLabo] = useState(initialLabo)
   const [substance, setSubstance] = useState(initialSubstance)
   const [activeOnly, setActiveOnly] = useState(initialActiveOnly)
+  const [advanced, setAdvanced] = useState<AdvancedSearchCondition[]>(initialAdvanced.length ? initialAdvanced : [{ field: 'dci', operator: 'contains', value: '', bool: 'AND' }])
   const [results, setResults] = useState<SearchResult[]>(initialResults)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const [, startTransition] = useTransition()
 
-  const syncUrl = useCallback((nextQ: string, nextScope: string, nextLabo: string, nextSubstance: string, nextActiveOnly: boolean) => {
-    const params = buildSearchParams(nextQ, nextScope, nextLabo, nextSubstance, nextActiveOnly)
+  const syncUrl = useCallback((nextQ: string, nextScope: string, nextLabo: string, nextSubstance: string, nextActiveOnly: boolean, nextAdvanced: AdvancedSearchCondition[]) => {
+    const params = buildSearchParams(nextQ, nextScope, nextLabo, nextSubstance, nextActiveOnly, nextAdvanced)
     startTransition(() => {
       router.replace(`/recherche${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false })
     })
   }, [router, startTransition])
 
-  const search = useCallback(async (q: string, s: string, l: string, sub: string, active: boolean) => {
-    if (!q.trim() && !l.trim() && !sub.trim()) { setResults([]); return }
+  const search = useCallback(async (q: string, s: string, l: string, sub: string, active: boolean, adv: AdvancedSearchCondition[]) => {
+    if (!q.trim() && !l.trim() && !sub.trim() && !hasAdvancedFilters(adv)) { setResults([]); return }
     setLoading(true)
     try {
-      const params = buildSearchParams(q, s, l, sub, active)
+      const params = buildSearchParams(q, s, l, sub, active, adv)
       const res = await fetch(`/api/search?${params.toString()}`)
       const data = await res.json()
       setResults(data.results || [])
@@ -64,49 +129,48 @@ export function SearchClient({
 
   function handleInput(val: string) {
     setQuery(val)
-    syncUrl(val, scope, labo, substance, activeOnly)
-    if (val.length >= 2 || labo || substance) search(val, scope, labo, substance, activeOnly)
+    syncUrl(val, scope, labo, substance, activeOnly, advanced)
+    if (val.length >= 2 || labo || substance || hasAdvancedFilters(advanced)) search(val, scope, labo, substance, activeOnly, advanced)
     else if (val.length === 0) setResults([])
   }
 
   function handleScope(s: string) {
     setScope(s)
-    if (query.trim() || labo.trim() || substance.trim()) search(query, s, labo, substance, activeOnly)
-    syncUrl(query, s, labo, substance, activeOnly)
-  }
-
-  function handleLabo(val: string) {
-    setLabo(val)
-    syncUrl(query, scope, val, substance, activeOnly)
-    if (query.trim() || val.trim() || substance.trim()) search(query, scope, val, substance, activeOnly)
-    else setResults([])
-  }
-
-  function handleSubstance(val: string) {
-    setSubstance(val)
-    syncUrl(query, scope, labo, val, activeOnly)
-    if (query.trim() || labo.trim() || val.trim()) search(query, scope, labo, val, activeOnly)
-    else setResults([])
+    if (query.trim() || labo.trim() || substance.trim() || hasAdvancedFilters(advanced)) search(query, s, labo, substance, activeOnly, advanced)
+    syncUrl(query, s, labo, substance, activeOnly, advanced)
   }
 
   function handleActiveOnly(checked: boolean) {
     setActiveOnly(checked)
-    syncUrl(query, scope, labo, substance, checked)
-    if (query.trim() || labo.trim() || substance.trim()) search(query, scope, labo, substance, checked)
+    syncUrl(query, scope, labo, substance, checked, advanced)
+    if (query.trim() || labo.trim() || substance.trim() || hasAdvancedFilters(advanced)) search(query, scope, labo, substance, checked, advanced)
   }
 
-  function applyExtractionPreset(type: 'labo' | 'substance') {
-    if (type === 'labo') {
-      setActiveOnly(true)
-      setScope('enregistrement')
-      search(query, 'enregistrement', labo, substance, true)
-      syncUrl(query, 'enregistrement', labo, substance, true)
-      return
-    }
+  function updateAdvanced(index: number, patch: Partial<AdvancedSearchCondition>) {
+    const next = advanced.map((condition, idx) => {
+      if (idx !== index) return condition
+      const updated = { ...condition, ...patch }
+      if (patch.field) updated.operator = getDefaultOperator(patch.field)
+      return updated
+    })
+    setAdvanced(next)
+    syncUrl(query, scope, labo, substance, activeOnly, next)
+    if (query.trim() || labo.trim() || substance.trim() || hasAdvancedFilters(next)) search(query, scope, labo, substance, activeOnly, next)
+    else setResults([])
+  }
 
-    search(query, 'all', labo, substance, activeOnly)
-    syncUrl(query, 'all', labo, substance, activeOnly)
-    setScope('all')
+  function addAdvancedCondition() {
+    const next = [...advanced, { field: 'dci', operator: 'contains', value: '', bool: 'AND' as const }]
+    setAdvanced(next)
+  }
+
+  function removeAdvancedCondition(index: number) {
+    const next = advanced.filter((_, idx) => idx !== index)
+    const safeNext = next.length ? next : [{ field: 'dci', operator: 'contains', value: '', bool: 'AND' as const }]
+    setAdvanced(safeNext)
+    syncUrl(query, scope, labo, substance, activeOnly, safeNext)
+    if (query.trim() || labo.trim() || substance.trim() || hasAdvancedFilters(safeNext)) search(query, scope, labo, substance, activeOnly, safeNext)
+    else setResults([])
   }
 
   function exportCsv() {
@@ -134,25 +198,8 @@ export function SearchClient({
           type="text"
           value={query}
           onChange={e => handleInput(e.target.value)}
-          placeholder="Recherche globale: DCI, marque, forme, dosage, labo..."
+          placeholder="Recherche simple sur tout: DCI, marque, forme, dosage, labo..."
           autoFocus
-        />
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
-        <input
-          type="text"
-          value={labo}
-          onChange={e => handleLabo(e.target.value)}
-          placeholder="Extraction ciblée: laboratoire (ex: SAIDAL)"
-          style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: 10, fontSize: 13 }}
-        />
-        <input
-          type="text"
-          value={substance}
-          onChange={e => handleSubstance(e.target.value)}
-          placeholder="Extraction ciblée: substance active / DCI"
-          style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: 10, fontSize: 13 }}
         />
       </div>
 
@@ -165,15 +212,6 @@ export function SearchClient({
           />
           Uniquement médicaments actifs (enregistrés)
         </label>
-
-        <button
-          onClick={() => applyExtractionPreset('labo')}
-          style={{ padding: '7px 12px', borderRadius: 20, border: '1px solid #cbd5e1', background: '#f8fafc', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
-        >Actifs d'un labo</button>
-        <button
-          onClick={() => applyExtractionPreset('substance')}
-          style={{ padding: '7px 12px', borderRadius: 20, border: '1px solid #cbd5e1', background: '#f8fafc', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
-        >Par substance active</button>
         <button
           onClick={exportCsv}
           disabled={!results.length}
@@ -191,16 +229,83 @@ export function SearchClient({
         ))}
       </div>
 
+      <details style={{ marginBottom: 16, border: '1px solid #e2e8f0', borderRadius: 10, padding: 12, background: '#f8fafc' }}>
+        <summary style={{ cursor: 'pointer', fontWeight: 700, color: '#334155' }}>Recherche avancée (booléenne)</summary>
+        <div style={{ marginTop: 12, display: 'grid', gap: 10 }}>
+          {advanced.map((condition, index) => {
+            const type = getFieldType(condition.field)
+            const operators = type === 'number' ? NUMBER_OPERATORS : TEXT_OPERATORS
+            return (
+              <div key={`advanced-${index}`} style={{ display: 'grid', gridTemplateColumns: index === 0 ? '1fr 1fr 1.2fr auto' : '90px 1fr 1fr 1.2fr auto', gap: 8 }}>
+                {index > 0 && (
+                  <select
+                    value={condition.bool || 'AND'}
+                    onChange={(e) => updateAdvanced(index, { bool: e.target.value as 'AND' | 'OR' })}
+                    style={{ width: '100%', padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 13 }}
+                  >
+                    <option value="AND">ET</option>
+                    <option value="OR">OU</option>
+                  </select>
+                )}
+
+                <select
+                  value={condition.field}
+                  onChange={(e) => updateAdvanced(index, { field: e.target.value })}
+                  style={{ width: '100%', padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 13 }}
+                >
+                  {ADVANCED_FIELDS.map((field) => (
+                    <option key={field.value} value={field.value}>{field.label}</option>
+                  ))}
+                </select>
+
+                <select
+                  value={condition.operator}
+                  onChange={(e) => updateAdvanced(index, { operator: e.target.value })}
+                  style={{ width: '100%', padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 13 }}
+                >
+                  {operators.map((operator) => (
+                    <option key={operator.value} value={operator.value}>{operator.label}</option>
+                  ))}
+                </select>
+
+                <input
+                  type={type === 'number' ? 'number' : 'text'}
+                  value={condition.value}
+                  onChange={(e) => updateAdvanced(index, { value: e.target.value })}
+                  placeholder={type === 'number' ? 'ex: 500' : 'valeur à rechercher'}
+                  style={{ width: '100%', padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 13 }}
+                />
+
+                <button
+                  onClick={() => removeAdvancedCondition(index)}
+                  style={{ border: '1px solid #fecaca', color: '#b91c1c', background: '#fff1f2', borderRadius: 8, padding: '0 10px', cursor: 'pointer', fontWeight: 700 }}
+                  title="Supprimer la condition"
+                >
+                  ✕
+                </button>
+              </div>
+            )
+          })}
+
+          <div>
+            <button
+              onClick={addAdvancedCondition}
+              style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
+            >+ Ajouter une condition</button>
+          </div>
+        </div>
+      </details>
+
       {loading && (
         <div className="loading-spinner">
           <div className="spinner" /> Recherche en cours...
         </div>
       )}
 
-      {!loading && (query || labo || substance) && (
+      {!loading && (query || labo || substance || hasAdvancedFilters(advanced)) && (
         <div className="search-count">
           {results.length === 0
-            ? `Aucun résultat — essayez d'élargir les critères (recherche globale, labo, substance, retirés).`
+            ? `Aucun résultat — essayez d'élargir les critères.`
             : `${results.length} résultat(s) trouvés`
           }
         </div>
@@ -210,11 +315,11 @@ export function SearchClient({
         <DrugCard key={`${d.source}-${d.id}-${i}`} drug={d} type={d.source} />
       ))}
 
-      {!query && !labo && !substance && !loading && (
+      {!query && !labo && !substance && !hasAdvancedFilters(advanced) && !loading && (
         <div style={{ textAlign: 'center', padding: '60px 20px', color: '#94a3b8' }}>
           <div style={{ fontSize: 52, marginBottom: 14 }}>💊</div>
-          <div style={{ fontSize: 16, fontWeight: 600, color: '#475569' }}>Tapez un médicament, une DCI, un labo ou un dosage</div>
-          <div style={{ fontSize: 13, marginTop: 6 }}>Exemples d'extractions: médicaments actifs d'un labo X, ou médicaments par substance active XX</div>
+          <div style={{ fontSize: 16, fontWeight: 600, color: '#475569' }}>Tapez une recherche globale ou ouvrez la recherche avancée</div>
+          <div style={{ fontSize: 13, marginTop: 6 }}>Exemples: substance contient "paracétamol", dosage numérique &gt; 500, labo commence par "SAI".</div>
         </div>
       )}
     </>
