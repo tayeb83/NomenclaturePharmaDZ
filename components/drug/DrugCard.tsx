@@ -68,7 +68,6 @@ export function DrugCard({ drug, type }: { drug: SearchResult; type: string }) {
         <Link
           href={`/medicament/${drug.source || type}/${drug.id}`}
           className="drug-detail-link"
-          onClick={e => e.stopPropagation()}
         >
           Voir la fiche →
         </Link>
