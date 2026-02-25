@@ -87,6 +87,39 @@ CREATE TABLE IF NOT EXISTS non_renouveles (
   created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Compatibilité ascendante : si les tables existent déjà avec des colonnes trop courtes
+-- (anciens schémas VARCHAR(50)), on élargit ici de façon idempotente.
+ALTER TABLE enregistrements
+  ALTER COLUMN n_enreg TYPE TEXT,
+  ALTER COLUMN dci TYPE TEXT,
+  ALTER COLUMN nom_marque TYPE TEXT,
+  ALTER COLUMN forme TYPE TEXT,
+  ALTER COLUMN dosage TYPE TEXT,
+  ALTER COLUMN conditionnement TYPE TEXT,
+  ALTER COLUMN obs TYPE TEXT,
+  ALTER COLUMN labo TYPE TEXT;
+
+ALTER TABLE retraits
+  ALTER COLUMN n_enreg TYPE TEXT,
+  ALTER COLUMN dci TYPE TEXT,
+  ALTER COLUMN nom_marque TYPE TEXT,
+  ALTER COLUMN forme TYPE TEXT,
+  ALTER COLUMN dosage TYPE TEXT,
+  ALTER COLUMN conditionnement TYPE TEXT,
+  ALTER COLUMN prescription TYPE TEXT,
+  ALTER COLUMN labo TYPE TEXT,
+  ALTER COLUMN motif_retrait TYPE TEXT;
+
+ALTER TABLE non_renouveles
+  ALTER COLUMN n_enreg TYPE TEXT,
+  ALTER COLUMN dci TYPE TEXT,
+  ALTER COLUMN nom_marque TYPE TEXT,
+  ALTER COLUMN forme TYPE TEXT,
+  ALTER COLUMN dosage TYPE TEXT,
+  ALTER COLUMN conditionnement TYPE TEXT,
+  ALTER COLUMN obs TYPE TEXT,
+  ALTER COLUMN labo TYPE TEXT;
+
 -- ─── TABLE NEWSLETTER ABONNÉS ────────────────────────────────
 CREATE TABLE IF NOT EXISTS newsletter_subscribers (
   id            SERIAL PRIMARY KEY,
@@ -157,7 +190,7 @@ RETURNS TABLE (
     SELECT 'enregistrement'::TEXT, e.id, e.n_enreg, e.dci, e.nom_marque, e.forme, e.dosage,
            e.labo, e.pays, e.type_prod, e.statut, e.annee,
            NULL::DATE, NULL::TEXT, e.date_final,
-           GREATEST(similarity(lower(e.dci), lower(query)), similarity(lower(e.nom_marque), lower(query)))
+           GREATEST(similarity(lower(e.dci), lower(query)), similarity(lower(e.nom_marque), lower(query))) AS similarity_score
     FROM enregistrements e
     WHERE (scope = 'all' OR scope = 'enregistrement')
       AND (e.dci ILIKE '%' || query || '%' OR e.nom_marque ILIKE '%' || query || '%'
@@ -169,7 +202,7 @@ RETURNS TABLE (
     SELECT 'retrait'::TEXT, r.id, r.n_enreg, r.dci, r.nom_marque, r.forme, r.dosage,
            r.labo, r.pays, r.type_prod, r.statut, NULL::SMALLINT,
            r.date_retrait, r.motif_retrait, NULL::DATE,
-           GREATEST(similarity(lower(r.dci), lower(query)), similarity(lower(r.nom_marque), lower(query)))
+           GREATEST(similarity(lower(r.dci), lower(query)), similarity(lower(r.nom_marque), lower(query))) AS similarity_score
     FROM retraits r
     WHERE (scope = 'all' OR scope = 'retrait')
       AND (r.dci ILIKE '%' || query || '%' OR r.nom_marque ILIKE '%' || query || '%'
@@ -181,7 +214,7 @@ RETURNS TABLE (
     SELECT 'non_renouvele'::TEXT, n.id, n.n_enreg, n.dci, n.nom_marque, n.forme, n.dosage,
            n.labo, n.pays, n.type_prod, n.statut, NULL::SMALLINT,
            NULL::DATE, NULL::TEXT, n.date_final,
-           GREATEST(similarity(lower(n.dci), lower(query)), similarity(lower(n.nom_marque), lower(query)))
+           GREATEST(similarity(lower(n.dci), lower(query)), similarity(lower(n.nom_marque), lower(query))) AS similarity_score
     FROM non_renouveles n
     WHERE (scope = 'all' OR scope = 'non_renouvele')
       AND (n.dci ILIKE '%' || query || '%' OR n.nom_marque ILIKE '%' || query || '%'
