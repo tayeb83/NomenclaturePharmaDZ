@@ -174,8 +174,51 @@ def infer_version_from_filename(filepath: Path):
     return year.group(1) if year else base
 
 
+def ensure_schema_compatibility(cur):
+    """
+    Rend l'ingestion robuste face aux anciens schémas Supabase
+    (colonnes historiques en VARCHAR(50), etc.).
+    """
+    cur.execute(
+        """
+        ALTER TABLE IF EXISTS enregistrements
+          ALTER COLUMN n_enreg TYPE TEXT,
+          ALTER COLUMN dci TYPE TEXT,
+          ALTER COLUMN nom_marque TYPE TEXT,
+          ALTER COLUMN forme TYPE TEXT,
+          ALTER COLUMN dosage TYPE TEXT,
+          ALTER COLUMN conditionnement TYPE TEXT,
+          ALTER COLUMN obs TYPE TEXT,
+          ALTER COLUMN labo TYPE TEXT;
+
+        ALTER TABLE IF EXISTS retraits
+          ALTER COLUMN n_enreg TYPE TEXT,
+          ALTER COLUMN dci TYPE TEXT,
+          ALTER COLUMN nom_marque TYPE TEXT,
+          ALTER COLUMN forme TYPE TEXT,
+          ALTER COLUMN dosage TYPE TEXT,
+          ALTER COLUMN conditionnement TYPE TEXT,
+          ALTER COLUMN prescription TYPE TEXT,
+          ALTER COLUMN labo TYPE TEXT,
+          ALTER COLUMN motif_retrait TYPE TEXT;
+
+        ALTER TABLE IF EXISTS non_renouveles
+          ALTER COLUMN n_enreg TYPE TEXT,
+          ALTER COLUMN dci TYPE TEXT,
+          ALTER COLUMN nom_marque TYPE TEXT,
+          ALTER COLUMN forme TYPE TEXT,
+          ALTER COLUMN dosage TYPE TEXT,
+          ALTER COLUMN conditionnement TYPE TEXT,
+          ALTER COLUMN prescription TYPE TEXT,
+          ALTER COLUMN obs TYPE TEXT,
+          ALTER COLUMN labo TYPE TEXT;
+        """
+    )
+
+
 def ingest(conn, current_file: Path, previous_file: Path | None, current_label: str, previous_label: str | None):
     cur = conn.cursor()
+    ensure_schema_compatibility(cur)
 
     current_rows, sheet_name = parse_enregistrements(current_file)
     prev_rows = parse_enregistrements(previous_file)[0] if previous_file else []
