@@ -10,9 +10,10 @@ import type { Enregistrement, Retrait, NonRenouvele, SearchResult, Stats } from 
 export async function getStats(): Promise<Stats> {
   const row = await queryOne<Stats>(`SELECT * FROM v_stats`)
   return row ?? {
-    total_enregistrements: 0, enreg_2025: 0, enreg_2024: 0,
+    total_enregistrements: 0, total_nouveautes: 0,
     total_retraits: 0, total_non_renouveles: 0,
     fabriques_algerie: 0, dci_uniques: 0, abonnes_newsletter: 0,
+    last_version: null,
   }
 }
 
@@ -79,6 +80,23 @@ export async function searchMedicaments(
 }
 
 // ─── ENREGISTREMENTS ──────────────────────────────────────────
+
+
+export async function getLatestNouveautes(limit = 20): Promise<Enregistrement[]> {
+  return query<Enregistrement>(`
+    SELECT * FROM enregistrements
+    WHERE is_new_vs_previous = TRUE
+      AND source_version = (
+        SELECT version_label
+        FROM nomenclature_versions
+        ORDER BY reference_date DESC NULLS LAST, created_at DESC
+        LIMIT 1
+      )
+    ORDER BY date_init DESC NULLS LAST, id DESC
+    LIMIT $1
+  `, [limit])
+}
+
 export async function getRecentEnregistrements(annee: number, limit = 6): Promise<Enregistrement[]> {
   return query<Enregistrement>(`
     SELECT * FROM enregistrements

@@ -23,7 +23,7 @@ function createPool() {
       : false,
     // Retourner les dates comme strings (pas comme objets Date JS)
     types: {
-      getTypeParser: (oid: number, format: string) => {
+      getTypeParser: (oid: number, format?: string) => {
         // 1082=date, 1114=timestamp, 1184=timestamptz
         if (oid === 1082 || oid === 1114 || oid === 1184) {
           return (val: string) => val  // garder comme string
@@ -49,7 +49,7 @@ export async function query<T = any>(
 ): Promise<T[]> {
   const client = await pool.connect()
   try {
-    const result: QueryResult<T> = await client.query(text, params)
+    const result: QueryResult<any> = await client.query(text, params)
     return result.rows
   } finally {
     client.release()
@@ -85,6 +85,8 @@ export type Enregistrement = {
   statut: string | null
   stabilite: string | null
   annee: number | null
+  source_version: string | null
+  is_new_vs_previous: boolean | null
 }
 
 export type Retrait = {
@@ -136,11 +138,11 @@ export type SearchResult = {
 
 export type Stats = {
   total_enregistrements: number
-  enreg_2025: number
-  enreg_2024: number
+  total_nouveautes: number
   total_retraits: number
   total_non_renouveles: number
   fabriques_algerie: number
   dci_uniques: number
   abonnes_newsletter: number
+  last_version: string | null
 }
