@@ -30,6 +30,34 @@ async function hasColumn(tableName: string, columnName: string): Promise<boolean
 // ─── STATS ────────────────────────────────────────────────────
 export async function getStats(): Promise<Stats> {
   const row = await queryOne<Stats>(`SELECT * FROM v_stats`)
+
+  const fallback = await queryOne<Stats>(`
+    SELECT
+      (SELECT COUNT(*) FROM enregistrements)::INT AS total_enregistrements,
+      (SELECT COUNT(*) FROM enregistrements WHERE is_new_vs_previous = TRUE)::INT AS total_nouveautes,
+      (SELECT COUNT(*) FROM retraits)::INT AS total_retraits,
+      (SELECT COUNT(*) FROM non_renouveles)::INT AS total_non_renouveles,
+      (SELECT COUNT(*) FROM enregistrements WHERE statut = 'F')::INT AS fabriques_algerie,
+      (SELECT COUNT(DISTINCT dci) FROM enregistrements)::INT AS dci_uniques,
+      (SELECT COUNT(*) FROM newsletter_subscribers WHERE confirmed = TRUE)::INT AS abonnes_newsletter,
+      (
+        SELECT version_label
+        FROM nomenclature_versions
+        ORDER BY reference_date DESC NULLS LAST, created_at DESC
+        LIMIT 1
+      ) AS last_version
+  `)
+
+  if (row && row.total_enregistrements > 0) return row
+  if (fallback && fallback.total_enregistrements > 0) {
+    return {
+      ...(row ?? fallback),
+      ...fallback,
+      // Préserver le label de version déjà exposé par v_stats s'il existe
+      last_version: row?.last_version ?? fallback.last_version,
+    }
+  }
+
   return row ?? {
     total_enregistrements: 0, total_nouveautes: 0,
     total_retraits: 0, total_non_renouveles: 0,
@@ -115,7 +143,7 @@ export async function getLatestNouveautes(limit = 20): Promise<Enregistrement[]>
     `, [limit])
   }
 
-  return query<Enregistrement>(`
+  const latestFromVersion = await query<Enregistrement>(`
     SELECT * FROM enregistrements
     WHERE is_new_vs_previous = TRUE
       AND source_version = (
@@ -124,6 +152,15 @@ export async function getLatestNouveautes(limit = 20): Promise<Enregistrement[]>
         ORDER BY reference_date DESC NULLS LAST, created_at DESC
         LIMIT 1
       )
+    ORDER BY date_init DESC NULLS LAST, id DESC
+    LIMIT $1
+  `, [limit])
+
+  if (latestFromVersion.length > 0) return latestFromVersion
+
+  // Fallback: certaines bases legacy contiennent des enregistrements sans source_version.
+  return query<Enregistrement>(`
+    SELECT * FROM enregistrements
     ORDER BY date_init DESC NULLS LAST, id DESC
     LIMIT $1
   `, [limit])
