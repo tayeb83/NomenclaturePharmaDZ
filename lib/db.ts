@@ -9,15 +9,42 @@ import { Pool, type QueryResult } from 'pg'
 // Pool de connexions — réutilisé entre les requêtes en dev et prod
 const globalForPg = globalThis as unknown as { _pgPool?: Pool }
 
+function getConnectionString(): string | undefined {
+  return (
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_URL ||
+    process.env.POSTGRES_PRISMA_URL ||
+    process.env.SUPABASE_DB_URL
+  )
+}
+
+function hasSplitPgConfig(): boolean {
+  return Boolean(
+    process.env.PGHOST ||
+    process.env.PGPORT ||
+    process.env.PGDATABASE ||
+    process.env.PGUSER ||
+    process.env.PGPASSWORD
+  )
+}
+
 function createPool() {
+  const connectionString = getConnectionString()
+
+  if (!connectionString && !hasSplitPgConfig()) {
+    throw new Error(
+      'Configuration PostgreSQL manquante: définissez DATABASE_URL (ou POSTGRES_URL) pour connecter l\'application à la nomenclature.'
+    )
+  }
+
   return new Pool({
-    connectionString: process.env.DATABASE_URL,
-    // Fallback si tu préfères des variables séparées
-    host:     process.env.PGHOST     || 'localhost',
-    port:     parseInt(process.env.PGPORT || '5432'),
-    database: process.env.PGDATABASE || 'pharmaveille',
-    user:     process.env.PGUSER     || 'postgres',
-    password: process.env.PGPASSWORD || '',
+    connectionString,
+    // Variables séparées si DATABASE_URL n'est pas disponible
+    host: process.env.PGHOST,
+    port: process.env.PGPORT ? parseInt(process.env.PGPORT, 10) : undefined,
+    database: process.env.PGDATABASE,
+    user: process.env.PGUSER,
+    password: process.env.PGPASSWORD,
     ssl: process.env.DATABASE_SSL === 'true'
       ? { rejectUnauthorized: false }
       : false,
