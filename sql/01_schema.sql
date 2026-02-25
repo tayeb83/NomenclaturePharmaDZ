@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS enregistrements (
   date_final      DATE,
   type_prod       VARCHAR(20),                   -- max : 3 mais on prend de la marge
   statut          VARCHAR(10),                   -- max : 1 (F/I)
-  stabilite       VARCHAR(30),
+  stabilite       TEXT,
   annee           SMALLINT,
   source_version  VARCHAR(40),
   is_new_vs_previous BOOLEAN DEFAULT FALSE,
