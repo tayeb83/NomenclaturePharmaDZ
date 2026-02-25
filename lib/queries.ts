@@ -106,9 +106,19 @@ export async function getStats(): Promise<Stats> {
 export async function searchMedicaments(
   q: string,
   scope: string = 'all',
-  limit: number = 40
+  limit: number = 40,
+  filters?: {
+    labo?: string
+    substance?: string
+    activeOnly?: boolean
+  }
 ): Promise<SearchResult[]> {
-  if (!q.trim()) return []
+  const trimmedQuery = q.trim()
+  const labo = filters?.labo?.trim() || ''
+  const substance = filters?.substance?.trim() || ''
+  const activeOnly = Boolean(filters?.activeOnly)
+
+  if (!trimmedQuery && !labo && !substance) return []
 
   // Construire la condition selon le scope
   const scopeConditions: Record<string, string> = {
@@ -117,7 +127,12 @@ export async function searchMedicaments(
     non_renouvele:  `WHERE source = 'non_renouvele'`,
     all:            '',
   }
-  const scopeFilter = scopeConditions[scope] ?? ''
+  const effectiveScope = activeOnly ? 'enregistrement' : scope
+  const scopeFilter = scopeConditions[effectiveScope] ?? ''
+
+  const searchPattern = `%${trimmedQuery}%`
+  const laboPattern = `%${labo}%`
+  const substancePattern = `%${substance}%`
 
   const results = await query<SearchResult>(`
     SELECT * FROM (
@@ -129,7 +144,12 @@ export async function searchMedicaments(
         NULL::TEXT AS motif_retrait,
         date_final
       FROM enregistrements
-      WHERE dci ILIKE $1 OR nom_marque ILIKE $1
+      WHERE (
+        $1 = ''
+        OR CONCAT_WS(' ', n_enreg, dci, nom_marque, forme, dosage, labo, pays, type_prod, statut, annee::TEXT) ILIKE $2
+      )
+      AND ($3 = '' OR labo ILIKE $4)
+      AND ($5 = '' OR dci ILIKE $6)
 
       UNION ALL
 
@@ -140,7 +160,12 @@ export async function searchMedicaments(
         date_retrait, motif_retrait,
         NULL::DATE AS date_final
       FROM retraits
-      WHERE dci ILIKE $1 OR nom_marque ILIKE $1
+      WHERE (
+        $1 = ''
+        OR CONCAT_WS(' ', n_enreg, dci, nom_marque, forme, dosage, labo, pays, type_prod, statut, motif_retrait) ILIKE $2
+      )
+      AND ($3 = '' OR labo ILIKE $4)
+      AND ($5 = '' OR dci ILIKE $6)
 
       UNION ALL
 
@@ -152,14 +177,19 @@ export async function searchMedicaments(
         NULL::TEXT AS motif_retrait,
         date_final
       FROM non_renouveles
-      WHERE dci ILIKE $1 OR nom_marque ILIKE $1
+      WHERE (
+        $1 = ''
+        OR CONCAT_WS(' ', n_enreg, dci, nom_marque, forme, dosage, labo, pays, type_prod, statut, date_final::TEXT) ILIKE $2
+      )
+      AND ($3 = '' OR labo ILIKE $4)
+      AND ($5 = '' OR dci ILIKE $6)
     ) AS combined
     ${scopeFilter}
     ORDER BY
       CASE source WHEN 'enregistrement' THEN 1 WHEN 'retrait' THEN 2 ELSE 3 END,
       nom_marque
-    LIMIT $2
-  `, [`%${q}%`, limit])
+    LIMIT $7
+  `, [trimmedQuery, searchPattern, labo, laboPattern, substance, substancePattern, limit])
 
   return results
 }
