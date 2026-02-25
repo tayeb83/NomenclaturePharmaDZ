@@ -234,17 +234,25 @@ WITH last_version AS (
   LIMIT 1
 )
 SELECT
+  -- Quand nomenclature_versions est vide (version_label IS NULL), on compte tous les
+  -- enregistrements. Sinon on filtre sur la version la plus récente.
+  -- L'ancien COALESCE(version_label, e.source_version) excluait les lignes où
+  -- source_version IS NULL car NULL = NULL vaut NULL (faux) en SQL.
   (SELECT COUNT(*) FROM enregistrements e
-   WHERE e.source_version = COALESCE((SELECT version_label FROM last_version), e.source_version))::INT AS total_enregistrements,
+   WHERE (SELECT version_label FROM last_version) IS NULL
+      OR e.source_version = (SELECT version_label FROM last_version))::INT AS total_enregistrements,
   (SELECT COUNT(*) FROM enregistrements e
-   WHERE e.source_version = COALESCE((SELECT version_label FROM last_version), e.source_version)
+   WHERE ((SELECT version_label FROM last_version) IS NULL
+      OR e.source_version = (SELECT version_label FROM last_version))
    AND e.is_new_vs_previous = TRUE)::INT AS total_nouveautes,
   (SELECT COUNT(*) FROM retraits)::INT                               AS total_retraits,
   (SELECT COUNT(*) FROM non_renouveles)::INT                         AS total_non_renouveles,
   (SELECT COUNT(*) FROM enregistrements e
-   WHERE e.source_version = COALESCE((SELECT version_label FROM last_version), e.source_version)
+   WHERE ((SELECT version_label FROM last_version) IS NULL
+      OR e.source_version = (SELECT version_label FROM last_version))
    AND e.statut = 'F')::INT     AS fabriques_algerie,
   (SELECT COUNT(DISTINCT dci) FROM enregistrements e
-   WHERE e.source_version = COALESCE((SELECT version_label FROM last_version), e.source_version))::INT AS dci_uniques,
+   WHERE (SELECT version_label FROM last_version) IS NULL
+      OR e.source_version = (SELECT version_label FROM last_version))::INT AS dci_uniques,
   (SELECT COUNT(*) FROM newsletter_subscribers WHERE confirmed = TRUE)::INT AS abonnes_newsletter,
   (SELECT version_label FROM last_version) AS last_version;

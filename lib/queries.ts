@@ -47,8 +47,22 @@ async function hasColumn(tableName: string, columnName: string): Promise<boolean
 
 // ─── STATS ────────────────────────────────────────────────────
 export async function getStats(): Promise<Stats> {
-  const hasIsNewFlag = await hasColumn('enregistrements', 'is_new_vs_previous')
-  const hasVersionsTable = await hasTable('nomenclature_versions')
+  // 1. Essayer la vue v_stats en premier (chemin rapide)
+  let row: Stats | null = null
+  try {
+    row = await queryOne<Stats>(`SELECT * FROM v_stats`)
+  } catch {
+    // Bases legacy sans la vue ou avec un schéma incompatible
+    row = null
+  }
+
+  if (row && row.total_enregistrements > 0) return row
+
+  // 2. v_stats absente ou vide → requête de secours avec détection de schéma
+  const [hasIsNewFlag, hasVersionsTable] = await Promise.all([
+    hasColumn('enregistrements', 'is_new_vs_previous'),
+    hasTable('nomenclature_versions'),
+  ])
   const nouveautesCountExpr = hasIsNewFlag
     ? `(SELECT COUNT(*) FROM enregistrements WHERE is_new_vs_previous = TRUE)::INT`
     : `0::INT`
@@ -61,37 +75,26 @@ export async function getStats(): Promise<Stats> {
       )`
     : `NULL::TEXT`
 
-  let row: Stats | null = null
+  let fallback: Stats | null = null
   try {
-    row = await queryOne<Stats>(`SELECT * FROM v_stats`)
+    fallback = await queryOne<Stats>(`
+      SELECT
+        (SELECT COUNT(*) FROM enregistrements)::INT AS total_enregistrements,
+        ${nouveautesCountExpr} AS total_nouveautes,
+        (SELECT COUNT(*) FROM retraits)::INT AS total_retraits,
+        (SELECT COUNT(*) FROM non_renouveles)::INT AS total_non_renouveles,
+        (SELECT COUNT(*) FROM enregistrements WHERE statut = 'F')::INT AS fabriques_algerie,
+        (SELECT COUNT(DISTINCT dci) FROM enregistrements)::INT AS dci_uniques,
+        (SELECT COUNT(*) FROM newsletter_subscribers WHERE confirmed = TRUE)::INT AS abonnes_newsletter,
+        ${lastVersionExpr} AS last_version
+    `)
   } catch {
-    // Certaines bases legacy n'ont pas encore la vue (ou la vue référence un ancien schéma)
-    row = null
+    fallback = null
   }
 
-  const fallback = await queryOne<Stats>(`
-    SELECT
-      (SELECT COUNT(*) FROM enregistrements)::INT AS total_enregistrements,
-      ${nouveautesCountExpr} AS total_nouveautes,
-      (SELECT COUNT(*) FROM retraits)::INT AS total_retraits,
-      (SELECT COUNT(*) FROM non_renouveles)::INT AS total_non_renouveles,
-      (SELECT COUNT(*) FROM enregistrements WHERE statut = 'F')::INT AS fabriques_algerie,
-      (SELECT COUNT(DISTINCT dci) FROM enregistrements)::INT AS dci_uniques,
-      (SELECT COUNT(*) FROM newsletter_subscribers WHERE confirmed = TRUE)::INT AS abonnes_newsletter,
-      ${lastVersionExpr} AS last_version
-  `)
+  if (fallback && fallback.total_enregistrements > 0) return fallback
 
-  if (row && row.total_enregistrements > 0) return row
-  if (fallback && fallback.total_enregistrements > 0) {
-    return {
-      ...(row ?? fallback),
-      ...fallback,
-      // Préserver le label de version déjà exposé par v_stats s'il existe
-      last_version: row?.last_version ?? fallback.last_version,
-    }
-  }
-
-  return row ?? {
+  return row ?? fallback ?? {
     total_enregistrements: 0, total_nouveautes: 0,
     total_retraits: 0, total_non_renouveles: 0,
     fabriques_algerie: 0, dci_uniques: 0, abonnes_newsletter: 0,
