@@ -79,13 +79,25 @@ function cleanStr(val: unknown): string | null {
   return s || null
 }
 
+function isValidDateParts(y: number, m: number, d: number): boolean {
+  if (y < 1000 || y > 9999) return false
+  if (m < 1 || m > 12) return false
+  if (d < 1 || d > 31) return false
+  return true
+}
+
 function cleanDate(val: unknown): string | null {
   if (val === null || val === undefined) return null
 
   // Déjà un objet Date (si cellDates: true)
   if (val instanceof Date) {
     if (isNaN(val.getTime())) return null
-    return val.toISOString().split('T')[0]
+    // Utiliser les composantes locales pour éviter le décalage UTC
+    const y = val.getFullYear()
+    const m = val.getMonth() + 1
+    const d = val.getDate()
+    if (!isValidDateParts(y, m, d)) return null
+    return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
   }
 
   // Nombre série Excel (entier ou flottant)
@@ -94,6 +106,7 @@ function cleanDate(val: unknown): string | null {
       const parsed = XLSX.SSF.parse_date_code(val)
       if (!parsed) return null
       const { y, m, d } = parsed
+      if (!isValidDateParts(y, m, d)) return null
       return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
     } catch {
       return null
@@ -104,23 +117,47 @@ function cleanDate(val: unknown): string | null {
   const s = String(val).trim()
   if (!s) return null
 
+  // Rejeter les chaînes purement numériques (numéros de série Excel stockés en texte)
+  // ex: "42736" → new Date("42736") = an 42736 → "+042736-01-01" → PostgreSQL plante
+  if (/^\d+(\.\d+)?$/.test(s)) {
+    try {
+      const n = parseFloat(s)
+      const parsed = XLSX.SSF.parse_date_code(n)
+      if (!parsed) return null
+      const { y, m, d } = parsed
+      if (!isValidDateParts(y, m, d)) return null
+      return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+    } catch {
+      return null
+    }
+  }
+
   // Format JJ/MM/AAAA (format français courant dans les exports MIPH)
   const frDate = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
   if (frDate) {
-    const [, d, m, y] = frDate
-    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
+    const [, dd, mm, yyyy] = frDate
+    const y = parseInt(yyyy), m = parseInt(mm), d = parseInt(dd)
+    if (!isValidDateParts(y, m, d)) return null
+    return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`
   }
 
   // Format AAAA-MM-JJ (ISO)
   const isoDate = s.match(/^(\d{4})-(\d{2})-(\d{2})/)
-  if (isoDate) return `${isoDate[1]}-${isoDate[2]}-${isoDate[3]}`
-
-  try {
-    const d = new Date(s)
-    if (!isNaN(d.getTime())) return d.toISOString().split('T')[0]
-  } catch {
-    // ignore
+  if (isoDate) {
+    const y = parseInt(isoDate[1]), m = parseInt(isoDate[2]), d = parseInt(isoDate[3])
+    if (!isValidDateParts(y, m, d)) return null
+    return `${isoDate[1]}-${isoDate[2]}-${isoDate[3]}`
   }
+
+  // Formats avec séparateur point : JJ.MM.AAAA
+  const dotDate = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/)
+  if (dotDate) {
+    const [, dd, mm, yyyy] = dotDate
+    const y = parseInt(yyyy), m = parseInt(mm), d = parseInt(dd)
+    if (!isValidDateParts(y, m, d)) return null
+    return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`
+  }
+
   return null
 }
 
