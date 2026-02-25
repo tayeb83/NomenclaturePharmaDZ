@@ -9,7 +9,6 @@ const LINKS = [
   { href: '/recherche', label: 'Recherche' },
   { href: '/alertes', label: '🚨 Alertes', badge: true },
   { href: '/substitution', label: 'Substitution' },
-  { href: '/veille', label: 'Veille' },
   { href: '/a-propos', label: 'À propos' },
 ]
 
