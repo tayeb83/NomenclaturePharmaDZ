@@ -16,6 +16,7 @@ from pathlib import Path
 
 import pandas as pd
 import psycopg2
+from psycopg2 import errors
 from psycopg2.extras import execute_values
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
@@ -179,41 +180,34 @@ def ensure_schema_compatibility(cur):
     Rend l'ingestion robuste face aux anciens schémas Supabase
     (colonnes historiques en VARCHAR(50), etc.).
     """
-    cur.execute(
-        """
-        ALTER TABLE IF EXISTS enregistrements
-          ALTER COLUMN n_enreg TYPE TEXT,
-          ALTER COLUMN dci TYPE TEXT,
-          ALTER COLUMN nom_marque TYPE TEXT,
-          ALTER COLUMN forme TYPE TEXT,
-          ALTER COLUMN dosage TYPE TEXT,
-          ALTER COLUMN conditionnement TYPE TEXT,
-          ALTER COLUMN obs TYPE TEXT,
-          ALTER COLUMN labo TYPE TEXT;
+    columns_to_widen = {
+        "enregistrements": [
+            "n_enreg", "dci", "nom_marque", "forme", "dosage", "conditionnement", "obs", "labo",
+        ],
+        "retraits": [
+            "n_enreg", "dci", "nom_marque", "forme", "dosage", "conditionnement", "prescription", "labo", "motif_retrait",
+        ],
+        "non_renouveles": [
+            "n_enreg", "dci", "nom_marque", "forme", "dosage", "conditionnement", "prescription", "obs", "labo",
+        ],
+    }
 
-        ALTER TABLE IF EXISTS retraits
-          ALTER COLUMN n_enreg TYPE TEXT,
-          ALTER COLUMN dci TYPE TEXT,
-          ALTER COLUMN nom_marque TYPE TEXT,
-          ALTER COLUMN forme TYPE TEXT,
-          ALTER COLUMN dosage TYPE TEXT,
-          ALTER COLUMN conditionnement TYPE TEXT,
-          ALTER COLUMN prescription TYPE TEXT,
-          ALTER COLUMN labo TYPE TEXT,
-          ALTER COLUMN motif_retrait TYPE TEXT;
-
-        ALTER TABLE IF EXISTS non_renouveles
-          ALTER COLUMN n_enreg TYPE TEXT,
-          ALTER COLUMN dci TYPE TEXT,
-          ALTER COLUMN nom_marque TYPE TEXT,
-          ALTER COLUMN forme TYPE TEXT,
-          ALTER COLUMN dosage TYPE TEXT,
-          ALTER COLUMN conditionnement TYPE TEXT,
-          ALTER COLUMN prescription TYPE TEXT,
-          ALTER COLUMN obs TYPE TEXT,
-          ALTER COLUMN labo TYPE TEXT;
-        """
-    )
+    for table, columns in columns_to_widen.items():
+        for column in columns:
+            savepoint = f"schema_compat_{table}_{column}"
+            cur.execute(f'SAVEPOINT "{savepoint}"')
+            try:
+                cur.execute(f'ALTER TABLE IF EXISTS "{table}" ALTER COLUMN "{column}" TYPE TEXT')
+            except errors.FeatureNotSupported as exc:
+                # Colonnes parfois référencées par des vues historiques (ex: v_stats)
+                # -> on garde le type existant et on poursuit l'ingestion.
+                cur.execute(f'ROLLBACK TO SAVEPOINT "{savepoint}"')
+                log(
+                    f"Compat schéma ignorée pour {table}.{column}: {exc.pgerror.strip() if exc.pgerror else exc}",
+                    "WARN",
+                )
+            finally:
+                cur.execute(f'RELEASE SAVEPOINT "{savepoint}"')
 
 
 def ingest(conn, current_file: Path, previous_file: Path | None, current_label: str, previous_label: str | None):
