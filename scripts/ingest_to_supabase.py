@@ -179,35 +179,39 @@ def ensure_schema_compatibility(cur):
     """
     Rend l'ingestion robuste face aux anciens schémas Supabase
     (colonnes historiques en VARCHAR(50), etc.).
-    """
-    columns_to_widen = {
-        "enregistrements": [
-            "n_enreg", "dci", "nom_marque", "forme", "dosage", "conditionnement", "obs", "labo",
-        ],
-        "retraits": [
-            "n_enreg", "dci", "nom_marque", "forme", "dosage", "conditionnement", "prescription", "labo", "motif_retrait",
-        ],
-        "non_renouveles": [
-            "n_enreg", "dci", "nom_marque", "forme", "dosage", "conditionnement", "prescription", "obs", "labo",
-        ],
-    }
 
-    for table, columns in columns_to_widen.items():
-        for column in columns:
-            savepoint = f"schema_compat_{table}_{column}"
-            cur.execute(f'SAVEPOINT "{savepoint}"')
-            try:
-                cur.execute(f'ALTER TABLE IF EXISTS "{table}" ALTER COLUMN "{column}" TYPE TEXT')
-            except errors.FeatureNotSupported as exc:
-                # Colonnes parfois référencées par des vues historiques (ex: v_stats)
-                # -> on garde le type existant et on poursuit l'ingestion.
-                cur.execute(f'ROLLBACK TO SAVEPOINT "{savepoint}"')
-                log(
-                    f"Compat schéma ignorée pour {table}.{column}: {exc.pgerror.strip() if exc.pgerror else exc}",
-                    "WARN",
-                )
-            finally:
-                cur.execute(f'RELEASE SAVEPOINT "{savepoint}"')
+    On élargit automatiquement toutes les colonnes texte à longueur bornée
+    (varchar/char) des tables ingestées pour éviter les erreurs de troncature.
+    """
+    tables = ("enregistrements", "retraits", "non_renouveles")
+    cur.execute(
+        """
+        SELECT table_name, column_name
+        FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = ANY(%s)
+          AND data_type IN ('character varying', 'character')
+          AND character_maximum_length IS NOT NULL
+        ORDER BY table_name, ordinal_position
+        """,
+        (list(tables),),
+    )
+
+    for table, column in cur.fetchall():
+        savepoint = f"schema_compat_{table}_{column}"
+        cur.execute(f'SAVEPOINT "{savepoint}"')
+        try:
+            cur.execute(f'ALTER TABLE IF EXISTS "{table}" ALTER COLUMN "{column}" TYPE TEXT')
+        except errors.FeatureNotSupported as exc:
+            # Colonnes parfois référencées par des vues historiques (ex: v_stats)
+            # -> on garde le type existant et on poursuit l'ingestion.
+            cur.execute(f'ROLLBACK TO SAVEPOINT "{savepoint}"')
+            log(
+                f"Compat schéma ignorée pour {table}.{column}: {exc.pgerror.strip() if exc.pgerror else exc}",
+                "WARN",
+            )
+        finally:
+            cur.execute(f'RELEASE SAVEPOINT "{savepoint}"')
 
 
 def ingest(conn, current_file: Path, previous_file: Path | None, current_label: str, previous_label: str | None):
