@@ -112,9 +112,9 @@ export async function searchMedicaments(
 
   // Construire la condition selon le scope
   const scopeConditions: Record<string, string> = {
-    enregistrement: `AND source = 'enregistrement'`,
-    retrait:        `AND source = 'retrait'`,
-    non_renouvele:  `AND source = 'non_renouvele'`,
+    enregistrement: `WHERE source = 'enregistrement'`,
+    retrait:        `WHERE source = 'retrait'`,
+    non_renouvele:  `WHERE source = 'non_renouvele'`,
     all:            '',
   }
   const scopeFilter = scopeConditions[scope] ?? ''
