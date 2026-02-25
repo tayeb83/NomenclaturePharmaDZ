@@ -28,6 +28,18 @@ CREATE TABLE IF NOT EXISTS enregistrements (
   statut          VARCHAR(10),                   -- max : 1 (F/I)
   stabilite       VARCHAR(30),
   annee           SMALLINT,
+  source_version  VARCHAR(40),
+  is_new_vs_previous BOOLEAN DEFAULT FALSE,
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS nomenclature_versions (
+  id              SERIAL PRIMARY KEY,
+  version_label   VARCHAR(40) UNIQUE NOT NULL,
+  reference_date  DATE,
+  previous_label  VARCHAR(40),
+  total_enregistrements INTEGER DEFAULT 0,
+  total_nouveautes INTEGER DEFAULT 0,
   created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -112,6 +124,8 @@ CREATE INDEX idx_nonrenouv_marque_trgm ON non_renouveles USING gin(nom_marque gi
 
 -- Index classiques
 CREATE INDEX idx_enreg_annee     ON enregistrements(annee);
+CREATE INDEX idx_enreg_version   ON enregistrements(source_version);
+CREATE INDEX idx_enreg_new       ON enregistrements(is_new_vs_previous);
 CREATE INDEX idx_enreg_type      ON enregistrements(type_prod);
 CREATE INDEX idx_enreg_statut    ON enregistrements(statut);
 CREATE INDEX idx_enreg_pays      ON enregistrements(pays);
@@ -178,12 +192,24 @@ $$;
 
 -- ─── VUE STATISTIQUES ────────────────────────────────────────
 CREATE OR REPLACE VIEW v_stats AS
+WITH last_version AS (
+  SELECT version_label
+  FROM nomenclature_versions
+  ORDER BY reference_date DESC NULLS LAST, created_at DESC
+  LIMIT 1
+)
 SELECT
-  (SELECT COUNT(*) FROM enregistrements)::INT                        AS total_enregistrements,
-  (SELECT COUNT(*) FROM enregistrements WHERE annee = 2025)::INT     AS enreg_2025,
-  (SELECT COUNT(*) FROM enregistrements WHERE annee = 2024)::INT     AS enreg_2024,
+  (SELECT COUNT(*) FROM enregistrements e
+   WHERE e.source_version = COALESCE((SELECT version_label FROM last_version), e.source_version))::INT AS total_enregistrements,
+  (SELECT COUNT(*) FROM enregistrements e
+   WHERE e.source_version = COALESCE((SELECT version_label FROM last_version), e.source_version)
+   AND e.is_new_vs_previous = TRUE)::INT AS total_nouveautes,
   (SELECT COUNT(*) FROM retraits)::INT                               AS total_retraits,
   (SELECT COUNT(*) FROM non_renouveles)::INT                         AS total_non_renouveles,
-  (SELECT COUNT(*) FROM enregistrements WHERE statut = 'F')::INT     AS fabriques_algerie,
-  (SELECT COUNT(DISTINCT dci) FROM enregistrements)::INT             AS dci_uniques,
-  (SELECT COUNT(*) FROM newsletter_subscribers WHERE confirmed = TRUE)::INT AS abonnes_newsletter;
+  (SELECT COUNT(*) FROM enregistrements e
+   WHERE e.source_version = COALESCE((SELECT version_label FROM last_version), e.source_version)
+   AND e.statut = 'F')::INT     AS fabriques_algerie,
+  (SELECT COUNT(DISTINCT dci) FROM enregistrements e
+   WHERE e.source_version = COALESCE((SELECT version_label FROM last_version), e.source_version))::INT AS dci_uniques,
+  (SELECT COUNT(*) FROM newsletter_subscribers WHERE confirmed = TRUE)::INT AS abonnes_newsletter,
+  (SELECT version_label FROM last_version) AS last_version;
