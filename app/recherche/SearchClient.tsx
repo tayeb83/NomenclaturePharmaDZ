@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useCallback } from 'react'
+import { useState, useTransition, useCallback, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { SearchResult } from '@/lib/db'
 import { DrugCard } from '@/components/drug/DrugCard'
@@ -68,6 +68,7 @@ function buildSearchParams(
   substance: string,
   activeOnly: boolean,
   advanced: AdvancedSearchCondition[],
+  algerieOnly: boolean,
 ) {
   const params = new URLSearchParams()
   if (q.trim()) params.set('q', q)
@@ -75,8 +76,14 @@ function buildSearchParams(
   if (labo.trim()) params.set('labo', labo)
   if (substance.trim()) params.set('substance', substance)
   if (activeOnly) params.set('activeOnly', '1')
+  if (algerieOnly) params.set('algerieOnly', '1')
   if (hasAdvancedFilters(advanced)) params.set('advanced', JSON.stringify(advanced))
   return params
+}
+
+function effectiveAdvanced(base: AdvancedSearchCondition[], algerieOnly: boolean): AdvancedSearchCondition[] {
+  if (!algerieOnly) return base
+  return [...base, { field: 'statut', operator: 'equals', value: 'F', bool: 'AND' as const }]
 }
 
 export function SearchClient({
@@ -87,6 +94,7 @@ export function SearchClient({
   initialSubstance,
   initialActiveOnly,
   initialAdvanced,
+  initialAlgerieOnly,
 }: {
   initialQuery: string
   initialScope: string
@@ -95,20 +103,35 @@ export function SearchClient({
   initialSubstance: string
   initialActiveOnly: boolean
   initialAdvanced: AdvancedSearchCondition[]
+  initialAlgerieOnly: boolean
 }) {
   const [query, setQuery] = useState(initialQuery)
   const [scope, setScope] = useState(initialScope)
   const [labo, setLabo] = useState(initialLabo)
   const [substance, setSubstance] = useState(initialSubstance)
   const [activeOnly, setActiveOnly] = useState(initialActiveOnly)
+  const [algerieOnly, setAlgerieOnly] = useState(initialAlgerieOnly)
   const [advanced, setAdvanced] = useState<AdvancedSearchCondition[]>(initialAdvanced.length ? initialAdvanced : [{ field: 'dci', operator: 'contains', value: '', bool: 'AND' }])
   const [results, setResults] = useState<SearchResult[]>(initialResults)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const [, startTransition] = useTransition()
+  const inputRef = useRef<HTMLInputElement>(null)
 
-  const syncUrl = useCallback((nextQ: string, nextScope: string, nextLabo: string, nextSubstance: string, nextActiveOnly: boolean, nextAdvanced: AdvancedSearchCondition[]) => {
-    const params = buildSearchParams(nextQ, nextScope, nextLabo, nextSubstance, nextActiveOnly, nextAdvanced)
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== '/') return
+      const tag = (e.target as HTMLElement).tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      e.preventDefault()
+      inputRef.current?.focus()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [])
+
+  const syncUrl = useCallback((nextQ: string, nextScope: string, nextLabo: string, nextSubstance: string, nextActiveOnly: boolean, nextAdvanced: AdvancedSearchCondition[], nextAlgerieOnly: boolean) => {
+    const params = buildSearchParams(nextQ, nextScope, nextLabo, nextSubstance, nextActiveOnly, nextAdvanced, nextAlgerieOnly)
     startTransition(() => {
       router.replace(`/recherche${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false })
     })
@@ -118,7 +141,8 @@ export function SearchClient({
     if (!q.trim() && !l.trim() && !sub.trim() && !hasAdvancedFilters(adv)) { setResults([]); return }
     setLoading(true)
     try {
-      const params = buildSearchParams(q, s, l, sub, active, adv)
+      // On passe l'algerieOnly courant via l'advanced effectif (pas de param supplémentaire à l'API)
+      const params = buildSearchParams(q, s, l, sub, active, adv, false)
       const res = await fetch(`/api/search?${params.toString()}`)
       const data = await res.json()
       setResults(data.results || [])
@@ -129,21 +153,32 @@ export function SearchClient({
 
   function handleInput(val: string) {
     setQuery(val)
-    syncUrl(val, scope, labo, substance, activeOnly, advanced)
-    if (val.length >= 2 || labo || substance || hasAdvancedFilters(advanced)) search(val, scope, labo, substance, activeOnly, advanced)
+    syncUrl(val, scope, labo, substance, activeOnly, advanced, algerieOnly)
+    const effAdv = effectiveAdvanced(advanced, algerieOnly)
+    if (val.length >= 2 || labo || substance || hasAdvancedFilters(effAdv)) search(val, scope, labo, substance, activeOnly, effAdv)
     else if (val.length === 0) setResults([])
   }
 
   function handleScope(s: string) {
     setScope(s)
-    if (query.trim() || labo.trim() || substance.trim() || hasAdvancedFilters(advanced)) search(query, s, labo, substance, activeOnly, advanced)
-    syncUrl(query, s, labo, substance, activeOnly, advanced)
+    const effAdv = effectiveAdvanced(advanced, algerieOnly)
+    if (query.trim() || labo.trim() || substance.trim() || hasAdvancedFilters(effAdv)) search(query, s, labo, substance, activeOnly, effAdv)
+    syncUrl(query, s, labo, substance, activeOnly, advanced, algerieOnly)
   }
 
   function handleActiveOnly(checked: boolean) {
     setActiveOnly(checked)
-    syncUrl(query, scope, labo, substance, checked, advanced)
-    if (query.trim() || labo.trim() || substance.trim() || hasAdvancedFilters(advanced)) search(query, scope, labo, substance, checked, advanced)
+    syncUrl(query, scope, labo, substance, checked, advanced, algerieOnly)
+    const effAdv = effectiveAdvanced(advanced, algerieOnly)
+    if (query.trim() || labo.trim() || substance.trim() || hasAdvancedFilters(effAdv)) search(query, scope, labo, substance, checked, effAdv)
+  }
+
+  function handleAlgerieOnly(next: boolean) {
+    setAlgerieOnly(next)
+    syncUrl(query, scope, labo, substance, activeOnly, advanced, next)
+    const effAdv = effectiveAdvanced(advanced, next)
+    if (query.trim() || labo.trim() || substance.trim() || hasAdvancedFilters(effAdv)) search(query, scope, labo, substance, activeOnly, effAdv)
+    else setResults([])
   }
 
   function updateAdvanced(index: number, patch: Partial<AdvancedSearchCondition>) {
@@ -154,8 +189,9 @@ export function SearchClient({
       return updated
     })
     setAdvanced(next)
-    syncUrl(query, scope, labo, substance, activeOnly, next)
-    if (query.trim() || labo.trim() || substance.trim() || hasAdvancedFilters(next)) search(query, scope, labo, substance, activeOnly, next)
+    syncUrl(query, scope, labo, substance, activeOnly, next, algerieOnly)
+    const effAdv = effectiveAdvanced(next, algerieOnly)
+    if (query.trim() || labo.trim() || substance.trim() || hasAdvancedFilters(effAdv)) search(query, scope, labo, substance, activeOnly, effAdv)
     else setResults([])
   }
 
@@ -168,8 +204,9 @@ export function SearchClient({
     const next = advanced.filter((_, idx) => idx !== index)
     const safeNext = next.length ? next : [{ field: 'dci', operator: 'contains', value: '', bool: 'AND' as const }]
     setAdvanced(safeNext)
-    syncUrl(query, scope, labo, substance, activeOnly, safeNext)
-    if (query.trim() || labo.trim() || substance.trim() || hasAdvancedFilters(safeNext)) search(query, scope, labo, substance, activeOnly, safeNext)
+    syncUrl(query, scope, labo, substance, activeOnly, safeNext, algerieOnly)
+    const effAdv = effectiveAdvanced(safeNext, algerieOnly)
+    if (query.trim() || labo.trim() || substance.trim() || hasAdvancedFilters(effAdv)) search(query, scope, labo, substance, activeOnly, effAdv)
     else setResults([])
   }
 
@@ -195,12 +232,14 @@ export function SearchClient({
       <div className="search-bar">
         <span className="search-bar-icon">🔍</span>
         <input
+          ref={inputRef}
           type="text"
           value={query}
           onChange={e => handleInput(e.target.value)}
           placeholder="Recherche simple sur tout: DCI, marque, forme, dosage, labo..."
           autoFocus
         />
+        <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#94a3b8', fontFamily: 'monospace', background: '#f1f5f9', padding: '2px 6px', borderRadius: 4, pointerEvents: 'none', userSelect: 'none' }}>/</span>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
@@ -227,6 +266,13 @@ export function SearchClient({
             onClick={() => handleScope(s.value)}
           >{s.label}</button>
         ))}
+        <button
+          className={`filter-tab${algerieOnly ? ' active' : ''}`}
+          onClick={() => handleAlgerieOnly(!algerieOnly)}
+          title="Afficher uniquement les médicaments fabriqués en Algérie (statut F)"
+        >
+          🇩🇿 Fabriqué en Algérie
+        </button>
       </div>
 
       <details style={{ marginBottom: 16, border: '1px solid #e2e8f0', borderRadius: 10, padding: 12, background: '#f8fafc' }}>

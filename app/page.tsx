@@ -1,12 +1,21 @@
 import Link from 'next/link'
-import { getStats, getLatestNouveautes, getLastRetraits } from '@/lib/queries'
+import { getStats, getLatestNouveautes, getLastRetraits, getLastVersionDate } from '@/lib/queries'
 import { DrugCard } from '@/components/drug/DrugCard'
 import { NewsletterSection } from '@/components/ui/NewsletterSection'
 
 export const revalidate = 3600
 
+function formatDateFR(d: string | null): string | null {
+  if (!d) return null
+  const parts = d.slice(0, 10).split('-')
+  if (parts.length !== 3) return null
+  return `${parts[2]}/${parts[1]}/${parts[0]}`
+}
+
 export default async function HomePage() {
-  const [stats, nouveautes, retraits] = await Promise.all([getStats(), getLatestNouveautes(6), getLastRetraits(3)])
+  const [stats, nouveautes, retraits, lastVersionDate] = await Promise.all([
+    getStats(), getLatestNouveautes(6), getLastRetraits(3), getLastVersionDate(),
+  ])
 
   return (
     <>
@@ -30,7 +39,12 @@ export default async function HomePage() {
             <div className="stat-icon">✅</div>
             <div className="stat-value">{stats?.total_enregistrements?.toLocaleString('fr') || '—'}</div>
             <div className="stat-label">Enregistrements actifs</div>
-            <div className="stat-sub">Version {stats?.last_version || '—'}</div>
+            <div className="stat-sub">
+              Version {stats?.last_version || '—'}
+              {formatDateFR(lastVersionDate) && (
+                <> · MàJ <strong style={{ color: '#0284c7' }}>{formatDateFR(lastVersionDate)}</strong></>
+              )}
+            </div>
           </div>
           <div className="stat-card green">
             <div className="stat-icon">🆕</div>

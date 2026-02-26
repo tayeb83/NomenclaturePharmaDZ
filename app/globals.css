@@ -171,7 +171,7 @@ body {
 /* ─── SEARCH PAGE ────────────────────────────────────────── */
 .search-bar { position: relative; margin-bottom: 16px; }
 .search-bar input {
-  width: 100%; padding: 13px 16px 13px 46px; font-size: 15px;
+  width: 100%; padding: 13px 48px 13px 46px; font-size: 15px;
   border: 2px solid var(--slate-200); border-radius: 10px;
   font-family: var(--font-body); outline: none; background: white;
   transition: border-color .15s; color: var(--navy);
@@ -257,7 +257,15 @@ body {
 .page-btn:disabled { opacity: .4; cursor: not-allowed; }
 
 /* ─── DRUG CARD FOOTER & DETAIL LINK ────────────────────── */
-.drug-card-footer { margin-top: 10px; display: flex; justify-content: flex-end; }
+.drug-card-footer { margin-top: 10px; display: flex; justify-content: flex-end; gap: 8px; align-items: center; }
+
+.drug-whatsapp-btn {
+  font-size: 12px; font-weight: 700; color: #16a34a;
+  text-decoration: none; padding: 4px 10px; border-radius: 5px;
+  background: #dcfce7; transition: all .15s;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.drug-whatsapp-btn:hover { background: #16a34a; color: white; }
 .drug-detail-link {
   font-size: 12px; font-weight: 700; color: var(--blue);
   text-decoration: none; padding: 4px 10px; border-radius: 5px;
