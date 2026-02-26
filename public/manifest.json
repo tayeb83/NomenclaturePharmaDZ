@@ -1,0 +1,48 @@
+{
+  "name": "PharmaVeille DZ",
+  "short_name": "PharmaVeille",
+  "description": "Nomenclature pharmaceutique algérienne — Recherche, alertes retraits, substitution générique. Données officielles MIPH.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "lang": "fr",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Recherche",
+      "short_name": "Recherche",
+      "description": "Rechercher un médicament",
+      "url": "/recherche",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Alertes & Retraits",
+      "short_name": "Alertes",
+      "description": "Médicaments retirés du marché",
+      "url": "/alertes",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Substitution générique",
+      "short_name": "Substitution",
+      "description": "Trouver un générique",
+      "url": "/substitution",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

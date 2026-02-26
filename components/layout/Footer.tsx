@@ -46,6 +46,14 @@ export function Footer() {
           </div>
         </div>
 
+        {/* Mobile quick-links bar — always visible on small screens */}
+        <div className="footer-mobile-quicklinks">
+          <Link href="/recherche">🔍 Recherche</Link>
+          <Link href="/alertes">🚨 Alertes</Link>
+          <Link href="/substitution">♻️ Substitution</Link>
+          <Link href="/a-propos">ℹ️ À propos</Link>
+        </div>
+
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} PharmaVeille DZ — Données à titre informatif uniquement. Consultez toujours les sources officielles.</span>
           <div className="footer-social">
