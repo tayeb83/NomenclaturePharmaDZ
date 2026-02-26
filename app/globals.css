@@ -178,6 +178,7 @@ body {
 .badge-amber { background: #b45309; border-color: #92400e; color: #fffbeb; }
 .badge-purple { background: #7e22ce; border-color: #6b21a8; color: #faf5ff; }
 .badge-slate { background: #334155; border-color: #1e293b; color: #f8fafc; }
+.badge-gray { background: #64748b; border-color: #475569; color: #f8fafc; }
 
 /* ─── SEARCH PAGE ────────────────────────────────────────── */
 .search-bar { position: relative; margin-bottom: 16px; }
@@ -247,6 +248,10 @@ body {
 .footer-social a { color: rgba(255,255,255,0.4); font-size: 18px; transition: color .15s; }
 .footer-social a:hover { color: white; }
 .footer-badge { background: rgba(2,132,199,0.2); color: #38bdf8; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: .06em; }
+.footer-mobile-quicklinks { display: none; border-top: 1px solid rgba(255,255,255,0.08); padding: 14px 0; gap: 0; }
+.footer-mobile-quicklinks a { color: rgba(255,255,255,0.6); text-decoration: none; font-size: 13px; font-weight: 600; padding: 8px 0; text-align: center; flex: 1; border-right: 1px solid rgba(255,255,255,0.08); transition: color .15s; }
+.footer-mobile-quicklinks a:last-child { border-right: none; }
+.footer-mobile-quicklinks a:hover { color: white; }
 
 /* ─── TABLES ─────────────────────────────────────────────── */
 .data-table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: var(--shadow); }
@@ -343,6 +348,7 @@ body {
   .container { padding: 0 16px; }
   .page-header h1 { font-size: 24px; }
   .newsletter-section { padding: 28px 20px; }
+  .footer-mobile-quicklinks { display: flex; }
 }
 @media (max-width: 480px) {
   .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }

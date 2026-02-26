@@ -3,7 +3,10 @@ import type { Retrait, NonRenouvele } from '@/lib/db'
 import { DrugCard } from '@/components/drug/DrugCard'
 import type { Metadata } from 'next'
 
-export const metadata: Metadata = { title: 'Alertes & Retraits' }
+export const metadata: Metadata = {
+  title: 'Alertes & Retraits',
+  description: 'Liste officielle des médicaments retirés du marché algérien et AMM non renouvelées — Source MIPH.',
+}
 export const revalidate = 3600
 
 const MOTIF_GROUPS: { label: string; color: string; keywords: string[] }[] = [

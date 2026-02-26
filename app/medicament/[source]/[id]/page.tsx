@@ -9,7 +9,7 @@ const TYPE_LABELS: Record<string, string> = {
   BIO: 'Biologique', I: 'Innovateur', 'Ré': 'Référence étrangère',
 }
 const STATUT_LABELS: Record<string, string> = {
-  F: 'Fabriqué en Algérie', I: 'Importé',
+  F: '🇩🇿 Fabriqué en Algérie', I: '📦 Importé',
 }
 
 function motifColor(m: string | null) {
@@ -37,9 +37,19 @@ export async function generateMetadata(
   if (isNaN(id)) return { title: 'Médicament introuvable' }
   const med = await getMedicamentById(params.source, id)
   if (!med) return { title: 'Médicament introuvable' }
+  const dosageSuffix = med.dosage ? ` ${med.dosage}` : ''
+  const title = `${med.nom_marque}${dosageSuffix} — Fiche médicament | PharmaVeille DZ`
+  const description = `${med.nom_marque}${dosageSuffix} (${med.dci})${med.forme ? ` — ${med.forme}` : ''}${med.labo ? ` — ${med.labo}` : ''}. Nomenclature MIPH Algérie.`
   return {
-    title: `${med.nom_marque} — ${med.dci} | PharmaVeille DZ`,
-    description: `Fiche détaillée de ${med.nom_marque} (${med.dci})${med.forme ? ` — ${med.forme}` : ''}${med.labo ? ` — ${med.labo}` : ''}`,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'article',
+      siteName: 'PharmaVeille DZ',
+      locale: 'fr_DZ',
+    },
   }
 }
 
@@ -170,7 +180,7 @@ export default async function MedicamentDetailPage(
                 <div className="detail-field">
                   <div className="detail-field-label">Origine de fabrication</div>
                   <div className="detail-field-value">
-                    <span className={`badge ${med.statut === 'F' ? 'badge-green' : 'badge-purple'}`}>
+                    <span className={`badge ${med.statut === 'F' ? 'badge-green' : 'badge-gray'}`}>
                       {STATUT_LABELS[med.statut] || med.statut}
                     </span>
                   </div>
@@ -308,8 +318,8 @@ export default async function MedicamentDetailPage(
                         </span>
                       )}
                       {a.statut && (
-                        <span className={`badge ${a.statut === 'F' ? 'badge-green' : 'badge-purple'}`}>
-                          {a.statut === 'F' ? 'Algérie' : 'Importé'}
+                        <span className={`badge ${a.statut === 'F' ? 'badge-green' : 'badge-gray'}`}>
+                          {a.statut === 'F' ? '🇩🇿' : '📦'}
                         </span>
                       )}
                       {a.annee && <span className="badge badge-amber">{a.annee}</span>}
