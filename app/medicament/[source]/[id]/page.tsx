@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getMedicamentById, getAlternatifsDCI } from '@/lib/queries'
+import { getMedicamentById, getAlternatifsDCI, getAtcHierarchyByDci } from '@/lib/queries'
 import type { Metadata } from 'next'
-import type { MedicamentDetail } from '@/lib/db'
+import type { MedicamentDetail, AtcCode } from '@/lib/db'
 
 const TYPE_LABELS: Record<string, string> = {
   GE: 'Générique', 'Gé': 'Générique', RE: 'Référence étrangère',
@@ -55,8 +55,12 @@ export default async function MedicamentDetailPage(
   const isRetrait = med.source === 'retrait'
   const isNonRenouv = med.source === 'non_renouvele'
 
-  const alternatifs = await getAlternatifsDCI(med.dci, 10)
+  const [alternatifs, atcHierarchy] = await Promise.all([
+    getAlternatifsDCI(med.dci, 10),
+    getAtcHierarchyByDci(med.dci),
+  ])
   const autres = alternatifs.filter(a => !(med.source === 'enregistrement' && a.id === med.id))
+  const atcLevel5 = atcHierarchy.find(a => a.niveau === 5)
 
   const headerBg = isRetrait
     ? 'linear-gradient(135deg, #7f1d1d, #991b1b)'
@@ -125,6 +129,33 @@ export default async function MedicamentDetailPage(
               <Field label="Nom de marque" value={med.nom_marque} />
               <Field label="N° d'enregistrement" value={med.n_enreg} />
               <Field label="Code produit" value={med.code} />
+              {/* ─── Code ATC inline dans identification si disponible ─ */}
+              {med.code_atc && (
+                <div className="detail-field">
+                  <div className="detail-field-label">Code ATC</div>
+                  <div className="detail-field-value">
+                    <span style={{
+                      display: 'inline-block',
+                      fontFamily: 'var(--font-mono)',
+                      fontWeight: 700,
+                      fontSize: 13,
+                      background: '#eff6ff',
+                      color: '#1d4ed8',
+                      border: '1.5px solid #bfdbfe',
+                      borderRadius: 6,
+                      padding: '2px 10px',
+                      letterSpacing: '.04em',
+                    }}>
+                      {med.code_atc}
+                    </span>
+                    {(med.atc_label_fr || med.atc_label_en) && (
+                      <span style={{ marginLeft: 8, color: '#475569', fontSize: 13 }}>
+                        {med.atc_label_fr || med.atc_label_en}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
               {med.type_prod && (
                 <div className="detail-field">
                   <div className="detail-field-label">Type de produit</div>
@@ -195,6 +226,63 @@ export default async function MedicamentDetailPage(
               </div>
             )}
           </div>
+
+          {/* ─── Classification ATC ──────────────────────────── */}
+          {atcHierarchy.length > 0 && (
+            <div style={{ marginTop: 32 }}>
+              <div className="section-title">🧬 Classification ATC</div>
+              <div className="section-sub">
+                Anatomical Therapeutic Chemical — Classification OMS
+              </div>
+              <div style={{
+                background: '#f8fafc',
+                border: '1.5px solid #e2e8f0',
+                borderRadius: 10,
+                padding: '16px 20px',
+                marginTop: 12,
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                gap: 0,
+              }}>
+                {atcHierarchy.map((level, idx) => (
+                  <div key={level.code} style={{ display: 'flex', alignItems: 'center' }}>
+                    {idx > 0 && (
+                      <span style={{ color: '#94a3b8', fontSize: 16, margin: '0 6px' }}>›</span>
+                    )}
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                    }}>
+                      <span style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontWeight: level.niveau === 5 ? 800 : 600,
+                        fontSize: level.niveau === 5 ? 14 : 12,
+                        color: level.niveau === 5 ? '#1d4ed8' : '#64748b',
+                        background: level.niveau === 5 ? '#eff6ff' : 'transparent',
+                        border: level.niveau === 5 ? '1.5px solid #bfdbfe' : 'none',
+                        borderRadius: level.niveau === 5 ? 5 : 0,
+                        padding: level.niveau === 5 ? '1px 7px' : '0',
+                        letterSpacing: '.05em',
+                      }}>
+                        {level.code}
+                      </span>
+                      <span style={{
+                        fontSize: 10,
+                        color: level.niveau === 5 ? '#1e40af' : '#94a3b8',
+                        maxWidth: 140,
+                        lineHeight: 1.3,
+                        marginTop: 2,
+                      }}>
+                        {level.label_fr || level.label_en || ''}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* ─── Médicaments similaires (même DCI) ───────────── */}
           {autres.length > 0 && (
