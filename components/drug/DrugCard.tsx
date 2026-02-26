@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import type { SearchResult } from '@/lib/db'
+import { getCountryFlag } from '@/lib/countryFlag'
 
 function buildWhatsAppUrl(drug: SearchResult, type: string): string {
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
@@ -87,7 +88,14 @@ export function DrugCard({ drug, type }: { drug: SearchResult; type: string }) {
 
       <div className="drug-meta">
         {drug.forme && <span>💊 <strong>{drug.forme}</strong>{drug.dosage ? ` — ${drug.dosage}` : ''}</span>}
-        {drug.labo && <span>🏭 {drug.labo}{drug.pays ? ` (${drug.pays})` : ''}</span>}
+        {drug.labo && (
+          <span>
+            🏭 {drug.labo}
+            {drug.pays ? (
+              <> ({getCountryFlag(drug.pays) ? `${getCountryFlag(drug.pays)} ` : ''}{drug.pays})</>
+            ) : ''}
+          </span>
+        )}
       </div>
 
       {isRetrait && drug.motif_retrait && (

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { getMedicamentById, getAlternatifsDCI, getAtcHierarchyByDci } from '@/lib/queries'
 import type { Metadata } from 'next'
 import type { MedicamentDetail, AtcCode } from '@/lib/db'
+import { getCountryFlag } from '@/lib/countryFlag'
 
 const TYPE_LABELS: Record<string, string> = {
   GE: 'Générique', 'Gé': 'Générique', RE: 'Référence étrangère',
@@ -203,7 +204,19 @@ export default async function MedicamentDetailPage(
             <div className="detail-card">
               <div className="detail-card-title">🏭 Fabricant</div>
               <Field label="Laboratoire" value={med.labo} />
-              <Field label="Pays d'origine" value={med.pays} />
+              {med.pays && (
+                <div className="detail-field">
+                  <div className="detail-field-label">Pays d&apos;origine</div>
+                  <div className="detail-field-value">
+                    {getCountryFlag(med.pays) && (
+                      <span style={{ fontSize: 20, marginRight: 6, verticalAlign: 'middle' }}>
+                        {getCountryFlag(med.pays)}
+                      </span>
+                    )}
+                    <span style={{ verticalAlign: 'middle' }}>{med.pays}</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* ─── Dates & Version ─────────────────────────── */}
@@ -310,7 +323,14 @@ export default async function MedicamentDetailPage(
                     {(a.forme || a.dosage) && (
                       <div className="detail-alt-meta">{[a.forme, a.dosage].filter(Boolean).join(' — ')}</div>
                     )}
-                    {a.labo && <div className="detail-alt-meta">🏭 {a.labo}{a.pays ? ` (${a.pays})` : ''}</div>}
+                    {a.labo && (
+                      <div className="detail-alt-meta">
+                        🏭 {a.labo}
+                        {a.pays ? (
+                          <> ({getCountryFlag(a.pays) ? `${getCountryFlag(a.pays)} ` : ''}{a.pays})</>
+                        ) : ''}
+                      </div>
+                    )}
                     <div style={{ marginTop: 8, display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                       {a.type_prod && (
                         <span className={`badge ${a.type_prod === 'BIO' ? 'badge-purple' : a.type_prod === 'RE' || a.type_prod === 'Ré' ? 'badge-blue' : 'badge-green'}`}>
