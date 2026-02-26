@@ -351,9 +351,28 @@ export function SearchClient({
       {!loading && (query || labo || substance || hasAdvancedFilters(advanced)) && (
         <div className="search-count">
           {results.length === 0
-            ? `Aucun résultat — essayez d'élargir les critères.`
+            ? 'Aucun résultat'
             : `${results.length} résultat(s) trouvés`
           }
+        </div>
+      )}
+
+      {!loading && results.length === 0 && (query || labo || substance || hasAdvancedFilters(advanced)) && (
+        <div style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: 12, padding: '20px 24px', marginBottom: 16 }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: '#334155', marginBottom: 12 }}>💡 Suggestions pour trouver votre médicament</div>
+          <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#475569', lineHeight: 2 }}>
+            <li>Vérifiez l'orthographe — essayez <em>PARACETAMOL</em> sans accent</li>
+            <li>Essayez la <strong>DCI</strong> au lieu du nom de marque (ex : <em>amoxicilline</em> → AMOXIL)</li>
+            <li>Cherchez <strong>sans le dosage</strong> — tapez juste le nom ou la substance</li>
+            <li>Élargissez le filtre : passez de <em>Enregistrés</em> à <strong>Tous</strong></li>
+          </ul>
+          <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #e2e8f0', fontSize: 13, color: '#64748b' }}>
+            Si ce médicament a été retiré, consultez{' '}
+            <a href="/alertes" style={{ color: '#dc2626', fontWeight: 600, textDecoration: 'none' }}>la page Alertes & Retraits</a>
+            {' '}ou utilisez{' '}
+            <a href="/substitution" style={{ color: '#059669', fontWeight: 600, textDecoration: 'none' }}>la substitution générique</a>
+            {' '}pour trouver une alternative.
+          </div>
         </div>
       )}
 

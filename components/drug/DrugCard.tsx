@@ -28,7 +28,7 @@ const TYPE_LABELS: Record<string, string> = {
   BIO: 'Biologique', I: 'Innovateur', 'Ré': 'Référence'
 }
 const STATUT_LABELS: Record<string, string> = {
-  F: 'Fabriqué en Algérie', I: 'Importé'
+  F: '🇩🇿 Local', I: '📦 Importé'
 }
 
 function motifColor(m: string | null) {
@@ -58,7 +58,7 @@ export function DrugCard({ drug, type }: { drug: SearchResult; type: string }) {
             </span>
           )}
           {drug.statut && (
-            <span className={`badge ${drug.statut === 'F' ? 'badge-green' : 'badge-purple'}`}>
+            <span className={`badge ${drug.statut === 'F' ? 'badge-green' : 'badge-gray'}`}>
               {STATUT_LABELS[drug.statut] || drug.statut}
             </span>
           )}
