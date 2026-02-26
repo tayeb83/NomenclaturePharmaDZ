@@ -549,6 +549,21 @@ export async function getMedicamentById(
   }
 }
 
+export async function getLastVersionDate(): Promise<string | null> {
+  try {
+    if (!await hasTable('nomenclature_versions')) return null
+    const row = await queryOne<{ reference_date: string | null }>(`
+      SELECT reference_date
+      FROM nomenclature_versions
+      ORDER BY reference_date DESC NULLS LAST, created_at DESC
+      LIMIT 1
+    `)
+    return row?.reference_date ?? null
+  } catch {
+    return null
+  }
+}
+
 export async function getAlternatifsDCI(dci: string, limit = 8): Promise<Enregistrement[]> {
   return query<Enregistrement>(`
     SELECT * FROM enregistrements
