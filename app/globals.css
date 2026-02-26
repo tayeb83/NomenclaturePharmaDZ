@@ -175,9 +175,9 @@ body {
 .badge-blue { background: #bfdbfe; border-color: #93c5fd; color: #1e3a8a; }
 .badge-green { background: #bbf7d0; border-color: #86efac; color: #14532d; }
 .badge-red { background: #fecaca; border-color: #fca5a5; color: #7f1d1d; }
-.badge-amber { background: #fde68a; border-color: #fcd34d; color: #78350f; }
-.badge-purple { background: #ddd6fe; border-color: #c4b5fd; color: #2e1065; }
-.badge-slate { background: #e2e8f0; border-color: #cbd5e1; color: #334155; }
+.badge-amber { background: #fef3c7; border-color: #f59e0b; color: #7c2d12; }
+.badge-purple { background: #ede9fe; border-color: #a78bfa; color: #4c1d95; }
+.badge-slate { background: #e2e8f0; border-color: #94a3b8; color: #1e293b; }
 
 /* ─── SEARCH PAGE ────────────────────────────────────────── */
 .search-bar { position: relative; margin-bottom: 16px; }
