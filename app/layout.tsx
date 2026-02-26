@@ -8,9 +8,15 @@ export const metadata: Metadata = {
   title: { default: 'PharmaVeille DZ', template: '%s | PharmaVeille DZ' },
   description: 'Nomenclature pharmaceutique algérienne — Recherche, alertes retraits, nouveaux enregistrements. Données officielles MIPH.',
   keywords: ['pharmacie', 'algérie', 'médicament', 'nomenclature', 'retrait', 'enregistrement', 'DCI'],
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'PharmaVeille DZ',
+  },
   openGraph: {
     title: 'PharmaVeille DZ',
-    description: 'La référence pour les pharmaciens algériens',
+    description: 'La référence pour les pharmaciens algériens — Données officielles MIPH',
     url: 'https://pharmaveille-dz.com',
     siteName: 'PharmaVeille DZ',
     locale: 'fr_DZ',
@@ -20,6 +26,8 @@ export const metadata: Metadata = {
 
 export const viewport = {
   themeColor: '#0f172a',
+  width: 'device-width',
+  initialScale: 1,
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

@@ -33,6 +33,13 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <div style={{ background: '#f0f9ff', borderBottom: '1px solid #bae6fd', padding: '9px 0' }}>
+        <div className="container" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: '#0369a1' }}>
+          <span style={{ fontSize: 15 }}>📋</span>
+          <span>Données issues de la <strong>nomenclature officielle du MIPH</strong> — automatiquement mise à jour à chaque nouvelle version publiée.</span>
+        </div>
+      </div>
+
       <div className="container">
         <div className="stats-grid">
           <div className="stat-card blue">
@@ -98,6 +105,7 @@ export default async function HomePage() {
                     { href: '/recherche', icon: '🔍', title: 'Recherche', sub: 'Par DCI ou marque' },
                     { href: '/substitution', icon: '♻️', title: 'Substitution', sub: 'Trouver un générique' },
                     { href: '/alertes', icon: '🚨', title: 'Alertes !', sub: 'Retraits & non renouvelés' },
+                    { href: '/veille', icon: '📡', title: 'Veille', sub: 'Nouveaux enregistrements' },
                   ].map(f => (
                     <Link key={f.href} href={f.href} style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 10, padding: '14px 16px', textDecoration: 'none', display: 'block' }}>
                       <div style={{ fontSize: 22, marginBottom: 6 }}>{f.icon}</div>

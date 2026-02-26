@@ -3,7 +3,10 @@ import type { SearchResult } from '@/lib/db'
 import { SearchClient } from './SearchClient'
 import type { Metadata } from 'next'
 
-export const metadata: Metadata = { title: 'Recherche' }
+export const metadata: Metadata = {
+  title: 'Recherche de médicaments',
+  description: 'Recherchez par DCI, nom de marque, laboratoire ou forme. Nomenclature pharmaceutique algérienne officielle MIPH.',
+}
 
 type AdvancedSearchCondition = {
   field: string
