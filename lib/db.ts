@@ -161,6 +161,8 @@ export type SearchResult = {
   date_retrait: string | null
   motif_retrait: string | null
   date_final: string | null
+  // Code ATC (présent uniquement si enrichi, optionnel)
+  code_atc?: string | null
 }
 
 export type Stats = {
@@ -172,6 +174,14 @@ export type Stats = {
   dci_uniques: number
   abonnes_newsletter: number
   last_version: string | null
+}
+
+export type AtcCode = {
+  code: string
+  parent_code: string | null
+  niveau: number
+  label_en: string | null
+  label_fr: string | null
 }
 
 export type MedicamentDetail = {
@@ -199,4 +209,8 @@ export type MedicamentDetail = {
   is_new_vs_previous: boolean | null
   date_retrait: string | null
   motif_retrait: string | null
+  // Code ATC (null si non renseigné)
+  code_atc: string | null
+  atc_label_fr: string | null
+  atc_label_en: string | null
 }
