@@ -39,16 +39,19 @@ function parseAdvanced(advancedRaw: string | undefined): AdvancedSearchCondition
 export default async function RecherchePage({
   searchParams,
 }: {
-  searchParams: { q?: string; scope?: string; labo?: string; substance?: string; activeOnly?: string; advanced?: string }
+  searchParams: { q?: string; scope?: string; labo?: string; substance?: string; activeOnly?: string; advanced?: string; algerieOnly?: string }
 }) {
   const query = searchParams.q || ''
   const scope = searchParams.scope || 'all'
   const advanced = parseAdvanced(searchParams.advanced)
+  const algerieOnly = searchParams.algerieOnly === '1'
   const filters: SearchFilters = {
     labo: searchParams.labo || '',
     substance: searchParams.substance || '',
     activeOnly: searchParams.activeOnly === '1',
-    advanced,
+    advanced: algerieOnly
+      ? [...advanced, { field: 'statut', operator: 'equals', value: 'F', bool: 'AND' }]
+      : advanced,
   }
 
   const results = await searchDrugs(query, scope, filters)
@@ -71,6 +74,7 @@ export default async function RecherchePage({
             initialSubstance={filters.substance || ''}
             initialActiveOnly={Boolean(filters.activeOnly)}
             initialAdvanced={advanced}
+            initialAlgerieOnly={algerieOnly}
           />
         </div>
       </div>
