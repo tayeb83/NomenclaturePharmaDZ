@@ -65,6 +65,21 @@ export function DrugCard({ drug, type }: { drug: SearchResult; type: string }) {
           {drug.annee && (
             <span className="badge badge-amber">Enreg. {drug.annee}</span>
           )}
+          {drug.code_atc && (
+            <span style={{
+              fontFamily: 'var(--font-mono)',
+              fontWeight: 700,
+              fontSize: 11,
+              background: '#eff6ff',
+              color: '#1d4ed8',
+              border: '1.5px solid #bfdbfe',
+              borderRadius: 5,
+              padding: '1px 7px',
+              letterSpacing: '.04em',
+            }}>
+              ATC {drug.code_atc}
+            </span>
+          )}
           {isRetrait && <span className="badge badge-red">🚫 Retiré</span>}
           {isNonRenouv && <span className="badge badge-amber">⚠️ Non renouvelé</span>}
         </div>

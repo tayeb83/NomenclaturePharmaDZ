@@ -4,7 +4,7 @@
  */
 
 import { query, queryOne } from './db'
-import type { Enregistrement, Retrait, NonRenouvele, SearchResult, Stats, MedicamentDetail } from './db'
+import type { Enregistrement, Retrait, NonRenouvele, SearchResult, Stats, MedicamentDetail, AtcCode } from './db'
 
 const schemaFeatureCache = new Map<string, boolean>()
 
@@ -496,6 +496,7 @@ export async function getMedicamentById(
   if (source === 'enregistrement') {
     const row = await queryOne<any>(`SELECT * FROM enregistrements WHERE id = $1`, [id])
     if (!row) return null
+    const atc = await getAtcByDci(row.dci)
     return {
       source: 'enregistrement',
       id: row.id, n_enreg: row.n_enreg, code: row.code ?? null,
@@ -510,12 +511,16 @@ export async function getMedicamentById(
       source_version: row.source_version ?? null,
       is_new_vs_previous: row.is_new_vs_previous ?? null,
       date_retrait: null, motif_retrait: null,
+      code_atc: atc?.code_atc ?? null,
+      atc_label_fr: atc?.atc_label_fr ?? null,
+      atc_label_en: atc?.atc_label_en ?? null,
     }
   }
 
   if (source === 'retrait') {
     const row = await queryOne<any>(`SELECT * FROM retraits WHERE id = $1`, [id])
     if (!row) return null
+    const atc = await getAtcByDci(row.dci)
     return {
       source: 'retrait',
       id: row.id, n_enreg: row.n_enreg ?? null, code: row.code ?? null,
@@ -528,12 +533,16 @@ export async function getMedicamentById(
       type_prod: row.type_prod ?? null, statut: row.statut ?? null,
       stabilite: null, annee: null, source_version: null, is_new_vs_previous: null,
       date_retrait: row.date_retrait ?? null, motif_retrait: row.motif_retrait ?? null,
+      code_atc: atc?.code_atc ?? null,
+      atc_label_fr: atc?.atc_label_fr ?? null,
+      atc_label_en: atc?.atc_label_en ?? null,
     }
   }
 
   // non_renouvele
   const row = await queryOne<any>(`SELECT * FROM non_renouveles WHERE id = $1`, [id])
   if (!row) return null
+  const atc = await getAtcByDci(row.dci)
   return {
     source: 'non_renouvele',
     id: row.id, n_enreg: row.n_enreg ?? null, code: row.code ?? null,
@@ -546,6 +555,9 @@ export async function getMedicamentById(
     type_prod: row.type_prod ?? null, statut: row.statut ?? null,
     stabilite: null, annee: null, source_version: null, is_new_vs_previous: null,
     date_retrait: null, motif_retrait: null,
+    code_atc: atc?.code_atc ?? null,
+    atc_label_fr: atc?.atc_label_fr ?? null,
+    atc_label_en: atc?.atc_label_en ?? null,
   }
 }
 
@@ -571,4 +583,60 @@ export async function getAlternatifsDCI(dci: string, limit = 8): Promise<Enregis
     ORDER BY nom_marque
     LIMIT $2
   `, [dci, limit])
+}
+
+// ─── CODES ATC ────────────────────────────────────────────────
+
+/**
+ * Retourne le code ATC et ses ancêtres (hiérarchie complète) pour une DCI donnée.
+ * Retourne un tableau vide si la table n'existe pas ou si la DCI n'est pas mappée.
+ */
+export async function getAtcHierarchyByDci(dci: string): Promise<AtcCode[]> {
+  const hasMappingTable = await hasTable('dci_atc_mapping')
+  const hasAtcTable = await hasTable('atc_codes')
+  if (!hasMappingTable || !hasAtcTable) return []
+
+  try {
+    return query<AtcCode>(`
+      WITH RECURSIVE atc_tree AS (
+        -- Nœud de départ : le code ATC niveau 5 de la DCI
+        SELECT a.code, a.parent_code, a.niveau, a.label_en, a.label_fr
+        FROM dci_atc_mapping m
+        JOIN atc_codes a ON a.code = m.code_atc
+        WHERE m.dci = UPPER(TRIM($1))
+
+        UNION ALL
+
+        -- Remonter la hiérarchie jusqu'au niveau 1
+        SELECT p.code, p.parent_code, p.niveau, p.label_en, p.label_fr
+        FROM atc_codes p
+        JOIN atc_tree c ON p.code = c.parent_code
+      )
+      SELECT * FROM atc_tree
+      ORDER BY niveau ASC
+    `, [dci])
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Retourne uniquement le code ATC niveau 5 (et son libellé) pour une DCI.
+ * Utilisé pour les listes/cartes où on n'a pas besoin de la hiérarchie complète.
+ */
+export async function getAtcByDci(dci: string): Promise<{ code_atc: string; atc_label_fr: string | null; atc_label_en: string | null } | null> {
+  const hasMappingTable = await hasTable('dci_atc_mapping')
+  const hasAtcTable = await hasTable('atc_codes')
+  if (!hasMappingTable || !hasAtcTable) return null
+
+  try {
+    return queryOne<{ code_atc: string; atc_label_fr: string | null; atc_label_en: string | null }>(`
+      SELECT m.code_atc, a.label_fr AS atc_label_fr, a.label_en AS atc_label_en
+      FROM dci_atc_mapping m
+      JOIN atc_codes a ON a.code = m.code_atc
+      WHERE m.dci = UPPER(TRIM($1))
+    `, [dci])
+  } catch {
+    return null
+  }
 }
