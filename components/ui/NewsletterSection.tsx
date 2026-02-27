@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useLanguage } from '@/components/i18n/LanguageProvider'
 
 export function NewsletterSection() {
   const [email, setEmail] = useState('')
@@ -7,6 +8,8 @@ export function NewsletterSection() {
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [msg, setMsg] = useState('')
+  const { lang } = useLanguage()
+  const t = (fr: string, ar: string) => lang === 'ar' ? ar : fr
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -21,22 +24,25 @@ export function NewsletterSection() {
       const data = await res.json()
       if (res.ok) {
         setStatus('success')
-        setMsg('✅ Inscription réussie ! Vérifiez votre email pour confirmer.')
+        setMsg(t('✅ Inscription réussie ! Vérifiez votre email pour confirmer.', '✅ تم التسجيل بنجاح! تحقق من بريدك للتأكيد.'))
         setEmail(''); setNom('')
       } else {
         setStatus('error')
-        setMsg(data.error || 'Une erreur est survenue.')
+        setMsg(data.error || t('Une erreur est survenue.', 'حدث خطأ.'))
       }
     } catch {
       setStatus('error')
-      setMsg('Erreur de connexion. Réessayez.')
+      setMsg(t('Erreur de connexion. Réessayez.', 'خطأ في الاتصال. أعد المحاولة.'))
     } finally { setLoading(false) }
   }
 
   return (
     <section className="newsletter-section">
-      <h2>📧 Restez informé</h2>
-      <p>Recevez les alertes retraits et nouveaux enregistrements directement dans votre boîte mail. Réservé aux pharmaciens algériens.</p>
+      <h2>📧 {t('Restez informé', 'ابق على اطلاع')}</h2>
+      <p>{t(
+        'Recevez les alertes retraits et nouveaux enregistrements directement dans votre boîte mail. Réservé aux pharmaciens algériens.',
+        'احصل على تنبيهات الانسحابات والتسجيلات الجديدة مباشرة في بريدك. مخصص للصيادلة الجزائريين.'
+      )}</p>
 
       {status === 'success' ? (
         <div style={{ background: 'rgba(5,150,105,0.2)', border: '1px solid #34d399', padding: '14px 20px', borderRadius: 8, color: '#6ee7b7', fontWeight: 600 }}>
@@ -45,17 +51,17 @@ export function NewsletterSection() {
       ) : (
         <form className="newsletter-form" onSubmit={handleSubmit}>
           <input
-            type="text" placeholder="Votre prénom (optionnel)"
+            type="text" placeholder={t('Votre prénom (optionnel)', 'اسمك (اختياري)')}
             value={nom} onChange={e => setNom(e.target.value)}
             style={{ minWidth: 150 }}
           />
           <input
-            type="email" placeholder="Votre email professionnel"
+            type="email" placeholder={t('Votre email professionnel', 'بريدك الإلكتروني المهني')}
             value={email} onChange={e => setEmail(e.target.value)}
             required style={{ flex: 2, minWidth: 200 }}
           />
           <button type="submit" disabled={loading}>
-            {loading ? '...' : "S'abonner"}
+            {loading ? '...' : t("S'abonner", 'اشترك')}
           </button>
         </form>
       )}
@@ -63,7 +69,10 @@ export function NewsletterSection() {
         <div style={{ marginTop: 10, color: '#fca5a5', fontSize: 13 }}>{msg}</div>
       )}
       <p style={{ marginTop: 14, fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 0 }}>
-        Fréquence : hebdomadaire ou lors d'alertes urgentes. Désinscription en un clic.
+        {t(
+          "Fréquence : hebdomadaire ou lors d'alertes urgentes. Désinscription en un clic.",
+          'التكرار: أسبوعي أو عند تنبيهات عاجلة. إلغاء الاشتراك بنقرة واحدة.'
+        )}
       </p>
     </section>
   )
