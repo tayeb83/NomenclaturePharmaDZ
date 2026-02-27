@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { Nav } from '@/components/layout/Nav'
 import { Footer } from '@/components/layout/Footer'
+import { LanguageProvider } from '@/components/i18n/LanguageProvider'
 import { getStats } from '@/lib/queries'
 
 export const metadata: Metadata = {
@@ -54,11 +55,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
       </head>
       <body>
-        <Nav currentVersion={currentVersion} />
-        <main className="main-content">
-          {children}
-        </main>
-        <Footer />
+        <LanguageProvider>
+          <Nav currentVersion={currentVersion} />
+          <main className="main-content">
+            {children}
+          </main>
+          <Footer />
+        </LanguageProvider>
       </body>
     </html>
   )
