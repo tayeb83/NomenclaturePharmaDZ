@@ -4,13 +4,15 @@ import { getMedicamentById, getAlternatifsDCI, getAtcHierarchyByDci } from '@/li
 import type { Metadata } from 'next'
 import type { MedicamentDetail, AtcCode } from '@/lib/db'
 import { getCountryFlag } from '@/lib/countryFlag'
+import { cookies } from 'next/headers'
+import { isLang, pickLang, type Lang } from '@/lib/i18n'
 
-const TYPE_LABELS: Record<string, string> = {
-  GE: 'Générique', 'Gé': 'Générique', RE: 'Référence étrangère',
-  BIO: 'Biologique', I: 'Innovateur', 'Ré': 'Référence étrangère',
+const TYPE_LABELS: Record<string, { fr: string; ar: string }> = {
+  GE: { fr: 'Générique', ar: 'جنيس' }, 'Gé': { fr: 'Générique', ar: 'جنيس' }, RE: { fr: 'Référence étrangère', ar: 'مرجعي أجنبي' },
+  BIO: { fr: 'Biologique', ar: 'بيولوجي' }, I: { fr: 'Innovateur', ar: 'مبتكر' }, 'Ré': { fr: 'Référence étrangère', ar: 'مرجعي أجنبي' },
 }
-const STATUT_LABELS: Record<string, string> = {
-  F: '🇩🇿 Fabriqué en Algérie', I: '📦 Importé',
+const STATUT_LABELS: Record<string, { fr: string; ar: string }> = {
+  F: { fr: '🇩🇿 Fabriqué en Algérie', ar: '🇩🇿 مصنع في الجزائر' }, I: { fr: '📦 Importé', ar: '📦 مستورد' },
 }
 
 function motifColor(m: string | null) {
@@ -34,6 +36,8 @@ function Field({ label, value }: { label: string; value: string | null | undefin
 export async function generateMetadata(
   { params }: { params: { source: string; id: string } }
 ): Promise<Metadata> {
+  const langCookie = cookies().get('lang')?.value
+  const lang: Lang = isLang(langCookie) ? langCookie : 'fr'
   const id = parseInt(params.id)
   if (isNaN(id)) return { title: 'Médicament introuvable' }
   const med = await getMedicamentById(params.source, id)
@@ -57,6 +61,8 @@ export async function generateMetadata(
 export default async function MedicamentDetailPage(
   { params }: { params: { source: string; id: string } }
 ) {
+  const langCookie = cookies().get('lang')?.value
+  const lang: Lang = isLang(langCookie) ? langCookie : 'fr'
   const id = parseInt(params.id)
   if (isNaN(id)) notFound()
 
@@ -80,10 +86,10 @@ export default async function MedicamentDetailPage(
     : 'linear-gradient(135deg, #0f172a, #0c2340)'
 
   const statusBadge = isRetrait
-    ? { label: '🚫 Médicament retiré', bg: '#fee2e2', color: '#991b1b' }
+    ? { label: pickLang(lang, { fr: '🚫 Médicament retiré', ar: '🚫 دواء مسحوب' }), bg: '#fee2e2', color: '#991b1b' }
     : isNonRenouv
-    ? { label: '⚠️ AMM non renouvelée', bg: '#fef3c7', color: '#92400e' }
-    : { label: '✅ Médicament actif', bg: '#d1fae5', color: '#065f46' }
+    ? { label: pickLang(lang, { fr: '⚠️ AMM non renouvelée', ar: '⚠️ AMM غير مجددة' }), bg: '#fef3c7', color: '#92400e' }
+    : { label: pickLang(lang, { fr: '✅ Médicament actif', ar: '✅ دواء نشط' }), bg: '#d1fae5', color: '#065f46' }
 
   return (
     <>
@@ -91,7 +97,7 @@ export default async function MedicamentDetailPage(
       <div className="page-header" style={{ background: headerBg }}>
         <div className="container">
           <Link href="/recherche" className="detail-back-link">
-            ← Retour à la recherche
+            {pickLang(lang, { fr: '← Retour à la recherche', ar: '→ العودة إلى البحث' })}
           </Link>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap', marginTop: 12 }}>
             <div style={{ flex: 1 }}>
@@ -135,11 +141,11 @@ export default async function MedicamentDetailPage(
           <div className="detail-grid">
             {/* ─── Identification ──────────────────────────── */}
             <div className="detail-card">
-              <div className="detail-card-title">🔖 Identification</div>
-              <Field label="DCI (Substance active)" value={med.dci} />
-              <Field label="Nom de marque" value={med.nom_marque} />
-              <Field label="N° d'enregistrement" value={med.n_enreg} />
-              <Field label="Code produit" value={med.code} />
+              <div className="detail-card-title">{pickLang(lang, { fr: '🔖 Identification', ar: '🔖 التعريف' })}</div>
+              <Field label={pickLang(lang, { fr: 'DCI (Substance active)', ar: 'DCI (المادة الفعالة)' })} value={med.dci} />
+              <Field label={pickLang(lang, { fr: 'Nom de marque', ar: 'الاسم التجاري' })} value={med.nom_marque} />
+              <Field label={pickLang(lang, { fr: "N° d'enregistrement", ar: 'رقم التسجيل' })} value={med.n_enreg} />
+              <Field label={pickLang(lang, { fr: 'Code produit', ar: 'رمز المنتج' })} value={med.code} />
               {/* ─── Code ATC inline dans identification si disponible ─ */}
               {med.code_atc && (
                 <div className="detail-field">
@@ -169,20 +175,20 @@ export default async function MedicamentDetailPage(
               )}
               {med.type_prod && (
                 <div className="detail-field">
-                  <div className="detail-field-label">Type de produit</div>
+                  <div className="detail-field-label">{pickLang(lang, { fr: 'Type de produit', ar: 'نوع المنتج' })}</div>
                   <div className="detail-field-value">
                     <span className={`badge ${med.type_prod === 'BIO' ? 'badge-purple' : med.type_prod === 'RE' || med.type_prod === 'Ré' ? 'badge-blue' : 'badge-green'}`}>
-                      {TYPE_LABELS[med.type_prod] || med.type_prod}
+                      {TYPE_LABELS[med.type_prod]?.[lang] || med.type_prod}
                     </span>
                   </div>
                 </div>
               )}
               {med.statut && (
                 <div className="detail-field">
-                  <div className="detail-field-label">Origine de fabrication</div>
+                  <div className="detail-field-label">{pickLang(lang, { fr: 'Origine de fabrication', ar: 'بلد التصنيع' })}</div>
                   <div className="detail-field-value">
                     <span className={`badge ${med.statut === 'F' ? 'badge-green' : 'badge-gray'}`}>
-                      {STATUT_LABELS[med.statut] || med.statut}
+                      {STATUT_LABELS[med.statut]?.[lang] || med.statut}
                     </span>
                   </div>
                 </div>
@@ -191,19 +197,19 @@ export default async function MedicamentDetailPage(
 
             {/* ─── Conditionnement ─────────────────────────── */}
             <div className="detail-card">
-              <div className="detail-card-title">💊 Conditionnement</div>
-              <Field label="Forme pharmaceutique" value={med.forme} />
-              <Field label="Dosage" value={med.dosage} />
-              <Field label="Conditionnement" value={med.conditionnement} />
-              <Field label="Liste" value={med.liste} />
-              <Field label="Prescription" value={med.prescription} />
+              <div className="detail-card-title">{pickLang(lang, { fr: '💊 Conditionnement', ar: '💊 الخصائص' })}</div>
+              <Field label={pickLang(lang, { fr: 'Forme pharmaceutique', ar: 'الشكل الصيدلاني' })} value={med.forme} />
+              <Field label={pickLang(lang, { fr: 'Dosage', ar: 'الجرعة' })} value={med.dosage} />
+              <Field label={pickLang(lang, { fr: 'Conditionnement', ar: 'التعبئة' })} value={med.conditionnement} />
+              <Field label={pickLang(lang, { fr: 'Liste', ar: 'القائمة' })} value={med.liste} />
+              <Field label={pickLang(lang, { fr: 'Prescription', ar: 'الوصفة' })} value={med.prescription} />
               {med.stabilite && <Field label="Stabilité" value={med.stabilite} />}
             </div>
 
             {/* ─── Fabricant ────────────────────────────────── */}
             <div className="detail-card">
-              <div className="detail-card-title">🏭 Fabricant</div>
-              <Field label="Laboratoire" value={med.labo} />
+              <div className="detail-card-title">{pickLang(lang, { fr: '🏭 Fabricant', ar: '🏭 المُصنّع' })}</div>
+              <Field label={pickLang(lang, { fr: 'Laboratoire', ar: 'المخبر' })} value={med.labo} />
               {med.pays && (
                 <div className="detail-field">
                   <div className="detail-field-label">Pays d&apos;origine</div>
@@ -221,11 +227,11 @@ export default async function MedicamentDetailPage(
 
             {/* ─── Dates & Version ─────────────────────────── */}
             <div className="detail-card">
-              <div className="detail-card-title">📅 Dates & Enregistrement</div>
-              <Field label="Date d'enregistrement" value={med.date_init} />
-              {!isRetrait && <Field label="Date de fin de validité" value={med.date_final} />}
-              {med.annee && <Field label="Année de nomenclature" value={String(med.annee)} />}
-              <Field label="Version source" value={med.source_version} />
+              <div className="detail-card-title">{pickLang(lang, { fr: '📅 Dates & Enregistrement', ar: '📅 التواريخ والتسجيل' })}</div>
+              <Field label={pickLang(lang, { fr: "Date d'enregistrement", ar: 'تاريخ التسجيل' })} value={med.date_init} />
+              {!isRetrait && <Field label={pickLang(lang, { fr: 'Date de fin de validité', ar: 'نهاية الصلاحية' })} value={med.date_final} />}
+              {med.annee && <Field label={pickLang(lang, { fr: 'Année de nomenclature', ar: 'سنة النومنكلاتور' })} value={String(med.annee)} />}
+              <Field label={pickLang(lang, { fr: 'Version source', ar: 'نسخة المصدر' })} value={med.source_version} />
               {med.is_new_vs_previous === true && (
                 <div className="detail-field">
                   <div className="detail-field-value">
@@ -235,8 +241,8 @@ export default async function MedicamentDetailPage(
               )}
               {isRetrait && (
                 <>
-                  <Field label="Date de retrait" value={med.date_retrait} />
-                  <Field label="Motif de retrait" value={med.motif_retrait} />
+                  <Field label={pickLang(lang, { fr: 'Date de retrait', ar: 'تاريخ السحب' })} value={med.date_retrait} />
+                  <Field label={pickLang(lang, { fr: 'Motif de retrait', ar: 'سبب السحب' })} value={med.motif_retrait} />
                 </>
               )}
             </div>
@@ -334,7 +340,7 @@ export default async function MedicamentDetailPage(
                     <div style={{ marginTop: 8, display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                       {a.type_prod && (
                         <span className={`badge ${a.type_prod === 'BIO' ? 'badge-purple' : a.type_prod === 'RE' || a.type_prod === 'Ré' ? 'badge-blue' : 'badge-green'}`}>
-                          {TYPE_LABELS[a.type_prod] || a.type_prod}
+                          {TYPE_LABELS[a.type_prod]?.[lang] || a.type_prod}
                         </span>
                       )}
                       {a.statut && (
@@ -357,7 +363,7 @@ export default async function MedicamentDetailPage(
               borderRadius: 8, fontWeight: 600, fontSize: 13, textDecoration: 'none',
               border: '1.5px solid #e2e8f0', transition: 'all .15s',
             }}>
-              ← Retour à la recherche
+              {pickLang(lang, { fr: '← Retour à la recherche', ar: '→ العودة إلى البحث' })}
             </Link>
             <Link href={`/recherche?q=${encodeURIComponent(med.dci)}`} style={{
               padding: '10px 20px', background: '#0284c7', color: 'white',

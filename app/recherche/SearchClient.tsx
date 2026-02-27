@@ -1,16 +1,10 @@
 'use client'
 
-import { useState, useTransition, useCallback, useRef, useEffect } from 'react'
+import { useState, useTransition, useCallback, useRef, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import type { SearchResult } from '@/lib/db'
 import { DrugCard } from '@/components/drug/DrugCard'
-
-const SCOPES = [
-  { value: 'all', label: 'Tous' },
-  { value: 'enregistrement', label: '✅ Enregistrés' },
-  { value: 'retrait', label: '🚫 Retirés' },
-  { value: 'non_renouvele', label: '⚠️ Non renouvelés' },
-]
+import { useLanguage } from '@/components/i18n/LanguageProvider'
 
 type AdvancedSearchCondition = {
   field: string
@@ -21,36 +15,22 @@ type AdvancedSearchCondition = {
 
 type FieldType = 'text' | 'number'
 
-const ADVANCED_FIELDS: Array<{ value: string; label: string; type: FieldType }> = [
-  { value: 'dci', label: 'Substance (DCI)', type: 'text' },
-  { value: 'nom_marque', label: 'Nom de marque', type: 'text' },
-  { value: 'forme', label: 'Forme', type: 'text' },
-  { value: 'dosage', label: 'Dosage (texte)', type: 'text' },
-  { value: 'dosage_num', label: 'Dosage (valeur numérique)', type: 'number' },
-  { value: 'labo', label: 'Laboratoire', type: 'text' },
-  { value: 'pays', label: 'Pays', type: 'text' },
-  { value: 'type_prod', label: 'Type produit', type: 'text' },
-  { value: 'statut', label: 'Statut', type: 'text' },
-  { value: 'n_enreg', label: 'N° enregistrement', type: 'text' },
-  { value: 'annee', label: 'Année', type: 'number' },
-]
-
 const TEXT_OPERATORS = [
-  { value: 'contains', label: 'contient' },
-  { value: 'equals', label: 'égal à' },
-  { value: 'starts_with', label: 'commence par' },
+  { value: 'contains', label: { fr: 'contient', ar: 'يحتوي' } },
+  { value: 'equals', label: { fr: 'égal à', ar: 'يساوي' } },
+  { value: 'starts_with', label: { fr: 'commence par', ar: 'يبدأ بـ' } },
 ]
 
 const NUMBER_OPERATORS = [
-  { value: 'equals', label: '=' },
-  { value: 'gt', label: '>' },
-  { value: 'gte', label: '>=' },
-  { value: 'lt', label: '<' },
-  { value: 'lte', label: '<=' },
+  { value: 'equals', label: { fr: '=', ar: '=' } },
+  { value: 'gt', label: { fr: '>', ar: '>' } },
+  { value: 'gte', label: { fr: '>=', ar: '>=' } },
+  { value: 'lt', label: { fr: '<', ar: '<' } },
+  { value: 'lte', label: { fr: '<=', ar: '<=' } },
 ]
 
 function getFieldType(field: string): FieldType {
-  return ADVANCED_FIELDS.find(item => item.value === field)?.type || 'text'
+  return field === 'dosage_num' || field === 'annee' ? 'number' : 'text'
 }
 
 function getDefaultOperator(field: string): string {
@@ -105,6 +85,28 @@ export function SearchClient({
   initialAdvanced: AdvancedSearchCondition[]
   initialAlgerieOnly: boolean
 }) {
+  const { lang } = useLanguage()
+  const SCOPES = useMemo(() => ([
+    { value: 'all', label: lang === 'ar' ? 'الكل' : 'Tous' },
+    { value: 'enregistrement', label: lang === 'ar' ? '✅ مسجّلة' : '✅ Enregistrés' },
+    { value: 'retrait', label: lang === 'ar' ? '🚫 مسحوبة' : '🚫 Retirés' },
+    { value: 'non_renouvele', label: lang === 'ar' ? '⚠️ غير مجددة' : '⚠️ Non renouvelés' },
+  ]), [lang])
+
+  const ADVANCED_FIELDS: Array<{ value: string; label: string; type: FieldType }> = useMemo(() => ([
+    { value: 'dci', label: lang === 'ar' ? 'المادة الفعالة (DCI)' : 'Substance (DCI)', type: 'text' },
+    { value: 'nom_marque', label: lang === 'ar' ? 'الاسم التجاري' : 'Nom de marque', type: 'text' },
+    { value: 'forme', label: lang === 'ar' ? 'الشكل' : 'Forme', type: 'text' },
+    { value: 'dosage', label: lang === 'ar' ? 'الجرعة (نص)' : 'Dosage (texte)', type: 'text' },
+    { value: 'dosage_num', label: lang === 'ar' ? 'الجرعة (رقم)' : 'Dosage (valeur numérique)', type: 'number' },
+    { value: 'labo', label: lang === 'ar' ? 'المخبر' : 'Laboratoire', type: 'text' },
+    { value: 'pays', label: lang === 'ar' ? 'البلد' : 'Pays', type: 'text' },
+    { value: 'type_prod', label: lang === 'ar' ? 'نوع المنتج' : 'Type produit', type: 'text' },
+    { value: 'statut', label: lang === 'ar' ? 'الحالة' : 'Statut', type: 'text' },
+    { value: 'n_enreg', label: lang === 'ar' ? 'رقم التسجيل' : 'N° enregistrement', type: 'text' },
+    { value: 'annee', label: lang === 'ar' ? 'السنة' : 'Année', type: 'number' },
+  ]), [lang])
+
   const [query, setQuery] = useState(initialQuery)
   const [scope, setScope] = useState(initialScope)
   const [labo, setLabo] = useState(initialLabo)
@@ -141,7 +143,6 @@ export function SearchClient({
     if (!q.trim() && !l.trim() && !sub.trim() && !hasAdvancedFilters(adv)) { setResults([]); return }
     setLoading(true)
     try {
-      // On passe l'algerieOnly courant via l'advanced effectif (pas de param supplémentaire à l'API)
       const params = buildSearchParams(q, s, l, sub, active, adv, false)
       const res = await fetch(`/api/search?${params.toString()}`)
       const data = await res.json()
@@ -236,7 +237,7 @@ export function SearchClient({
           type="text"
           value={query}
           onChange={e => handleInput(e.target.value)}
-          placeholder="Recherche simple sur tout: DCI, marque, forme, dosage, labo..."
+          placeholder={lang === 'ar' ? 'بحث شامل: DCI، الاسم التجاري، الشكل، الجرعة، المخبر...' : 'Recherche simple sur tout: DCI, marque, forme, dosage, labo...'}
           autoFocus
         />
         <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#94a3b8', fontFamily: 'monospace', background: '#f1f5f9', padding: '2px 6px', borderRadius: 4, pointerEvents: 'none', userSelect: 'none' }}>/</span>
@@ -249,13 +250,13 @@ export function SearchClient({
             checked={activeOnly}
             onChange={(e) => handleActiveOnly(e.target.checked)}
           />
-          Uniquement médicaments actifs (enregistrés)
+          {lang === 'ar' ? 'فقط الأدوية النشطة (المسجلة)' : 'Uniquement médicaments actifs (enregistrés)'}
         </label>
         <button
           onClick={exportCsv}
           disabled={!results.length}
           style={{ padding: '7px 12px', borderRadius: 20, border: '1px solid #bfdbfe', background: results.length ? '#dbeafe' : '#f1f5f9', cursor: results.length ? 'pointer' : 'not-allowed', fontSize: 12, fontWeight: 600 }}
-        >Extraire CSV</button>
+        >{lang === 'ar' ? 'تصدير CSV' : 'Extraire CSV'}</button>
       </div>
 
       <div className="filter-tabs">
@@ -269,14 +270,14 @@ export function SearchClient({
         <button
           className={`filter-tab${algerieOnly ? ' active' : ''}`}
           onClick={() => handleAlgerieOnly(!algerieOnly)}
-          title="Afficher uniquement les médicaments fabriqués en Algérie (statut F)"
+          title={lang === 'ar' ? 'عرض الأدوية المصنّعة في الجزائر فقط (F)' : 'Afficher uniquement les médicaments fabriqués en Algérie (statut F)'}
         >
-          🇩🇿 Fabriqué en Algérie
+          🇩🇿 {lang === 'ar' ? 'مصنوع في الجزائر' : 'Fabriqué en Algérie'}
         </button>
       </div>
 
       <details style={{ marginBottom: 16, border: '1px solid #e2e8f0', borderRadius: 10, padding: 12, background: '#f8fafc' }}>
-        <summary style={{ cursor: 'pointer', fontWeight: 700, color: '#334155' }}>Recherche avancée (booléenne)</summary>
+        <summary style={{ cursor: 'pointer', fontWeight: 700, color: '#334155' }}>{lang === 'ar' ? 'بحث متقدم (منطقي)' : 'Recherche avancée (booléenne)'}</summary>
         <div style={{ marginTop: 12, display: 'grid', gap: 10 }}>
           {advanced.map((condition, index) => {
             const type = getFieldType(condition.field)
@@ -289,28 +290,20 @@ export function SearchClient({
                     onChange={(e) => updateAdvanced(index, { bool: e.target.value as 'AND' | 'OR' })}
                     style={{ width: '100%', padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 13 }}
                   >
-                    <option value="AND">ET</option>
-                    <option value="OR">OU</option>
+                    <option value="AND">{lang === 'ar' ? 'و' : 'ET'}</option>
+                    <option value="OR">{lang === 'ar' ? 'أو' : 'OU'}</option>
                   </select>
                 )}
 
-                <select
-                  value={condition.field}
-                  onChange={(e) => updateAdvanced(index, { field: e.target.value })}
-                  style={{ width: '100%', padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 13 }}
-                >
+                <select value={condition.field} onChange={(e) => updateAdvanced(index, { field: e.target.value })} style={{ width: '100%', padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 13 }}>
                   {ADVANCED_FIELDS.map((field) => (
                     <option key={field.value} value={field.value}>{field.label}</option>
                   ))}
                 </select>
 
-                <select
-                  value={condition.operator}
-                  onChange={(e) => updateAdvanced(index, { operator: e.target.value })}
-                  style={{ width: '100%', padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 13 }}
-                >
+                <select value={condition.operator} onChange={(e) => updateAdvanced(index, { operator: e.target.value })} style={{ width: '100%', padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 13 }}>
                   {operators.map((operator) => (
-                    <option key={operator.value} value={operator.value}>{operator.label}</option>
+                    <option key={operator.value} value={operator.value}>{operator.label[lang]}</option>
                   ))}
                 </select>
 
@@ -318,15 +311,11 @@ export function SearchClient({
                   type={type === 'number' ? 'number' : 'text'}
                   value={condition.value}
                   onChange={(e) => updateAdvanced(index, { value: e.target.value })}
-                  placeholder={type === 'number' ? 'ex: 500' : 'valeur à rechercher'}
+                  placeholder={type === 'number' ? 'ex: 500' : (lang === 'ar' ? 'القيمة المراد البحث عنها' : 'valeur à rechercher')}
                   style={{ width: '100%', padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 13 }}
                 />
 
-                <button
-                  onClick={() => removeAdvancedCondition(index)}
-                  style={{ border: '1px solid #fecaca', color: '#b91c1c', background: '#fff1f2', borderRadius: 8, padding: '0 10px', cursor: 'pointer', fontWeight: 700 }}
-                  title="Supprimer la condition"
-                >
+                <button onClick={() => removeAdvancedCondition(index)} style={{ border: '1px solid #fecaca', color: '#b91c1c', background: '#fff1f2', borderRadius: 8, padding: '0 10px', cursor: 'pointer', fontWeight: 700 }} title={lang === 'ar' ? 'حذف الشرط' : 'Supprimer la condition'}>
                   ✕
                 </button>
               </div>
@@ -334,59 +323,28 @@ export function SearchClient({
           })}
 
           <div>
-            <button
-              onClick={addAdvancedCondition}
-              style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
-            >+ Ajouter une condition</button>
+            <button onClick={addAdvancedCondition} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+              + {lang === 'ar' ? 'إضافة شرط' : 'Ajouter une condition'}
+            </button>
           </div>
         </div>
       </details>
 
       {loading && (
         <div className="loading-spinner">
-          <div className="spinner" /> Recherche en cours...
+          <div className="spinner" /> {lang === 'ar' ? 'جاري البحث...' : 'Recherche en cours...'}
         </div>
       )}
 
       {!loading && (query || labo || substance || hasAdvancedFilters(advanced)) && (
         <div className="search-count">
-          {results.length === 0
-            ? 'Aucun résultat'
-            : `${results.length} résultat(s) trouvés`
-          }
-        </div>
-      )}
-
-      {!loading && results.length === 0 && (query || labo || substance || hasAdvancedFilters(advanced)) && (
-        <div style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: 12, padding: '20px 24px', marginBottom: 16 }}>
-          <div style={{ fontWeight: 700, fontSize: 14, color: '#334155', marginBottom: 12 }}>💡 Suggestions pour trouver votre médicament</div>
-          <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#475569', lineHeight: 2 }}>
-            <li>Vérifiez l'orthographe — essayez <em>PARACETAMOL</em> sans accent</li>
-            <li>Essayez la <strong>DCI</strong> au lieu du nom de marque (ex : <em>amoxicilline</em> → AMOXIL)</li>
-            <li>Cherchez <strong>sans le dosage</strong> — tapez juste le nom ou la substance</li>
-            <li>Élargissez le filtre : passez de <em>Enregistrés</em> à <strong>Tous</strong></li>
-          </ul>
-          <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #e2e8f0', fontSize: 13, color: '#64748b' }}>
-            Si ce médicament a été retiré, consultez{' '}
-            <a href="/alertes" style={{ color: '#dc2626', fontWeight: 600, textDecoration: 'none' }}>la page Alertes & Retraits</a>
-            {' '}ou utilisez{' '}
-            <a href="/substitution" style={{ color: '#059669', fontWeight: 600, textDecoration: 'none' }}>la substitution générique</a>
-            {' '}pour trouver une alternative.
-          </div>
+          {results.length === 0 ? (lang === 'ar' ? 'لا توجد نتائج' : 'Aucun résultat') : `${results.length} ${lang === 'ar' ? 'نتيجة' : 'résultat(s) trouvés'}`}
         </div>
       )}
 
       {!loading && results.map((d, i) => (
         <DrugCard key={`${d.source}-${d.id}-${i}`} drug={d} type={d.source} />
       ))}
-
-      {!query && !labo && !substance && !hasAdvancedFilters(advanced) && !loading && (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: '#94a3b8' }}>
-          <div style={{ fontSize: 52, marginBottom: 14 }}>💊</div>
-          <div style={{ fontSize: 16, fontWeight: 600, color: '#475569' }}>Tapez une recherche globale ou ouvrez la recherche avancée</div>
-          <div style={{ fontSize: 13, marginTop: 6 }}>Exemples: substance contient "paracétamol", dosage numérique &gt; 500, labo commence par "SAI".</div>
-        </div>
-      )}
     </>
   )
 }
