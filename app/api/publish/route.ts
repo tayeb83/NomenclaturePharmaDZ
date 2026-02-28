@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
+import crypto from 'crypto'
 import { query, queryOne } from '@/lib/db'
 import { formatRetrait, formatNouveaute, publishToAll, sendNewsletter } from '@/lib/social'
-import { getConfirmedSubscribers } from '@/lib/queries'
+
+function secretsMatch(provided: string | null, expected: string | undefined): boolean {
+  if (!provided || !expected) return false
+
+  const providedBuffer = Buffer.from(provided)
+  const expectedBuffer = Buffer.from(expected)
+
+  if (providedBuffer.length !== expectedBuffer.length) return false
+
+  return crypto.timingSafeEqual(providedBuffer, expectedBuffer)
+}
 
 /**
  * POST /api/publish
@@ -12,13 +23,13 @@ import { getConfirmedSubscribers } from '@/lib/queries'
  * - Envoyer le récap hebdomadaire newsletter
  */
 export async function POST(request: NextRequest) {
-  const secret = request.headers.get('x-api-secret') || (await request.json().catch(() => ({}))).secret
-  if (secret !== process.env.API_SECRET_KEY) {
+  const secret = request.headers.get('x-api-secret')
+  if (!secretsMatch(secret, process.env.API_SECRET_KEY)) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 
   const body = await request.json().catch(() => ({}))
-  const { type, id, platforms = ['facebook', 'twitter'], sendNewsletter: doNewsletter } = body
+  const { type, id, sendNewsletter: doNewsletter } = body
 
   try {
     if (type === 'retrait' && id) {
@@ -61,8 +72,9 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ error: 'Type invalide' }, { status: 400 })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+  } catch (error) {
+    console.error('[api/publish] Internal error:', error)
+    return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 })
   }
 }
 
