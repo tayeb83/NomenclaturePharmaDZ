@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { hashAdminPassword } from '@/lib/admin-auth'
+import { createAdminSessionToken, SESSION_MAX_AGE_SECONDS } from '@/lib/admin-auth'
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,12 +14,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Mot de passe incorrect' }, { status: 401 })
     }
 
+    const sessionToken = createAdminSessionToken(adminPwd)
+    if (!sessionToken) {
+      return NextResponse.json({ error: 'Configuration serveur incomplète' }, { status: 500 })
+    }
+
     const response = NextResponse.json({ success: true })
-    response.cookies.set('admin_session', hashAdminPassword(adminPwd), {
+    response.cookies.set('admin_session', sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 60 * 60 * 8, // 8 heures
+      maxAge: SESSION_MAX_AGE_SECONDS,
       path: '/',
     })
     return response
