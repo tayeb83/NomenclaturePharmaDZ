@@ -17,8 +17,9 @@ export async function POST(request: NextRequest) {
     if (process.env.BREVO_API_KEY) await addBrevoContact(email, nom)
 
     return NextResponse.json({ success: true, message: 'Inscription enregistrée !' })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Erreur serveur' }, { status: 500 })
+  } catch (error) {
+    console.error('[api/newsletter] Internal error:', error)
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
   }
 }
 
