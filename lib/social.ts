@@ -173,6 +173,76 @@ export async function addBrevoContact(email: string, nom?: string): Promise<{ su
   }
 }
 
+// ─── EMAIL DE CONFIRMATION D'ABONNEMENT ───────────────────────
+export async function sendConfirmationEmail(
+  email: string,
+  nom: string | null | undefined,
+  confirmToken: string
+): Promise<{ success: boolean; error?: string }> {
+  const apiKey = process.env.BREVO_API_KEY
+  const senderEmail = process.env.BREVO_SENDER_EMAIL || 'noreply@pharmaveille-dz.com'
+  const senderName = process.env.BREVO_SENDER_NAME || 'PharmaVeille DZ'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.com'
+  const confirmUrl = `${appUrl}/api/newsletter?action=confirm&token=${confirmToken}`
+
+  if (!apiKey) {
+    // Fallback : log uniquement (dev sans Brevo)
+    console.log(`[Newsletter] Confirmation URL for ${email}: ${confirmUrl}`)
+    return { success: true }
+  }
+
+  const prenom = nom || 'Pharmacien(ne)'
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: linear-gradient(135deg, #0f172a, #1e293b); color: white; padding: 24px; border-radius: 10px 10px 0 0; text-align: center;">
+        <h1 style="margin: 0; font-size: 22px;">💊 PharmaVeille DZ</h1>
+        <p style="margin: 8px 0 0; font-size: 13px; opacity: 0.7;">Nomenclature pharmaceutique algérienne</p>
+      </div>
+      <div style="background: white; padding: 28px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 10px 10px;">
+        <p style="font-size: 16px; color: #334155;">Bonjour ${prenom},</p>
+        <p style="color: #475569; line-height: 1.7;">
+          Merci de vous être inscrit(e) à la newsletter <strong>PharmaVeille DZ</strong>.
+          Vous recevrez les alertes de retraits de médicaments et les résumés hebdomadaires
+          des nouveaux enregistrements sur le marché pharmaceutique algérien.
+        </p>
+        <div style="text-align: center; margin: 28px 0;">
+          <a href="${confirmUrl}"
+             style="background: #0284c7; color: white; padding: 14px 32px; border-radius: 8px;
+                    text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block;">
+            ✅ Confirmer mon abonnement
+          </a>
+        </div>
+        <p style="font-size: 13px; color: #94a3b8;">
+          Si vous n'avez pas fait cette demande, ignorez simplement cet email.
+          <br>Ce lien est valable 7 jours.
+        </p>
+        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+        <p style="font-size: 12px; color: #94a3b8; text-align: center;">
+          PharmaVeille DZ — Données officielles MIPH Algérie<br>
+          <a href="${appUrl}" style="color: #0284c7;">${appUrl}</a>
+        </p>
+      </div>
+    </div>
+  `
+
+  try {
+    await axios.post(
+      'https://api.brevo.com/v3/smtp/email',
+      {
+        sender: { email: senderEmail, name: senderName },
+        to: [{ email, name: nom || undefined }],
+        subject: '✅ Confirmez votre abonnement — PharmaVeille DZ',
+        htmlContent,
+      },
+      { headers: { 'api-key': apiKey, 'Content-Type': 'application/json' } }
+    )
+    return { success: true }
+  } catch (err: any) {
+    console.error('[sendConfirmationEmail]', err.response?.data || err.message)
+    return { success: false, error: err.response?.data?.message || err.message }
+  }
+}
+
 // ─── PUBLICATION AUTOMATIQUE ──────────────────────────────────
 export async function publishToAll(
   content: { short: string; facebook: string },
