@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react'
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 
-export function Nav({ currentVersion }: { currentVersion?: string | null }) {
+export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | null; isAdmin?: boolean }) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const { lang } = useLanguage()
@@ -14,11 +14,11 @@ export function Nav({ currentVersion }: { currentVersion?: string | null }) {
   const links = useMemo(() => [
     { href: '/', label: lang === 'ar' ? 'الرئيسية' : 'Accueil' },
     { href: '/recherche', label: lang === 'ar' ? 'البحث' : 'Recherche' },
-    { href: '/diff', label: lang === 'ar' ? '🔄 الفروقات' : '🔄 Diff' },
+    ...(isAdmin ? [{ href: '/diff', label: lang === 'ar' ? '🔄 الفروقات' : '🔄 Diff' }] : []),
     { href: '/alertes', label: lang === 'ar' ? '🚨 التنبيهات' : '🚨 Alertes', badge: true },
     { href: '/substitution', label: lang === 'ar' ? 'الاستبدال' : 'Substitution' },
     { href: '/a-propos', label: lang === 'ar' ? 'حول' : 'À propos' },
-  ], [lang])
+  ], [lang, isAdmin])
 
   return (
     <nav className="nav">
