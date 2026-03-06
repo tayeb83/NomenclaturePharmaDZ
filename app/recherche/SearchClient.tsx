@@ -75,6 +75,7 @@ export function SearchClient({
   initialActiveOnly,
   initialAdvanced,
   initialAlgerieOnly,
+  basePath = '/recherche',
 }: {
   initialQuery: string
   initialScope: string
@@ -84,6 +85,7 @@ export function SearchClient({
   initialActiveOnly: boolean
   initialAdvanced: AdvancedSearchCondition[]
   initialAlgerieOnly: boolean
+  basePath?: string
 }) {
   const { lang } = useLanguage()
   const SCOPES = useMemo(() => ([
@@ -135,9 +137,9 @@ export function SearchClient({
   const syncUrl = useCallback((nextQ: string, nextScope: string, nextLabo: string, nextSubstance: string, nextActiveOnly: boolean, nextAdvanced: AdvancedSearchCondition[], nextAlgerieOnly: boolean) => {
     const params = buildSearchParams(nextQ, nextScope, nextLabo, nextSubstance, nextActiveOnly, nextAdvanced, nextAlgerieOnly)
     startTransition(() => {
-      router.replace(`/recherche${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false })
+      router.replace(`${basePath}${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false })
     })
-  }, [router, startTransition])
+  }, [router, startTransition, basePath])
 
   const search = useCallback(async (q: string, s: string, l: string, sub: string, active: boolean, adv: AdvancedSearchCondition[]) => {
     if (!q.trim() && !l.trim() && !sub.trim() && !hasAdvancedFilters(adv)) { setResults([]); return }
