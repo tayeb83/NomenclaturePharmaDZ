@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 
@@ -32,6 +32,9 @@ type RemovedDrug = {
   type_prod: string | null
   statut: string | null
 }
+
+type SortField = 'nom' | 'labo' | 'pays' | 'date'
+type SortOrder = 'asc' | 'desc'
 
 function TypeBadge({ type }: { type: string | null }) {
   const colors: Record<string, string> = {
@@ -72,6 +75,11 @@ function AddedDrugRow({ drug }: { drug: AddedDrug }) {
         {drug.dosage && <span style={{ color: '#64748b', fontSize: 12 }}>{drug.dosage}</span>}
         <TypeBadge type={drug.type_prod} />
         <StatutBadge statut={drug.statut} />
+        {drug.annee && (
+          <span style={{ marginLeft: 'auto', fontSize: 11, color: '#64748b', fontWeight: 600 }}>
+            📅 {drug.annee}
+          </span>
+        )}
       </div>
       <div style={{ fontSize: 12, color: '#475569' }}>
         <span style={{ fontWeight: 600 }}>DCI : </span>{drug.dci || '—'}
@@ -121,6 +129,51 @@ function RemovedDrugRow({ drug }: { drug: RemovedDrug }) {
   )
 }
 
+function SortBar({
+  sortField, sortOrder, onChange, showDate,
+  t,
+}: {
+  sortField: SortField
+  sortOrder: SortOrder
+  onChange: (field: SortField) => void
+  showDate: boolean
+  t: (fr: string, ar: string) => string
+}) {
+  const fields: { key: SortField; label: string; labelAr: string }[] = [
+    { key: 'nom', label: 'Nom', labelAr: 'الاسم' },
+    { key: 'labo', label: 'Labo', labelAr: 'المخبر' },
+    { key: 'pays', label: 'Pays', labelAr: 'البلد' },
+    ...(showDate ? [{ key: 'date' as SortField, label: 'Année', labelAr: 'السنة' }] : []),
+  ]
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+      <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>
+        {t('Trier par :', 'ترتيب حسب :')}
+      </span>
+      {fields.map(f => (
+        <button
+          key={f.key}
+          onClick={() => onChange(f.key)}
+          style={{
+            padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600,
+            border: '1px solid',
+            borderColor: sortField === f.key ? '#0284c7' : '#cbd5e1',
+            background: sortField === f.key ? '#0284c7' : 'white',
+            color: sortField === f.key ? 'white' : '#475569',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+          }}
+        >
+          {t(f.label, f.labelAr)}
+          {sortField === f.key && (
+            <span style={{ fontSize: 10 }}>{sortOrder === 'asc' ? '↑' : '↓'}</span>
+          )}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export function DiffClient({
   latestVersion,
   previousVersion,
@@ -140,8 +193,19 @@ export function DiffClient({
   const t = (fr: string, ar: string) => lang === 'ar' ? ar : fr
   const [tab, setTab] = useState<'added' | 'removed'>('added')
   const [search, setSearch] = useState('')
+  const [sortField, setSortField] = useState<SortField>('nom')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc')
 
-  const filterDrugs = <T extends { nom_marque?: string | null; dci?: string | null; labo?: string | null }>(drugs: T[]) => {
+  function handleSort(field: SortField) {
+    if (field === sortField) {
+      setSortOrder(o => o === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortOrder('asc')
+    }
+  }
+
+  function filterDrugs<T extends { nom_marque?: string | null; dci?: string | null; labo?: string | null }>(drugs: T[]): T[] {
     if (!search.trim()) return drugs
     const q = search.toLowerCase()
     return drugs.filter(d =>
@@ -151,8 +215,26 @@ export function DiffClient({
     )
   }
 
-  const filteredAdded = filterDrugs(addedDrugs)
-  const filteredRemoved = filterDrugs(removedDrugs)
+  function sortDrugs<T extends { nom_marque?: string | null; labo?: string | null; pays?: string | null; annee?: number | null }>(drugs: T[]): T[] {
+    return [...drugs].sort((a, b) => {
+      let valA: string | number | null = null
+      let valB: string | number | null = null
+
+      if (sortField === 'nom') { valA = a.nom_marque || ''; valB = b.nom_marque || '' }
+      else if (sortField === 'labo') { valA = a.labo || ''; valB = b.labo || '' }
+      else if (sortField === 'pays') { valA = a.pays || ''; valB = b.pays || '' }
+      else if (sortField === 'date') { valA = a.annee ?? 0; valB = b.annee ?? 0 }
+
+      if (typeof valA === 'number' && typeof valB === 'number') {
+        return sortOrder === 'asc' ? valA - valB : valB - valA
+      }
+      const cmp = String(valA).localeCompare(String(valB), 'fr', { sensitivity: 'base' })
+      return sortOrder === 'asc' ? cmp : -cmp
+    })
+  }
+
+  const filteredAdded = useMemo(() => sortDrugs(filterDrugs(addedDrugs)), [addedDrugs, search, sortField, sortOrder])
+  const filteredRemoved = useMemo(() => sortDrugs(filterDrugs(removedDrugs)), [removedDrugs, search, sortField, sortOrder])
 
   return (
     <>
@@ -223,7 +305,7 @@ export function DiffClient({
 
           {/* Filtre de recherche */}
           {(addedCount > 0 || removedCount > 0) && (
-            <div style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 12 }}>
               <input
                 type="text"
                 value={search}
@@ -235,6 +317,17 @@ export function DiffClient({
                 }}
               />
             </div>
+          )}
+
+          {/* Tris */}
+          {(addedCount > 0 || removedCount > 0) && (
+            <SortBar
+              sortField={sortField}
+              sortOrder={sortOrder}
+              onChange={handleSort}
+              showDate={tab === 'added'}
+              t={t}
+            />
           )}
 
           {/* Tabs */}
