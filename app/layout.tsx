@@ -4,6 +4,8 @@ import { Nav } from '@/components/layout/Nav'
 import { Footer } from '@/components/layout/Footer'
 import { LanguageProvider } from '@/components/i18n/LanguageProvider'
 import { getStats } from '@/lib/queries'
+import { isAdminSessionValid } from '@/lib/admin-auth'
+import { cookies } from 'next/headers'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
 
@@ -49,6 +51,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     // Silencieux : la nav affiche le fallback si la DB est inaccessible
   }
 
+  const cookieStore = await cookies()
+  const session = cookieStore.get('admin_session')?.value
+  const isAdmin = isAdminSessionValid(session)
+
   return (
     <html lang="fr">
       <head>
@@ -64,7 +70,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <LanguageProvider>
-          <Nav currentVersion={currentVersion} />
+          <Nav currentVersion={currentVersion} isAdmin={isAdmin} />
           <main className="main-content">
             {children}
           </main>
