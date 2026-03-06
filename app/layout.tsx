@@ -5,11 +5,19 @@ import { Footer } from '@/components/layout/Footer'
 import { LanguageProvider } from '@/components/i18n/LanguageProvider'
 import { getStats } from '@/lib/queries'
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
+
 export const metadata: Metadata = {
   title: { default: 'PharmaVeille DZ', template: '%s | PharmaVeille DZ' },
   description: 'Nomenclature pharmaceutique algérienne — Recherche, alertes retraits, nouveaux enregistrements. Données officielles MIPH.',
-  keywords: ['pharmacie', 'algérie', 'médicament', 'nomenclature', 'retrait', 'enregistrement', 'DCI'],
+  keywords: [
+    'pharmacie algérie', 'médicament algérie', 'nomenclature pharmaceutique',
+    'retrait médicament', 'DCI', 'MIPH', 'pharmacien algérien',
+    'enregistrement médicament', 'دواء الجزائر', 'صيدلية',
+  ],
+  metadataBase: new URL(APP_URL),
   manifest: '/manifest.json',
+  robots: { index: true, follow: true },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -18,7 +26,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'PharmaVeille DZ',
     description: 'La référence pour les pharmaciens algériens — Données officielles MIPH',
-    url: 'https://pharmaveille-dz.com',
+    url: APP_URL,
     siteName: 'PharmaVeille DZ',
     locale: 'fr_DZ',
     type: 'website',
