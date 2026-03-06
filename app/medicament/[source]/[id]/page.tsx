@@ -33,6 +33,8 @@ function Field({ label, value }: { label: string; value: string | null | undefin
   )
 }
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
+
 export async function generateMetadata(
   { params }: { params: { source: string; id: string } }
 ): Promise<Metadata> {
@@ -45,15 +47,18 @@ export async function generateMetadata(
   const dosageSuffix = med.dosage ? ` ${med.dosage}` : ''
   const title = `${med.nom_marque}${dosageSuffix} — Fiche médicament | PharmaVeille DZ`
   const description = `${med.nom_marque}${dosageSuffix} (${med.dci})${med.forme ? ` — ${med.forme}` : ''}${med.labo ? ` — ${med.labo}` : ''}. Nomenclature MIPH Algérie.`
+  const canonical = `${APP_URL}/medicament/${params.source}/${params.id}`
   return {
     title,
     description,
+    alternates: { canonical },
     openGraph: {
       title,
       description,
       type: 'article',
       siteName: 'PharmaVeille DZ',
       locale: 'fr_DZ',
+      url: canonical,
     },
   }
 }
@@ -91,8 +96,25 @@ export default async function MedicamentDetailPage(
     ? { label: pickLang(lang, { fr: '⚠️ AMM non renouvelée', ar: '⚠️ AMM غير مجددة' }), bg: '#fef3c7', color: '#92400e' }
     : { label: pickLang(lang, { fr: '✅ Médicament actif', ar: '✅ دواء نشط' }), bg: '#d1fae5', color: '#065f46' }
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Drug',
+    name: med.nom_marque,
+    ...(med.dosage ? { dosageForm: med.dosage } : {}),
+    ...(med.forme ? { administrationRoute: med.forme } : {}),
+    ...(med.dci ? { activeIngredient: med.dci } : {}),
+    ...(med.labo ? { manufacturer: { '@type': 'Organization', name: med.labo } } : {}),
+    ...(med.pays ? { countryOfOrigin: { '@type': 'Country', name: med.pays } } : {}),
+    description: `${med.nom_marque}${med.dosage ? ` ${med.dosage}` : ''}${med.dci ? ` (${med.dci})` : ''}. Nomenclature pharmaceutique algérienne MIPH.`,
+    url: `${APP_URL}/medicament/${med.source}/${med.id}`,
+  }
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* ─── Header ─────────────────────────────────────────── */}
       <div className="page-header" style={{ background: headerBg }}>
         <div className="container">
