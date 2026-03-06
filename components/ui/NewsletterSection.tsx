@@ -2,11 +2,13 @@
 import { useState } from 'react'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 
+type Status = 'idle' | 'success' | 'resent' | 'already_confirmed' | 'error'
+
 export function NewsletterSection() {
   const [email, setEmail] = useState('')
   const [nom, setNom] = useState('')
   const [loading, setLoading] = useState(false)
-  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [status, setStatus] = useState<Status>('idle')
   const [msg, setMsg] = useState('')
   const { lang } = useLanguage()
   const t = (fr: string, ar: string) => lang === 'ar' ? ar : fr
@@ -22,19 +24,45 @@ export function NewsletterSection() {
         body: JSON.stringify({ email, nom }),
       })
       const data = await res.json()
+
+      if (res.status === 409 && data.error === 'already_confirmed') {
+        setStatus('already_confirmed')
+        setMsg(t(
+          '📬 Cet email est déjà abonné. Vous recevrez les prochaines newsletters normalement.',
+          '📬 هذا البريد مشترك بالفعل. ستصلك النشرات القادمة تلقائيًا.'
+        ))
+        return
+      }
+
       if (res.ok) {
-        setStatus('success')
-        setMsg(t('✅ Inscription réussie ! Vérifiez votre email pour confirmer.', '✅ تم التسجيل بنجاح! تحقق من بريدك للتأكيد.'))
-        setEmail(''); setNom('')
+        if (data.resent) {
+          setStatus('resent')
+          setMsg(t(
+            '📧 Un nouvel email de confirmation vous a été envoyé. Vérifiez votre boîte mail.',
+            '📧 تم إرسال بريد تأكيد جديد. تحقق من صندوق الوارد.'
+          ))
+        } else {
+          setStatus('success')
+          setMsg(t(
+            '✅ Inscription réussie ! Vérifiez votre email pour confirmer votre abonnement.',
+            '✅ تم التسجيل بنجاح! تحقق من بريدك للتأكيد.'
+          ))
+        }
+        setEmail('')
+        setNom('')
       } else {
         setStatus('error')
-        setMsg(data.error || t('Une erreur est survenue.', 'حدث خطأ.'))
+        setMsg(data.message || data.error || t('Une erreur est survenue.', 'حدث خطأ.'))
       }
     } catch {
       setStatus('error')
       setMsg(t('Erreur de connexion. Réessayez.', 'خطأ في الاتصال. أعد المحاولة.'))
-    } finally { setLoading(false) }
+    } finally {
+      setLoading(false)
+    }
   }
+
+  const isSubmitted = status === 'success' || status === 'resent' || status === 'already_confirmed'
 
   return (
     <section className="newsletter-section">
@@ -44,21 +72,32 @@ export function NewsletterSection() {
         'احصل على تنبيهات الانسحابات والتسجيلات الجديدة مباشرة في بريدك. مخصص للصيادلة الجزائريين.'
       )}</p>
 
-      {status === 'success' ? (
-        <div style={{ background: 'rgba(5,150,105,0.2)', border: '1px solid #34d399', padding: '14px 20px', borderRadius: 8, color: '#6ee7b7', fontWeight: 600 }}>
+      {isSubmitted ? (
+        <div style={{
+          background: status === 'already_confirmed' ? 'rgba(234,179,8,0.2)' : 'rgba(5,150,105,0.2)',
+          border: `1px solid ${status === 'already_confirmed' ? '#fcd34d' : '#34d399'}`,
+          padding: '14px 20px', borderRadius: 8,
+          color: status === 'already_confirmed' ? '#fef08a' : '#6ee7b7',
+          fontWeight: 600,
+        }}>
           {msg}
         </div>
       ) : (
         <form className="newsletter-form" onSubmit={handleSubmit}>
           <input
-            type="text" placeholder={t('Votre prénom (optionnel)', 'اسمك (اختياري)')}
-            value={nom} onChange={e => setNom(e.target.value)}
+            type="text"
+            placeholder={t('Votre prénom (optionnel)', 'اسمك (اختياري)')}
+            value={nom}
+            onChange={e => setNom(e.target.value)}
             style={{ minWidth: 150 }}
           />
           <input
-            type="email" placeholder={t('Votre email professionnel', 'بريدك الإلكتروني المهني')}
-            value={email} onChange={e => setEmail(e.target.value)}
-            required style={{ flex: 2, minWidth: 200 }}
+            type="email"
+            placeholder={t('Votre email professionnel', 'بريدك الإلكتروني المهني')}
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            required
+            style={{ flex: 2, minWidth: 200 }}
           />
           <button type="submit" disabled={loading}>
             {loading ? '...' : t("S'abonner", 'اشترك')}

@@ -29,6 +29,63 @@ async function ensureArchiveColumns(client: any) {
       ADD COLUMN IF NOT EXISTS removed_count        INTEGER DEFAULT 0,
       ADD COLUMN IF NOT EXISTS uploaded_file        TEXT
   `)
+  // Créer la table version_removed_drugs si elle n'existe pas
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS version_removed_drugs (
+      id            SERIAL PRIMARY KEY,
+      version_label TEXT NOT NULL,
+      n_enreg       TEXT,
+      code          TEXT,
+      dci           TEXT,
+      nom_marque    TEXT,
+      forme         TEXT,
+      dosage        TEXT,
+      labo          TEXT,
+      pays          TEXT,
+      type_prod     TEXT,
+      statut        TEXT,
+      created_at    TIMESTAMPTZ DEFAULT NOW()
+    )
+  `)
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS idx_version_removed_drugs_version
+      ON version_removed_drugs(version_label)
+  `)
+}
+
+async function saveRemovedDrugs(client: any, versionLabel: string, removedKeys: string[]) {
+  if (!removedKeys.length) return
+  // Récupérer les données complètes des médicaments supprimés AVANT le TRUNCATE
+  const placeholders = removedKeys.map((_, i) => `$${i + 2}`).join(', ')
+  const { rows } = await client.query(`
+    SELECT n_enreg, code, dci, nom_marque, forme, dosage, labo, pays, type_prod, statut
+    FROM enregistrements
+    WHERE CONCAT_WS('|', COALESCE(n_enreg,''), COALESCE(code,''), COALESCE(dci,''), COALESCE(nom_marque,''), COALESCE(dosage,'')) = ANY($1::text[])
+  `, [removedKeys])
+
+  if (!rows.length) return
+
+  // Supprimer les anciens enregistrements de cette version (au cas où on réimporte)
+  await client.query(`DELETE FROM version_removed_drugs WHERE version_label = $1`, [versionLabel])
+
+  // Insérer par lots de 200
+  for (let i = 0; i < rows.length; i += 200) {
+    const batch = rows.slice(i, i + 200)
+    const ph = batch.map((_: any, bi: number) => {
+      const b = bi * 11
+      return `($${b+1},$${b+2},$${b+3},$${b+4},$${b+5},$${b+6},$${b+7},$${b+8},$${b+9},$${b+10},$${b+11})`
+    }).join(',')
+    const flat = batch.flatMap((r: any) => [
+      versionLabel, r.n_enreg, r.code, r.dci, r.nom_marque,
+      r.forme, r.dosage, r.labo, r.pays, r.type_prod, r.statut,
+    ])
+    await client.query(
+      `INSERT INTO version_removed_drugs
+       (version_label, n_enreg, code, dci, nom_marque, forme, dosage, labo, pays, type_prod, statut)
+       VALUES ${ph}`,
+      flat
+    )
+  }
 }
 
 async function getCurrentEnregistrementKeys(client: any): Promise<Set<string>> {
@@ -129,7 +186,13 @@ export async function POST(req: NextRequest) {
     const newKeys = buildIdentityKeySet(enregistrements)
 
     const addedCount = [...newKeys].filter(k => !existingKeys.has(k)).length
-    const removedCount = [...existingKeys].filter(k => !newKeys.has(k)).length
+    const removedKeys = [...existingKeys].filter(k => !newKeys.has(k))
+    const removedCount = removedKeys.length
+
+    // Sauvegarder les médicaments supprimés AVANT le TRUNCATE (pour la page /diff)
+    if (removedCount > 0) {
+      await saveRemovedDrugs(client, versionLabel, removedKeys)
+    }
 
     // Préparer l'année depuis le label de version
     const yearMatch = versionLabel.match(/20\d{2}/)

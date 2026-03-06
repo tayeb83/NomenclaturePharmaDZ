@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { addSubscriber, confirmSubscriber, unsubscribeByToken } from '@/lib/queries'
-import { addBrevoContact } from '@/lib/social'
+import { addSubscriber, confirmSubscriber, unsubscribeByToken, getSubscriberByEmail } from '@/lib/queries'
+import { addBrevoContact, sendConfirmationEmail } from '@/lib/social'
 import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
@@ -9,14 +9,41 @@ export async function POST(request: NextRequest) {
     if (!email || !email.includes('@')) {
       return NextResponse.json({ error: 'Email invalide' }, { status: 400 })
     }
+
+    // Vérifier si l'email existe déjà
+    const existing = await getSubscriberByEmail(email.toLowerCase().trim())
+
+    if (existing?.confirmed) {
+      // Déjà inscrit et confirmé
+      return NextResponse.json(
+        { error: 'already_confirmed', message: 'Cet email est déjà abonné à la newsletter.' },
+        { status: 409 }
+      )
+    }
+
     const confirmToken = crypto.randomBytes(32).toString('hex')
     const unsubToken   = crypto.randomBytes(32).toString('hex')
 
-    await addSubscriber(email, nom || null, confirmToken, unsubToken)
-    // Ajouter à Brevo si configuré
-    if (process.env.BREVO_API_KEY) await addBrevoContact(email, nom)
+    await addSubscriber(email.toLowerCase().trim(), nom || null, confirmToken, unsubToken)
 
-    return NextResponse.json({ success: true, message: 'Inscription enregistrée !' })
+    // Envoyer l'email de confirmation
+    await sendConfirmationEmail(email, nom, confirmToken)
+
+    // Ajouter à Brevo si configuré (contact non confirmé pour l'instant)
+    if (process.env.BREVO_API_KEY) {
+      await addBrevoContact(email, nom).catch(() => {}) // non bloquant
+    }
+
+    if (existing && !existing.confirmed) {
+      // Email existant mais pas encore confirmé — renvoyer l'email
+      return NextResponse.json({
+        success: true,
+        message: 'Un nouvel email de confirmation vous a été envoyé.',
+        resent: true,
+      })
+    }
+
+    return NextResponse.json({ success: true, message: 'Inscription enregistrée ! Vérifiez votre email pour confirmer.' })
   } catch (error) {
     console.error('[api/newsletter] Internal error:', error)
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
