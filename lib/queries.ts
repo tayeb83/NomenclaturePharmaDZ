@@ -666,6 +666,20 @@ export async function getLastVersionDate(): Promise<string | null> {
   }
 }
 
+// ─── SITEMAP ───────────────────────────────────────────────────
+export async function getAllMedicamentIds(): Promise<Array<{ source: string; id: number; updated_at: string | null }>> {
+  const [enregistrements, retraits, nonRenouveles] = await Promise.all([
+    query<{ id: number; updated_at: string | null }>(`SELECT id, NULL::TEXT AS updated_at FROM enregistrements ORDER BY id`),
+    query<{ id: number; updated_at: string | null }>(`SELECT id, NULL::TEXT AS updated_at FROM retraits ORDER BY id`),
+    query<{ id: number; updated_at: string | null }>(`SELECT id, NULL::TEXT AS updated_at FROM non_renouveles ORDER BY id`),
+  ])
+  return [
+    ...enregistrements.map(r => ({ source: 'enregistrement', id: r.id, updated_at: r.updated_at })),
+    ...retraits.map(r => ({ source: 'retrait', id: r.id, updated_at: r.updated_at })),
+    ...nonRenouveles.map(r => ({ source: 'non_renouvele', id: r.id, updated_at: r.updated_at })),
+  ]
+}
+
 export async function getAlternatifsDCI(dci: string, limit = 8): Promise<Enregistrement[]> {
   return query<Enregistrement>(`
     SELECT * FROM enregistrements
