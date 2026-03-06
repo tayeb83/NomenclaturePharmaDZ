@@ -3,7 +3,7 @@ import { VeilleClient } from './VeilleClient'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Veille réglementaire' }
-export const revalidate = 3600
+export const dynamic = 'force-dynamic'
 
 export default async function VeillePage({ searchParams }: { searchParams: { annee?: string } }) {
   const anneesDisponibles = await getAvailableAnnees(8)
