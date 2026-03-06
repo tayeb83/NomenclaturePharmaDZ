@@ -3,7 +3,105 @@
  */
 
 import axios from 'axios'
+import nodemailer from 'nodemailer'
 import { query as dbQuery } from './db'
+
+// ─── GMAIL SMTP ───────────────────────────────────────────────
+
+function getGmailTransporter() {
+  const user = process.env.GMAIL_USER
+  const pass = process.env.GMAIL_APP_PASSWORD
+  if (!user || !pass) return null
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user, pass },
+  })
+}
+
+/**
+ * Envoie un email individuel via Gmail SMTP (nodemailer).
+ * Utilise GMAIL_USER + GMAIL_APP_PASSWORD (mot de passe d'application Google).
+ */
+export async function sendEmailViaGmail(
+  to: string,
+  subject: string,
+  htmlContent: string,
+  toName?: string
+): Promise<{ success: boolean; error?: string }> {
+  const transporter = getGmailTransporter()
+  if (!transporter) return { success: false, error: 'Gmail non configuré (GMAIL_USER / GMAIL_APP_PASSWORD manquants)' }
+
+  const from = process.env.GMAIL_USER!
+  const senderName = process.env.BREVO_SENDER_NAME || 'PharmaVeille DZ'
+
+  try {
+    await transporter.sendMail({
+      from: `"${senderName}" <${from}>`,
+      to: toName ? `"${toName}" <${to}>` : to,
+      subject,
+      html: htmlContent,
+    })
+    return { success: true }
+  } catch (err: any) {
+    return { success: false, error: err.message }
+  }
+}
+
+/**
+ * Envoie la newsletter à tous les abonnés confirmés via Gmail.
+ * Récupère la liste en base et envoie un email individuel à chacun.
+ */
+export async function sendNewsletterViaGmail(
+  subject: string,
+  htmlContent: string
+): Promise<{ success: boolean; sent: number; failed: number; error?: string }> {
+  const transporter = getGmailTransporter()
+  if (!transporter) {
+    return { success: false, sent: 0, failed: 0, error: 'Gmail non configuré (GMAIL_USER / GMAIL_APP_PASSWORD manquants)' }
+  }
+
+  const subscribers = await dbQuery<{ email: string; nom: string | null; unsubscribe_token: string }>(`
+    SELECT email, nom, unsubscribe_token FROM newsletter_subscribers WHERE confirmed = true
+  `)
+
+  if (!subscribers.length) {
+    return { success: true, sent: 0, failed: 0 }
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.com'
+  const senderName = process.env.BREVO_SENDER_NAME || 'PharmaVeille DZ'
+  const from = process.env.GMAIL_USER!
+
+  let sent = 0
+  let failed = 0
+
+  for (const sub of subscribers) {
+    const unsubLink = `${appUrl}/api/newsletter?action=unsubscribe&token=${sub.unsubscribe_token}`
+    const personalizedHtml = htmlContent.replace(
+      /\{\{unsubscribe_token\}\}/g,
+      sub.unsubscribe_token
+    ).replace(
+      /<\/body>/i,
+      `<div style="text-align:center;padding:12px;font-size:11px;color:#94a3b8;">
+        <a href="${unsubLink}" style="color:#94a3b8;">Se désabonner</a>
+      </div></body>`
+    )
+
+    try {
+      await transporter.sendMail({
+        from: `"${senderName}" <${from}>`,
+        to: sub.nom ? `"${sub.nom}" <${sub.email}>` : sub.email,
+        subject,
+        html: personalizedHtml,
+      })
+      sent++
+    } catch {
+      failed++
+    }
+  }
+
+  return { success: true, sent, failed }
+}
 
 // ─── FORMATAGE DES MESSAGES ───────────────────────────────────
 export function formatRetrait(drug: { dci: string; nom_marque: string; dosage?: string | null; labo?: string | null; motif_retrait?: string | null }) {
@@ -118,33 +216,41 @@ export async function postToTwitter(text: string): Promise<{ success: boolean; t
   }
 }
 
-// ─── NEWSLETTER VIA BREVO ────────────────────────────────────
-export async function sendNewsletter(subject: string, htmlContent: string): Promise<{ success: boolean; error?: string }> {
+// ─── NEWSLETTER (Brevo en priorité, Gmail en fallback) ────────
+export async function sendNewsletter(subject: string, htmlContent: string): Promise<{ success: boolean; sent?: number; failed?: number; error?: string }> {
   const apiKey = process.env.BREVO_API_KEY
-  const senderEmail = process.env.BREVO_SENDER_EMAIL || 'noreply@pharmaveille-dz.com'
-  const senderName = process.env.BREVO_SENDER_NAME || 'PharmaVeille DZ'
-  const listId = parseInt(process.env.BREVO_LIST_ID || '1')
 
-  if (!apiKey) return { success: false, error: 'Brevo API key manquante' }
-
-  try {
-    await axios.post(
-      'https://api.brevo.com/v3/emailCampaigns',
-      {
-        name: `Newsletter - ${new Date().toLocaleDateString('fr-DZ')}`,
-        subject,
-        sender: { email: senderEmail, name: senderName },
-        type: 'classic',
-        htmlContent,
-        recipients: { listIds: [listId] },
-        scheduledAt: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // dans 5 min
-      },
-      { headers: { 'api-key': apiKey, 'Content-Type': 'application/json' } }
-    )
-    return { success: true }
-  } catch (err: any) {
-    return { success: false, error: err.response?.data?.message || err.message }
+  // Priorité 1 : Brevo campaign
+  if (apiKey) {
+    const senderEmail = process.env.BREVO_SENDER_EMAIL || 'noreply@pharmaveille-dz.com'
+    const senderName = process.env.BREVO_SENDER_NAME || 'PharmaVeille DZ'
+    const listId = parseInt(process.env.BREVO_LIST_ID || '1')
+    try {
+      await axios.post(
+        'https://api.brevo.com/v3/emailCampaigns',
+        {
+          name: `Newsletter - ${new Date().toLocaleDateString('fr-DZ')}`,
+          subject,
+          sender: { email: senderEmail, name: senderName },
+          type: 'classic',
+          htmlContent,
+          recipients: { listIds: [listId] },
+          scheduledAt: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+        },
+        { headers: { 'api-key': apiKey, 'Content-Type': 'application/json' } }
+      )
+      return { success: true }
+    } catch (err: any) {
+      return { success: false, error: err.response?.data?.message || err.message }
+    }
   }
+
+  // Priorité 2 : Gmail (envoi individuel à chaque abonné)
+  if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+    return sendNewsletterViaGmail(subject, htmlContent)
+  }
+
+  return { success: false, error: 'Aucun service email configuré (BREVO_API_KEY ou GMAIL_USER/GMAIL_APP_PASSWORD)' }
 }
 
 // Ajouter un abonné à Brevo
@@ -174,25 +280,9 @@ export async function addBrevoContact(email: string, nom?: string): Promise<{ su
 }
 
 // ─── EMAIL DE CONFIRMATION D'ABONNEMENT ───────────────────────
-export async function sendConfirmationEmail(
-  email: string,
-  nom: string | null | undefined,
-  confirmToken: string
-): Promise<{ success: boolean; error?: string }> {
-  const apiKey = process.env.BREVO_API_KEY
-  const senderEmail = process.env.BREVO_SENDER_EMAIL || 'noreply@pharmaveille-dz.com'
-  const senderName = process.env.BREVO_SENDER_NAME || 'PharmaVeille DZ'
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.com'
-  const confirmUrl = `${appUrl}/api/newsletter?action=confirm&token=${confirmToken}`
 
-  if (!apiKey) {
-    // Fallback : log uniquement (dev sans Brevo)
-    console.log(`[Newsletter] Confirmation URL for ${email}: ${confirmUrl}`)
-    return { success: true }
-  }
-
-  const prenom = nom || 'Pharmacien(ne)'
-  const htmlContent = `
+function buildConfirmHtml(prenom: string, confirmUrl: string, appUrl: string): string {
+  return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, #0f172a, #1e293b); color: white; padding: 24px; border-radius: 10px 10px 0 0; text-align: center;">
         <h1 style="margin: 0; font-size: 22px;">💊 PharmaVeille DZ</h1>
@@ -224,23 +314,50 @@ export async function sendConfirmationEmail(
       </div>
     </div>
   `
+}
 
-  try {
-    await axios.post(
-      'https://api.brevo.com/v3/smtp/email',
-      {
-        sender: { email: senderEmail, name: senderName },
-        to: [{ email, name: nom || undefined }],
-        subject: '✅ Confirmez votre abonnement — PharmaVeille DZ',
-        htmlContent,
-      },
-      { headers: { 'api-key': apiKey, 'Content-Type': 'application/json' } }
-    )
-    return { success: true }
-  } catch (err: any) {
-    console.error('[sendConfirmationEmail]', err.response?.data || err.message)
-    return { success: false, error: err.response?.data?.message || err.message }
+export async function sendConfirmationEmail(
+  email: string,
+  nom: string | null | undefined,
+  confirmToken: string
+): Promise<{ success: boolean; error?: string }> {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.com'
+  const confirmUrl = `${appUrl}/api/newsletter?action=confirm&token=${confirmToken}`
+  const prenom = nom || 'Pharmacien(ne)'
+  const subject = '✅ Confirmez votre abonnement — PharmaVeille DZ'
+  const htmlContent = buildConfirmHtml(prenom, confirmUrl, appUrl)
+
+  // Priorité 1 : Brevo
+  const apiKey = process.env.BREVO_API_KEY
+  if (apiKey) {
+    const senderEmail = process.env.BREVO_SENDER_EMAIL || 'noreply@pharmaveille-dz.com'
+    const senderName = process.env.BREVO_SENDER_NAME || 'PharmaVeille DZ'
+    try {
+      await axios.post(
+        'https://api.brevo.com/v3/smtp/email',
+        {
+          sender: { email: senderEmail, name: senderName },
+          to: [{ email, name: nom || undefined }],
+          subject,
+          htmlContent,
+        },
+        { headers: { 'api-key': apiKey, 'Content-Type': 'application/json' } }
+      )
+      return { success: true }
+    } catch (err: any) {
+      console.error('[sendConfirmationEmail/brevo]', err.response?.data || err.message)
+      return { success: false, error: err.response?.data?.message || err.message }
+    }
   }
+
+  // Priorité 2 : Gmail
+  if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+    return sendEmailViaGmail(email, subject, htmlContent, nom || undefined)
+  }
+
+  // Dernier recours : log uniquement (dev sans config email)
+  console.log(`[Newsletter] Confirmation URL for ${email}: ${confirmUrl}`)
+  return { success: true }
 }
 
 // ─── PUBLICATION AUTOMATIQUE ──────────────────────────────────
