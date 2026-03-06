@@ -14,6 +14,7 @@ export function Nav({ currentVersion }: { currentVersion?: string | null }) {
   const links = useMemo(() => [
     { href: '/', label: lang === 'ar' ? 'الرئيسية' : 'Accueil' },
     { href: '/recherche', label: lang === 'ar' ? 'البحث' : 'Recherche' },
+    { href: '/diff', label: lang === 'ar' ? '🔄 الفروقات' : '🔄 Diff' },
     { href: '/alertes', label: lang === 'ar' ? '🚨 التنبيهات' : '🚨 Alertes', badge: true },
     { href: '/substitution', label: lang === 'ar' ? 'الاستبدال' : 'Substitution' },
     { href: '/a-propos', label: lang === 'ar' ? 'حول' : 'À propos' },

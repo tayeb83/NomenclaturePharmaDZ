@@ -450,6 +450,12 @@ export async function getNonRenouveles(limit = 50): Promise<NonRenouvele[]> {
 }
 
 // ─── NEWSLETTER ───────────────────────────────────────────────
+export async function getSubscriberByEmail(email: string): Promise<{ email: string; confirmed: boolean; confirm_token: string } | null> {
+  return queryOne<{ email: string; confirmed: boolean; confirm_token: string }>(`
+    SELECT email, confirmed, confirm_token FROM newsletter_subscribers WHERE email = $1
+  `, [email])
+}
+
 export async function addSubscriber(email: string, nom: string | null, confirmToken: string, unsubToken: string) {
   return queryOne(`
     INSERT INTO newsletter_subscribers (email, nom, confirm_token, unsubscribe_token, confirmed)
@@ -558,6 +564,90 @@ export async function getMedicamentById(
     code_atc: atc?.code_atc ?? null,
     atc_label_fr: atc?.atc_label_fr ?? null,
     atc_label_en: atc?.atc_label_en ?? null,
+  }
+}
+
+// ─── DIFF ENTRE VERSIONS ──────────────────────────────────────
+export type RemovedDrug = {
+  id: number
+  version_label: string
+  n_enreg: string | null
+  code: string | null
+  dci: string | null
+  nom_marque: string | null
+  forme: string | null
+  dosage: string | null
+  labo: string | null
+  pays: string | null
+  type_prod: string | null
+  statut: string | null
+}
+
+export async function getDiffData(): Promise<{
+  latestVersion: string | null
+  previousVersion: string | null
+  addedDrugs: Enregistrement[]
+  removedDrugs: RemovedDrug[]
+  addedCount: number
+  removedCount: number
+}> {
+  const empty = { latestVersion: null, previousVersion: null, addedDrugs: [], removedDrugs: [], addedCount: 0, removedCount: 0 }
+
+  try {
+    if (!await hasTable('nomenclature_versions')) return empty
+
+    const versions = await query<{ version_label: string; previous_label: string | null; total_nouveautes: number | null; removed_count: number | null }>(`
+      SELECT version_label, previous_label, total_nouveautes, removed_count
+      FROM nomenclature_versions
+      ORDER BY reference_date DESC NULLS LAST, created_at DESC
+      LIMIT 2
+    `)
+    if (!versions.length) return empty
+
+    const latest = versions[0]
+    const latestVersion = latest.version_label
+    const previousVersion = latest.previous_label ?? (versions[1]?.version_label ?? null)
+
+    // Médicaments ajoutés dans la version courante
+    const hasIsNewFlag = await hasColumn('enregistrements', 'is_new_vs_previous')
+    const hasSourceVersion = await hasColumn('enregistrements', 'source_version')
+
+    let addedDrugs: Enregistrement[] = []
+    if (hasIsNewFlag && hasSourceVersion) {
+      addedDrugs = await query<Enregistrement>(`
+        SELECT * FROM enregistrements
+        WHERE is_new_vs_previous = TRUE
+          AND source_version = $1
+        ORDER BY nom_marque
+      `, [latestVersion])
+    } else if (hasIsNewFlag) {
+      addedDrugs = await query<Enregistrement>(`
+        SELECT * FROM enregistrements
+        WHERE is_new_vs_previous = TRUE
+        ORDER BY nom_marque
+      `)
+    }
+
+    // Médicaments supprimés (table version_removed_drugs)
+    let removedDrugs: RemovedDrug[] = []
+    if (await hasTable('version_removed_drugs')) {
+      removedDrugs = await query<RemovedDrug>(`
+        SELECT * FROM version_removed_drugs
+        WHERE version_label = $1
+        ORDER BY nom_marque
+      `, [latestVersion])
+    }
+
+    return {
+      latestVersion,
+      previousVersion,
+      addedDrugs,
+      removedDrugs,
+      addedCount: addedDrugs.length,
+      removedCount: removedDrugs.length,
+    }
+  } catch {
+    return empty
   }
 }
 

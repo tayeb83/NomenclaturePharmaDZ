@@ -4,6 +4,9 @@ import Link from 'next/link'
 import { DrugCard } from '@/components/drug/DrugCard'
 import { NewsletterSection } from '@/components/ui/NewsletterSection'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
+import { SearchClient } from './recherche/SearchClient'
+import type { SearchResult } from '@/lib/db'
+import { useState } from 'react'
 
 function formatDate(d: string | null): string | null {
   if (!d) return null
@@ -20,27 +23,51 @@ type Stats = {
   last_version: string | null
 }
 
+type AdvancedSearchCondition = {
+  field: string
+  operator: string
+  value: string
+  bool?: 'AND' | 'OR'
+}
+
 export function HomeClient({
   stats,
   nouveautes,
   retraits,
   lastVersionDate,
+  initialQuery,
+  initialScope,
+  initialResults,
+  initialLabo,
+  initialSubstance,
+  initialActiveOnly,
+  initialAdvanced,
+  initialAlgerieOnly,
 }: {
   stats: Stats | null
   nouveautes: any[]
   retraits: any[]
   lastVersionDate: string | null
+  initialQuery: string
+  initialScope: string
+  initialResults: SearchResult[]
+  initialLabo: string
+  initialSubstance: string
+  initialActiveOnly: boolean
+  initialAdvanced: AdvancedSearchCondition[]
+  initialAlgerieOnly: boolean
 }) {
   const { lang } = useLanguage()
   const t = (fr: string, ar: string) => lang === 'ar' ? ar : fr
   const formattedDate = formatDate(lastVersionDate)
+  const [showSearch, setShowSearch] = useState(initialQuery.trim().length > 0)
 
   const quickLinks = [
     {
-      href: '/recherche',
-      icon: '🔍',
-      title: t('Recherche', 'البحث'),
-      sub: t('Par DCI ou marque', 'بالاسم العلمي أو التجاري'),
+      href: '/diff',
+      icon: '🔄',
+      title: t('Diff versions', 'الفروقات'),
+      sub: t('Ajoutés & supprimés', 'مضاف ومحذوف'),
     },
     {
       href: '/substitution',
@@ -76,23 +103,6 @@ export function HomeClient({
               `ابحث بين ${stats?.total_enregistrements?.toLocaleString('fr') || '—'} دواء، اطّلع على التنبيهات الرسمية وابحث عن بدائل الاستبدال.`
             )}
           </p>
-          <div className="hero-search">
-            <span className="hero-search-icon">🔍</span>
-            <form action="/recherche" method="GET">
-              <input
-                name="q"
-                type="text"
-                placeholder={t(
-                  'DCI ou nom de marque... Ex: PARACETAMOL, DOLIPRANE',
-                  'DCI أو اسم تجاري... مثال: PARACETAMOL, DOLIPRANE'
-                )}
-                autoComplete="off"
-              />
-              <button type="submit" className="hero-search-btn">
-                {t('Rechercher', 'بحث')}
-              </button>
-            </form>
-          </div>
         </div>
       </section>
 
@@ -141,8 +151,59 @@ export function HomeClient({
         </div>
       </div>
 
-      <div className="page-body">
+      {/* Section recherche intégrée */}
+      <div className="page-body" style={{ paddingTop: 0 }}>
         <div className="container">
+
+          {/* Toggle pour afficher/masquer la recherche */}
+          {!showSearch ? (
+            <div style={{ textAlign: 'center', marginBottom: 28 }}>
+              <button
+                onClick={() => setShowSearch(true)}
+                style={{
+                  background: 'linear-gradient(135deg, #0284c7, #0369a1)',
+                  color: 'white', border: 'none', borderRadius: 12,
+                  padding: '14px 32px', fontSize: 15, fontWeight: 700,
+                  cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 10,
+                  boxShadow: '0 4px 14px rgba(2,132,199,0.3)',
+                }}
+              >
+                🔍 {t('Rechercher un médicament', 'ابحث عن دواء')}
+              </button>
+            </div>
+          ) : (
+            <div style={{
+              background: 'white', borderRadius: 14, border: '1px solid #e2e8f0',
+              padding: '20px 24px', marginBottom: 28,
+              boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' }}>
+                  🔍 {t('Recherche', 'البحث')}
+                </h2>
+                <button
+                  onClick={() => setShowSearch(false)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: 18 }}
+                  title={t('Masquer la recherche', 'إخفاء البحث')}
+                >
+                  ✕
+                </button>
+              </div>
+              <SearchClient
+                initialQuery={initialQuery}
+                initialScope={initialScope}
+                initialResults={initialResults}
+                initialLabo={initialLabo}
+                initialSubstance={initialSubstance}
+                initialActiveOnly={initialActiveOnly}
+                initialAdvanced={initialAdvanced}
+                initialAlgerieOnly={initialAlgerieOnly}
+                basePath="/"
+              />
+            </div>
+          )}
+
+          {/* Nouveautés + Retraits + Accès rapide */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
             <div>
               <div className="section-title">
@@ -161,10 +222,10 @@ export function HomeClient({
                 <DrugCard key={d.id} drug={{ ...d, source: 'enregistrement', similarity_score: 1 } as any} type="enregistrement" />
               ))}
               <Link
-                href="/recherche?scope=enregistrement"
-                style={{ display: 'block', textAlign: 'center', padding: '12px', background: '#eff6ff', borderRadius: 8, color: '#0284c7', fontWeight: 700, textDecoration: 'none', marginTop: 8 }}
+                href="/diff"
+                style={{ display: 'block', textAlign: 'center', padding: '12px', background: '#f0fdf4', borderRadius: 8, color: '#16a34a', fontWeight: 700, textDecoration: 'none', marginTop: 8 }}
               >
-                {t('Rechercher dans la nomenclature active →', '← البحث في التسمية النشطة')}
+                {t('Voir le diff complet →', '← عرض الفروقات الكاملة')}
               </Link>
             </div>
 
