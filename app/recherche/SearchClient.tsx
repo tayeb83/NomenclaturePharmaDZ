@@ -29,6 +29,12 @@ const NUMBER_OPERATORS = [
   { value: 'lte', label: { fr: '<=', ar: '<=' } },
 ]
 
+const SOURCE_LABELS: Record<SearchResult['source'], { fr: string; ar: string }> = {
+  enregistrement: { fr: 'Enregistré', ar: 'مسجّل' },
+  retrait: { fr: 'Retiré', ar: 'مسحوب' },
+  non_renouvele: { fr: 'Non renouvelé', ar: 'غير مجدد' },
+}
+
 function getFieldType(field: string): FieldType {
   return field === 'dosage_num' || field === 'annee' ? 'number' : 'text'
 }
@@ -118,6 +124,10 @@ export function SearchClient({
   const [advanced, setAdvanced] = useState<AdvancedSearchCondition[]>(initialAdvanced.length ? initialAdvanced : [{ field: 'dci', operator: 'contains', value: '', bool: 'AND' }])
   const [results, setResults] = useState<SearchResult[]>(initialResults)
   const [loading, setLoading] = useState(false)
+  const [selectedPays, setSelectedPays] = useState('')
+  const [selectedLaboFacet, setSelectedLaboFacet] = useState('')
+  const [selectedSource, setSelectedSource] = useState('')
+  const [selectedAnnee, setSelectedAnnee] = useState('')
   const router = useRouter()
   const [, startTransition] = useTransition()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -213,6 +223,50 @@ export function SearchClient({
     else setResults([])
   }
 
+  const facets = useMemo(() => {
+    const counts = {
+      pays: new Map<string, number>(),
+      labo: new Map<string, number>(),
+      source: new Map<string, number>(),
+      annee: new Map<string, number>(),
+    }
+
+    for (const row of results) {
+      const pays = row.pays?.trim()
+      const labo = row.labo?.trim()
+      counts.source.set(row.source, (counts.source.get(row.source) || 0) + 1)
+      if (pays) counts.pays.set(pays, (counts.pays.get(pays) || 0) + 1)
+      if (labo) counts.labo.set(labo, (counts.labo.get(labo) || 0) + 1)
+      if (row.annee) counts.annee.set(String(row.annee), (counts.annee.get(String(row.annee)) || 0) + 1)
+    }
+
+    const toSorted = (map: Map<string, number>) => Array.from(map.entries())
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+
+    return {
+      pays: toSorted(counts.pays),
+      labo: toSorted(counts.labo),
+      source: toSorted(counts.source),
+      annee: toSorted(counts.annee),
+    }
+  }, [results])
+
+  useEffect(() => {
+    if (selectedPays && !facets.pays.some(([value]) => value === selectedPays)) setSelectedPays('')
+    if (selectedLaboFacet && !facets.labo.some(([value]) => value === selectedLaboFacet)) setSelectedLaboFacet('')
+    if (selectedSource && !facets.source.some(([value]) => value === selectedSource)) setSelectedSource('')
+    if (selectedAnnee && !facets.annee.some(([value]) => value === selectedAnnee)) setSelectedAnnee('')
+  }, [facets, selectedPays, selectedLaboFacet, selectedSource, selectedAnnee])
+
+  const filteredResults = useMemo(() => {
+    return results.filter((row) => {
+      if (selectedPays && row.pays?.trim() !== selectedPays) return false
+      if (selectedLaboFacet && row.labo?.trim() !== selectedLaboFacet) return false
+      if (selectedSource && row.source !== selectedSource) return false
+      if (selectedAnnee && String(row.annee || '') !== selectedAnnee) return false
+      return true
+    })
+  }, [results, selectedPays, selectedLaboFacet, selectedSource, selectedAnnee])
   function exportCsv() {
     if (!results.length) return
     const header = ['source', 'n_enreg', 'dci', 'nom_marque', 'forme', 'dosage', 'labo', 'pays', 'type_prod', 'statut']
@@ -340,11 +394,65 @@ export function SearchClient({
 
       {!loading && (query || labo || substance || hasAdvancedFilters(advanced)) && (
         <div className="search-count">
-          {results.length === 0 ? (lang === 'ar' ? 'لا توجد نتائج' : 'Aucun résultat') : `${results.length} ${lang === 'ar' ? 'نتيجة' : 'résultat(s) trouvés'}`}
+          {filteredResults.length === 0 ? (lang === 'ar' ? 'لا توجد نتائج' : 'Aucun résultat') : `${filteredResults.length} ${lang === 'ar' ? 'نتيجة' : 'résultat(s) trouvés'}`}
+          {results.length !== filteredResults.length && ` (${results.length} ${lang === 'ar' ? 'إجمالي' : 'total'})`}
         </div>
       )}
 
-      {!loading && results.map((d, i) => (
+      {!loading && results.length > 0 && (
+        <div style={{ marginBottom: 18, border: '1px solid #e2e8f0', borderRadius: 10, padding: 12, background: '#f8fafc' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 10 }}>
+            {lang === 'ar' ? 'الواجهات (Facettes) لتضييق النتائج' : 'Facettes pour affiner les résultats'}
+          </div>
+          <div style={{ display: 'grid', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <strong style={{ fontSize: 12, color: '#475569', minWidth: 58 }}>{lang === 'ar' ? 'البلد' : 'Pays'}</strong>
+              {facets.pays.slice(0, 8).map(([value, count]) => (
+                <button
+                  key={`facet-pays-${value}`}
+                  onClick={() => setSelectedPays(selectedPays === value ? '' : value)}
+                  style={{ padding: '6px 10px', borderRadius: 999, border: selectedPays === value ? '1px solid #2563eb' : '1px solid #cbd5e1', background: selectedPays === value ? '#dbeafe' : '#fff', cursor: 'pointer', fontSize: 12 }}
+                >{value} ({count})</button>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <strong style={{ fontSize: 12, color: '#475569', minWidth: 58 }}>{lang === 'ar' ? 'المخبر' : 'Labo'}</strong>
+              {facets.labo.slice(0, 8).map(([value, count]) => (
+                <button
+                  key={`facet-labo-${value}`}
+                  onClick={() => setSelectedLaboFacet(selectedLaboFacet === value ? '' : value)}
+                  style={{ padding: '6px 10px', borderRadius: 999, border: selectedLaboFacet === value ? '1px solid #2563eb' : '1px solid #cbd5e1', background: selectedLaboFacet === value ? '#dbeafe' : '#fff', cursor: 'pointer', fontSize: 12 }}
+                >{value} ({count})</button>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <strong style={{ fontSize: 12, color: '#475569', minWidth: 58 }}>{lang === 'ar' ? 'البيانات' : 'Données'}</strong>
+              {facets.source.map(([value, count]) => (
+                <button
+                  key={`facet-source-${value}`}
+                  onClick={() => setSelectedSource(selectedSource === value ? '' : value)}
+                  style={{ padding: '6px 10px', borderRadius: 999, border: selectedSource === value ? '1px solid #2563eb' : '1px solid #cbd5e1', background: selectedSource === value ? '#dbeafe' : '#fff', cursor: 'pointer', fontSize: 12 }}
+                >{SOURCE_LABELS[value as SearchResult['source']][lang]} ({count})</button>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <strong style={{ fontSize: 12, color: '#475569', minWidth: 58 }}>{lang === 'ar' ? 'السنة' : 'Année'}</strong>
+              {facets.annee.slice(0, 8).map(([value, count]) => (
+                <button
+                  key={`facet-annee-${value}`}
+                  onClick={() => setSelectedAnnee(selectedAnnee === value ? '' : value)}
+                  style={{ padding: '6px 10px', borderRadius: 999, border: selectedAnnee === value ? '1px solid #2563eb' : '1px solid #cbd5e1', background: selectedAnnee === value ? '#dbeafe' : '#fff', cursor: 'pointer', fontSize: 12 }}
+                >{value} ({count})</button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!loading && filteredResults.map((d, i) => (
         <DrugCard key={`${d.source}-${d.id}-${i}`} drug={d} type={d.source} />
       ))}
     </>
