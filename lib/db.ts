@@ -65,9 +65,19 @@ function createPool() {
   })
 }
 
-// En dev, Next.js recharge les modules → on réutilise le pool existant
-export const pool = globalForPg._pgPool ?? createPool()
-if (process.env.NODE_ENV !== 'production') globalForPg._pgPool = pool
+// Initialisation lazy — évite le crash au build SSG si DATABASE_URL absent
+function getPool(): Pool {
+  if (!globalForPg._pgPool) {
+    globalForPg._pgPool = createPool()
+  }
+  return globalForPg._pgPool
+}
+
+export const pool = new Proxy({} as Pool, {
+  get(_target, prop) {
+    return (getPool() as any)[prop]
+  },
+})
 
 // Helper typé pour les requêtes
 export async function query<T = any>(
