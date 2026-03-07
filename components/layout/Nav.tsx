@@ -18,6 +18,7 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
     ...(isAdmin ? [{ href: '/diff', label: lang === 'ar' ? '🔄 الفروقات' : '🔄 Diff' }] : []),
     { href: '/alertes', label: lang === 'ar' ? '🚨 التنبيهات' : '🚨 Alertes', badge: true },
     { href: '/substitution', label: lang === 'ar' ? 'الاستبدال' : 'Substitution' },
+    { href: '/api-docs', label: lang === 'ar' ? '🔗 واجهة API' : '🔗 API' },
     { href: '/a-propos', label: lang === 'ar' ? 'حول' : 'À propos' },
   ], [lang, isAdmin])
 

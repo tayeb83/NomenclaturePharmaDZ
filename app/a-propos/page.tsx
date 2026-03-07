@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 
 export default function AboutPage() {
@@ -85,17 +84,6 @@ export default function AboutPage() {
           </div>
         </div>
 
-        <section className="text-center">
-          <p className="mb-3">
-            {t(
-              "Vous souhaitez recevoir les alertes importantes (retraits, nouvelles versions) ?",
-              'هل تريد تلقي التنبيهات المهمة (الانسحابات، الإصدارات الجديدة)؟'
-            )}
-          </p>
-          <Link href="/newsletter" className="btn btn-primary px-4">
-            {t("S'abonner à la newsletter", 'الاشتراك في النشرة البريدية')}
-          </Link>
-        </section>
       </div>
     </div>
   )
