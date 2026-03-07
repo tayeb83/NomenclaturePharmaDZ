@@ -29,7 +29,8 @@ export function Footer() {
           <div className="footer-col">
             <h4>Ressources</h4>
             <ul className="footer-links">
-              <li><Link href="/newsletter">Newsletter</Link></li>
+              <li><Link href="/medicaments">Tous les médicaments</Link></li>
+              <li><Link href="/contact">Contact</Link></li>
               <li><Link href="/a-propos">À propos</Link></li>
               <li><a href="https://www.industrie.gov.dz" target="_blank" rel="noopener">MIPH Algérie</a></li>
               <li><a href="https://www.ands.dz" target="_blank" rel="noopener">ANDS</a></li>
