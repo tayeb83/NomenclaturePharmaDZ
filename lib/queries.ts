@@ -149,57 +149,57 @@ export async function searchMedicaments(
     SELECT * FROM (
       SELECT
         'enregistrement' AS source,
-        id, n_enreg, dci, nom_marque, forme, dosage, labo, pays,
-        type_prod, statut, annee,
+        e.id, e.n_enreg, e.dci, e.nom_marque, e.forme, e.dosage, e.labo, e.pays,
+        e.type_prod, e.statut, e.annee,
         NULL::DATE AS date_retrait,
         NULL::TEXT AS motif_retrait,
-        date_final,
+        e.date_final,
         ${codeAtcEnr} AS code_atc
       FROM enregistrements e
       ${atcJoinEnr}
       WHERE (
         $1 = ''
-        OR CONCAT_WS(' ', n_enreg, dci, nom_marque, forme, dosage, labo, pays, type_prod, statut, annee::TEXT, ${codeAtcEnr}) ILIKE $2
+        OR CONCAT_WS(' ', e.n_enreg, e.dci, e.nom_marque, e.forme, e.dosage, e.labo, e.pays, e.type_prod, e.statut, e.annee::TEXT, ${codeAtcEnr}) ILIKE $2
       )
-      AND ($3 = '' OR labo ILIKE $4)
-      AND ($5 = '' OR dci ILIKE $6)
+      AND ($3 = '' OR e.labo ILIKE $4)
+      AND ($5 = '' OR e.dci ILIKE $6)
 
       UNION ALL
 
       SELECT
         'retrait' AS source,
-        id, n_enreg, dci, nom_marque, forme, dosage, labo, pays,
-        type_prod, statut, NULL::SMALLINT AS annee,
-        date_retrait, motif_retrait,
+        r.id, r.n_enreg, r.dci, r.nom_marque, r.forme, r.dosage, r.labo, r.pays,
+        r.type_prod, r.statut, NULL::SMALLINT AS annee,
+        r.date_retrait, r.motif_retrait,
         NULL::DATE AS date_final,
         ${codeAtcRet} AS code_atc
       FROM retraits r
       ${atcJoinRet}
       WHERE (
         $1 = ''
-        OR CONCAT_WS(' ', n_enreg, dci, nom_marque, forme, dosage, labo, pays, type_prod, statut, motif_retrait, ${codeAtcRet}) ILIKE $2
+        OR CONCAT_WS(' ', r.n_enreg, r.dci, r.nom_marque, r.forme, r.dosage, r.labo, r.pays, r.type_prod, r.statut, r.motif_retrait, ${codeAtcRet}) ILIKE $2
       )
-      AND ($3 = '' OR labo ILIKE $4)
-      AND ($5 = '' OR dci ILIKE $6)
+      AND ($3 = '' OR r.labo ILIKE $4)
+      AND ($5 = '' OR r.dci ILIKE $6)
 
       UNION ALL
 
       SELECT
         'non_renouvele' AS source,
-        id, n_enreg, dci, nom_marque, forme, dosage, labo, pays,
-        type_prod, statut, NULL::SMALLINT AS annee,
+        n.id, n.n_enreg, n.dci, n.nom_marque, n.forme, n.dosage, n.labo, n.pays,
+        n.type_prod, n.statut, NULL::SMALLINT AS annee,
         NULL::DATE AS date_retrait,
         NULL::TEXT AS motif_retrait,
-        date_final,
+        n.date_final,
         ${codeAtcNon} AS code_atc
       FROM non_renouveles n
       ${atcJoinNon}
       WHERE (
         $1 = ''
-        OR CONCAT_WS(' ', n_enreg, dci, nom_marque, forme, dosage, labo, pays, type_prod, statut, date_final::TEXT, ${codeAtcNon}) ILIKE $2
+        OR CONCAT_WS(' ', n.n_enreg, n.dci, n.nom_marque, n.forme, n.dosage, n.labo, n.pays, n.type_prod, n.statut, n.date_final::TEXT, ${codeAtcNon}) ILIKE $2
       )
-      AND ($3 = '' OR labo ILIKE $4)
-      AND ($5 = '' OR dci ILIKE $6)
+      AND ($3 = '' OR n.labo ILIKE $4)
+      AND ($5 = '' OR n.dci ILIKE $6)
     ) AS combined
     ${scopeFilter ? `${scopeFilter} ${advancedClause.sql ? 'AND' : ''}` : `${advancedClause.sql ? 'WHERE' : ''}`}
     ${advancedClause.sql}
