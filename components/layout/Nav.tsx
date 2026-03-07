@@ -14,6 +14,7 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
   const links = useMemo(() => [
     { href: '/', label: lang === 'ar' ? 'الرئيسية' : 'Accueil' },
     { href: '/recherche', label: lang === 'ar' ? 'البحث' : 'Recherche' },
+    { href: '/medicaments', label: lang === 'ar' ? '💊 كل الأدوية' : '💊 Médicaments' },
     ...(isAdmin ? [{ href: '/diff', label: lang === 'ar' ? '🔄 الفروقات' : '🔄 Diff' }] : []),
     { href: '/alertes', label: lang === 'ar' ? '🚨 التنبيهات' : '🚨 Alertes', badge: true },
     { href: '/substitution', label: lang === 'ar' ? 'الاستبدال' : 'Substitution' },
@@ -61,8 +62,8 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
 
         <LanguageSwitcher />
 
-        <Link href="/newsletter" className="nav-newsletter-btn">
-          📧 {lang === 'ar' ? 'النشرة البريدية' : 'Newsletter'}
+        <Link href="/contact" className="nav-newsletter-btn">
+          📬 {lang === 'ar' ? 'اتصل بنا' : 'Contact'}
         </Link>
 
         <button className="nav-mobile-toggle" onClick={() => setOpen(!open)} aria-label="Menu">
