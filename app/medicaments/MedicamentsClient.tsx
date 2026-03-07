@@ -40,23 +40,29 @@ const STATUT_LABELS: Record<string, string> = {
 function TypeBadge({ type }: { type: string | null }) {
   if (!type) return null
   const colors: Record<string, string> = {
-    GE: 'rgba(34,197,94,0.15)', 'Gé': 'rgba(34,197,94,0.15)',
-    I: 'rgba(99,102,241,0.15)',
-    RE: 'rgba(251,191,36,0.15)',
-    BIO: 'rgba(236,72,153,0.15)',
+    GE: '#dcfce7', 'Gé': '#dcfce7',
+    I: '#ede9fe',
+    RE: '#fef9c3',
+    BIO: '#fce7f3',
   }
   const textColors: Record<string, string> = {
-    GE: '#86efac', 'Gé': '#86efac',
-    I: '#a5b4fc',
-    RE: '#fde68a',
-    BIO: '#f9a8d4',
+    GE: '#166534', 'Gé': '#166534',
+    I: '#5b21b6',
+    RE: '#854d0e',
+    BIO: '#9d174d',
+  }
+  const borderColors: Record<string, string> = {
+    GE: '#bbf7d0', 'Gé': '#bbf7d0',
+    I: '#ddd6fe',
+    RE: '#fef08a',
+    BIO: '#fbcfe8',
   }
   return (
     <span style={{
       fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
-      background: colors[type] || 'rgba(255,255,255,0.08)',
-      color: textColors[type] || 'rgba(255,255,255,0.6)',
-      border: `1px solid ${colors[type] || 'rgba(255,255,255,0.1)'}`,
+      background: colors[type] || '#f1f5f9',
+      color: textColors[type] || '#475569',
+      border: `1px solid ${borderColors[type] || '#e2e8f0'}`,
     }}>
       {TYPE_LABELS[type] || type}
     </span>
@@ -110,8 +116,8 @@ export function MedicamentsClient() {
     <div>
       {/* Filtres */}
       <div style={{
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.1)',
+        background: '#fff',
+        border: '1px solid #e2e8f0',
         borderRadius: 12,
         padding: '20px 24px',
         marginBottom: 24,
@@ -119,15 +125,16 @@ export function MedicamentsClient() {
         gap: 12,
         flexWrap: 'wrap',
         alignItems: 'flex-end',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
       }}>
         <div>
-          <label style={{ display: 'block', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 6 }}>Type</label>
+          <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 6, fontWeight: 600 }}>Type</label>
           <select
             value={filterType}
             onChange={e => setFilterType(e.target.value)}
             style={{
-              background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)',
-              color: '#fff', borderRadius: 8, padding: '8px 12px', fontSize: 14,
+              background: '#f8fafc', border: '1px solid #e2e8f0',
+              color: '#1e293b', borderRadius: 8, padding: '8px 12px', fontSize: 14,
             }}
           >
             <option value="">Tous les types</option>
@@ -139,13 +146,13 @@ export function MedicamentsClient() {
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 6 }}>Statut</label>
+          <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 6, fontWeight: 600 }}>Statut</label>
           <select
             value={filterStatut}
             onChange={e => setFilterStatut(e.target.value)}
             style={{
-              background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)',
-              color: '#fff', borderRadius: 8, padding: '8px 12px', fontSize: 14,
+              background: '#f8fafc', border: '1px solid #e2e8f0',
+              color: '#1e293b', borderRadius: 8, padding: '8px 12px', fontSize: 14,
             }}
           >
             <option value="">Tous</option>
@@ -155,13 +162,13 @@ export function MedicamentsClient() {
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 6 }}>Année</label>
+          <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 6, fontWeight: 600 }}>Année</label>
           <select
             value={filterAnnee}
             onChange={e => setFilterAnnee(e.target.value)}
             style={{
-              background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)',
-              color: '#fff', borderRadius: 8, padding: '8px 12px', fontSize: 14,
+              background: '#f8fafc', border: '1px solid #e2e8f0',
+              color: '#1e293b', borderRadius: 8, padding: '8px 12px', fontSize: 14,
             }}
           >
             <option value="">Toutes les années</option>
@@ -174,8 +181,8 @@ export function MedicamentsClient() {
         <button
           onClick={handleFilter}
           style={{
-            background: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.4)',
-            color: '#a5b4fc', borderRadius: 8, padding: '8px 18px', fontSize: 14,
+            background: '#0284c7', border: 'none',
+            color: '#fff', borderRadius: 8, padding: '8px 18px', fontSize: 14,
             cursor: 'pointer', fontWeight: 600,
           }}
         >
@@ -186,8 +193,8 @@ export function MedicamentsClient() {
           <button
             onClick={() => { setFilterType(''); setFilterStatut(''); setFilterAnnee('') }}
             style={{
-              background: 'transparent', border: '1px solid rgba(255,255,255,0.15)',
-              color: 'rgba(255,255,255,0.5)', borderRadius: 8, padding: '8px 14px',
+              background: 'transparent', border: '1px solid #e2e8f0',
+              color: '#64748b', borderRadius: 8, padding: '8px 14px',
               fontSize: 13, cursor: 'pointer',
             }}
           >
@@ -198,7 +205,7 @@ export function MedicamentsClient() {
 
       {/* Compteur */}
       {pagination && (
-        <div style={{ marginBottom: 16, color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>
+        <div style={{ marginBottom: 16, color: '#64748b', fontSize: 14 }}>
           {pagination.total.toLocaleString('fr-DZ')} médicaments enregistrés
           {' — '}page {pagination.page} / {pagination.totalPages}
         </div>
@@ -206,13 +213,13 @@ export function MedicamentsClient() {
 
       {/* États */}
       {error && (
-        <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, padding: '14px 18px', color: '#fca5a5', marginBottom: 20 }}>
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '14px 18px', color: '#dc2626', marginBottom: 20 }}>
           {error}
         </div>
       )}
 
       {loading && (
-        <div style={{ textAlign: 'center', padding: '48px 0', color: 'rgba(255,255,255,0.4)', fontSize: 15 }}>
+        <div style={{ textAlign: 'center', padding: '48px 0', color: '#94a3b8', fontSize: 15 }}>
           ⏳ Chargement…
         </div>
       )}
@@ -226,26 +233,29 @@ export function MedicamentsClient() {
               href={`/medicament/enregistrement/${med.id}`}
               style={{
                 display: 'block', textDecoration: 'none', color: 'inherit',
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.08)',
+                background: '#fff',
+                border: '1px solid #e2e8f0',
                 borderRadius: 10, padding: '14px 18px',
-                transition: 'background 0.15s, border-color 0.15s',
+                transition: 'background 0.15s, border-color 0.15s, box-shadow 0.15s',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
               }}
               onMouseEnter={e => {
-                ;(e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.06)'
-                ;(e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.15)'
+                ;(e.currentTarget as HTMLAnchorElement).style.background = '#f8fafc'
+                ;(e.currentTarget as HTMLAnchorElement).style.borderColor = '#cbd5e1'
+                ;(e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)'
               }}
               onMouseLeave={e => {
-                ;(e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.03)'
-                ;(e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.08)'
+                ;(e.currentTarget as HTMLAnchorElement).style.background = '#fff'
+                ;(e.currentTarget as HTMLAnchorElement).style.borderColor = '#e2e8f0'
+                ;(e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)'
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
                 <div style={{ flex: 1, minWidth: 200 }}>
-                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 3 }}>
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 3, color: '#0f172a' }}>
                     {med.nom_marque}
                   </div>
-                  <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>
+                  <div style={{ fontSize: 13, color: '#64748b' }}>
                     {med.dci}
                     {med.forme && ` — ${med.forme}`}
                     {med.dosage && ` ${med.dosage}`}
@@ -254,14 +264,14 @@ export function MedicamentsClient() {
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', flexShrink: 0 }}>
                   <TypeBadge type={med.type_prod} />
                   {med.statut === 'F' && (
-                    <span style={{ fontSize: 11, color: '#67e8f9', background: 'rgba(6,182,212,0.1)', border: '1px solid rgba(6,182,212,0.25)', padding: '2px 8px', borderRadius: 6, fontWeight: 600 }}>
+                    <span style={{ fontSize: 11, color: '#0369a1', background: '#e0f2fe', border: '1px solid #bae6fd', padding: '2px 8px', borderRadius: 6, fontWeight: 600 }}>
                       🇩🇿 Local
                     </span>
                   )}
                 </div>
               </div>
               {med.labo && (
-                <div style={{ marginTop: 6, fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>
+                <div style={{ marginTop: 6, fontSize: 12, color: '#94a3b8' }}>
                   {med.labo}{med.pays && ` · ${med.pays}`}
                   {med.annee && ` · ${med.annee}`}
                 </div>
@@ -278,8 +288,8 @@ export function MedicamentsClient() {
             onClick={() => { setPage(1); window.scrollTo(0, 0) }}
             disabled={!pagination.hasPrev}
             style={{
-              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
-              color: pagination.hasPrev ? '#fff' : 'rgba(255,255,255,0.3)',
+              background: '#fff', border: '1px solid #e2e8f0',
+              color: pagination.hasPrev ? '#334155' : '#cbd5e1',
               borderRadius: 8, padding: '8px 14px', fontSize: 13, cursor: pagination.hasPrev ? 'pointer' : 'default',
             }}
           >
@@ -289,8 +299,8 @@ export function MedicamentsClient() {
             onClick={() => { setPage(p => p - 1); window.scrollTo(0, 0) }}
             disabled={!pagination.hasPrev}
             style={{
-              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
-              color: pagination.hasPrev ? '#fff' : 'rgba(255,255,255,0.3)',
+              background: '#fff', border: '1px solid #e2e8f0',
+              color: pagination.hasPrev ? '#334155' : '#cbd5e1',
               borderRadius: 8, padding: '8px 14px', fontSize: 13, cursor: pagination.hasPrev ? 'pointer' : 'default',
             }}
           >
@@ -307,9 +317,9 @@ export function MedicamentsClient() {
                 key={p}
                 onClick={() => { setPage(p); window.scrollTo(0, 0) }}
                 style={{
-                  background: p === pagination.page ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.06)',
-                  border: `1px solid ${p === pagination.page ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.12)'}`,
-                  color: p === pagination.page ? '#a5b4fc' : '#fff',
+                  background: p === pagination.page ? '#0284c7' : '#fff',
+                  border: `1px solid ${p === pagination.page ? '#0284c7' : '#e2e8f0'}`,
+                  color: p === pagination.page ? '#fff' : '#334155',
                   borderRadius: 8, padding: '8px 13px', fontSize: 13, cursor: 'pointer', fontWeight: p === pagination.page ? 700 : 400,
                 }}
               >
@@ -322,8 +332,8 @@ export function MedicamentsClient() {
             onClick={() => { setPage(p => p + 1); window.scrollTo(0, 0) }}
             disabled={!pagination.hasNext}
             style={{
-              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
-              color: pagination.hasNext ? '#fff' : 'rgba(255,255,255,0.3)',
+              background: '#fff', border: '1px solid #e2e8f0',
+              color: pagination.hasNext ? '#334155' : '#cbd5e1',
               borderRadius: 8, padding: '8px 14px', fontSize: 13, cursor: pagination.hasNext ? 'pointer' : 'default',
             }}
           >
@@ -333,8 +343,8 @@ export function MedicamentsClient() {
             onClick={() => { setPage(pagination.totalPages); window.scrollTo(0, 0) }}
             disabled={!pagination.hasNext}
             style={{
-              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
-              color: pagination.hasNext ? '#fff' : 'rgba(255,255,255,0.3)',
+              background: '#fff', border: '1px solid #e2e8f0',
+              color: pagination.hasNext ? '#334155' : '#cbd5e1',
               borderRadius: 8, padding: '8px 14px', fontSize: 13, cursor: pagination.hasNext ? 'pointer' : 'default',
             }}
           >
