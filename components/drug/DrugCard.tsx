@@ -38,9 +38,14 @@ export function DrugCard({ drug, type }: { drug: SearchResult; type: string }) {
   const isRetrait = type === 'retrait'
   const isNonRenouv = type === 'non_renouvele'
   const { lang } = useLanguage()
+  const href = `/medicament/${drug.source || type}/${drug.id}`
 
   return (
-    <div className={`drug-card ${isRetrait ? 'retrait' : isNonRenouv ? 'non-renouvele' : 'enregistrement'}`}>
+    <Link
+      href={href}
+      style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}
+    >
+    <div className={`drug-card ${isRetrait ? 'retrait' : isNonRenouv ? 'non-renouvele' : 'enregistrement'}`} style={{ cursor: 'pointer' }}>
       <div className="drug-card-top">
         <div style={{ flex: 1 }}>
           <div className="drug-dci">DCI</div>
@@ -119,13 +124,11 @@ export function DrugCard({ drug, type }: { drug: SearchResult; type: string }) {
           <span>{lang === 'ar' ? 'واتساب' : 'WhatsApp'}</span>
         </a>
 
-        <Link
-          href={`/medicament/${drug.source || type}/${drug.id}`}
-          className="drug-detail-btn"
-        >
+        <span className="drug-detail-btn">
           {lang === 'ar' ? 'عرض البطاقة' : 'Voir la fiche'}
-        </Link>
+        </span>
       </div>
     </div>
+    </Link>
   )
 }
