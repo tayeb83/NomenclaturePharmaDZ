@@ -128,6 +128,8 @@ export function SearchClient({
   const [selectedLaboFacet, setSelectedLaboFacet] = useState('')
   const [selectedSource, setSelectedSource] = useState('')
   const [selectedAnnee, setSelectedAnnee] = useState('')
+  const [selectedAtc, setSelectedAtc] = useState('')
+  const [selectedSubstanceFacet, setSelectedSubstanceFacet] = useState('')
   const router = useRouter()
   const [, startTransition] = useTransition()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -229,15 +231,21 @@ export function SearchClient({
       labo: new Map<string, number>(),
       source: new Map<string, number>(),
       annee: new Map<string, number>(),
+      atc: new Map<string, number>(),
+      substance: new Map<string, number>(),
     }
 
     for (const row of results) {
       const pays = row.pays?.trim()
       const labo = row.labo?.trim()
+      const atc = row.code_atc?.trim()
+      const substance = row.dci?.trim()
       counts.source.set(row.source, (counts.source.get(row.source) || 0) + 1)
       if (pays) counts.pays.set(pays, (counts.pays.get(pays) || 0) + 1)
       if (labo) counts.labo.set(labo, (counts.labo.get(labo) || 0) + 1)
       if (row.annee) counts.annee.set(String(row.annee), (counts.annee.get(String(row.annee)) || 0) + 1)
+      if (atc) counts.atc.set(atc, (counts.atc.get(atc) || 0) + 1)
+      if (substance) counts.substance.set(substance, (counts.substance.get(substance) || 0) + 1)
     }
 
     const toSorted = (map: Map<string, number>) => Array.from(map.entries())
@@ -248,6 +256,8 @@ export function SearchClient({
       labo: toSorted(counts.labo),
       source: toSorted(counts.source),
       annee: toSorted(counts.annee),
+      atc: toSorted(counts.atc),
+      substance: toSorted(counts.substance),
     }
   }, [results])
 
@@ -256,7 +266,9 @@ export function SearchClient({
     if (selectedLaboFacet && !facets.labo.some(([value]) => value === selectedLaboFacet)) setSelectedLaboFacet('')
     if (selectedSource && !facets.source.some(([value]) => value === selectedSource)) setSelectedSource('')
     if (selectedAnnee && !facets.annee.some(([value]) => value === selectedAnnee)) setSelectedAnnee('')
-  }, [facets, selectedPays, selectedLaboFacet, selectedSource, selectedAnnee])
+    if (selectedAtc && !facets.atc.some(([value]) => value === selectedAtc)) setSelectedAtc('')
+    if (selectedSubstanceFacet && !facets.substance.some(([value]) => value === selectedSubstanceFacet)) setSelectedSubstanceFacet('')
+  }, [facets, selectedPays, selectedLaboFacet, selectedSource, selectedAnnee, selectedAtc, selectedSubstanceFacet])
 
   const filteredResults = useMemo(() => {
     return results.filter((row) => {
@@ -264,9 +276,11 @@ export function SearchClient({
       if (selectedLaboFacet && row.labo?.trim() !== selectedLaboFacet) return false
       if (selectedSource && row.source !== selectedSource) return false
       if (selectedAnnee && String(row.annee || '') !== selectedAnnee) return false
+      if (selectedAtc && row.code_atc?.trim() !== selectedAtc) return false
+      if (selectedSubstanceFacet && row.dci?.trim() !== selectedSubstanceFacet) return false
       return true
     })
-  }, [results, selectedPays, selectedLaboFacet, selectedSource, selectedAnnee])
+  }, [results, selectedPays, selectedLaboFacet, selectedSource, selectedAnnee, selectedAtc, selectedSubstanceFacet])
   function exportCsv() {
     if (!results.length) return
     const header = ['source', 'n_enreg', 'dci', 'nom_marque', 'forme', 'dosage', 'labo', 'pays', 'type_prod', 'statut']
@@ -445,6 +459,28 @@ export function SearchClient({
                   key={`facet-annee-${value}`}
                   onClick={() => setSelectedAnnee(selectedAnnee === value ? '' : value)}
                   style={{ padding: '6px 10px', borderRadius: 999, border: selectedAnnee === value ? '1px solid #2563eb' : '1px solid #cbd5e1', background: selectedAnnee === value ? '#dbeafe' : '#fff', cursor: 'pointer', fontSize: 12 }}
+                >{value} ({count})</button>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <strong style={{ fontSize: 12, color: '#475569', minWidth: 58 }}>ATC</strong>
+              {facets.atc.slice(0, 8).map(([value, count]) => (
+                <button
+                  key={`facet-atc-${value}`}
+                  onClick={() => setSelectedAtc(selectedAtc === value ? '' : value)}
+                  style={{ padding: '6px 10px', borderRadius: 999, border: selectedAtc === value ? '1px solid #2563eb' : '1px solid #cbd5e1', background: selectedAtc === value ? '#dbeafe' : '#fff', cursor: 'pointer', fontSize: 12 }}
+                >{value} ({count})</button>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <strong style={{ fontSize: 12, color: '#475569', minWidth: 58 }}>{lang === 'ar' ? 'المادة' : 'Substance'}</strong>
+              {facets.substance.slice(0, 8).map(([value, count]) => (
+                <button
+                  key={`facet-substance-${value}`}
+                  onClick={() => setSelectedSubstanceFacet(selectedSubstanceFacet === value ? '' : value)}
+                  style={{ padding: '6px 10px', borderRadius: 999, border: selectedSubstanceFacet === value ? '1px solid #2563eb' : '1px solid #cbd5e1', background: selectedSubstanceFacet === value ? '#dbeafe' : '#fff', cursor: 'pointer', fontSize: 12 }}
                 >{value} ({count})</button>
               ))}
             </div>
