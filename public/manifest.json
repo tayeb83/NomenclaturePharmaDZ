@@ -8,6 +8,7 @@
   "theme_color": "#0f172a",
   "lang": "fr",
   "orientation": "portrait-primary",
+  "categories": ["health", "medical", "utilities"],
   "icons": [
     {
       "src": "/icon-192.png",
@@ -24,10 +25,17 @@
   ],
   "shortcuts": [
     {
-      "name": "Recherche",
+      "name": "Recherche médicament",
       "short_name": "Recherche",
-      "description": "Rechercher un médicament",
+      "description": "Rechercher un médicament en Algérie",
       "url": "/recherche",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Tous les médicaments",
+      "short_name": "Médicaments",
+      "description": "Liste complète des médicaments enregistrés",
+      "url": "/medicaments",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
