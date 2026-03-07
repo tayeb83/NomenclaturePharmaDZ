@@ -137,6 +137,13 @@ export async function searchMedicaments(
   const substancePattern = `%${substance}%`
 
   const advancedClause = buildAdvancedSearchClause(advanced, 8)
+  const hasAtcMapping = await hasTable('dci_atc_mapping')
+  const codeAtcEnr = hasAtcMapping ? 'atc_e.code_atc' : 'NULL::TEXT'
+  const codeAtcRet = hasAtcMapping ? 'atc_r.code_atc' : 'NULL::TEXT'
+  const codeAtcNon = hasAtcMapping ? 'atc_n.code_atc' : 'NULL::TEXT'
+  const atcJoinEnr = hasAtcMapping ? 'LEFT JOIN dci_atc_mapping atc_e ON atc_e.dci = e.dci' : ''
+  const atcJoinRet = hasAtcMapping ? 'LEFT JOIN dci_atc_mapping atc_r ON atc_r.dci = r.dci' : ''
+  const atcJoinNon = hasAtcMapping ? 'LEFT JOIN dci_atc_mapping atc_n ON atc_n.dci = n.dci' : ''
 
   const results = await query<SearchResult>(`
     SELECT * FROM (
@@ -146,11 +153,13 @@ export async function searchMedicaments(
         type_prod, statut, annee,
         NULL::DATE AS date_retrait,
         NULL::TEXT AS motif_retrait,
-        date_final
-      FROM enregistrements
+        date_final,
+        ${codeAtcEnr} AS code_atc
+      FROM enregistrements e
+      ${atcJoinEnr}
       WHERE (
         $1 = ''
-        OR CONCAT_WS(' ', n_enreg, dci, nom_marque, forme, dosage, labo, pays, type_prod, statut, annee::TEXT) ILIKE $2
+        OR CONCAT_WS(' ', n_enreg, dci, nom_marque, forme, dosage, labo, pays, type_prod, statut, annee::TEXT, ${codeAtcEnr}) ILIKE $2
       )
       AND ($3 = '' OR labo ILIKE $4)
       AND ($5 = '' OR dci ILIKE $6)
@@ -162,11 +171,13 @@ export async function searchMedicaments(
         id, n_enreg, dci, nom_marque, forme, dosage, labo, pays,
         type_prod, statut, NULL::SMALLINT AS annee,
         date_retrait, motif_retrait,
-        NULL::DATE AS date_final
-      FROM retraits
+        NULL::DATE AS date_final,
+        ${codeAtcRet} AS code_atc
+      FROM retraits r
+      ${atcJoinRet}
       WHERE (
         $1 = ''
-        OR CONCAT_WS(' ', n_enreg, dci, nom_marque, forme, dosage, labo, pays, type_prod, statut, motif_retrait) ILIKE $2
+        OR CONCAT_WS(' ', n_enreg, dci, nom_marque, forme, dosage, labo, pays, type_prod, statut, motif_retrait, ${codeAtcRet}) ILIKE $2
       )
       AND ($3 = '' OR labo ILIKE $4)
       AND ($5 = '' OR dci ILIKE $6)
@@ -179,11 +190,13 @@ export async function searchMedicaments(
         type_prod, statut, NULL::SMALLINT AS annee,
         NULL::DATE AS date_retrait,
         NULL::TEXT AS motif_retrait,
-        date_final
-      FROM non_renouveles
+        date_final,
+        ${codeAtcNon} AS code_atc
+      FROM non_renouveles n
+      ${atcJoinNon}
       WHERE (
         $1 = ''
-        OR CONCAT_WS(' ', n_enreg, dci, nom_marque, forme, dosage, labo, pays, type_prod, statut, date_final::TEXT) ILIKE $2
+        OR CONCAT_WS(' ', n_enreg, dci, nom_marque, forme, dosage, labo, pays, type_prod, statut, date_final::TEXT, ${codeAtcNon}) ILIKE $2
       )
       AND ($3 = '' OR labo ILIKE $4)
       AND ($5 = '' OR dci ILIKE $6)
