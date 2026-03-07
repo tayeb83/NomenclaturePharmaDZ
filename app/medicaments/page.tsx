@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { MedicamentsClient } from './MedicamentsClient'
 import { AdHorizontal } from '@/components/ads/AdBanner'
 
@@ -34,15 +33,6 @@ export default function MedicamentsPage() {
           Nomenclature pharmaceutique officielle algérienne (MIPH). Liste complète des médicaments enregistrés,
           filtrables par type, statut de fabrication et année.
         </p>
-        <Link href="/api-docs" style={{
-          display: 'inline-flex', alignItems: 'center', gap: 6,
-          marginTop: 14, fontSize: 13, fontWeight: 600,
-          color: '#0284c7', textDecoration: 'none',
-          background: '#eff6ff', border: '1px solid #bfdbfe',
-          borderRadius: 8, padding: '6px 12px',
-        }}>
-          🔌 Documentation API
-        </Link>
       </div>
 
       {/* Publicité entre l'en-tête et la liste */}
