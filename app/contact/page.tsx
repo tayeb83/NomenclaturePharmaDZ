@@ -20,7 +20,7 @@ export default function ContactPage() {
       <div style={{ textAlign: 'center', marginBottom: 48 }}>
         <div style={{ fontSize: 52, marginBottom: 12 }}>📬</div>
         <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 12 }}>Contactez-nous</h1>
-        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 17, maxWidth: 500, margin: '0 auto' }}>
+        <p style={{ color: 'var(--slate-500)', fontSize: 17, maxWidth: 500, margin: '0 auto' }}>
           Une question, une suggestion, une erreur à signaler dans la nomenclature ?<br />
           Nous sommes à votre écoute.
         </p>
@@ -28,11 +28,12 @@ export default function ContactPage() {
 
       {/* Carte contact */}
       <div style={{
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.1)',
+        background: 'white',
+        border: '1px solid var(--slate-200)',
         borderRadius: 16,
         padding: '36px 40px',
         marginBottom: 32,
+        boxShadow: 'var(--shadow)',
       }}>
         <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 10 }}>
           <span>✉️</span> Email
@@ -44,11 +45,11 @@ export default function ContactPage() {
             display: 'inline-flex',
             alignItems: 'center',
             gap: 10,
-            background: 'rgba(99,102,241,0.15)',
-            border: '1px solid rgba(99,102,241,0.35)',
+            background: '#eef2ff',
+            border: '1px solid #c7d2fe',
             borderRadius: 10,
             padding: '14px 22px',
-            color: '#a5b4fc',
+            color: '#3730a3',
             fontSize: 18,
             fontWeight: 600,
             textDecoration: 'none',
@@ -59,18 +60,19 @@ export default function ContactPage() {
           sahaokbane@gmail.com
         </a>
 
-        <p style={{ marginTop: 20, color: 'rgba(255,255,255,0.5)', fontSize: 14, lineHeight: 1.6 }}>
+        <p style={{ marginTop: 20, color: 'var(--slate-500)', fontSize: 14, lineHeight: 1.6 }}>
           Nous répondons généralement sous 24 à 48 heures (jours ouvrés).
         </p>
       </div>
 
       {/* Sujets */}
       <div style={{
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.1)',
+        background: 'white',
+        border: '1px solid var(--slate-200)',
         borderRadius: 16,
         padding: '32px 40px',
         marginBottom: 32,
+        boxShadow: 'var(--shadow)',
       }}>
         <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 20 }}>Pour quel sujet ?</h2>
         <div style={{ display: 'grid', gap: 12 }}>
@@ -84,14 +86,14 @@ export default function ContactPage() {
               display: 'flex',
               gap: 14,
               padding: '14px 16px',
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.07)',
+              background: 'var(--slate-50)',
+              border: '1px solid var(--slate-200)',
               borderRadius: 10,
             }}>
               <span style={{ fontSize: 24, flexShrink: 0 }}>{item.icon}</span>
               <div>
                 <div style={{ fontWeight: 600, marginBottom: 3 }}>{item.title}</div>
-                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>{item.desc}</div>
+                <div style={{ color: 'var(--slate-500)', fontSize: 13 }}>{item.desc}</div>
               </div>
             </div>
           ))}
@@ -109,8 +111,8 @@ export default function ContactPage() {
         alignItems: 'flex-start',
       }}>
         <span style={{ fontSize: 20, flexShrink: 0 }}>⚠️</span>
-        <p style={{ margin: 0, color: 'rgba(255,255,255,0.6)', fontSize: 13, lineHeight: 1.6 }}>
-          <strong style={{ color: 'rgba(255,255,255,0.85)' }}>Important :</strong> PharmaVeille DZ est une plateforme indépendante
+        <p style={{ margin: 0, color: '#92400e', fontSize: 13, lineHeight: 1.6 }}>
+          <strong style={{ color: '#78350f' }}>Important :</strong> PharmaVeille DZ est une plateforme indépendante
           qui diffuse les données officielles du MIPH. Pour toute question réglementaire officielle,
           contactez directement le{' '}
           <a href="https://www.industrie.gov.dz" target="_blank" rel="noopener noreferrer" style={{ color: '#60a5fa' }}>
