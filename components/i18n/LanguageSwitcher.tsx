@@ -6,7 +6,7 @@ export function LanguageSwitcher() {
   const { lang, setLang } = useLanguage()
 
   return (
-    <div style={{ display: 'inline-flex', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 999, overflow: 'hidden' }}>
+    <div style={{ display: 'inline-flex', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 999, overflow: 'hidden', flexShrink: 0 }}>
       <button
         type="button"
         onClick={() => setLang('fr')}

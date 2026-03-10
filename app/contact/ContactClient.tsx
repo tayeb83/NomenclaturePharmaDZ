@@ -72,7 +72,7 @@ export function ContactClient() {
         </h2>
 
         <a
-          href="mailto:sahaokbane@gmail.com"
+          href="mailto:admin@nomenclature-pharma.org"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -89,7 +89,7 @@ export function ContactClient() {
           }}
         >
           <span>📧</span>
-          sahaokbane@gmail.com
+          admin@nomenclature-pharma.org
         </a>
 
         <p style={{ marginTop: 20, color: 'var(--slate-500)', fontSize: 14, lineHeight: 1.6 }}>
