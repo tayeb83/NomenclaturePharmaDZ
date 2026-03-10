@@ -5,8 +5,13 @@ import { DrugCard } from '@/components/drug/DrugCard'
 import { NewsletterSection } from '@/components/ui/NewsletterSection'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 import { SearchClient } from './recherche/SearchClient'
+import { AdHorizontal } from '@/components/ads/AdBanner'
 import type { SearchResult } from '@/lib/db'
 import { useState } from 'react'
+
+// Remplacez ces IDs par vos vrais slots AdSense (disponibles dans Google AdSense > Annonces > Par bloc)
+const AD_SLOT_HOME_TOP = process.env.NEXT_PUBLIC_AD_SLOT_HOME_TOP || '1234567890'
+const AD_SLOT_HOME_MIDDLE = process.env.NEXT_PUBLIC_AD_SLOT_HOME_MIDDLE || '0987654321'
 
 function formatDate(d: string | null): string | null {
   if (!d) return null
@@ -115,6 +120,11 @@ export function HomeClient({
             <span>Données issues de la <strong>nomenclature officielle du MIPH</strong> — automatiquement mise à jour à chaque nouvelle version publiée.</span>
           )}
         </div>
+      </div>
+
+      {/* Bannière pub — entre le hero et les stats */}
+      <div className="container" style={{ paddingTop: 8 }}>
+        <AdHorizontal slot={AD_SLOT_HOME_TOP} />
       </div>
 
       <div className="container">
@@ -262,6 +272,9 @@ export function HomeClient({
               </div>
             </div>
           </div>
+
+          {/* Bannière pub — avant la newsletter */}
+          <AdHorizontal slot={AD_SLOT_HOME_MIDDLE} />
 
           <NewsletterSection />
         </div>
