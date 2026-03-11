@@ -22,7 +22,11 @@ function toSqlNull(val: string | null): string | null {
 
 async function ensureArchiveColumns(client: any) {
   // Élargir les colonnes VARCHAR contraintes pour éviter "value too long for type character varying(N)"
-  // Ces ALTER sont idempotents : PostgreSQL ignore si le type est déjà TEXT
+  // La vue v_stats référence des colonnes (ex: statut) des tables principales.
+  // PostgreSQL interdit de modifier le type d'une colonne utilisée par une vue.
+  // On supprime donc v_stats avant les ALTER et on la recrée ensuite.
+  await client.query(`DROP VIEW IF EXISTS v_stats`)
+
   for (const table of ['enregistrements', 'retraits', 'non_renouveles']) {
     await client.query(`
       ALTER TABLE ${table}
@@ -34,6 +38,36 @@ async function ensureArchiveColumns(client: any) {
         ALTER COLUMN type_prod TYPE TEXT
     `)
   }
+
+  // Recréer la vue v_stats après les ALTER
+  await client.query(`
+    CREATE OR REPLACE VIEW v_stats AS
+    WITH last_version AS (
+      SELECT version_label
+      FROM nomenclature_versions
+      ORDER BY reference_date DESC NULLS LAST, created_at DESC
+      LIMIT 1
+    )
+    SELECT
+      (SELECT COUNT(*) FROM enregistrements e
+       WHERE (SELECT version_label FROM last_version) IS NULL
+          OR e.source_version = (SELECT version_label FROM last_version))::INT AS total_enregistrements,
+      (SELECT COUNT(*) FROM enregistrements e
+       WHERE ((SELECT version_label FROM last_version) IS NULL
+          OR e.source_version = (SELECT version_label FROM last_version))
+       AND e.is_new_vs_previous = TRUE)::INT AS total_nouveautes,
+      (SELECT COUNT(*) FROM retraits)::INT                               AS total_retraits,
+      (SELECT COUNT(*) FROM non_renouveles)::INT                         AS total_non_renouveles,
+      (SELECT COUNT(*) FROM enregistrements e
+       WHERE ((SELECT version_label FROM last_version) IS NULL
+          OR e.source_version = (SELECT version_label FROM last_version))
+       AND e.statut = 'F')::INT     AS fabriques_algerie,
+      (SELECT COUNT(DISTINCT dci) FROM enregistrements e
+       WHERE (SELECT version_label FROM last_version) IS NULL
+          OR e.source_version = (SELECT version_label FROM last_version))::INT AS dci_uniques,
+      (SELECT COUNT(*) FROM newsletter_subscribers WHERE confirmed = TRUE)::INT AS abonnes_newsletter,
+      (SELECT version_label FROM last_version) AS last_version
+  `)
 
   // Ajouter les colonnes d'archive si elles n'existent pas encore
   await client.query(`
