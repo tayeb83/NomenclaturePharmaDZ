@@ -270,16 +270,15 @@ export function parseEnregistrements(workbook: XLSX.WorkBook): ParsedEnregistrem
       conditionnement:cleanStr(row[7]),
       liste:          cleanStr(row[8]),
       prescription:   cleanStr(row[9]),
-      obs:            cleanStr(row[10] ?? null),
-      // col[11] ignoré (vide)
-      // col[12] ignoré (colonne vide supplémentaire)
-      labo:           cleanStr(row[13] ?? null),
-      pays:           cleanStr(row[14] ?? null),
-      date_init:      cleanDate(row[15] ?? null),
-      date_final:     cleanDate(row[16] ?? null),
-      type_prod:      cleanStr(row[17] ?? null),
-      statut:         cleanStr(row[18] ?? null),
-      stabilite:      cleanStr(row[19] ?? null),
+      // col[10] = P2 (ignoré)
+      obs:            cleanStr(row[11] ?? null),
+      labo:           cleanStr(row[12] ?? null),
+      pays:           cleanStr(row[13] ?? null),
+      date_init:      cleanDate(row[14] ?? null),
+      date_final:     cleanDate(row[15] ?? null),
+      type_prod:      cleanStr(row[16] ?? null),
+      statut:         cleanStr(row[17] ?? null),
+      stabilite:      cleanStr(row[18] ?? null),
     })
   }
 
@@ -311,16 +310,14 @@ export function parseRetraits(workbook: XLSX.WorkBook): ParsedRetrait[] {
       conditionnement:cleanStr(row[7]),
       liste:          cleanStr(row[8]),
       prescription:   cleanStr(row[9]),
-      // col[10] ignoré
-      // col[11] ignoré (vide)
-      // col[12] ignoré (colonne vide supplémentaire)
-      labo:           cleanStr(row[13] ?? null),
-      pays:           cleanStr(row[14] ?? null),
-      date_init:      cleanDate(row[15] ?? null),
-      type_prod:      cleanStr(row[16] ?? null),
-      statut:         cleanStr(row[17] ?? null),
-      date_retrait:   cleanDate(row[18] ?? null),
-      motif_retrait:  cleanStr(row[19] ?? null),
+      // col[10] = P2 (ignoré) — feuille Retraits n'a pas de colonne OBS
+      labo:           cleanStr(row[11] ?? null),
+      pays:           cleanStr(row[12] ?? null),
+      date_init:      cleanDate(row[13] ?? null),
+      type_prod:      cleanStr(row[14] ?? null),
+      statut:         cleanStr(row[15] ?? null),
+      date_retrait:   cleanDate(row[16] ?? null),
+      motif_retrait:  cleanStr(row[17] ?? null),
     })
   }
 
@@ -352,15 +349,13 @@ export function parseNonRenouveles(workbook: XLSX.WorkBook): ParsedNonRenouvele[
       conditionnement:cleanStr(row[7]),
       liste:          cleanStr(row[8]),
       prescription:   cleanStr(row[9]),
-      // col[10] ignoré
-      // col[11] ignoré (vide)
-      // col[12] ignoré (colonne vide supplémentaire)
-      labo:           cleanStr(row[13] ?? null),
-      pays:           cleanStr(row[14] ?? null),
-      date_init:      cleanDate(row[15] ?? null),
-      date_final:     cleanDate(row[16] ?? null),
-      type_prod:      cleanStr(row[17] ?? null),
-      statut:         cleanStr(row[18] ?? null),
+      // col[10] = P2 (ignoré), col[11] = OBS (ignoré — non stocké dans non_renouveles)
+      labo:           cleanStr(row[12] ?? null),
+      pays:           cleanStr(row[13] ?? null),
+      date_init:      cleanDate(row[14] ?? null),
+      date_final:     cleanDate(row[15] ?? null),
+      type_prod:      cleanStr(row[16] ?? null),
+      statut:         cleanStr(row[17] ?? null),
     })
   }
 

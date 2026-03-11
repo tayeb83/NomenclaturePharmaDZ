@@ -110,16 +110,15 @@ def parse_enregistrements(filepath: Path):
             "conditionnement": clean_str(r[cols[7]]),
             "liste": clean_str(r[cols[8]]),
             "prescription": clean_str(r[cols[9]]),
-            "obs": clean_str(r[cols[10]] if len(cols) > 10 else None),
-            # cols[11] ignoré (vide)
-            # cols[12] ignoré (colonne vide supplémentaire)
-            "labo": clean_str(r[cols[13]] if len(cols) > 13 else None),
-            "pays": clean_str(r[cols[14]] if len(cols) > 14 else None),
-            "date_init": clean_date(r[cols[15]] if len(cols) > 15 else None),
-            "date_final": clean_date(r[cols[16]] if len(cols) > 16 else None),
-            "type_prod": clean_str(r[cols[17]] if len(cols) > 17 else None),
-            "statut": clean_str(r[cols[18]] if len(cols) > 18 else None),
-            "stabilite": clean_str(r[cols[19]] if len(cols) > 19 else None),
+            # cols[10] = P2 (ignoré)
+            "obs": clean_str(r[cols[11]] if len(cols) > 11 else None),
+            "labo": clean_str(r[cols[12]] if len(cols) > 12 else None),
+            "pays": clean_str(r[cols[13]] if len(cols) > 13 else None),
+            "date_init": clean_date(r[cols[14]] if len(cols) > 14 else None),
+            "date_final": clean_date(r[cols[15]] if len(cols) > 15 else None),
+            "type_prod": clean_str(r[cols[16]] if len(cols) > 16 else None),
+            "statut": clean_str(r[cols[17]] if len(cols) > 17 else None),
+            "stabilite": clean_str(r[cols[18]] if len(cols) > 18 else None),
         })
     return rows, sheet
 
@@ -136,10 +135,10 @@ def parse_non_renouveles(filepath: Path):
         rows.append((
             clean_n_enreg(r[cols[1]]), clean_str(r[cols[2]]), clean_str(r[cols[3]]), clean_str(r[cols[4]]),
             clean_str(r[cols[5]]), clean_str(r[cols[6]]), clean_str(r[cols[7]]), clean_str(r[cols[8]]),
-            # cols[10] ignoré, cols[11] ignoré (vide), cols[12] ignoré (colonne vide supplémentaire)
-            clean_str(r[cols[9]]), clean_str(r[cols[13]] if len(cols) > 13 else None), clean_str(r[cols[14]] if len(cols) > 14 else None),
-            clean_date(r[cols[15]] if len(cols) > 15 else None), clean_date(r[cols[16]] if len(cols) > 16 else None),
-            clean_str(r[cols[17]] if len(cols) > 17 else None), clean_str(r[cols[18]] if len(cols) > 18 else None),
+            # cols[10] = P2 (ignoré), cols[11] = OBS (ignoré — non stocké)
+            clean_str(r[cols[9]]), clean_str(r[cols[12]] if len(cols) > 12 else None), clean_str(r[cols[13]] if len(cols) > 13 else None),
+            clean_date(r[cols[14]] if len(cols) > 14 else None), clean_date(r[cols[15]] if len(cols) > 15 else None),
+            clean_str(r[cols[16]] if len(cols) > 16 else None), clean_str(r[cols[17]] if len(cols) > 17 else None),
         ))
     return rows
 
@@ -156,10 +155,10 @@ def parse_retraits(filepath: Path):
         rows.append((
             clean_n_enreg(r[cols[1]]), clean_str(r[cols[2]]), clean_str(r[cols[3]]), clean_str(r[cols[4]]),
             clean_str(r[cols[5]]), clean_str(r[cols[6]]), clean_str(r[cols[7]]), clean_str(r[cols[8]]),
-            # cols[10] ignoré, cols[11] ignoré (vide), cols[12] ignoré (colonne vide supplémentaire)
-            clean_str(r[cols[9]]), clean_str(r[cols[13]] if len(cols) > 13 else None), clean_str(r[cols[14]] if len(cols) > 14 else None),
-            clean_date(r[cols[15]] if len(cols) > 15 else None), clean_str(r[cols[16]] if len(cols) > 16 else None), clean_str(r[cols[17]] if len(cols) > 17 else None),
-            clean_date(r[cols[18]] if len(cols) > 18 else None), clean_str(r[cols[19]] if len(cols) > 19 else None),
+            # cols[10] = P2 (ignoré) — feuille Retraits n'a pas de colonne OBS
+            clean_str(r[cols[9]]), clean_str(r[cols[11]] if len(cols) > 11 else None), clean_str(r[cols[12]] if len(cols) > 12 else None),
+            clean_date(r[cols[13]] if len(cols) > 13 else None), clean_str(r[cols[14]] if len(cols) > 14 else None), clean_str(r[cols[15]] if len(cols) > 15 else None),
+            clean_date(r[cols[16]] if len(cols) > 16 else None), clean_str(r[cols[17]] if len(cols) > 17 else None),
         ))
     return rows
 
