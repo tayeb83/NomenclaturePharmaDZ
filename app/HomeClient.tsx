@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { DrugCard } from '@/components/drug/DrugCard'
-import { NewsletterSection } from '@/components/ui/NewsletterSection'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 import { SearchClient } from './recherche/SearchClient'
 import { AdHorizontal } from '@/components/ads/AdBanner'
@@ -273,10 +272,7 @@ export function HomeClient({
             </div>
           </div>
 
-          {/* Bannière pub — avant la newsletter */}
           <AdHorizontal slot={AD_SLOT_HOME_MIDDLE} />
-
-          <NewsletterSection />
         </div>
       </div>
     </>

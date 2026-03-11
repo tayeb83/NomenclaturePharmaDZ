@@ -49,9 +49,7 @@ export function Footer() {
           <div className="footer-col">
             <h4>{t('Suivez-nous', 'تابعونا')}</h4>
             <ul className="footer-links">
-              <li><a href="https://facebook.com/pharmaveille.dz" target="_blank" rel="noopener">📘 Facebook</a></li>
-              <li><a href="https://twitter.com/pharmaveilledz" target="_blank" rel="noopener">🐦 Twitter / X</a></li>
-              <li><a href="https://t.me/pharmaveille_dz" target="_blank" rel="noopener">✈️ Telegram</a></li>
+              <li><a href="https://www.facebook.com/profile.php?id=61584995326062" target="_blank" rel="noopener">📘 Facebook</a></li>
             </ul>
           </div>
         </div>
@@ -73,8 +71,7 @@ export function Footer() {
             )}
           </span>
           <div className="footer-social">
-            <a href="https://facebook.com/pharmaveille.dz" target="_blank" rel="noopener" title="Facebook">📘</a>
-            <a href="https://twitter.com/pharmaveilledz" target="_blank" rel="noopener" title="Twitter">🐦</a>
+            <a href="https://www.facebook.com/profile.php?id=61584995326062" target="_blank" rel="noopener" title="Facebook">📘</a>
           </div>
         </div>
       </div>
