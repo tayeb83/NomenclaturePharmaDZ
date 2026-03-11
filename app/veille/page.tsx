@@ -2,7 +2,13 @@ import { getAllEnregistrements, getAvailableAnnees, getStatsByYear } from '@/lib
 import { VeilleClient } from './VeilleClient'
 import type { Metadata } from 'next'
 
-export const metadata: Metadata = { title: 'Veille réglementaire' }
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
+
+export const metadata: Metadata = {
+  title: 'Veille réglementaire',
+  description: 'Nouveaux médicaments enregistrés en Algérie — Suivi des mises à jour officielles de la nomenclature pharmaceutique MIPH.',
+  alternates: { canonical: `${APP_URL}/veille` },
+}
 export const dynamic = 'force-dynamic'
 
 export default async function VeillePage({ searchParams }: { searchParams: { annee?: string } }) {
