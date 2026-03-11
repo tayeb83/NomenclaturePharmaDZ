@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   alternates: { canonical: `${APP_URL}/medicaments` },
   openGraph: {
     title: 'Tous les médicaments enregistrés en Algérie | PharmaVeille DZ',
-    description: 'Nomenclature pharmaceutique algérienne complète — liste paginée, filtrable par type, statut et année.',
+    description: 'Nomenclature pharmaceutique algérienne complète — liste paginée avec filtres (type, statut, année), nouveautés de version et médicaments retirés par année.',
     url: `${APP_URL}/medicaments`,
     type: 'website',
   },
@@ -31,7 +31,7 @@ export default function MedicamentsPage() {
         </h1>
         <p style={{ color: '#64748b', fontSize: 16, maxWidth: 620, lineHeight: 1.6 }}>
           Nomenclature pharmaceutique officielle algérienne (MIPH). Liste complète des médicaments enregistrés,
-          filtrables par type, statut de fabrication et année.
+          filtrables par type, statut de fabrication, année, nouveautés de la version courante et médicaments retirés par année.
         </p>
       </div>
 

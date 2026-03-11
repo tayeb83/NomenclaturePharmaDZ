@@ -17,6 +17,8 @@ type Medicament = {
   annee: number | null
   date_init: string | null
   date_final: string | null
+  retrait_annee?: number | null
+  version_label?: string | null
 }
 
 type Pagination = {
@@ -28,14 +30,14 @@ type Pagination = {
   hasPrev: boolean
 }
 
+
+type ApiMeta = {
+  availableRemovedYears?: number[]
+}
 const TYPE_LABELS: Record<string, string> = {
   GE: 'Générique', 'Gé': 'Générique', I: 'Innovateur', RE: 'Référence', BIO: 'Biologique',
 }
 
-const STATUT_LABELS: Record<string, string> = {
-  F: '🇩🇿 Fabriqué en Algérie',
-  I: '🌍 Importé',
-}
 
 function TypeBadge({ type }: { type: string | null }) {
   if (!type) return null
@@ -75,34 +77,39 @@ export function MedicamentsClient() {
   const [pagination, setPagination] = useState<Pagination | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [mode, setMode] = useState<'all' | 'new' | 'removed'>('all')
   const [filterType, setFilterType] = useState('')
   const [filterStatut, setFilterStatut] = useState('')
   const [filterAnnee, setFilterAnnee] = useState('')
+  const [removedYear, setRemovedYear] = useState('')
+  const [meta, setMeta] = useState<ApiMeta>({})
 
   const fetchData = useCallback(async (p: number) => {
     setLoading(true)
     setError('')
     try {
-      const params = new URLSearchParams({ page: String(p), limit: '50' })
-      if (filterType) params.set('type_prod', filterType)
-      if (filterStatut) params.set('statut', filterStatut)
-      if (filterAnnee) params.set('annee', filterAnnee)
+      const params = new URLSearchParams({ page: String(p), limit: '50', mode })
+      if (mode !== 'removed' && filterType) params.set('type_prod', filterType)
+      if (mode !== 'removed' && filterStatut) params.set('statut', filterStatut)
+      if (mode !== 'removed' && filterAnnee) params.set('annee', filterAnnee)
+      if (mode === 'removed' && removedYear) params.set('removed_year', removedYear)
 
       const res = await fetch(`/api/medicaments?${params}`)
       if (!res.ok) throw new Error('Erreur serveur')
       const json = await res.json()
       setData(json.data || [])
       setPagination(json.pagination)
+      setMeta(json.meta || {})
     } catch {
       setError('Impossible de charger les médicaments. Veuillez réessayer.')
     } finally {
       setLoading(false)
     }
-  }, [filterType, filterStatut, filterAnnee])
+  }, [mode, filterType, filterStatut, filterAnnee, removedYear])
 
   useEffect(() => {
     setPage(1)
-  }, [filterType, filterStatut, filterAnnee])
+  }, [mode, filterType, filterStatut, filterAnnee, removedYear])
 
   useEffect(() => {
     fetchData(page)
@@ -127,6 +134,24 @@ export function MedicamentsClient() {
         alignItems: 'flex-end',
         boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
       }}>
+
+        <div>
+          <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 6, fontWeight: 600 }}>Vue</label>
+          <select
+            value={mode}
+            onChange={e => setMode(e.target.value as 'all' | 'new' | 'removed')}
+            style={{
+              background: '#f8fafc', border: '1px solid #e2e8f0',
+              color: '#1e293b', borderRadius: 8, padding: '8px 12px', fontSize: 14,
+            }}
+          >
+            <option value="all">Tous les médicaments</option>
+            <option value="new">Nouveaux médicaments (version en cours)</option>
+            <option value="removed">Médicaments retirés par année</option>
+          </select>
+        </div>
+
+        {mode !== 'removed' && (
         <div>
           <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 6, fontWeight: 600 }}>Type</label>
           <select
@@ -144,7 +169,9 @@ export function MedicamentsClient() {
             <option value="BIO">Biologique</option>
           </select>
         </div>
+        )}
 
+        {mode !== 'removed' && (
         <div>
           <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 6, fontWeight: 600 }}>Statut</label>
           <select
@@ -160,7 +187,9 @@ export function MedicamentsClient() {
             <option value="I">Importé</option>
           </select>
         </div>
+        )}
 
+        {mode !== 'removed' && (
         <div>
           <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 6, fontWeight: 600 }}>Année</label>
           <select
@@ -177,6 +206,26 @@ export function MedicamentsClient() {
             ))}
           </select>
         </div>
+        )}
+
+        {mode === 'removed' && (
+          <div>
+            <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 6, fontWeight: 600 }}>Année de retrait</label>
+            <select
+              value={removedYear}
+              onChange={e => setRemovedYear(e.target.value)}
+              style={{
+                background: '#f8fafc', border: '1px solid #e2e8f0',
+                color: '#1e293b', borderRadius: 8, padding: '8px 12px', fontSize: 14,
+              }}
+            >
+              <option value="">Toutes les années</option>
+              {(meta.availableRemovedYears || []).map(y => (
+                <option key={y} value={String(y)}>{y}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <button
           onClick={handleFilter}
@@ -189,9 +238,9 @@ export function MedicamentsClient() {
           Filtrer
         </button>
 
-        {(filterType || filterStatut || filterAnnee) && (
+        {(mode !== 'all' || filterType || filterStatut || filterAnnee || removedYear) && (
           <button
-            onClick={() => { setFilterType(''); setFilterStatut(''); setFilterAnnee('') }}
+            onClick={() => { setMode('all'); setFilterType(''); setFilterStatut(''); setFilterAnnee(''); setRemovedYear('') }}
             style={{
               background: 'transparent', border: '1px solid #e2e8f0',
               color: '#64748b', borderRadius: 8, padding: '8px 14px',
@@ -206,7 +255,7 @@ export function MedicamentsClient() {
       {/* Compteur */}
       {pagination && (
         <div style={{ marginBottom: 16, color: '#64748b', fontSize: 14 }}>
-          {pagination.total.toLocaleString('fr-DZ')} médicaments enregistrés
+          {pagination.total.toLocaleString('fr-DZ')} {mode === 'removed' ? 'médicaments retirés' : mode === 'new' ? 'nouveaux médicaments' : 'médicaments enregistrés'}
           {' — '}page {pagination.page} / {pagination.totalPages}
         </div>
       )}
@@ -229,8 +278,8 @@ export function MedicamentsClient() {
         <div style={{ display: 'grid', gap: 10 }}>
           {data.map((med) => (
             <Link
-              key={med.id}
-              href={`/medicament/enregistrement/${med.id}`}
+              key={`${mode}-${med.id}-${med.version_label || ''}`}
+              href={mode === 'removed' ? '/diff' : `/medicament/enregistrement/${med.id}`}
               style={{
                 display: 'block', textDecoration: 'none', color: 'inherit',
                 background: '#fff',
@@ -262,8 +311,18 @@ export function MedicamentsClient() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', flexShrink: 0 }}>
-                  <TypeBadge type={med.type_prod} />
-                  {med.statut === 'F' && (
+                  {mode !== 'removed' && <TypeBadge type={med.type_prod} />}
+                  {mode === 'new' && (
+                    <span style={{ fontSize: 11, color: '#166534', background: '#dcfce7', border: '1px solid #86efac', padding: '2px 8px', borderRadius: 6, fontWeight: 700 }}>
+                      Nouveau
+                    </span>
+                  )}
+                  {mode === 'removed' && (
+                    <span style={{ fontSize: 11, color: '#991b1b', background: '#fee2e2', border: '1px solid #fecaca', padding: '2px 8px', borderRadius: 6, fontWeight: 700 }}>
+                      Retiré
+                    </span>
+                  )}
+                  {mode !== 'removed' && med.statut === 'F' && (
                     <span style={{ fontSize: 11, color: '#0369a1', background: '#e0f2fe', border: '1px solid #bae6fd', padding: '2px 8px', borderRadius: 6, fontWeight: 600 }}>
                       🇩🇿 Local
                     </span>
@@ -273,7 +332,7 @@ export function MedicamentsClient() {
               {med.labo && (
                 <div style={{ marginTop: 6, fontSize: 12, color: '#94a3b8' }}>
                   {med.labo}{med.pays && ` · ${med.pays}`}
-                  {med.annee && ` · ${med.annee}`}
+                  {mode === 'removed' ? (med.retrait_annee ? ` · Retiré en ${med.retrait_annee}` : '') : (med.annee ? ` · ${med.annee}` : '')}
                 </div>
               )}
             </Link>
