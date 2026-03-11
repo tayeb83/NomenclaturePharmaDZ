@@ -44,12 +44,6 @@ export const metadata: Metadata = {
     locale: 'fr_DZ',
     type: 'website',
   },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'PharmaVeille DZ — Médicaments en Algérie',
-    description: 'Nomenclature pharmaceutique algérienne officielle MIPH — recherche, alertes, génériques.',
-    site: '@pharmaveilledz',
-  },
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || '',
   },
