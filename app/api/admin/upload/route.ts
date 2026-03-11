@@ -21,6 +21,20 @@ function toSqlNull(val: string | null): string | null {
 }
 
 async function ensureArchiveColumns(client: any) {
+  // Élargir les colonnes VARCHAR contraintes pour éviter "value too long for type character varying(N)"
+  // Ces ALTER sont idempotents : PostgreSQL ignore si le type est déjà TEXT
+  for (const table of ['enregistrements', 'retraits', 'non_renouveles']) {
+    await client.query(`
+      ALTER TABLE ${table}
+        ALTER COLUMN statut    TYPE TEXT,
+        ALTER COLUMN code      TYPE TEXT,
+        ALTER COLUMN liste     TYPE TEXT,
+        ALTER COLUMN prescription TYPE TEXT,
+        ALTER COLUMN pays      TYPE TEXT,
+        ALTER COLUMN type_prod TYPE TEXT
+    `)
+  }
+
   // Ajouter les colonnes d'archive si elles n'existent pas encore
   await client.query(`
     ALTER TABLE nomenclature_versions

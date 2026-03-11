@@ -18,41 +18,41 @@ ALTER TABLE enregistrements
   DROP CONSTRAINT IF EXISTS enregistrements_n_enreg_key;
 
 ALTER TABLE enregistrements
-  ALTER COLUMN n_enreg       TYPE TEXT,
-  ALTER COLUMN code          TYPE VARCHAR(15),
-  ALTER COLUMN dosage        TYPE TEXT,
+  ALTER COLUMN n_enreg         TYPE TEXT,
+  ALTER COLUMN code            TYPE TEXT,
+  ALTER COLUMN dosage          TYPE TEXT,
   ALTER COLUMN conditionnement TYPE TEXT,
-  ALTER COLUMN liste         TYPE VARCHAR(20),
-  ALTER COLUMN prescription  TYPE VARCHAR(20),
-  ALTER COLUMN obs           TYPE TEXT,
-  ALTER COLUMN pays          TYPE VARCHAR(50),
-  ALTER COLUMN type_prod     TYPE VARCHAR(20),
-  ALTER COLUMN statut        TYPE VARCHAR(10),
-  ALTER COLUMN stabilite     TYPE TEXT;
+  ALTER COLUMN liste           TYPE TEXT,
+  ALTER COLUMN prescription    TYPE TEXT,
+  ALTER COLUMN obs             TYPE TEXT,
+  ALTER COLUMN pays            TYPE TEXT,
+  ALTER COLUMN type_prod       TYPE TEXT,
+  ALTER COLUMN statut          TYPE TEXT,
+  ALTER COLUMN stabilite       TYPE TEXT;
 
 -- ─── TABLE retraits ──────────────────────────────────────────
 ALTER TABLE retraits
-  ALTER COLUMN n_enreg       TYPE TEXT,
-  ALTER COLUMN code          TYPE VARCHAR(15),
-  ALTER COLUMN dosage        TYPE TEXT,
+  ALTER COLUMN n_enreg         TYPE TEXT,
+  ALTER COLUMN code            TYPE TEXT,
+  ALTER COLUMN dosage          TYPE TEXT,
   ALTER COLUMN conditionnement TYPE TEXT,
-  ALTER COLUMN liste         TYPE VARCHAR(20),
-  ALTER COLUMN prescription  TYPE TEXT,
-  ALTER COLUMN pays          TYPE VARCHAR(50),
-  ALTER COLUMN type_prod     TYPE VARCHAR(20),
-  ALTER COLUMN statut        TYPE VARCHAR(10);
+  ALTER COLUMN liste           TYPE TEXT,
+  ALTER COLUMN prescription    TYPE TEXT,
+  ALTER COLUMN pays            TYPE TEXT,
+  ALTER COLUMN type_prod       TYPE TEXT,
+  ALTER COLUMN statut          TYPE TEXT;
 
 -- ─── TABLE non_renouveles ────────────────────────────────────
 ALTER TABLE non_renouveles
-  ALTER COLUMN n_enreg       TYPE TEXT,
-  ALTER COLUMN code          TYPE VARCHAR(15),
-  ALTER COLUMN dosage        TYPE TEXT,
+  ALTER COLUMN n_enreg         TYPE TEXT,
+  ALTER COLUMN code            TYPE TEXT,
+  ALTER COLUMN dosage          TYPE TEXT,
   ALTER COLUMN conditionnement TYPE TEXT,
-  ALTER COLUMN liste         TYPE VARCHAR(20),
-  ALTER COLUMN obs           TYPE TEXT,
-  ALTER COLUMN pays          TYPE VARCHAR(50),
-  ALTER COLUMN type_prod     TYPE VARCHAR(20),
-  ALTER COLUMN statut        TYPE VARCHAR(10);
+  ALTER COLUMN liste           TYPE TEXT,
+  ALTER COLUMN obs             TYPE TEXT,
+  ALTER COLUMN pays            TYPE TEXT,
+  ALTER COLUMN type_prod       TYPE TEXT,
+  ALTER COLUMN statut          TYPE TEXT;
 
 -- Nettoyer les valeurs avec espaces parasites (ex: 'RE ')
 UPDATE enregistrements SET type_prod = TRIM(type_prod) WHERE type_prod != TRIM(type_prod);
