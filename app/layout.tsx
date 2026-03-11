@@ -29,6 +29,7 @@ export const metadata: Metadata = {
   ],
   metadataBase: new URL(APP_URL),
   manifest: '/manifest.json',
+  alternates: { canonical: APP_URL },
   robots: { index: true, follow: true },
   appleWebApp: {
     capable: true,

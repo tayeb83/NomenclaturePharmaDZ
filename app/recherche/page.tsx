@@ -3,9 +3,12 @@ import type { SearchResult } from '@/lib/db'
 import { SearchClient } from './SearchClient'
 import type { Metadata } from 'next'
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
+
 export const metadata: Metadata = {
   title: 'Recherche de médicaments',
   description: 'Recherchez par DCI, nom de marque, laboratoire ou forme. Nomenclature pharmaceutique algérienne officielle MIPH.',
+  alternates: { canonical: `${APP_URL}/recherche` },
 }
 
 type AdvancedSearchCondition = {
