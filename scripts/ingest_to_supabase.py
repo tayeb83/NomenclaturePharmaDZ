@@ -19,7 +19,7 @@ import psycopg2
 from psycopg2 import errors
 from psycopg2.extras import execute_values
 
-DATABASE_URL = os.environ.g:wqet("DATABASE_URL", "")
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
 DEFAULT_DATA_DIR = Path(__file__).parent.parent / "data"
 
 
