@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
 
   try {
     if (mode === 'removed') {
-      const removedTableExists = await hasTable('version_removed_drugs')
+      const removedTableExists = await hasTable('retraits')
       if (!removedTableExists) {
         return NextResponse.json({
           data: [],
@@ -106,18 +106,12 @@ export async function GET(request: NextRequest) {
         })
       }
 
-      const hasVersionsTable = await hasTable('nomenclature_versions')
-      const yearExpr = hasVersionsTable
-        ? `COALESCE(EXTRACT(YEAR FROM nv.reference_date)::INT, NULLIF(SUBSTRING(vrd.version_label FROM '(20\\d{2})'), '')::INT)`
-        : `NULLIF(SUBSTRING(vrd.version_label FROM '(20\\d{2})'), '')::INT`
-      const versionJoin = hasVersionsTable
-        ? 'LEFT JOIN nomenclature_versions nv ON nv.version_label = vrd.version_label'
-        : ''
+      const yearExpr = `EXTRACT(YEAR FROM r.date_retrait)::INT`
 
       const yearsRows = await query<{ year: number | null }>(`
         SELECT DISTINCT ${yearExpr} AS year
-        FROM version_removed_drugs vrd
-        ${versionJoin}
+        FROM retraits r
+        WHERE r.date_retrait IS NOT NULL
         ORDER BY year DESC NULLS LAST
       `)
       const availableRemovedYears = yearsRows
@@ -141,18 +135,16 @@ export async function GET(request: NextRequest) {
       const [countRow, rows] = await Promise.all([
         queryOne<{ total: string }>(`
           SELECT COUNT(*) AS total
-          FROM version_removed_drugs vrd
-          ${versionJoin}
+          FROM retraits r
           ${removedWhere}
         `, removedParams),
         query<any>(`
-          SELECT vrd.id, vrd.n_enreg, vrd.dci, vrd.nom_marque, vrd.forme, vrd.dosage, vrd.labo, vrd.pays, vrd.type_prod, vrd.statut,
+          SELECT r.id, r.n_enreg, r.dci, r.nom_marque, r.forme, r.dosage, r.labo, r.pays, r.type_prod, r.statut,
                  ${yearExpr} AS retrait_annee,
-                 vrd.version_label
-          FROM version_removed_drugs vrd
-          ${versionJoin}
+                 NULL::TEXT AS version_label
+          FROM retraits r
           ${removedWhere}
-          ORDER BY retrait_annee DESC NULLS LAST, vrd.nom_marque ASC, vrd.dci ASC
+          ORDER BY retrait_annee DESC NULLS LAST, r.nom_marque ASC, r.dci ASC
           LIMIT $${removedIdx++} OFFSET $${removedIdx++}
         `, [...removedParams, limit, offset]),
       ])
