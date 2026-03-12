@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next'
 import { getAllMedicamentIds } from '@/lib/queries'
+import { seoIntentPages } from '@/lib/seo-intent-pages'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
 
@@ -56,6 +57,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'yearly',
       priority: 0.3,
     },
+    ...seoIntentPages.map(page => ({
+      url: `${APP_URL}/guides/${page.slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.65,
+    })),
   ]
 
   let medicamentPages: MetadataRoute.Sitemap = []
