@@ -39,7 +39,7 @@ export function AlertesClient({
 
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 32 }}>
             <div>
-              <div className="section-title">
+              <div id="retraits" className="section-title">
                 🚫 {t(`Médicaments retirés (${retraits.length} affichés)`, `الأدوية المسحوبة (${retraits.length} معروض)`)}
               </div>
               <div className="section-sub">{t('Dernier retrait en date', 'آخر انسحاب')}</div>
@@ -48,7 +48,7 @@ export function AlertesClient({
               ))}
 
               <div style={{ marginTop: 36 }}>
-                <div className="section-title">
+                <div id="non-renouveles" className="section-title">
                   ⚠️ {t(`AMM non renouvelées (${nonRenouveles.length} affichés)`, `AMM غير مجددة (${nonRenouveles.length} معروض)`)}
                 </div>
                 <div className="section-sub">
