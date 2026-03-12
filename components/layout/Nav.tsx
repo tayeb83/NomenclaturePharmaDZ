@@ -15,7 +15,7 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
     { href: '/', label: lang === 'ar' ? 'الرئيسية' : 'Accueil' },
     { href: '/recherche', label: lang === 'ar' ? 'البحث' : 'Recherche' },
     { href: '/medicaments', label: lang === 'ar' ? '💊 كل الأدوية' : '💊 Médicaments' },
-    ...(isAdmin ? [{ href: '/diff', label: lang === 'ar' ? '🔄 الفروقات' : '🔄 Diff' }] : []),
+    { href: '/diff', label: lang === 'ar' ? '🆕 الجديد' : '🆕 Nouveautés' },
     { href: '/alertes', label: lang === 'ar' ? '🚨 التنبيهات' : '🚨 Alertes', badge: true },
     { href: '/substitution', label: lang === 'ar' ? 'الاستبدال' : 'Substitution' },
     { href: '/api-docs', label: lang === 'ar' ? '🔗 واجهة API' : '🔗 API' },
