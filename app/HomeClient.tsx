@@ -128,7 +128,7 @@ export function HomeClient({
 
       <div className="container">
         <div className="stats-grid">
-          <div className="stat-card blue">
+          <Link href="/medicaments" className="stat-card blue stat-card-link">
             <div className="stat-icon">✅</div>
             <div className="stat-value">{stats?.total_enregistrements?.toLocaleString('fr') || '—'}</div>
             <div className="stat-label">{t('Enregistrements actifs', 'التسجيلات النشطة')}</div>
@@ -138,25 +138,29 @@ export function HomeClient({
                 <> · {t('MàJ', 'تحديث')} <strong style={{ color: '#0284c7' }}>{formattedDate}</strong></>
               )}
             </div>
-          </div>
-          <div className="stat-card green">
+            <div className="stat-cta">{t('Voir les médicaments →', 'عرض الأدوية →')}</div>
+          </Link>
+          <Link href="/diff" className="stat-card green stat-card-link">
             <div className="stat-icon">🆕</div>
             <div className="stat-value">{stats?.total_nouveautes != null ? stats.total_nouveautes.toLocaleString('fr') : '—'}</div>
             <div className="stat-label">{t('Nouveautés', 'جديد')}</div>
             <div className="stat-sub">{t('vs version précédente', 'مقارنة بالإصدار السابق')}</div>
-          </div>
-          <div className="stat-card red">
+            <div className="stat-cta">{t('Voir les nouveautés →', 'عرض الجديد →')}</div>
+          </Link>
+          <Link href="/alertes#retraits" className="stat-card red stat-card-link">
             <div className="stat-icon">🚫</div>
             <div className="stat-value">{stats?.total_retraits?.toLocaleString('fr') || '—'}</div>
             <div className="stat-label">{t('Médicaments retirés', 'أدوية مسحوبة')}</div>
             <div className="stat-sub">{t('Source MIPH', 'المصدر: MIPH')}</div>
-          </div>
-          <div className="stat-card amber">
+            <div className="stat-cta">{t('Voir les retraits →', 'عرض المسحوبات →')}</div>
+          </Link>
+          <Link href="/alertes#non-renouveles" className="stat-card amber stat-card-link">
             <div className="stat-icon">⚠️</div>
             <div className="stat-value">{stats?.total_non_renouveles?.toLocaleString('fr') || '—'}</div>
             <div className="stat-label">{t('AMM non renouvelées', 'AMM غير مجددة')}</div>
             <div className="stat-sub">{t('Source MIPH', 'المصدر: MIPH')}</div>
-          </div>
+            <div className="stat-cta">{t('Voir les non renouvelées →', 'عرض غير المجددة →')}</div>
+          </Link>
         </div>
       </div>
 
