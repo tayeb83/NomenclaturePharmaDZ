@@ -182,6 +182,92 @@ function detectSheet(workbook: XLSX.WorkBook, keyword: string): string | null {
 
 type RawRow = (string | number | Date | boolean | null | undefined)[]
 
+type HeaderMap = {
+  n_enreg: number
+  code: number
+  dci: number
+  nom_marque: number
+  forme: number
+  dosage: number
+  conditionnement: number
+  liste: number
+  prescription: number
+  obs: number
+  labo: number
+  pays: number
+  date_init: number
+  date_final: number
+  type_prod: number
+  statut: number
+  stabilite: number
+  date_retrait: number
+  motif_retrait: number
+}
+
+const DEFAULT_COLS: HeaderMap = {
+  n_enreg: 1,
+  code: 2,
+  dci: 3,
+  nom_marque: 4,
+  forme: 5,
+  dosage: 6,
+  conditionnement: 7,
+  liste: 8,
+  prescription: 9,
+  obs: 10,
+  labo: 13,
+  pays: 14,
+  date_init: 15,
+  date_final: 16,
+  type_prod: 17,
+  statut: 18,
+  stabilite: 19,
+  date_retrait: 18,
+  motif_retrait: 19,
+}
+
+function normalizeHeader(val: unknown): string {
+  const text = String(val ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+  return text.replace(/[^A-Z0-9]+/g, ' ').trim()
+}
+
+function buildHeaderMap(headerRow: RawRow | undefined): HeaderMap {
+  if (!headerRow) return DEFAULT_COLS
+
+  const normalized = headerRow.map(normalizeHeader)
+  const findIndex = (...needles: string[]) => {
+    const idx = normalized.findIndex(col => needles.every(n => col.includes(n)))
+    return idx >= 0 ? idx : null
+  }
+
+  const map: HeaderMap = { ...DEFAULT_COLS }
+
+  map.n_enreg = findIndex('ENREGISTREMENT') ?? map.n_enreg
+  map.code = findIndex('CODE') ?? map.code
+  map.dci = findIndex('DENOMINATION', 'COMMUNE', 'INTERNATIONALE') ?? map.dci
+  map.nom_marque = findIndex('NOM', 'MARQUE') ?? map.nom_marque
+  map.forme = findIndex('FORME') ?? map.forme
+  map.dosage = findIndex('DOSAGE') ?? map.dosage
+  map.conditionnement = findIndex('CONDITIONNEMENT') ?? map.conditionnement
+  map.liste = findIndex('LISTE') ?? map.liste
+  map.prescription = findIndex('P1') ?? map.prescription
+  map.obs = findIndex('OBS') ?? map.obs
+  map.labo = findIndex('LABORATOIRES', 'DETENTEUR', 'DECISION', 'ENREGISTREMENT') ?? map.labo
+  map.pays = findIndex('PAYS', 'LABORATOIRE', 'DETENTEUR', 'DECISION', 'ENREGISTREMENT') ?? map.pays
+  map.date_init = findIndex('DATE', 'ENREGISTREMENT', 'INITIAL') ?? map.date_init
+  map.date_final = findIndex('DATE', 'ENREGISTREMENT', 'FINAL') ?? map.date_final
+  map.type_prod = findIndex('TYPE') ?? map.type_prod
+  map.statut = findIndex('STATUT') ?? map.statut
+  map.stabilite = findIndex('DUREE', 'STABILITE') ?? map.stabilite
+  map.date_retrait = findIndex('DATE', 'RETRAIT') ?? map.date_retrait
+  map.motif_retrait = findIndex('MOTIF', 'RETRAIT') ?? map.motif_retrait
+
+  return map
+}
+
 function readSheetRaw(workbook: XLSX.WorkBook, sheetName: string): RawRow[] {
   const ws = workbook.Sheets[sheetName]
   return XLSX.utils.sheet_to_json<RawRow>(ws, {
@@ -251,35 +337,34 @@ export function parseEnregistrements(workbook: XLSX.WorkBook): ParsedEnregistrem
   const rawData = readSheetRaw(workbook, sheetName)
   const headerIdx = findHeaderRow(rawData)
   if (headerIdx === -1) throw new Error('En-tête (colonne "N° Enregistrement") introuvable dans la feuille Nomenclature')
+  const cols = buildHeaderMap(rawData[headerIdx])
 
   const dataRows = rawData.slice(headerIdx + 1)
   const result: ParsedEnregistrement[] = []
 
   for (const row of dataRows) {
     // Ignorer les lignes vides (cols 1 et 3 doivent être remplies)
-    if (!row[1] && !row[3]) continue
-    if (!cleanStr(row[1]) && !cleanStr(row[3])) continue
+    if (!row[cols.n_enreg] && !row[cols.dci]) continue
+    if (!cleanStr(row[cols.n_enreg]) && !cleanStr(row[cols.dci])) continue
 
     result.push({
-      n_enreg:        cleanNEnreg(row[1]),
-      code:           cleanStr(row[2]),
-      dci:            cleanStr(row[3]),
-      nom_marque:     cleanStr(row[4]),
-      forme:          cleanStr(row[5]),
-      dosage:         cleanStr(row[6]),
-      conditionnement:cleanStr(row[7]),
-      liste:          cleanStr(row[8]),
-      prescription:   cleanStr(row[9]),
-      obs:            cleanStr(row[10] ?? null),
-      // col[11] ignoré (vide)
-      // col[12] ignoré (colonne vide supplémentaire)
-      labo:           cleanStr(row[13] ?? null),
-      pays:           cleanStr(row[14] ?? null),
-      date_init:      cleanDate(row[15] ?? null),
-      date_final:     cleanDate(row[16] ?? null),
-      type_prod:      cleanStr(row[17] ?? null),
-      statut:         cleanStr(row[18] ?? null),
-      stabilite:      cleanStr(row[19] ?? null),
+      n_enreg:        cleanNEnreg(row[cols.n_enreg]),
+      code:           cleanStr(row[cols.code]),
+      dci:            cleanStr(row[cols.dci]),
+      nom_marque:     cleanStr(row[cols.nom_marque]),
+      forme:          cleanStr(row[cols.forme]),
+      dosage:         cleanStr(row[cols.dosage]),
+      conditionnement:cleanStr(row[cols.conditionnement]),
+      liste:          cleanStr(row[cols.liste]),
+      prescription:   cleanStr(row[cols.prescription]),
+      obs:            cleanStr(row[cols.obs] ?? null),
+      labo:           cleanStr(row[cols.labo] ?? null),
+      pays:           cleanStr(row[cols.pays] ?? null),
+      date_init:      cleanDate(row[cols.date_init] ?? null),
+      date_final:     cleanDate(row[cols.date_final] ?? null),
+      type_prod:      cleanStr(row[cols.type_prod] ?? null),
+      statut:         cleanStr(row[cols.statut] ?? null),
+      stabilite:      cleanStr(row[cols.stabilite] ?? null),
     })
   }
 
@@ -293,34 +378,32 @@ export function parseRetraits(workbook: XLSX.WorkBook): ParsedRetrait[] {
   const rawData = readSheetRaw(workbook, sheetName)
   const headerIdx = findHeaderRow(rawData)
   if (headerIdx === -1) return []
+  const cols = buildHeaderMap(rawData[headerIdx])
 
   const dataRows = rawData.slice(headerIdx + 1)
   const result: ParsedRetrait[] = []
 
   for (const row of dataRows) {
-    if (!row[1] && !row[3]) continue
-    if (!cleanStr(row[1]) && !cleanStr(row[3])) continue
+    if (!row[cols.n_enreg] && !row[cols.dci]) continue
+    if (!cleanStr(row[cols.n_enreg]) && !cleanStr(row[cols.dci])) continue
 
     result.push({
-      n_enreg:        cleanNEnreg(row[1]),
-      code:           cleanStr(row[2]),
-      dci:            cleanStr(row[3]),
-      nom_marque:     cleanStr(row[4]),
-      forme:          cleanStr(row[5]),
-      dosage:         cleanStr(row[6]),
-      conditionnement:cleanStr(row[7]),
-      liste:          cleanStr(row[8]),
-      prescription:   cleanStr(row[9]),
-      // col[10] ignoré
-      // col[11] ignoré (vide)
-      // col[12] ignoré (colonne vide supplémentaire)
-      labo:           cleanStr(row[13] ?? null),
-      pays:           cleanStr(row[14] ?? null),
-      date_init:      cleanDate(row[15] ?? null),
-      type_prod:      cleanStr(row[16] ?? null),
-      statut:         cleanStr(row[17] ?? null),
-      date_retrait:   cleanDate(row[18] ?? null),
-      motif_retrait:  cleanStr(row[19] ?? null),
+      n_enreg:        cleanNEnreg(row[cols.n_enreg]),
+      code:           cleanStr(row[cols.code]),
+      dci:            cleanStr(row[cols.dci]),
+      nom_marque:     cleanStr(row[cols.nom_marque]),
+      forme:          cleanStr(row[cols.forme]),
+      dosage:         cleanStr(row[cols.dosage]),
+      conditionnement:cleanStr(row[cols.conditionnement]),
+      liste:          cleanStr(row[cols.liste]),
+      prescription:   cleanStr(row[cols.prescription]),
+      labo:           cleanStr(row[cols.labo] ?? null),
+      pays:           cleanStr(row[cols.pays] ?? null),
+      date_init:      cleanDate(row[cols.date_init] ?? null),
+      type_prod:      cleanStr(row[cols.type_prod] ?? null),
+      statut:         cleanStr(row[cols.statut] ?? null),
+      date_retrait:   cleanDate(row[cols.date_retrait] ?? null),
+      motif_retrait:  cleanStr(row[cols.motif_retrait] ?? null),
     })
   }
 
@@ -334,33 +417,31 @@ export function parseNonRenouveles(workbook: XLSX.WorkBook): ParsedNonRenouvele[
   const rawData = readSheetRaw(workbook, sheetName)
   const headerIdx = findHeaderRow(rawData)
   if (headerIdx === -1) return []
+  const cols = buildHeaderMap(rawData[headerIdx])
 
   const dataRows = rawData.slice(headerIdx + 1)
   const result: ParsedNonRenouvele[] = []
 
   for (const row of dataRows) {
-    if (!row[1] && !row[3]) continue
-    if (!cleanStr(row[1]) && !cleanStr(row[3])) continue
+    if (!row[cols.n_enreg] && !row[cols.dci]) continue
+    if (!cleanStr(row[cols.n_enreg]) && !cleanStr(row[cols.dci])) continue
 
     result.push({
-      n_enreg:        cleanNEnreg(row[1]),
-      code:           cleanStr(row[2]),
-      dci:            cleanStr(row[3]),
-      nom_marque:     cleanStr(row[4]),
-      forme:          cleanStr(row[5]),
-      dosage:         cleanStr(row[6]),
-      conditionnement:cleanStr(row[7]),
-      liste:          cleanStr(row[8]),
-      prescription:   cleanStr(row[9]),
-      // col[10] ignoré
-      // col[11] ignoré (vide)
-      // col[12] ignoré (colonne vide supplémentaire)
-      labo:           cleanStr(row[13] ?? null),
-      pays:           cleanStr(row[14] ?? null),
-      date_init:      cleanDate(row[15] ?? null),
-      date_final:     cleanDate(row[16] ?? null),
-      type_prod:      cleanStr(row[17] ?? null),
-      statut:         cleanStr(row[18] ?? null),
+      n_enreg:        cleanNEnreg(row[cols.n_enreg]),
+      code:           cleanStr(row[cols.code]),
+      dci:            cleanStr(row[cols.dci]),
+      nom_marque:     cleanStr(row[cols.nom_marque]),
+      forme:          cleanStr(row[cols.forme]),
+      dosage:         cleanStr(row[cols.dosage]),
+      conditionnement:cleanStr(row[cols.conditionnement]),
+      liste:          cleanStr(row[cols.liste]),
+      prescription:   cleanStr(row[cols.prescription]),
+      labo:           cleanStr(row[cols.labo] ?? null),
+      pays:           cleanStr(row[cols.pays] ?? null),
+      date_init:      cleanDate(row[cols.date_init] ?? null),
+      date_final:     cleanDate(row[cols.date_final] ?? null),
+      type_prod:      cleanStr(row[cols.type_prod] ?? null),
+      statut:         cleanStr(row[cols.statut] ?? null),
     })
   }
 
