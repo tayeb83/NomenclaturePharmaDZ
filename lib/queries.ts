@@ -45,6 +45,35 @@ async function hasColumn(tableName: string, columnName: string): Promise<boolean
   return exists
 }
 
+export type SearchClickEventInput = {
+  search_query: string
+  scope: string
+  result_source: SearchResult['source']
+  result_id: number
+  result_name: string
+  result_dci: string
+  result_labo?: string | null
+}
+
+export type SearchClickStat = {
+  day: string
+  total_clicks: number
+  unique_queries: number
+}
+
+export type TopSearchClick = {
+  search_query: string
+  clicks: number
+}
+
+export type TopResultClick = {
+  result_source: SearchResult['source']
+  result_id: number
+  result_name: string
+  result_dci: string
+  clicks: number
+}
+
 // ─── STATS ────────────────────────────────────────────────────
 export async function getStats(): Promise<Stats> {
   // 1. Essayer la vue v_stats en premier (chemin rapide)
@@ -210,6 +239,74 @@ export async function searchMedicaments(
   `, [trimmedQuery, searchPattern, labo, laboPattern, substance, substancePattern, limit, ...advancedClause.params])
 
   return results
+}
+
+// ─── ANALYTICS CLICS RECHERCHE ───────────────────────────────
+export async function recordSearchClick(event: SearchClickEventInput) {
+  if (!await hasTable('search_click_events')) return
+
+  await query(`
+    INSERT INTO search_click_events (
+      search_query, scope, result_source, result_id, result_name, result_dci, result_labo
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+  `, [
+    event.search_query,
+    event.scope,
+    event.result_source,
+    event.result_id,
+    event.result_name,
+    event.result_dci,
+    event.result_labo ?? null,
+  ])
+}
+
+export async function getSearchClickStats(days: number = 30): Promise<{
+  daily: SearchClickStat[]
+  topQueries: TopSearchClick[]
+  topResults: TopResultClick[]
+}> {
+  if (!await hasTable('search_click_events')) {
+    return { daily: [], topQueries: [], topResults: [] }
+  }
+
+  const clampedDays = Math.min(Math.max(days, 1), 365)
+  const intervalExpr = `${clampedDays} days`
+
+  const [daily, topQueries, topResults] = await Promise.all([
+    query<SearchClickStat>(`
+      SELECT
+        DATE_TRUNC('day', created_at)::DATE::TEXT AS day,
+        COUNT(*)::INT AS total_clicks,
+        COUNT(DISTINCT search_query)::INT AS unique_queries
+      FROM search_click_events
+      WHERE created_at >= NOW() - $1::INTERVAL
+      GROUP BY DATE_TRUNC('day', created_at)
+      ORDER BY day DESC
+    `, [intervalExpr]),
+    query<TopSearchClick>(`
+      SELECT search_query, COUNT(*)::INT AS clicks
+      FROM search_click_events
+      WHERE created_at >= NOW() - $1::INTERVAL
+      GROUP BY search_query
+      ORDER BY clicks DESC, search_query ASC
+      LIMIT 20
+    `, [intervalExpr]),
+    query<TopResultClick>(`
+      SELECT
+        result_source,
+        result_id,
+        result_name,
+        result_dci,
+        COUNT(*)::INT AS clicks
+      FROM search_click_events
+      WHERE created_at >= NOW() - $1::INTERVAL
+      GROUP BY result_source, result_id, result_name, result_dci
+      ORDER BY clicks DESC, result_name ASC
+      LIMIT 20
+    `, [intervalExpr]),
+  ])
+
+  return { daily, topQueries, topResults }
 }
 
 type AdvancedSearchCondition = {

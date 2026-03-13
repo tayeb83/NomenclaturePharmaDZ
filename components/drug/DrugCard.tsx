@@ -34,7 +34,15 @@ const STATUT_LABELS: Record<string, { fr: string; ar: string }> = {
 }
 
 
-export function DrugCard({ drug, type }: { drug: SearchResult; type: string }) {
+export function DrugCard({
+  drug,
+  type,
+  onOpen,
+}: {
+  drug: SearchResult
+  type: string
+  onOpen?: () => void
+}) {
   const isRetrait = type === 'retrait'
   const isNonRenouv = type === 'non_renouvele'
   const { lang } = useLanguage()
@@ -44,6 +52,7 @@ export function DrugCard({ drug, type }: { drug: SearchResult; type: string }) {
     <Link
       href={href}
       style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}
+      onClick={onOpen}
     >
     <div className={`drug-card ${isRetrait ? 'retrait' : isNonRenouv ? 'non-renouvele' : 'enregistrement'}`} style={{ cursor: 'pointer' }}>
       <div className="drug-card-top">
