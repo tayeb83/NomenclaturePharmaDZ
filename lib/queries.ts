@@ -1157,6 +1157,127 @@ export async function getLaboProducts(laboName: string, limit = 50, offset = 0) 
   `, [laboName, limit, offset])
 }
 
+// ─── COMPARATEUR MARCHÉ ────────────────────────────────────────
+
+export type MarketLocalImporte = {
+  local: number
+  importe: number
+  inconnu: number
+}
+
+export type MarketTypeBreakdown = {
+  type_prod: string
+  nb: number
+}
+
+export type MarketTopLabo = {
+  labo: string
+  nb: number
+  local: number
+  importe: number
+}
+
+export type MarketTopDci = {
+  dci: string
+  nb_marques: number
+  nb_enreg: number
+}
+
+export type MarketEvolutionAnnee = {
+  annee: number
+  nb: number
+  local: number
+  importe: number
+}
+
+export type MarketComparatorData = {
+  localImporte: MarketLocalImporte
+  typeBreakdown: MarketTypeBreakdown[]
+  topLabos: MarketTopLabo[]
+  topDciConcurrence: MarketTopDci[]
+  evolutionAnnuelle: MarketEvolutionAnnee[]
+}
+
+export async function getMarketComparatorData(): Promise<MarketComparatorData> {
+  const [localImporteRow, typeRows, laboRows, dciRows, evolutionRows] = await Promise.all([
+    queryOne<{ local: string; importe: string; inconnu: string }>(`
+      SELECT
+        SUM(CASE WHEN statut = 'F' THEN 1 ELSE 0 END)::TEXT AS local,
+        SUM(CASE WHEN statut IS NOT NULL AND statut != 'F' THEN 1 ELSE 0 END)::TEXT AS importe,
+        SUM(CASE WHEN statut IS NULL OR statut = '' THEN 1 ELSE 0 END)::TEXT AS inconnu
+      FROM enregistrements
+    `),
+    query<{ type_prod: string; nb: string }>(`
+      SELECT type_prod, COUNT(*)::TEXT AS nb
+      FROM enregistrements
+      WHERE type_prod IS NOT NULL AND type_prod != ''
+      GROUP BY type_prod
+      ORDER BY COUNT(*) DESC
+    `),
+    query<{ labo: string; nb: string; local: string; importe: string }>(`
+      SELECT
+        labo,
+        COUNT(*)::TEXT AS nb,
+        SUM(CASE WHEN statut = 'F' THEN 1 ELSE 0 END)::TEXT AS local,
+        SUM(CASE WHEN statut IS NOT NULL AND statut != 'F' THEN 1 ELSE 0 END)::TEXT AS importe
+      FROM enregistrements
+      WHERE labo IS NOT NULL AND labo != ''
+      GROUP BY labo
+      ORDER BY COUNT(*) DESC
+      LIMIT 15
+    `),
+    query<{ dci: string; nb_marques: string; nb_enreg: string }>(`
+      SELECT
+        dci,
+        COUNT(DISTINCT nom_marque)::TEXT AS nb_marques,
+        COUNT(*)::TEXT AS nb_enreg
+      FROM enregistrements
+      WHERE dci IS NOT NULL AND dci != ''
+      GROUP BY dci
+      HAVING COUNT(DISTINCT nom_marque) > 1
+      ORDER BY COUNT(DISTINCT nom_marque) DESC
+      LIMIT 20
+    `),
+    query<{ annee: string; nb: string; local: string; importe: string }>(`
+      SELECT
+        annee::TEXT,
+        COUNT(*)::TEXT AS nb,
+        SUM(CASE WHEN statut = 'F' THEN 1 ELSE 0 END)::TEXT AS local,
+        SUM(CASE WHEN statut IS NOT NULL AND statut != 'F' THEN 1 ELSE 0 END)::TEXT AS importe
+      FROM enregistrements
+      WHERE annee IS NOT NULL
+      GROUP BY annee
+      ORDER BY annee ASC
+    `),
+  ])
+
+  return {
+    localImporte: {
+      local: parseInt(localImporteRow?.local ?? '0'),
+      importe: parseInt(localImporteRow?.importe ?? '0'),
+      inconnu: parseInt(localImporteRow?.inconnu ?? '0'),
+    },
+    typeBreakdown: typeRows.map(r => ({ type_prod: r.type_prod, nb: parseInt(r.nb) })),
+    topLabos: laboRows.map(r => ({
+      labo: r.labo,
+      nb: parseInt(r.nb),
+      local: parseInt(r.local),
+      importe: parseInt(r.importe),
+    })),
+    topDciConcurrence: dciRows.map(r => ({
+      dci: r.dci,
+      nb_marques: parseInt(r.nb_marques),
+      nb_enreg: parseInt(r.nb_enreg),
+    })),
+    evolutionAnnuelle: evolutionRows.map(r => ({
+      annee: parseInt(r.annee),
+      nb: parseInt(r.nb),
+      local: parseInt(r.local),
+      importe: parseInt(r.importe),
+    })),
+  }
+}
+
 /**
  * Slugs de tous les labos (pour sitemap et génération statique).
  */
