@@ -5,9 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type {
   LaboStats,
-  LaboNouveauteParAnnee,
   LaboDciItem,
-  LaboLocalImporte,
 } from '@/lib/queries'
 
 interface Product {
@@ -43,9 +41,7 @@ interface Props {
   labo: string
   slug: string
   stats: LaboStats
-  nouveautesByYear: LaboNouveauteParAnnee[]
   portfolioDci: LaboDciItem[]
-  localImporte: LaboLocalImporte
   products: Product[]
 }
 
@@ -82,17 +78,13 @@ export function LaboClient({
   labo,
   slug,
   stats,
-  nouveautesByYear,
   portfolioDci,
-  localImporte,
   products,
 }: Props) {
   const router = useRouter()
   const [showAllDci, setShowAllDci] = useState(false)
   const [showAllProducts, setShowAllProducts] = useState(false)
 
-  const maxYearNb = Math.max(...nouveautesByYear.map(n => n.nb), 1)
-  const totalLocal = localImporte.local + localImporte.importe + localImporte.inconnu || 1
   const visibleDci = showAllDci ? portfolioDci : portfolioDci.slice(0, 15)
   const maxDci = portfolioDci[0]?.nb ?? 1
   const visibleProducts = showAllProducts ? products : products.slice(0, 20)
@@ -158,67 +150,6 @@ export function LaboClient({
           />
         </div>
       </section>
-
-      {/* ── Local / Importé ── */}
-      <section style={{ marginBottom: 36 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 700, color: '#334155', marginBottom: 14 }}>
-          Répartition local / importé
-        </h2>
-        <div style={{
-          background: '#fff', borderRadius: 14, padding: '22px 24px',
-          border: '1.5px solid #e2e8f0',
-        }}>
-          {[
-            { label: 'Fabrication locale 🇩🇿', value: localImporte.local, color: '#16a34a' },
-            { label: 'Importé', value: localImporte.importe, color: '#3b82f6' },
-            { label: 'Non renseigné', value: localImporte.inconnu, color: '#94a3b8' },
-          ].map(item => (
-            <div key={item.label} style={{ marginBottom: 14 }}>
-              <div style={{
-                display: 'flex', justifyContent: 'space-between',
-                fontSize: 13, color: '#334155', marginBottom: 5,
-              }}>
-                <span style={{ fontWeight: 600 }}>{item.label}</span>
-                <span style={{ fontWeight: 700, color: item.color }}>
-                  {item.value} ({Math.round((item.value / totalLocal) * 100)}%)
-                </span>
-              </div>
-              <Bar value={item.value} max={totalLocal} color={item.color} />
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Nouveautés par année ── */}
-      {nouveautesByYear.length > 0 && (
-        <section style={{ marginBottom: 36 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#334155', marginBottom: 14 }}>
-            Nouveautés par année d&apos;enregistrement
-          </h2>
-          <div style={{
-            background: '#fff', borderRadius: 14, padding: '22px 24px',
-            border: '1.5px solid #e2e8f0', overflowX: 'auto',
-          }}>
-            <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', minHeight: 100 }}>
-              {nouveautesByYear.map(y => (
-                <div key={y.annee} style={{ flex: 1, minWidth: 32, textAlign: 'center' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#334155', marginBottom: 4 }}>
-                    {y.nb}
-                  </div>
-                  <div style={{
-                    height: Math.max(4, Math.round((y.nb / maxYearNb) * 80)),
-                    background: '#3b82f6', borderRadius: '4px 4px 0 0',
-                    transition: 'height 0.3s',
-                  }} />
-                  <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 4, whiteSpace: 'nowrap' }}>
-                    {y.annee}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* ── Portefeuille DCI ── */}
       {portfolioDci.length > 0 && (

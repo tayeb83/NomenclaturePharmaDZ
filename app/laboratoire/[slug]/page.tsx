@@ -3,9 +3,7 @@ import type { Metadata } from 'next'
 import {
   getLaboNameBySlug,
   getLaboStats,
-  getLaboNouveautesByYear,
   getLaboPortfolioDCI,
-  getLaboLocalImporte,
   getLaboProducts,
   laboToSlug,
 } from '@/lib/queries'
@@ -49,11 +47,9 @@ export default async function LaboPage({ params }: Props) {
   const laboName = await getLaboNameBySlug(params.slug)
   if (!laboName) notFound()
 
-  const [stats, nouveautesByYear, portfolioDci, localImporte, products] = await Promise.all([
+  const [stats, portfolioDci, products] = await Promise.all([
     getLaboStats(laboName),
-    getLaboNouveautesByYear(laboName),
     getLaboPortfolioDCI(laboName, 30),
-    getLaboLocalImporte(laboName),
     getLaboProducts(laboName, 50, 0),
   ])
 
@@ -79,9 +75,7 @@ export default async function LaboPage({ params }: Props) {
         labo={laboName}
         slug={params.slug}
         stats={stats}
-        nouveautesByYear={nouveautesByYear}
         portfolioDci={portfolioDci}
-        localImporte={localImporte}
         products={products}
       />
     </>
