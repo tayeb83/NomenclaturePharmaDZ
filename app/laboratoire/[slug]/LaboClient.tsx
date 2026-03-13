@@ -287,13 +287,8 @@ export function LaboClient({
                   <td style={{ padding: '8px 12px', color: '#64748b', whiteSpace: 'nowrap' }}>
                     {p.n_enreg ?? '—'}
                   </td>
-                  <td
-                    style={{ padding: '8px 12px', fontWeight: 600, color: '#334155' }}
-                    onClick={e => { e.stopPropagation(); router.push(`/recherche?q=${encodeURIComponent(p.dci)}`) }}
-                  >
-                    <span style={{ color: '#1d4ed8', textDecoration: 'underline', cursor: 'pointer' }}>
-                      {p.dci}
-                    </span>
+                  <td style={{ padding: '8px 12px', fontWeight: 600, color: '#334155' }}>
+                    {p.dci}
                   </td>
                   <td style={{ padding: '8px 12px', fontWeight: 600, color: '#0f172a' }}>
                     {p.nom_marque}
@@ -334,78 +329,29 @@ export function LaboClient({
         </div>
       </section>
 
-      {/* ── Pro Mode CTA ── */}
+      {/* ── Contact ── */}
       <section style={{
-        background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-        borderRadius: 16, padding: '32px 28px', marginBottom: 20,
+        background: '#f8fafc',
+        borderRadius: 16,
+        padding: '28px 24px',
+        marginBottom: 20,
+        border: '1.5px solid #e2e8f0',
+        textAlign: 'center',
       }}>
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ fontSize: 36, marginBottom: 8 }}>⭐</div>
-          <h2 style={{ color: '#f1f5f9', fontSize: 20, fontWeight: 800, margin: '0 0 8px' }}>
-            Vous êtes {labo} ?
-          </h2>
-          <p style={{ color: '#94a3b8', fontSize: 14, margin: 0 }}>
-            Accédez à des outils exclusifs pour valoriser votre présence réglementaire.
-          </p>
-        </div>
-
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: 14, marginBottom: 28,
+        <div style={{ fontSize: 34, marginBottom: 8 }}>📩</div>
+        <h2 style={{ color: '#0f172a', fontSize: 20, fontWeight: 800, margin: '0 0 8px' }}>
+          Besoin d&apos;une mise à jour ou d&apos;une correction ?
+        </h2>
+        <p style={{ color: '#64748b', fontSize: 14, margin: '0 0 18px' }}>
+          Notre équipe reste disponible pour toute demande concernant la fiche laboratoire.
+        </p>
+        <Link href="/contact" style={{
+          background: '#3b82f6', color: '#fff', padding: '12px 28px',
+          borderRadius: 10, fontWeight: 700, fontSize: 14,
+          textDecoration: 'none', display: 'inline-block',
         }}>
-          {[
-            {
-              icon: '🏆',
-              title: 'Fiche sponsorisée',
-              desc: 'Mettez en avant votre labo en tête de la liste, avec logo et description personnalisée.',
-              tag: 'Premium',
-            },
-            {
-              icon: '📊',
-              title: 'Rapport concurrentiel',
-              desc: 'Comparez votre portefeuille avec les concurrents sur les mêmes DCI ou classes thérapeutiques.',
-              tag: 'Pro',
-            },
-            {
-              icon: '🔒',
-              title: 'Dashboard privé',
-              desc: 'Tableau de bord en temps réel : alertes réglementaires, veille sur vos DCI, notifications MIPH.',
-              tag: 'Pro',
-            },
-          ].map(offer => (
-            <div key={offer.title} style={{
-              background: 'rgba(255,255,255,0.06)', borderRadius: 12,
-              padding: '18px 20px', border: '1px solid rgba(255,255,255,0.1)',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span style={{ fontSize: 22 }}>{offer.icon}</span>
-                <span style={{
-                  background: '#3b82f6', color: '#fff', fontSize: 10,
-                  fontWeight: 700, padding: '2px 8px', borderRadius: 20,
-                }}>
-                  {offer.tag}
-                </span>
-              </div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9', marginBottom: 6 }}>
-                {offer.title}
-              </div>
-              <div style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.5 }}>
-                {offer.desc}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ textAlign: 'center' }}>
-          <Link href="/contact" style={{
-            background: '#3b82f6', color: '#fff', padding: '12px 28px',
-            borderRadius: 10, fontWeight: 700, fontSize: 14,
-            textDecoration: 'none', display: 'inline-block',
-          }}>
-            Contactez-nous pour une démo →
-          </Link>
-        </div>
+          Contacter l&apos;équipe →
+        </Link>
       </section>
 
     </main>
