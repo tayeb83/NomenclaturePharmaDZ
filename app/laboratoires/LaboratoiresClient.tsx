@@ -130,19 +130,25 @@ export function LaboratoiresClient({ labos }: Props) {
         />
       </div>
 
-      {/* Pro mode banner */}
+      {/* Contact banner */}
       <div style={{
-        background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-        borderRadius: 14, padding: '18px 24px', marginBottom: 32,
-        display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
+        background: '#f8fafc',
+        borderRadius: 14,
+        padding: '18px 24px',
+        marginBottom: 32,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 16,
+        flexWrap: 'wrap',
+        border: '1.5px solid #e2e8f0',
       }}>
-        <span style={{ fontSize: 28 }}>⭐</span>
+        <span style={{ fontSize: 28 }}>📩</span>
         <div style={{ flex: 1 }}>
-          <div style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 15, marginBottom: 3 }}>
-            Mode Pro — Laboratoires
+          <div style={{ color: '#0f172a', fontWeight: 700, fontSize: 15, marginBottom: 3 }}>
+            Une mise à jour à proposer ?
           </div>
-          <div style={{ color: '#94a3b8', fontSize: 13 }}>
-            Fiche sponsorisée · Rapport concurrentiel · Dashboard privé — Contactez-nous pour accéder à nos offres premium.
+          <div style={{ color: '#64748b', fontSize: 13 }}>
+            Pour toute correction ou demande liée aux laboratoires, contactez directement notre équipe.
           </div>
         </div>
         <Link href="/contact" style={{
@@ -150,7 +156,7 @@ export function LaboratoiresClient({ labos }: Props) {
           borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: 'none',
           whiteSpace: 'nowrap',
         }}>
-          En savoir plus →
+          Contacter →
         </Link>
       </div>
 

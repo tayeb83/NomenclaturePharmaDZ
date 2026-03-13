@@ -953,9 +953,17 @@ export async function getLaboProducts(laboName: string, limit = 50, offset = 0) 
     id: number; source: string; n_enreg: string | null; dci: string; nom_marque: string;
     forme: string | null; dosage: string | null; statut: string | null; annee: number | null;
   }>(`
-    SELECT id, 'enregistrement' AS source, n_enreg, dci, nom_marque, forme, dosage, statut, annee
-    FROM enregistrements
-    WHERE labo = $1
+    SELECT * FROM (
+      SELECT id, 'enregistrement' AS source, n_enreg, dci, nom_marque, forme, dosage, statut, annee
+      FROM enregistrements
+      WHERE labo = $1
+
+      UNION ALL
+
+      SELECT id, 'retrait' AS source, n_enreg, dci, nom_marque, forme, dosage, 'RET'::TEXT AS statut, NULL::INT AS annee
+      FROM retraits
+      WHERE labo = $1
+    ) AS products
     ORDER BY nom_marque ASC
     LIMIT $2 OFFSET $3
   `, [laboName, limit, offset])
