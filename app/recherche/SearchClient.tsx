@@ -225,6 +225,36 @@ export function SearchClient({
     else setResults([])
   }
 
+  const trackResultOpen = useCallback((drug: SearchResult) => {
+    const searchQuery = query.trim() || substance.trim() || labo.trim() || 'recherche_avancee'
+    const payload = {
+      search_query: searchQuery,
+      scope: activeOnly ? 'enregistrement' : scope,
+      result_source: drug.source,
+      result_id: drug.id,
+      result_name: drug.nom_marque,
+      result_dci: drug.dci,
+      result_labo: drug.labo,
+    }
+
+    try {
+      const body = JSON.stringify(payload)
+      if (typeof navigator !== 'undefined' && 'sendBeacon' in navigator) {
+        const blob = new Blob([body], { type: 'application/json' })
+        navigator.sendBeacon('/api/analytics/search-click', blob)
+        return
+      }
+      fetch('/api/analytics/search-click', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        keepalive: true,
+      }).catch(() => {})
+    } catch {
+      // analytics non bloquant
+    }
+  }, [activeOnly, labo, query, scope, substance])
+
   const facets = useMemo(() => {
     const counts = {
       pays: new Map<string, number>(),
@@ -489,7 +519,7 @@ export function SearchClient({
       )}
 
       {!loading && filteredResults.map((d, i) => (
-        <DrugCard key={`${d.source}-${d.id}-${i}`} drug={d} type={d.source} />
+        <DrugCard key={`${d.source}-${d.id}-${i}`} drug={d} type={d.source} onOpen={() => trackResultOpen(d)} />
       ))}
     </>
   )

@@ -146,6 +146,19 @@ CREATE TABLE IF NOT EXISTS social_posts (
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- ─── TABLE ANALYTICS CLICS RECHERCHE ────────────────────────
+CREATE TABLE IF NOT EXISTS search_click_events (
+  id            BIGSERIAL PRIMARY KEY,
+  search_query  TEXT NOT NULL,
+  scope         VARCHAR(30) NOT NULL DEFAULT 'all',
+  result_source VARCHAR(20) NOT NULL,
+  result_id     INTEGER NOT NULL,
+  result_name   TEXT NOT NULL,
+  result_dci    TEXT NOT NULL,
+  result_labo   TEXT,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ─── INDEX POUR RECHERCHE FULLTEXT ───────────────────────────
 -- Index trigramme pour recherche floue (typos tolérées)
 CREATE INDEX idx_enreg_dci_trgm      ON enregistrements USING gin(dci gin_trgm_ops);
@@ -164,6 +177,8 @@ CREATE INDEX idx_enreg_statut    ON enregistrements(statut);
 CREATE INDEX idx_enreg_pays      ON enregistrements(pays);
 CREATE INDEX idx_retraits_motif  ON retraits(motif_retrait);
 CREATE INDEX idx_retraits_date   ON retraits(date_retrait);
+CREATE INDEX idx_search_click_events_created_at ON search_click_events(created_at DESC);
+CREATE INDEX idx_search_click_events_query ON search_click_events(search_query);
 
 -- ─── FONCTION RECHERCHE UNIFIÉE ──────────────────────────────
 CREATE OR REPLACE FUNCTION search_medicaments(query TEXT, scope TEXT DEFAULT 'all', lim INTEGER DEFAULT 30)
