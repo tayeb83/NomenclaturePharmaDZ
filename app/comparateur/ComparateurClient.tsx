@@ -157,8 +157,8 @@ function TopLabosSection({ data, lang }: { data: MarketComparatorData['topLabos'
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
         {[
           { key: null, label: t('Tous', 'الكل') },
-          { key: true, label: `🇩🇿 ${t('Locaux', 'محلية')}` },
-          { key: false, label: `🌍 ${t('Importateurs', 'مستوردة')}` },
+          { key: true, label: `🇩🇿 ${t('Labos locaux (Algérie)', 'مخابر محلية (الجزائر)')}` },
+          { key: false, label: `🌍 ${t('Labos étrangers (hors Algérie)', 'مخابر أجنبية (خارج الجزائر)')}` },
         ].map(opt => (
           <button
             key={String(opt.key)}
@@ -191,7 +191,7 @@ function TopLabosSection({ data, lang }: { data: MarketComparatorData['topLabos'
               <div style={{ flex: labo.importe, background: '#7c3aed' }} />
             </div>
             <div style={{ fontSize: 11, color: '#94a3b8' }}>
-              🟢 {localPct}% {t('local', 'محلي')} · 🟣 {100 - localPct}% {t('importé', 'مستورد')}
+              🟢 {localPct}% {t('local (Algérie)', 'محلي (الجزائر)')} · 🟣 {100 - localPct}% {t('étranger (hors Algérie)', 'أجنبي (خارج الجزائر)')}
             </div>
           </div>
         )
@@ -221,115 +221,6 @@ function TopDciSection({ data, lang }: { data: MarketComparatorData['topDciConcu
           subLabel={`${row.nb_enreg.toLocaleString()} ${t('enregistrements au total', 'تسجيل في المجموع')}`}
         />
       ))}
-    </SectionCard>
-  )
-}
-
-// ─── Section 5 – Évolution annuelle ──────────────────────────
-
-function EvolutionSection({ data, lang }: { data: MarketComparatorData['evolutionAnnuelle']; lang: string }) {
-  const t = (fr: string, ar: string) => lang === 'ar' ? ar : fr
-  const maxNb = Math.max(...data.map(d => d.nb), 1)
-  const [mode, setMode] = useState<'total' | 'split'>('total')
-
-  return (
-    <SectionCard title={`📈 ${t('Évolution annuelle des enregistrements', 'التطور السنوي للتسجيلات')}`}>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-        {[
-          { key: 'total' as const, label: t('Total', 'الإجمالي') },
-          { key: 'split' as const, label: t('Local / Importé', 'محلي / مستورد') },
-        ].map(opt => (
-          <button
-            key={opt.key}
-            onClick={() => setMode(opt.key)}
-            style={{
-              padding: '5px 14px', borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              border: '1.5px solid',
-              borderColor: mode === opt.key ? '#0f172a' : '#e2e8f0',
-              background: mode === opt.key ? '#0f172a' : 'white',
-              color: mode === opt.key ? 'white' : '#475569',
-            }}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Vertical bar chart */}
-      <div style={{ overflowX: 'auto', paddingBottom: 8 }}>
-        <div style={{
-          display: 'flex', alignItems: 'flex-end', gap: 6,
-          minWidth: data.length * 44,
-          height: 180,
-          borderBottom: '1px solid #e2e8f0',
-          paddingBottom: 4,
-        }}>
-          {data.map(row => {
-            const heightPct = maxNb > 0 ? (row.nb / maxNb) * 100 : 0
-            const localH = maxNb > 0 ? (row.local / maxNb) * 100 : 0
-            const importeH = maxNb > 0 ? (row.importe / maxNb) * 100 : 0
-
-            return (
-              <div
-                key={row.annee}
-                title={`${row.annee} — ${row.nb.toLocaleString()} ${t('enregistrements', 'تسجيل')} (${t('local', 'محلي')}: ${row.local}, ${t('importé', 'مستورد')}: ${row.importe})`}
-                style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'default' }}
-              >
-                <div style={{
-                  width: '100%', display: 'flex', flexDirection: 'column',
-                  height: `${Math.max(heightPct, 2)}%`,
-                  borderRadius: '4px 4px 0 0', overflow: 'hidden',
-                  minHeight: 4,
-                }}>
-                  {mode === 'split' ? (
-                    <>
-                      <div style={{ flex: row.local, background: '#059669' }} />
-                      <div style={{ flex: row.importe, background: '#7c3aed' }} />
-                    </>
-                  ) : (
-                    <div style={{ flex: 1, background: '#0284c7' }} />
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        {/* Year labels */}
-        <div style={{
-          display: 'flex', gap: 6, minWidth: data.length * 44, marginTop: 6,
-        }}>
-          {data.map(row => (
-            <div key={row.annee} style={{
-              flex: 1, textAlign: 'center', fontSize: 10.5,
-              color: '#64748b', fontWeight: 600,
-              transform: data.length > 12 ? 'rotate(-45deg)' : 'none',
-              transformOrigin: 'top center',
-            }}>
-              {row.annee}
-            </div>
-          ))}
-        </div>
-
-        {/* Values on hover - show raw numbers below */}
-        <div style={{ display: 'flex', gap: 6, minWidth: data.length * 44, marginTop: data.length > 12 ? 20 : 4 }}>
-          {data.map(row => (
-            <div key={row.annee} style={{
-              flex: 1, textAlign: 'center', fontSize: 10,
-              color: '#94a3b8',
-            }}>
-              {row.nb > 999 ? `${(row.nb / 1000).toFixed(1)}k` : row.nb}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {mode === 'split' && (
-        <div style={{ display: 'flex', gap: 16, marginTop: 12, fontSize: 12, color: '#475569' }}>
-          <span>🟢 {t('Local (Algérie)', 'محلي (الجزائر)')}</span>
-          <span>🟣 {t('Importé', 'مستورد')}</span>
-        </div>
-      )}
     </SectionCard>
   )
 }
@@ -379,10 +270,6 @@ export function ComparateurClient({ data }: { data: MarketComparatorData }) {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 24, marginBottom: 24 }}>
             <LocalImporteSection data={data.localImporte} lang={lang} />
             <TypeBreakdownSection data={data.typeBreakdown} lang={lang} />
-          </div>
-
-          <div style={{ marginBottom: 24 }}>
-            <EvolutionSection data={data.evolutionAnnuelle} lang={lang} />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 24 }}>
