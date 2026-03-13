@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 
@@ -10,7 +10,6 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const { lang } = useLanguage()
-  const navLinksRef = useRef<HTMLDivElement>(null)
 
   const links = useMemo(() => [
     { href: '/', label: lang === 'ar' ? 'الرئيسية' : 'Accueil' },
@@ -22,20 +21,6 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
     { href: '/api-docs', label: lang === 'ar' ? '🔗 واجهة API' : '🔗 API' },
     { href: '/a-propos', label: lang === 'ar' ? 'حول' : 'À propos' },
   ], [lang, isAdmin])
-
-  useEffect(() => {
-    const container = navLinksRef.current
-    if (!container) return
-
-    const activeLink = container.querySelector<HTMLAnchorElement>('.nav-link.active')
-    if (!activeLink) return
-
-    activeLink.scrollIntoView({
-      behavior: 'smooth',
-      block: 'nearest',
-      inline: 'center',
-    })
-  }, [pathname, lang])
 
   return (
     <nav className="nav">
@@ -50,7 +35,7 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
           </div>
         </Link>
 
-        <div ref={navLinksRef} className={`nav-links${open ? ' open' : ''}`}>
+        <div className={`nav-links${open ? ' open' : ''}`}>
           {links.map(l => (
             <Link
               key={l.href}
