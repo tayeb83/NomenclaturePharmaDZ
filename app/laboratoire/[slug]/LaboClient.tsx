@@ -22,6 +22,23 @@ interface Product {
   annee: number | null
 }
 
+function SourceBadge({ source }: { source: string }) {
+  const isRetired = source === 'retrait'
+  return (
+    <span style={{
+      background: isRetired ? '#fee2e2' : '#dbeafe',
+      color: isRetired ? '#b91c1c' : '#1d4ed8',
+      padding: '2px 8px',
+      borderRadius: 999,
+      fontSize: 11,
+      fontWeight: 700,
+      whiteSpace: 'nowrap',
+    }}>
+      {isRetired ? 'Retiré' : 'Enregistré'}
+    </span>
+  )
+}
+
 interface Props {
   labo: string
   slug: string
@@ -260,7 +277,7 @@ export function LaboClient({
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                {['N° Enreg.', 'DCI', 'Nom de marque', 'Forme', 'Dosage', 'Statut', 'Année'].map(h => (
+                {['Type', 'N° Enreg.', 'DCI', 'Nom de marque', 'Forme', 'Dosage', 'Statut', 'Année'].map(h => (
                   <th key={h} style={{
                     padding: '10px 12px', textAlign: 'left', fontSize: 11,
                     fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap',
@@ -284,6 +301,9 @@ export function LaboClient({
                   onMouseEnter={e => (e.currentTarget.style.background = '#eff6ff')}
                   onMouseLeave={e => (e.currentTarget.style.background = i % 2 === 0 ? '#fff' : '#fafafa')}
                 >
+                  <td style={{ padding: '8px 12px' }}>
+                    <SourceBadge source={p.source} />
+                  </td>
                   <td style={{ padding: '8px 12px', color: '#64748b', whiteSpace: 'nowrap' }}>
                     {p.n_enreg ?? '—'}
                   </td>
@@ -297,11 +317,11 @@ export function LaboClient({
                   <td style={{ padding: '8px 12px', color: '#64748b' }}>{p.dosage ?? '—'}</td>
                   <td style={{ padding: '8px 12px' }}>
                     <span style={{
-                      background: p.statut === 'A' ? '#dcfce7' : '#f1f5f9',
-                      color: p.statut === 'A' ? '#16a34a' : '#64748b',
+                      background: p.statut === 'A' ? '#dcfce7' : p.statut === 'RET' ? '#fee2e2' : '#f1f5f9',
+                      color: p.statut === 'A' ? '#16a34a' : p.statut === 'RET' ? '#b91c1c' : '#64748b',
                       padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600,
                     }}>
-                      {p.statut === 'A' ? 'Actif' : (p.statut ?? '—')}
+                      {p.statut === 'A' ? 'Actif' : p.statut === 'RET' ? 'Retiré' : (p.statut ?? '—')}
                     </span>
                   </td>
                   <td style={{ padding: '8px 12px', color: '#94a3b8' }}>{p.annee ?? '—'}</td>
