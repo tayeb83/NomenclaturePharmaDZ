@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import type { LaboSummary } from '@/lib/queries'
-import { countryFlag } from '@/lib/countryFlag'
+import { getCountryFlag } from '@/lib/countryFlag'
 
 interface Props {
   labos: LaboSummary[]
@@ -130,8 +130,8 @@ export function LaboratoiresClient({ labos }: Props) {
                       marginBottom: 4, lineHeight: 1.3,
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}>
-                      {labo.pays_origine && countryFlag(labo.pays_origine)
-                        ? `${countryFlag(labo.pays_origine)} `
+                      {labo.pays_origine && getCountryFlag(labo.pays_origine)
+                        ? `${getCountryFlag(labo.pays_origine)} `
                         : '🏭 '
                       }
                       {labo.labo}
