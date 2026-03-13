@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import type {
   LaboStats,
   LaboNouveauteParAnnee,
@@ -69,6 +70,7 @@ export function LaboClient({
   localImporte,
   products,
 }: Props) {
+  const router = useRouter()
   const [showAllDci, setShowAllDci] = useState(false)
   const [showAllProducts, setShowAllProducts] = useState(false)
 
@@ -272,25 +274,29 @@ export function LaboClient({
               {visibleProducts.map((p, i) => (
                 <tr
                   key={`${p.source}-${p.id}`}
+                  onClick={() => router.push(`/medicament/${p.source}/${p.id}`)}
                   style={{
                     borderBottom: '1px solid #f1f5f9',
                     background: i % 2 === 0 ? '#fff' : '#fafafa',
+                    cursor: 'pointer',
+                    transition: 'background 0.1s',
                   }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#eff6ff')}
+                  onMouseLeave={e => (e.currentTarget.style.background = i % 2 === 0 ? '#fff' : '#fafafa')}
                 >
                   <td style={{ padding: '8px 12px', color: '#64748b', whiteSpace: 'nowrap' }}>
                     {p.n_enreg ?? '—'}
                   </td>
-                  <td style={{ padding: '8px 12px', fontWeight: 600, color: '#334155' }}>
-                    <Link href={`/recherche?q=${encodeURIComponent(p.dci)}`}
-                      style={{ color: '#1d4ed8', textDecoration: 'none' }}>
+                  <td
+                    style={{ padding: '8px 12px', fontWeight: 600, color: '#334155' }}
+                    onClick={e => { e.stopPropagation(); router.push(`/recherche?q=${encodeURIComponent(p.dci)}`) }}
+                  >
+                    <span style={{ color: '#1d4ed8', textDecoration: 'underline', cursor: 'pointer' }}>
                       {p.dci}
-                    </Link>
+                    </span>
                   </td>
                   <td style={{ padding: '8px 12px', fontWeight: 600, color: '#0f172a' }}>
-                    <Link href={`/medicament/${p.source}/${p.id}`}
-                      style={{ color: '#0f172a', textDecoration: 'none' }}>
-                      {p.nom_marque}
-                    </Link>
+                    {p.nom_marque}
                   </td>
                   <td style={{ padding: '8px 12px', color: '#64748b' }}>{p.forme ?? '—'}</td>
                   <td style={{ padding: '8px 12px', color: '#64748b' }}>{p.dosage ?? '—'}</td>

@@ -9,14 +9,98 @@ interface Props {
   labos: LaboSummary[]
 }
 
+function LaboCard({ labo }: { labo: LaboSummary }) {
+  return (
+    <Link href={`/laboratoire/${labo.slug}`} style={{ textDecoration: 'none' }}>
+      <div
+        style={{
+          background: '#fff', borderRadius: 12, padding: '16px 18px',
+          border: '1.5px solid #e2e8f0', transition: 'border-color 0.15s, box-shadow 0.15s',
+          cursor: 'pointer',
+        }}
+        onMouseEnter={e => {
+          (e.currentTarget as HTMLDivElement).style.borderColor = '#3b82f6'
+          ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(59,130,246,0.1)'
+        }}
+        onMouseLeave={e => {
+          (e.currentTarget as HTMLDivElement).style.borderColor = '#e2e8f0'
+          ;(e.currentTarget as HTMLDivElement).style.boxShadow = 'none'
+        }}
+      >
+        <div style={{
+          fontSize: 13, fontWeight: 700, color: '#0f172a',
+          marginBottom: 8, lineHeight: 1.3,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {labo.labo}
+        </div>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <span style={{
+            background: '#eff6ff', color: '#1d4ed8', fontSize: 11, fontWeight: 600,
+            padding: '3px 8px', borderRadius: 6,
+          }}>
+            💊 {labo.total_enregistres}
+          </span>
+          {labo.total_retraits > 0 && (
+            <span style={{
+              background: '#fff1f2', color: '#be123c', fontSize: 11, fontWeight: 600,
+              padding: '3px 8px', borderRadius: 6,
+            }}>
+              🚨 {labo.total_retraits}
+            </span>
+          )}
+          {labo.total_non_renouveles > 0 && (
+            <span style={{
+              background: '#fffbeb', color: '#b45309', fontSize: 11, fontWeight: 600,
+              padding: '3px 8px', borderRadius: 6,
+            }}>
+              📋 {labo.total_non_renouveles}
+            </span>
+          )}
+        </div>
+      </div>
+    </Link>
+  )
+}
+
 export function LaboratoiresClient({ labos }: Props) {
   const [search, setSearch] = useState('')
+  const [openCountries, setOpenCountries] = useState<Set<string>>(new Set())
 
+  // Flat filtered list (pour la recherche)
   const filtered = useMemo(() => {
     if (!search.trim()) return labos
     const q = search.toLowerCase()
     return labos.filter(l => l.labo.toLowerCase().includes(q))
   }, [labos, search])
+
+  // Groupement par pays, trié par nom de pays puis nom de labo
+  const groupedByCountry = useMemo(() => {
+    const groups = new Map<string, LaboSummary[]>()
+    const sorted = [...labos].sort((a, b) => {
+      const ca = a.pays_origine ?? '\uFFFF'
+      const cb = b.pays_origine ?? '\uFFFF'
+      if (ca !== cb) return ca.localeCompare(cb, 'fr')
+      return a.labo.localeCompare(b.labo, 'fr')
+    })
+    for (const labo of sorted) {
+      const key = labo.pays_origine ?? 'Non renseigné'
+      if (!groups.has(key)) groups.set(key, [])
+      groups.get(key)!.push(labo)
+    }
+    return groups
+  }, [labos])
+
+  const toggleCountry = (country: string) => {
+    setOpenCountries(prev => {
+      const next = new Set(prev)
+      if (next.has(country)) next.delete(country)
+      else next.add(country)
+      return next
+    })
+  }
+
+  const isSearching = search.trim().length > 0
 
   return (
     <main style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 16px' }}>
@@ -77,9 +161,9 @@ export function LaboratoiresClient({ labos }: Props) {
       }}>
         {[
           { label: 'Laboratoires', value: labos.length, icon: '🏭' },
+          { label: 'Pays représentés', value: groupedByCountry.size, icon: '🌍' },
           { label: 'Produits enregistrés', value: labos.reduce((s, l) => s + l.total_enregistres, 0).toLocaleString('fr-DZ'), icon: '💊' },
           { label: 'Retraits cumulés', value: labos.reduce((s, l) => s + l.total_retraits, 0).toLocaleString('fr-DZ'), icon: '🚨' },
-          { label: 'AMM non renouvelées', value: labos.reduce((s, l) => s + l.total_non_renouveles, 0).toLocaleString('fr-DZ'), icon: '📋' },
         ].map(stat => (
           <div key={stat.label} style={{
             background: '#f8fafc', borderRadius: 12, padding: '16px 20px',
@@ -92,85 +176,81 @@ export function LaboratoiresClient({ labos }: Props) {
         ))}
       </div>
 
-      {/* Labs grid */}
-      {filtered.length === 0 ? (
-        <p style={{ color: '#94a3b8', textAlign: 'center', padding: '40px 0' }}>
-          Aucun laboratoire trouvé pour &quot;{search}&quot;
-        </p>
+      {/* Résultats de recherche (liste plate) */}
+      {isSearching ? (
+        filtered.length === 0 ? (
+          <p style={{ color: '#94a3b8', textAlign: 'center', padding: '40px 0' }}>
+            Aucun laboratoire trouvé pour &quot;{search}&quot;
+          </p>
+        ) : (
+          <>
+            <p style={{ color: '#64748b', fontSize: 13, marginBottom: 14 }}>
+              {filtered.length} résultat{filtered.length > 1 ? 's' : ''} pour &quot;{search}&quot;
+            </p>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: 12,
+            }}>
+              {filtered.map(labo => <LaboCard key={labo.slug} labo={labo} />)}
+            </div>
+          </>
+        )
       ) : (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-          gap: 14,
-        }}>
-          {filtered.map(labo => (
-            <Link
-              key={labo.slug}
-              href={`/laboratoire/${labo.slug}`}
-              style={{ textDecoration: 'none' }}
-            >
-              <div style={{
-                background: '#fff', borderRadius: 12, padding: '18px 20px',
-                border: '1.5px solid #e2e8f0', transition: 'border-color 0.15s, box-shadow 0.15s',
-                cursor: 'pointer',
-              }}
-                onMouseEnter={e => {
-                  (e.currentTarget as HTMLDivElement).style.borderColor = '#3b82f6'
-                  ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(59,130,246,0.1)'
-                }}
-                onMouseLeave={e => {
-                  (e.currentTarget as HTMLDivElement).style.borderColor = '#e2e8f0'
-                  ;(e.currentTarget as HTMLDivElement).style.boxShadow = 'none'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                      fontSize: 14, fontWeight: 700, color: '#0f172a',
-                      marginBottom: 4, lineHeight: 1.3,
-                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    }}>
-                      {labo.pays_origine && getCountryFlag(labo.pays_origine)
-                        ? `${getCountryFlag(labo.pays_origine)} `
-                        : '🏭 '
-                      }
-                      {labo.labo}
-                    </div>
-                    {labo.pays_origine && (
-                      <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 8 }}>
-                        {labo.pays_origine}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{
-                    background: '#eff6ff', color: '#1d4ed8', fontSize: 11, fontWeight: 600,
-                    padding: '3px 8px', borderRadius: 6,
-                  }}>
-                    💊 {labo.total_enregistres} enreg.
+        /* Accordéon par pays */
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {Array.from(groupedByCountry.entries()).map(([country, countryLabos]) => {
+            const flag = getCountryFlag(country)
+            const isOpen = openCountries.has(country)
+            return (
+              <div key={country} style={{ borderRadius: 12, overflow: 'hidden', border: '1.5px solid #e2e8f0' }}>
+                {/* En-tête pays */}
+                <button
+                  onClick={() => toggleCountry(country)}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '14px 18px', background: isOpen ? '#eff6ff' : '#f8fafc',
+                    border: 'none', cursor: 'pointer', textAlign: 'left',
+                    borderBottom: isOpen ? '1px solid #dbeafe' : 'none',
+                    transition: 'background 0.15s',
+                  }}
+                >
+                  <span style={{ fontSize: 22, lineHeight: 1 }}>
+                    {flag || '🌍'}
                   </span>
-                  {labo.total_retraits > 0 && (
-                    <span style={{
-                      background: '#fff1f2', color: '#be123c', fontSize: 11, fontWeight: 600,
-                      padding: '3px 8px', borderRadius: 6,
-                    }}>
-                      🚨 {labo.total_retraits} retraits
-                    </span>
-                  )}
-                  {labo.total_non_renouveles > 0 && (
-                    <span style={{
-                      background: '#fffbeb', color: '#b45309', fontSize: 11, fontWeight: 600,
-                      padding: '3px 8px', borderRadius: 6,
-                    }}>
-                      📋 {labo.total_non_renouveles} non-ren.
-                    </span>
-                  )}
-                </div>
+                  <span style={{
+                    flex: 1, fontWeight: 700, fontSize: 15, color: '#0f172a',
+                  }}>
+                    {country}
+                  </span>
+                  <span style={{
+                    background: isOpen ? '#dbeafe' : '#e2e8f0',
+                    color: isOpen ? '#1d4ed8' : '#64748b',
+                    fontSize: 12, fontWeight: 700,
+                    padding: '3px 10px', borderRadius: 20,
+                  }}>
+                    {countryLabos.length} labo{countryLabos.length > 1 ? 's' : ''}
+                  </span>
+                  <span style={{ color: '#94a3b8', fontSize: 14, marginLeft: 4 }}>
+                    {isOpen ? '▲' : '▼'}
+                  </span>
+                </button>
+
+                {/* Liste des labos (dépliable) */}
+                {isOpen && (
+                  <div style={{
+                    padding: '14px',
+                    background: '#fafcff',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                    gap: 10,
+                  }}>
+                    {countryLabos.map(labo => <LaboCard key={labo.slug} labo={labo} />)}
+                  </div>
+                )}
               </div>
-            </Link>
-          ))}
+            )
+          })}
         </div>
       )}
     </main>
