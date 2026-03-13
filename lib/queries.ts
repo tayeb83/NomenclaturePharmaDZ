@@ -757,3 +757,218 @@ export async function getAtcByDci(dci: string): Promise<{ code_atc: string; atc_
     return null
   }
 }
+
+// ─── LABORATOIRES ─────────────────────────────────────────────
+
+export type LaboSummary = {
+  labo: string
+  slug: string
+  total_enregistres: number
+  total_retraits: number
+  total_non_renouveles: number
+  pays_origine: string | null
+}
+
+export type LaboStats = {
+  labo: string
+  slug: string
+  total_enregistres: number
+  total_actifs: number
+  total_retraits: number
+  total_non_renouveles: number
+  pays_origine: string | null
+}
+
+export type LaboNouveauteParAnnee = {
+  annee: number
+  nb: number
+}
+
+export type LaboDciItem = {
+  dci: string
+  nb: number
+}
+
+export type LaboLocalImporte = {
+  local: number
+  importe: number
+  inconnu: number
+}
+
+/** Convertit un nom de labo en slug URL-safe */
+export function laboToSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+/** Expression SQL pour normaliser un nom de labo en slug */
+const LABO_SLUG_EXPR = `LOWER(REGEXP_REPLACE(COALESCE(labo, ''), '[^a-zA-Z0-9]+', '-', 'g'))`
+
+/**
+ * Liste tous les laboratoires distincts avec leurs compteurs.
+ * Triés par nombre de produits enregistrés décroissant.
+ */
+export async function getAllLaboratoires(): Promise<LaboSummary[]> {
+  const rows = await query<{
+    labo: string
+    total_enregistres: string
+    total_retraits: string
+    total_non_renouveles: string
+    pays_origine: string | null
+  }>(`
+    SELECT
+      e.labo,
+      COUNT(*)::INT AS total_enregistres,
+      COALESCE(r.nb, 0)::INT AS total_retraits,
+      COALESCE(n.nb, 0)::INT AS total_non_renouveles,
+      (SELECT pays FROM enregistrements WHERE labo = e.labo AND pays IS NOT NULL LIMIT 1) AS pays_origine
+    FROM enregistrements e
+    LEFT JOIN (
+      SELECT labo, COUNT(*) AS nb FROM retraits WHERE labo IS NOT NULL GROUP BY labo
+    ) r ON r.labo = e.labo
+    LEFT JOIN (
+      SELECT labo, COUNT(*) AS nb FROM non_renouveles WHERE labo IS NOT NULL GROUP BY labo
+    ) n ON n.labo = e.labo
+    WHERE e.labo IS NOT NULL AND e.labo != ''
+    GROUP BY e.labo, r.nb, n.nb
+    ORDER BY COUNT(*) DESC
+  `)
+
+  return rows.map(r => ({
+    labo: r.labo,
+    slug: laboToSlug(r.labo),
+    total_enregistres: parseInt(String(r.total_enregistres)),
+    total_retraits: parseInt(String(r.total_retraits)),
+    total_non_renouveles: parseInt(String(r.total_non_renouveles)),
+    pays_origine: r.pays_origine,
+  }))
+}
+
+/**
+ * Trouve le nom exact du labo correspondant à un slug.
+ */
+export async function getLaboNameBySlug(slug: string): Promise<string | null> {
+  const row = await queryOne<{ labo: string }>(`
+    SELECT labo FROM enregistrements
+    WHERE ${LABO_SLUG_EXPR} = $1 AND labo IS NOT NULL
+    LIMIT 1
+  `, [slug])
+  return row?.labo ?? null
+}
+
+/**
+ * Statistiques globales d'un laboratoire.
+ */
+export async function getLaboStats(laboName: string): Promise<LaboStats | null> {
+  const slug = laboToSlug(laboName)
+  const row = await queryOne<{
+    labo: string
+    total_enregistres: string
+    total_actifs: string
+    total_retraits: string
+    total_non_renouveles: string
+    pays_origine: string | null
+  }>(`
+    SELECT
+      $1::TEXT AS labo,
+      (SELECT COUNT(*) FROM enregistrements WHERE labo = $1)::INT AS total_enregistres,
+      (SELECT COUNT(*) FROM enregistrements WHERE labo = $1 AND statut = 'A')::INT AS total_actifs,
+      (SELECT COUNT(*) FROM retraits WHERE labo = $1)::INT AS total_retraits,
+      (SELECT COUNT(*) FROM non_renouveles WHERE labo = $1)::INT AS total_non_renouveles,
+      (SELECT pays FROM enregistrements WHERE labo = $1 AND pays IS NOT NULL LIMIT 1) AS pays_origine
+  `, [laboName])
+
+  if (!row) return null
+
+  return {
+    labo: row.labo,
+    slug,
+    total_enregistres: parseInt(String(row.total_enregistres)),
+    total_actifs: parseInt(String(row.total_actifs)),
+    total_retraits: parseInt(String(row.total_retraits)),
+    total_non_renouveles: parseInt(String(row.total_non_renouveles)),
+    pays_origine: row.pays_origine,
+  }
+}
+
+/**
+ * Répartition des nouveaux enregistrements par année pour un labo.
+ */
+export async function getLaboNouveautesByYear(laboName: string): Promise<LaboNouveauteParAnnee[]> {
+  const rows = await query<{ annee: string; nb: string }>(`
+    SELECT annee::TEXT, COUNT(*)::TEXT AS nb
+    FROM enregistrements
+    WHERE labo = $1 AND annee IS NOT NULL
+    GROUP BY annee
+    ORDER BY annee ASC
+  `, [laboName])
+  return rows.map(r => ({ annee: parseInt(r.annee), nb: parseInt(r.nb) }))
+}
+
+/**
+ * Portefeuille par DCI (top substances actives du labo).
+ */
+export async function getLaboPortfolioDCI(laboName: string, limit = 30): Promise<LaboDciItem[]> {
+  const rows = await query<{ dci: string; nb: string }>(`
+    SELECT dci, COUNT(*)::TEXT AS nb
+    FROM enregistrements
+    WHERE labo = $1 AND dci IS NOT NULL AND dci != ''
+    GROUP BY dci
+    ORDER BY COUNT(*) DESC
+    LIMIT $2
+  `, [laboName, limit])
+  return rows.map(r => ({ dci: r.dci, nb: parseInt(r.nb) }))
+}
+
+/**
+ * Répartition local / importé pour un labo.
+ * Local = pays contient 'algérie' ou 'algerie' (insensible casse/accents)
+ */
+export async function getLaboLocalImporte(laboName: string): Promise<LaboLocalImporte> {
+  const row = await queryOne<{ local: string; importe: string; inconnu: string }>(`
+    SELECT
+      SUM(CASE WHEN LOWER(unaccent(COALESCE(pays,''))) LIKE '%algerie%' THEN 1 ELSE 0 END)::TEXT AS local,
+      SUM(CASE WHEN pays IS NOT NULL AND LOWER(unaccent(pays)) NOT LIKE '%algerie%' THEN 1 ELSE 0 END)::TEXT AS importe,
+      SUM(CASE WHEN pays IS NULL OR pays = '' THEN 1 ELSE 0 END)::TEXT AS inconnu
+    FROM enregistrements
+    WHERE labo = $1
+  `, [laboName])
+
+  return {
+    local: parseInt(row?.local ?? '0'),
+    importe: parseInt(row?.importe ?? '0'),
+    inconnu: parseInt(row?.inconnu ?? '0'),
+  }
+}
+
+/**
+ * Liste des enregistrements d'un labo (paginés).
+ */
+export async function getLaboProducts(laboName: string, limit = 50, offset = 0) {
+  return query<{
+    id: number; source: string; n_enreg: string | null; dci: string; nom_marque: string;
+    forme: string | null; dosage: string | null; statut: string | null; annee: number | null;
+  }>(`
+    SELECT id, 'enregistrement' AS source, n_enreg, dci, nom_marque, forme, dosage, statut, annee
+    FROM enregistrements
+    WHERE labo = $1
+    ORDER BY nom_marque ASC
+    LIMIT $2 OFFSET $3
+  `, [laboName, limit, offset])
+}
+
+/**
+ * Slugs de tous les labos (pour sitemap et génération statique).
+ */
+export async function getAllLaboSlugs(): Promise<{ slug: string; labo: string }[]> {
+  const rows = await query<{ labo: string }>(`
+    SELECT DISTINCT labo FROM enregistrements
+    WHERE labo IS NOT NULL AND labo != ''
+    ORDER BY labo
+  `)
+  return rows.map(r => ({ labo: r.labo, slug: laboToSlug(r.labo) }))
+}
