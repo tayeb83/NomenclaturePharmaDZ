@@ -20,6 +20,21 @@ type UploadResult = {
   error?: string
 }
 
+
+
+type AnalyticsRow = {
+  label: string
+  value: number
+  hint?: string
+}
+
+type AdminAnalyticsPayload = {
+  topQueries: Array<{ search_query: string; clicks: number }>
+  topResults: Array<{ result_source: string; result_id: number; result_name: string; result_dci: string; clicks: number }>
+  topPages: Array<{ page_path: string; visits: number }>
+  topApis: Array<{ api_path: string; method: string; calls: number }>
+}
+
 type Version = {
   id: number
   version_label: string
@@ -132,7 +147,7 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
 // ─── Dashboard admin ──────────────────────────────────────────
 
 function AdminDashboard({ onLogout }: { onLogout: () => void }) {
-  const [tab, setTab] = useState<'upload' | 'archive'>('upload')
+  const [tab, setTab] = useState<'upload' | 'archive' | 'analytics'>('upload')
 
   async function handleLogout() {
     await fetch('/api/admin/logout', { method: 'POST' })
@@ -198,6 +213,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           {[
             { id: 'upload', label: '📤 Importer un fichier' },
             { id: 'archive', label: '🗂️ Archive des versions' },
+            { id: 'analytics', label: '📊 Analytics' },
           ].map(t => (
             <button
               key={t.id}
@@ -218,6 +234,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
         {tab === 'upload' && <UploadTab />}
         {tab === 'archive' && <ArchiveTab />}
+        {tab === 'analytics' && <AnalyticsTab />}
       </div>
     </div>
   )
@@ -769,6 +786,127 @@ function MiniStat({ label, value, color = 'white' }: { label: string; value: num
     <div style={{ textAlign: 'center' }}>
       <div style={{ fontSize: 22, fontWeight: 800, color }}>{value.toLocaleString('fr')}</div>
       <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>{label}</div>
+    </div>
+  )
+}
+
+function AnalyticsTab() {
+  const [days, setDays] = useState(30)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [data, setData] = useState<AdminAnalyticsPayload | null>(null)
+
+  const loadAnalytics = useCallback(async (windowDays: number) => {
+    setLoading(true)
+    setError('')
+
+    try {
+      const res = await fetch(`/api/admin/analytics?days=${windowDays}`)
+      const payload = await res.json()
+      if (!res.ok) {
+        setError(payload.error || 'Impossible de charger les analytics')
+        return
+      }
+      setData(payload)
+    } catch {
+      setError('Erreur réseau lors du chargement des analytics')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadAnalytics(days)
+  }, [days, loadAnalytics])
+
+  const toRows = (rows: AnalyticsRow[]) => rows.length ? rows : [{ label: 'Aucune donnée', value: 0 }]
+
+  return (
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div style={{
+        background: 'white', borderRadius: 14, padding: 16,
+        boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
+      }}>
+        <div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: '#0f172a' }}>Dashboard analytics</div>
+          <div style={{ fontSize: 12.5, color: '#64748b' }}>Recherche, clics, pages visitées et APIs les plus exécutées</div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <select
+            value={days}
+            onChange={e => setDays(Number(e.target.value))}
+            style={{ border: '1px solid #cbd5e1', borderRadius: 8, padding: '8px 10px', fontSize: 13 }}
+          >
+            <option value={7}>7 jours</option>
+            <option value={30}>30 jours</option>
+            <option value={90}>90 jours</option>
+          </select>
+          <button
+            onClick={() => loadAnalytics(days)}
+            style={{
+              border: 'none', borderRadius: 8, padding: '8px 12px',
+              background: '#0284c7', color: 'white', fontWeight: 700, fontSize: 12,
+            }}
+          >
+            Actualiser
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div style={{ background: '#fee2e2', color: '#b91c1c', borderRadius: 10, padding: 12, fontSize: 13 }}>
+          {error}
+        </div>
+      )}
+
+      {loading && !data && <div style={{ color: '#64748b', fontSize: 13 }}>Chargement des analytics…</div>}
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
+        <AnalyticsCard
+          title="Médicaments les plus recherchés"
+          rows={toRows((data?.topQueries || []).map(item => ({ label: item.search_query, value: item.clicks })))}
+          valueLabel="clics"
+        />
+        <AnalyticsCard
+          title="Médicaments les plus cliqués"
+          rows={toRows((data?.topResults || []).map(item => ({ label: item.result_name, value: item.clicks, hint: item.result_dci })))}
+          valueLabel="clics"
+        />
+        <AnalyticsCard
+          title="Pages les plus visitées"
+          rows={toRows((data?.topPages || []).map(item => ({ label: item.page_path, value: item.visits })))}
+          valueLabel="visites"
+        />
+        <AnalyticsCard
+          title="APIs les plus exécutées"
+          rows={toRows((data?.topApis || []).map(item => ({ label: `${item.method} ${item.api_path}`, value: item.calls })))}
+          valueLabel="appels"
+        />
+      </div>
+    </div>
+  )
+}
+
+function AnalyticsCard({ title, rows, valueLabel }: { title: string; rows: AnalyticsRow[]; valueLabel: string }) {
+  return (
+    <div style={{ background: 'white', borderRadius: 14, padding: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+      <div style={{ fontSize: 14.5, fontWeight: 800, color: '#0f172a', marginBottom: 12 }}>{title}</div>
+      <div style={{ display: 'grid', gap: 8 }}>
+        {rows.slice(0, 10).map((row, idx) => (
+          <div key={`${title}-${row.label}-${idx}`} style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 13, color: '#334155', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {idx + 1}. {row.label}
+              </div>
+              {row.hint && <div style={{ fontSize: 11.5, color: '#94a3b8' }}>{row.hint}</div>}
+            </div>
+            <div style={{ fontSize: 12, color: '#0284c7', fontWeight: 800, whiteSpace: 'nowrap' }}>
+              {row.value.toLocaleString('fr')} {valueLabel}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
