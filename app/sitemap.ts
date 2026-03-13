@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next'
-import { getAllMedicamentIds } from '@/lib/queries'
+import { getAllMedicamentIds, getAllLaboSlugs } from '@/lib/queries'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
 
@@ -45,6 +45,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
+      url: `${APP_URL}/laboratoires`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
       url: `${APP_URL}/a-propos`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
@@ -71,5 +77,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Si la DB est inaccessible, on retourne uniquement les pages statiques
   }
 
-  return [...staticPages, ...medicamentPages]
+  let laboPages: MetadataRoute.Sitemap = []
+  try {
+    const slugs = await getAllLaboSlugs()
+    laboPages = slugs.map(({ slug }) => ({
+      url: `${APP_URL}/laboratoire/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    }))
+  } catch {
+    // Si la DB est inaccessible, on ignore les pages labo
+  }
+
+  return [...staticPages, ...medicamentPages, ...laboPages]
 }
