@@ -309,6 +309,97 @@ export async function getSearchClickStats(days: number = 30): Promise<{
   return { daily, topQueries, topResults }
 }
 
+
+export type PageVisitEventInput = {
+  page_path: string
+  page_title?: string | null
+  referrer?: string | null
+}
+
+export type ApiExecEventInput = {
+  api_path: string
+  method: string
+  status_code?: number | null
+}
+
+export type TopPageVisit = {
+  page_path: string
+  visits: number
+}
+
+export type TopApiExec = {
+  api_path: string
+  method: string
+  calls: number
+}
+
+export async function recordPageVisit(event: PageVisitEventInput) {
+  if (!await hasTable('page_visit_events')) return
+
+  await query(`
+    INSERT INTO page_visit_events (page_path, page_title, referrer)
+    VALUES ($1, $2, $3)
+  `, [
+    event.page_path,
+    event.page_title ?? null,
+    event.referrer ?? null,
+  ])
+}
+
+export async function recordApiExec(event: ApiExecEventInput) {
+  if (!await hasTable('api_exec_events')) return
+
+  await query(`
+    INSERT INTO api_exec_events (api_path, method, status_code)
+    VALUES ($1, $2, $3)
+  `, [
+    event.api_path,
+    event.method.toUpperCase(),
+    event.status_code ?? null,
+  ])
+}
+
+export async function getAdminAnalyticsStats(days: number = 30): Promise<{
+  topQueries: TopSearchClick[]
+  topResults: TopResultClick[]
+  topPages: TopPageVisit[]
+  topApis: TopApiExec[]
+}> {
+  const clampedDays = Math.min(Math.max(days, 1), 365)
+  const intervalExpr = `${clampedDays} days`
+
+  const [searchStats, topPages, topApis] = await Promise.all([
+    getSearchClickStats(clampedDays),
+    hasTable('page_visit_events').then(exists => exists
+      ? query<TopPageVisit>(`
+          SELECT page_path, COUNT(*)::INT AS visits
+          FROM page_visit_events
+          WHERE created_at >= NOW() - $1::INTERVAL
+          GROUP BY page_path
+          ORDER BY visits DESC, page_path ASC
+          LIMIT 20
+        `, [intervalExpr])
+      : Promise.resolve([] as TopPageVisit[])),
+    hasTable('api_exec_events').then(exists => exists
+      ? query<TopApiExec>(`
+          SELECT api_path, method, COUNT(*)::INT AS calls
+          FROM api_exec_events
+          WHERE created_at >= NOW() - $1::INTERVAL
+          GROUP BY api_path, method
+          ORDER BY calls DESC, api_path ASC
+          LIMIT 20
+        `, [intervalExpr])
+      : Promise.resolve([] as TopApiExec[])),
+  ])
+
+  return {
+    topQueries: searchStats.topQueries,
+    topResults: searchStats.topResults,
+    topPages,
+    topApis,
+  }
+}
+
 type AdvancedSearchCondition = {
   field: string
   operator: string

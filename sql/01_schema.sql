@@ -159,6 +159,24 @@ CREATE TABLE IF NOT EXISTS search_click_events (
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- ─── TABLE ANALYTICS VISITES DE PAGES ──────────────────────
+CREATE TABLE IF NOT EXISTS page_visit_events (
+  id            BIGSERIAL PRIMARY KEY,
+  page_path     TEXT NOT NULL,
+  page_title    TEXT,
+  referrer      TEXT,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ─── TABLE ANALYTICS EXÉCUTIONS API ────────────────────────
+CREATE TABLE IF NOT EXISTS api_exec_events (
+  id            BIGSERIAL PRIMARY KEY,
+  api_path      TEXT NOT NULL,
+  method        VARCHAR(10) NOT NULL,
+  status_code   INTEGER,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ─── INDEX POUR RECHERCHE FULLTEXT ───────────────────────────
 -- Index trigramme pour recherche floue (typos tolérées)
 CREATE INDEX idx_enreg_dci_trgm      ON enregistrements USING gin(dci gin_trgm_ops);
@@ -179,6 +197,10 @@ CREATE INDEX idx_retraits_motif  ON retraits(motif_retrait);
 CREATE INDEX idx_retraits_date   ON retraits(date_retrait);
 CREATE INDEX idx_search_click_events_created_at ON search_click_events(created_at DESC);
 CREATE INDEX idx_search_click_events_query ON search_click_events(search_query);
+CREATE INDEX idx_page_visit_events_created_at ON page_visit_events(created_at DESC);
+CREATE INDEX idx_page_visit_events_path ON page_visit_events(page_path);
+CREATE INDEX idx_api_exec_events_created_at ON api_exec_events(created_at DESC);
+CREATE INDEX idx_api_exec_events_path ON api_exec_events(api_path);
 
 -- ─── FONCTION RECHERCHE UNIFIÉE ──────────────────────────────
 CREATE OR REPLACE FUNCTION search_medicaments(query TEXT, scope TEXT DEFAULT 'all', lim INTEGER DEFAULT 30)

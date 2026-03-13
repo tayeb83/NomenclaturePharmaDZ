@@ -4,6 +4,7 @@ import { Nav } from '@/components/layout/Nav'
 import { Footer } from '@/components/layout/Footer'
 import { LanguageProvider } from '@/components/i18n/LanguageProvider'
 import { PWAManager } from '@/components/pwa/PWAManager'
+import { PageVisitTracker } from '@/components/analytics/PageVisitTracker'
 import { getStats } from '@/lib/queries'
 import { isAdminSessionValid } from '@/lib/admin-auth'
 import { cookies } from 'next/headers'
@@ -132,6 +133,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </main>
           <Footer />
           <PWAManager />
+          <PageVisitTracker />
         </LanguageProvider>
       </body>
     </html>
