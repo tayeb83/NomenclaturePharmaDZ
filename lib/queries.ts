@@ -805,8 +805,13 @@ export function laboToSlug(name: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
-/** Expression SQL pour normaliser un nom de labo en slug */
-const LABO_SLUG_EXPR = `LOWER(REGEXP_REPLACE(COALESCE(labo, ''), '[^a-zA-Z0-9]+', '-', 'g'))`
+/**
+ * Expression SQL pour normaliser un nom de labo en slug.
+ * Doit rester alignée avec `laboToSlug` (suppression accents + trim des tirets).
+ */
+const LABO_SLUG_EXPR = `
+  TRIM(BOTH '-' FROM REGEXP_REPLACE(LOWER(unaccent(COALESCE(labo, ''))), '[^a-z0-9]+', '-', 'g'))
+`
 
 /**
  * Liste tous les laboratoires distincts avec leurs compteurs.
