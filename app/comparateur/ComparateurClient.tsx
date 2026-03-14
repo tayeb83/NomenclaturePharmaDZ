@@ -145,12 +145,11 @@ function TypeBreakdownSection({ data, lang }: { data: MarketComparatorData['type
 
 function TopLabosSection({ data, lang }: { data: MarketComparatorData['topLabos']; lang: string }) {
   const t = (fr: string, ar: string) => lang === 'ar' ? ar : fr
-  const maxNb = data[0]?.nb ?? 1
   const [showLocal, setShowLocal] = useState<boolean | null>(null)
 
   const filtered = showLocal === null
     ? data
-    : data.filter(l => showLocal ? l.local >= l.importe : l.local < l.importe)
+    : data.filter((l) => showLocal ? l.algerie >= l.etranger : l.etranger > l.algerie)
 
   return (
     <SectionCard title={`🏭 ${t('Top laboratoires', 'أبرز المخابر')} — ${t('par enregistrements', 'حسب التسجيلات')}`}>
@@ -176,7 +175,8 @@ function TopLabosSection({ data, lang }: { data: MarketComparatorData['topLabos'
         ))}
       </div>
       {filtered.map((labo, i) => {
-        const localPct = labo.nb > 0 ? Math.round((labo.local / labo.nb) * 100) : 0
+        const algeriePct = labo.nb > 0 ? Math.round((labo.algerie / labo.nb) * 100) : 0
+        const etrangerPct = labo.nb > 0 ? Math.round((labo.etranger / labo.nb) * 100) : 0
         return (
           <div key={labo.labo} style={{ marginBottom: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 3 }}>
@@ -187,11 +187,13 @@ function TopLabosSection({ data, lang }: { data: MarketComparatorData['topLabos'
               <span style={{ color: '#0284c7', flexShrink: 0 }}>{labo.nb.toLocaleString()}</span>
             </div>
             <div style={{ display: 'flex', height: 8, borderRadius: 4, overflow: 'hidden', marginBottom: 2 }}>
-              <div style={{ flex: labo.local, background: '#059669' }} />
-              <div style={{ flex: labo.importe, background: '#7c3aed' }} />
+              <div style={{ flex: labo.algerie, background: '#059669' }} />
+              <div style={{ flex: labo.etranger, background: '#7c3aed' }} />
+              {labo.inconnu > 0 && <div style={{ flex: labo.inconnu, background: '#cbd5e1' }} />}
             </div>
             <div style={{ fontSize: 11, color: '#94a3b8' }}>
-              🟢 {localPct}% {t('local (Algérie)', 'محلي (الجزائر)')} · 🟣 {100 - localPct}% {t('étranger (hors Algérie)', 'أجنبي (خارج الجزائر)')}
+              🟢 {algeriePct}% {t('local (Algérie)', 'محلي (الجزائر)')} · 🟣 {etrangerPct}% {t('étranger (hors Algérie)', 'أجنبي (خارج الجزائر)')}
+              {labo.inconnu > 0 && ` · ⚪ ${100 - algeriePct - etrangerPct}% ${t('non renseigné', 'غير محدد')}`}
             </div>
           </div>
         )
