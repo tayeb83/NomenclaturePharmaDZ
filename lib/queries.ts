@@ -768,6 +768,137 @@ export async function getMedicamentById(
   }
 }
 
+// ─── SEO : PAGES CIBLÉES ──────────────────────────────────────
+
+export type DciSlug = { dci: string; count: number }
+export type FormeSlug = { forme: string; count: number }
+
+/** Tous les médicaments actifs pour une DCI donnée */
+export async function getMedicamentsByDci(dci: string, limit = 200): Promise<Enregistrement[]> {
+  return query<Enregistrement>(`
+    SELECT * FROM enregistrements
+    WHERE LOWER(dci) = LOWER($1)
+    ORDER BY nom_marque ASC
+    LIMIT $2
+  `, [dci, limit])
+}
+
+/** Toutes les DCI uniques avec leur nombre de médicaments (pour sitemap + pages index) */
+export async function getAllDciList(limit = 2000): Promise<DciSlug[]> {
+  const rows = await query<{ dci: string; count: string }>(`
+    SELECT dci, COUNT(*)::INT AS count
+    FROM enregistrements
+    WHERE dci IS NOT NULL AND dci <> ''
+    GROUP BY dci
+    ORDER BY count DESC, dci ASC
+    LIMIT $1
+  `, [limit])
+  return rows.map(r => ({ dci: r.dci, count: parseInt(r.count as unknown as string) }))
+}
+
+/** Tous les médicaments actifs pour une forme pharmaceutique */
+export async function getMedicamentsByForme(forme: string, limit = 200): Promise<Enregistrement[]> {
+  return query<Enregistrement>(`
+    SELECT * FROM enregistrements
+    WHERE LOWER(forme) = LOWER($1)
+    ORDER BY dci ASC, nom_marque ASC
+    LIMIT $2
+  `, [forme, limit])
+}
+
+/** Toutes les formes uniques avec leur nombre de médicaments */
+export async function getAllFormeList(limit = 500): Promise<FormeSlug[]> {
+  const rows = await query<{ forme: string; count: string }>(`
+    SELECT forme, COUNT(*)::INT AS count
+    FROM enregistrements
+    WHERE forme IS NOT NULL AND forme <> ''
+    GROUP BY forme
+    ORDER BY count DESC, forme ASC
+    LIMIT $1
+  `, [limit])
+  return rows.map(r => ({ forme: r.forme, count: parseInt(r.count as unknown as string) }))
+}
+
+/** Retraits pour une année donnée */
+export async function getRetraitsByAnnee(annee: number): Promise<Retrait[]> {
+  return query<Retrait>(`
+    SELECT * FROM retraits
+    WHERE EXTRACT(YEAR FROM date_retrait) = $1
+    ORDER BY date_retrait DESC NULLS LAST, id DESC
+  `, [annee])
+}
+
+/** Toutes les années disponibles dans la table retraits */
+export async function getAllRetraitAnnees(): Promise<number[]> {
+  const rows = await query<{ annee: number }>(`
+    SELECT DISTINCT EXTRACT(YEAR FROM date_retrait)::INT AS annee
+    FROM retraits
+    WHERE date_retrait IS NOT NULL
+    ORDER BY annee DESC
+  `)
+  return rows.map(r => r.annee)
+}
+
+/** Nouveautés pour un mois/année donné (is_new_vs_previous ou date_init) */
+export async function getNouveautesByAnneeMois(annee: number, mois: number, limit = 300): Promise<Enregistrement[]> {
+  const hasIsNew = await hasColumn('enregistrements', 'is_new_vs_previous')
+  if (hasIsNew) {
+    return query<Enregistrement>(`
+      SELECT * FROM enregistrements
+      WHERE is_new_vs_previous = TRUE
+        AND EXTRACT(YEAR FROM date_init) = $1
+        AND EXTRACT(MONTH FROM date_init) = $2
+      ORDER BY nom_marque ASC
+      LIMIT $3
+    `, [annee, mois, limit])
+  }
+  return query<Enregistrement>(`
+    SELECT * FROM enregistrements
+    WHERE EXTRACT(YEAR FROM date_init) = $1
+      AND EXTRACT(MONTH FROM date_init) = $2
+    ORDER BY nom_marque ASC
+    LIMIT $3
+  `, [annee, mois, limit])
+}
+
+/** Toutes les paires année/mois avec des nouveautés */
+export async function getAllNouveauteAnneeMois(): Promise<{ annee: number; mois: number; count: number }[]> {
+  const hasIsNew = await hasColumn('enregistrements', 'is_new_vs_previous')
+  const whereExtra = hasIsNew ? 'AND is_new_vs_previous = TRUE' : ''
+  const rows = await query<{ annee: string; mois: string; count: string }>(`
+    SELECT
+      EXTRACT(YEAR FROM date_init)::INT AS annee,
+      EXTRACT(MONTH FROM date_init)::INT AS mois,
+      COUNT(*)::INT AS count
+    FROM enregistrements
+    WHERE date_init IS NOT NULL ${whereExtra}
+    GROUP BY annee, mois
+    HAVING COUNT(*) >= 3
+    ORDER BY annee DESC, mois DESC
+    LIMIT 60
+  `)
+  return rows.map(r => ({
+    annee: parseInt(r.annee as unknown as string),
+    mois: parseInt(r.mois as unknown as string),
+    count: parseInt(r.count as unknown as string),
+  }))
+}
+
+/** Substitution : médicaments (actifs + génériques) pour une DCI */
+export async function getMedicamentsDciSubstitution(dci: string): Promise<{
+  reference: Enregistrement[]
+  generiques: Enregistrement[]
+}> {
+  const all = await query<Enregistrement>(`
+    SELECT * FROM enregistrements
+    WHERE LOWER(dci) = LOWER($1)
+    ORDER BY type_prod ASC, nom_marque ASC
+  `, [dci])
+  const reference = all.filter(m => !['GE', 'Gé'].includes(m.type_prod ?? ''))
+  const generiques = all.filter(m => ['GE', 'Gé'].includes(m.type_prod ?? ''))
+  return { reference, generiques }
+}
+
 // ─── DIFF ENTRE VERSIONS ──────────────────────────────────────
 export type RemovedDrug = {
   id: number
