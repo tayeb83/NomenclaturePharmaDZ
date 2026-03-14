@@ -1,5 +1,12 @@
 import { MetadataRoute } from 'next'
-import { getAllMedicamentIds, getAllLaboSlugs } from '@/lib/queries'
+import {
+  getAllMedicamentIds,
+  getAllLaboSlugs,
+  getAllDciList,
+  getAllFormeList,
+  getAllRetraitAnnees,
+  getAllNouveauteAnneeMois,
+} from '@/lib/queries'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
 
@@ -64,6 +71,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ]
 
+  // ─── Pages médicaments individuelles ──────────────────────────
   let medicamentPages: MetadataRoute.Sitemap = []
   try {
     const ids = await getAllMedicamentIds()
@@ -77,6 +85,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Si la DB est inaccessible, on retourne uniquement les pages statiques
   }
 
+  // ─── Pages laboratoires ────────────────────────────────────────
   let laboPages: MetadataRoute.Sitemap = []
   try {
     const slugs = await getAllLaboSlugs()
@@ -90,5 +99,85 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Si la DB est inaccessible, on ignore les pages labo
   }
 
-  return [...staticPages, ...medicamentPages, ...laboPages]
+  // ─── Pages DCI ─────────────────────────────────────────────────
+  let dciPages: MetadataRoute.Sitemap = []
+  try {
+    const list = await getAllDciList(2000)
+    dciPages = list.map(({ dci }) => ({
+      url: `${APP_URL}/dci/${encodeURIComponent(dci.toLowerCase())}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    }))
+  } catch {
+    // ignore
+  }
+
+  // ─── Pages formes pharmaceutiques ─────────────────────────────
+  let formePages: MetadataRoute.Sitemap = []
+  try {
+    const list = await getAllFormeList(200)
+    formePages = list.map(({ forme }) => ({
+      url: `${APP_URL}/forme/${encodeURIComponent(forme.toLowerCase())}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    }))
+  } catch {
+    // ignore
+  }
+
+  // ─── Pages retraits par année ──────────────────────────────────
+  let retraitAnneePages: MetadataRoute.Sitemap = []
+  try {
+    const annees = await getAllRetraitAnnees()
+    retraitAnneePages = annees.map(annee => ({
+      url: `${APP_URL}/retraits/${annee}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.75,
+    }))
+  } catch {
+    // ignore
+  }
+
+  // ─── Pages nouveautés par mois ────────────────────────────────
+  let nouveautePages: MetadataRoute.Sitemap = []
+  try {
+    const periodes = await getAllNouveauteAnneeMois()
+    nouveautePages = periodes.map(({ annee, mois }) => ({
+      url: `${APP_URL}/nouveautes/${annee}/${String(mois).padStart(2, '0')}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.75,
+    }))
+  } catch {
+    // ignore
+  }
+
+  // ─── Pages substitution par DCI ───────────────────────────────
+  let substitutionPages: MetadataRoute.Sitemap = []
+  try {
+    // On réutilise la liste DCI pour les pages substitution
+    const list = await getAllDciList(500)
+    substitutionPages = list.map(({ dci }) => ({
+      url: `${APP_URL}/substitution/${encodeURIComponent(dci.toLowerCase())}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    }))
+  } catch {
+    // ignore
+  }
+
+  return [
+    ...staticPages,
+    ...medicamentPages,
+    ...laboPages,
+    ...dciPages,
+    ...formePages,
+    ...retraitAnneePages,
+    ...nouveautePages,
+    ...substitutionPages,
+  ]
 }
