@@ -1173,8 +1173,9 @@ export type MarketTypeBreakdown = {
 export type MarketTopLabo = {
   labo: string
   nb: number
-  local: number
-  importe: number
+  algerie: number
+  etranger: number
+  inconnu: number
 }
 
 export type MarketTopDci = {
@@ -1214,17 +1215,41 @@ export async function getMarketComparatorData(): Promise<MarketComparatorData> {
       GROUP BY type_prod
       ORDER BY COUNT(*) DESC
     `),
-    query<{ labo: string; nb: string; local: string; importe: string }>(`
+    query<{ labo: string; nb: string; algerie: string; etranger: string; inconnu: string }>(`
       SELECT
         labo,
         COUNT(*)::TEXT AS nb,
-        SUM(CASE WHEN statut = 'F' THEN 1 ELSE 0 END)::TEXT AS local,
-        SUM(CASE WHEN statut IS NOT NULL AND statut != 'F' THEN 1 ELSE 0 END)::TEXT AS importe
+        SUM(
+          CASE
+            WHEN pays IS NOT NULL
+             AND (
+               LOWER(pays) LIKE '%alg%'
+               OR LOWER(pays) LIKE '%dz%'
+               OR pays LIKE '%الجزائر%'
+             )
+            THEN 1
+            ELSE 0
+          END
+        )::TEXT AS algerie,
+        SUM(
+          CASE
+            WHEN pays IS NOT NULL
+             AND pays != ''
+             AND NOT (
+               LOWER(pays) LIKE '%alg%'
+               OR LOWER(pays) LIKE '%dz%'
+               OR pays LIKE '%الجزائر%'
+             )
+            THEN 1
+            ELSE 0
+          END
+        )::TEXT AS etranger,
+        SUM(CASE WHEN pays IS NULL OR pays = '' THEN 1 ELSE 0 END)::TEXT AS inconnu
       FROM enregistrements
       WHERE labo IS NOT NULL AND labo != ''
       GROUP BY labo
       ORDER BY COUNT(*) DESC
-      LIMIT 15
+      LIMIT 200
     `),
     query<{ dci: string; nb_marques: string; nb_enreg: string }>(`
       SELECT
@@ -1261,8 +1286,9 @@ export async function getMarketComparatorData(): Promise<MarketComparatorData> {
     topLabos: laboRows.map(r => ({
       labo: r.labo,
       nb: parseInt(r.nb),
-      local: parseInt(r.local),
-      importe: parseInt(r.importe),
+      algerie: parseInt(r.algerie),
+      etranger: parseInt(r.etranger),
+      inconnu: parseInt(r.inconnu),
     })),
     topDciConcurrence: dciRows.map(r => ({
       dci: r.dci,
