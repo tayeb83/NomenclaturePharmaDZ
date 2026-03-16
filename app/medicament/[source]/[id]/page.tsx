@@ -171,7 +171,7 @@ export default async function MedicamentDetailPage(
               {/* ─── Code ATC inline dans identification si disponible ─ */}
               {med.code_atc && (
                 <div className="detail-field">
-                  <div className="detail-field-label">Code ATC</div>
+                  <div className="detail-field-label">{pickLang(lang, { fr: 'Code ATC', ar: 'رمز ATC' })}</div>
                   <div className="detail-field-value">
                     <span style={{
                       display: 'inline-block',
@@ -225,7 +225,7 @@ export default async function MedicamentDetailPage(
               <Field label={pickLang(lang, { fr: 'Conditionnement', ar: 'التعبئة' })} value={med.conditionnement} />
               <Field label={pickLang(lang, { fr: 'Liste', ar: 'القائمة' })} value={med.liste} />
               <Field label={pickLang(lang, { fr: 'Prescription', ar: 'الوصفة' })} value={med.prescription} />
-              {med.stabilite && <Field label="Stabilité" value={med.stabilite} />}
+              {med.stabilite && <Field label={pickLang(lang, { fr: 'Stabilité', ar: 'الاستقرار' })} value={med.stabilite} />}
             </div>
 
             {/* ─── Fabricant ────────────────────────────────── */}
@@ -234,7 +234,7 @@ export default async function MedicamentDetailPage(
               <Field label={pickLang(lang, { fr: 'Laboratoire', ar: 'المخبر' })} value={med.labo} />
               {med.pays && (
                 <div className="detail-field">
-                  <div className="detail-field-label">Pays d&apos;origine</div>
+                  <div className="detail-field-label">{pickLang(lang, { fr: "Pays d'origine", ar: 'بلد المنشأ' })}</div>
                   <div className="detail-field-value">
                     {getCountryFlag(med.pays) && (
                       <span style={{ fontSize: 20, marginRight: 6, verticalAlign: 'middle' }}>
