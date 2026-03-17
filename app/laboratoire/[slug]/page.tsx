@@ -50,7 +50,7 @@ export default async function LaboPage({ params }: Props) {
   const [stats, portfolioDci, products] = await Promise.all([
     getLaboStats(laboName),
     getLaboPortfolioDCI(laboName, 30),
-    getLaboProducts(laboName, 50, 0),
+    getLaboProducts(laboName, 1000, 0),
   ])
 
   if (!stats) notFound()

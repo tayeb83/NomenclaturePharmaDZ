@@ -27,7 +27,7 @@ export async function GET(
       getLaboNouveautesByYear(laboName),
       getLaboPortfolioDCI(laboName, 30),
       getLaboLocalImporte(laboName),
-      getLaboProducts(laboName, 50, 0),
+      getLaboProducts(laboName, 1000, 0),
     ])
 
     return NextResponse.json({
