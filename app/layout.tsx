@@ -100,7 +100,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <html lang="fr">
+    <html lang="fr" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -125,7 +125,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           />
         )}
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <LanguageProvider>
           <Nav currentVersion={currentVersion} isAdmin={isAdmin} />
           <main className="main-content">
