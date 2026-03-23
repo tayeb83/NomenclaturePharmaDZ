@@ -16,16 +16,18 @@ export async function generateStaticParams() {
 export async function generateMetadata(
   { params }: { params: { slug: string } }
 ): Promise<Metadata> {
-  const article = getArticleBySlug(params.slug)
+  const { slug } = params
+  const article = getArticleBySlug(slug)
   if (!article) return { title: 'Article introuvable' }
 
   const canonical = `${APP_URL}/articles/${article.slug}`
   return {
-    title: `${article.title} | PharmaVeille DZ`,
+    title: `${article.seoTitle || article.title} | PharmaVeille DZ`,
     description: article.description,
+    keywords: article.seoKeywords,
     alternates: { canonical },
     openGraph: {
-      title: article.title,
+      title: article.seoTitle || article.title,
       description: article.description,
       type: 'article',
       publishedTime: article.date,
@@ -36,8 +38,6 @@ export async function generateMetadata(
     },
   }
 }
-
-// ─── Section Renderers ──────────────────────────────────────────
 
 function renderBold(text: string) {
   const parts = text.split(/\*\*(.*?)\*\*/g)
@@ -199,14 +199,14 @@ function RenderSection({ section, isRtl }: { section: ArticleSection; isRtl: boo
 export default async function ArticleDetailPage({ params }: { params: { slug: string } }) {
   const langCookie = cookies().get('lang')?.value
   const lang: Lang = isLang(langCookie) ? langCookie : 'fr'
+  const { slug } = params
 
-  const article = getArticleBySlug(params.slug)
+  const article = getArticleBySlug(slug)
   if (!article) notFound()
 
-  const related = getRelatedArticles(params.slug, article.lang)
+  const related = getRelatedArticles(slug, article.lang)
   const isRtl = article.lang === 'ar'
 
-  // Alternate language article (same audience, other lang)
   const altSlug = article.slug.endsWith('-ar')
     ? article.slug.replace(/-ar$/, '')
     : `${article.slug}-ar`
@@ -218,14 +218,14 @@ export default async function ArticleDetailPage({ params }: { params: { slug: st
   }
   const aud = AUDIENCE_LABEL[article.audience]
 
-  const jsonLd = {
+  const articleJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: article.title,
     description: article.description,
     datePublished: article.date,
     inLanguage: article.lang,
-    keywords: article.tags.join(', '),
+    keywords: [...article.tags, ...(article.seoKeywords || [])].join(', '),
     publisher: {
       '@type': 'Organization',
       name: 'PharmaVeille DZ',
@@ -234,14 +234,37 @@ export default async function ArticleDetailPage({ params }: { params: { slug: st
     url: `${APP_URL}/articles/${article.slug}`,
   }
 
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Accueil', item: APP_URL },
+      { '@type': 'ListItem', position: 2, name: 'Articles', item: `${APP_URL}/articles` },
+      { '@type': 'ListItem', position: 3, name: article.title, item: `${APP_URL}/articles/${article.slug}` },
+    ],
+  }
+
+  const faqJsonLd = article.faq?.length
+    ? {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: article.faq.map(item => ({
+        '@type': 'Question',
+        name: item.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: item.answer,
+        },
+      })),
+    }
+    : null
+
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      {faqJsonLd ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} /> : null}
 
-      {/* ─── Header ─────────────────────────────────────────── */}
       <div className="page-header" style={{ background: 'linear-gradient(135deg, #0f172a, #0c2340)' }}>
         <div className="container">
           <Link href="/articles" className="detail-back-link">
@@ -256,7 +279,7 @@ export default async function ArticleDetailPage({ params }: { params: { slug: st
               }}>
                 {article.lang === 'ar' ? aud?.ar : aud?.fr}
               </span>
-              {article.tags.slice(0, 3).map(tag => (
+              {article.tags.slice(0, 4).map(tag => (
                 <span key={tag} style={{
                   padding: '4px 12px', borderRadius: 20, fontSize: 11,
                   background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)',
@@ -265,31 +288,29 @@ export default async function ArticleDetailPage({ params }: { params: { slug: st
             </div>
 
             <h1 style={{
-              fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 800, color: 'white',
+              fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: 'white',
               margin: '0 0 8px', direction: isRtl ? 'rtl' : 'ltr', lineHeight: 1.3,
             }}>
               {article.title}
             </h1>
-            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, margin: '0 0 8px', direction: isRtl ? 'rtl' : 'ltr' }}>
+            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, margin: '0 0 8px', direction: isRtl ? 'rtl' : 'ltr', maxWidth: 780 }}>
               {article.subtitle}
             </p>
-            <div style={{ display: 'flex', gap: 16, fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
               <span>🗓 {new Date(article.date).toLocaleDateString(article.lang === 'ar' ? 'ar-DZ' : 'fr-DZ', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
               <span>⏱ {article.readingTime} {article.lang === 'ar' ? 'دقائق' : 'min de lecture'}</span>
+              {article.seoKeywords?.length ? <span>🔎 {article.seoKeywords.slice(0, 3).join(' • ')}</span> : null}
             </div>
           </div>
         </div>
       </div>
 
-      {/* ─── Body ───────────────────────────────────────────── */}
       <div className="page-body">
-        <div className="container" style={{ maxWidth: 780 }}>
-
-          {/* Language switcher */}
+        <div className="container" style={{ maxWidth: 840 }}>
           {altArticle && (
             <div style={{
               background: '#eff6ff', border: '1.5px solid #bfdbfe', borderRadius: 8,
-              padding: '10px 16px', marginBottom: 28, display: 'flex',
+              padding: '10px 16px', marginBottom: 18, display: 'flex',
               justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8,
             }}>
               <span style={{ fontSize: 13, color: '#1e40af' }}>
@@ -306,14 +327,96 @@ export default async function ArticleDetailPage({ params }: { params: { slug: st
             </div>
           )}
 
-          {/* Article content */}
+          {(article.sourceLinks?.length || article.relatedLinks?.length) && (
+            <section style={{
+              background: '#f8fafc',
+              border: '1.5px solid #e2e8f0',
+              borderRadius: 14,
+              padding: '18px 20px',
+              marginBottom: 28,
+            }}>
+              <div style={{ fontWeight: 800, color: '#0f172a', marginBottom: 12 }}>
+                {article.lang === 'ar' ? 'روابط مفيدة' : 'Ressources utiles'}
+              </div>
+              {article.sourceLinks?.length ? (
+                <div style={{ marginBottom: article.relatedLinks?.length ? 16 : 0 }}>
+                  <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>
+                    {article.lang === 'ar' ? 'مصادر رسمية' : 'Sources officielles'}
+                  </div>
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    {article.sourceLinks.map(link => (
+                      <a
+                        key={link.label}
+                        href={link.url}
+                        target={link.external ? '_blank' : undefined}
+                        rel={link.external ? 'noreferrer noopener' : undefined}
+                        style={{
+                          textDecoration: 'none',
+                          padding: '10px 14px',
+                          borderRadius: 10,
+                          background: '#0f172a',
+                          color: 'white',
+                          fontSize: 13,
+                          fontWeight: 700,
+                        }}
+                      >
+                        ⬇️ {link.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {article.relatedLinks?.length ? (
+                <div>
+                  <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>
+                    {article.lang === 'ar' ? 'روابط داخلية مقترحة' : 'Liens internes conseillés'}
+                  </div>
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    {article.relatedLinks.map(link => (
+                      <Link
+                        key={link.label}
+                        href={link.url}
+                        style={{
+                          textDecoration: 'none',
+                          padding: '10px 14px',
+                          borderRadius: 10,
+                          background: '#eff6ff',
+                          color: '#0369a1',
+                          fontSize: 13,
+                          fontWeight: 700,
+                          border: '1px solid #bae6fd',
+                        }}
+                      >
+                        🔗 {link.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </section>
+          )}
+
           <article style={{ direction: isRtl ? 'rtl' : 'ltr' }}>
             {article.content.map((section, i) => (
               <RenderSection key={i} section={section} isRtl={isRtl} />
             ))}
           </article>
 
-          {/* Tags */}
+          {article.faq?.length ? (
+            <section style={{ marginTop: 36 }}>
+              <div className="section-title">{article.lang === 'ar' ? '❓ أسئلة شائعة' : '❓ FAQ rapide'}</div>
+              <div style={{ display: 'grid', gap: 12, marginTop: 16 }}>
+                {article.faq.map(item => (
+                  <div key={item.question} style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 12, padding: '16px 18px' }}>
+                    <div style={{ fontWeight: 800, color: '#0f172a', marginBottom: 6, direction: isRtl ? 'rtl' : 'ltr' }}>{item.question}</div>
+                    <div style={{ color: '#475569', lineHeight: 1.7, fontSize: 14.5, direction: isRtl ? 'rtl' : 'ltr' }}>{item.answer}</div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
           <div style={{ marginTop: 32, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {article.tags.map(tag => (
               <span key={tag} style={{
@@ -323,7 +426,6 @@ export default async function ArticleDetailPage({ params }: { params: { slug: st
             ))}
           </div>
 
-          {/* Back link */}
           <div style={{ marginTop: 32, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <Link href="/articles" style={{
               padding: '10px 20px', background: '#f1f5f9', color: '#334155',
@@ -340,7 +442,6 @@ export default async function ArticleDetailPage({ params }: { params: { slug: st
             </Link>
           </div>
 
-          {/* Related articles */}
           {related.length > 0 && (
             <div style={{ marginTop: 48 }}>
               <div className="section-title">
@@ -368,7 +469,6 @@ export default async function ArticleDetailPage({ params }: { params: { slug: st
               </div>
             </div>
           )}
-
         </div>
       </div>
 

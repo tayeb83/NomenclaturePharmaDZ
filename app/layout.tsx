@@ -8,6 +8,7 @@ import { PageVisitTracker } from '@/components/analytics/PageVisitTracker'
 import { getStats } from '@/lib/queries'
 import { isAdminSessionValid } from '@/lib/admin-auth'
 import { cookies } from 'next/headers'
+import { getDir, isLang } from '@/lib/i18n'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
 
@@ -72,9 +73,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     // Silencieux : la nav affiche le fallback si la DB est inaccessible
   }
 
-  const cookieStore = await cookies()
+  const cookieStore = cookies()
   const session = cookieStore.get('admin_session')?.value
   const isAdmin = isAdminSessionValid(session)
+  const cookieLang = cookieStore.get('lang')?.value
+  const initialLang = isLang(cookieLang) ? cookieLang : 'fr'
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -100,7 +103,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <html lang="fr" suppressHydrationWarning>
+    <html lang={initialLang} dir={getDir(initialLang)} suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
