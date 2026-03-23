@@ -7,6 +7,7 @@ import {
   getAllRetraitAnnees,
   getAllNouveauteAnneeMois,
 } from '@/lib/queries'
+import { ARTICLES } from '@/lib/articles'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
 
@@ -170,8 +171,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // ignore
   }
 
+  // ─── Pages articles ────────────────────────────────────────────
+  const articlePages: MetadataRoute.Sitemap = [
+    {
+      url: `${APP_URL}/articles`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    ...ARTICLES.map(article => ({
+      url: `${APP_URL}/articles/${article.slug}`,
+      lastModified: new Date(article.date),
+      changeFrequency: 'monthly' as const,
+      priority: 0.75,
+    })),
+  ]
+
   return [
     ...staticPages,
+    ...articlePages,
     ...medicamentPages,
     ...laboPages,
     ...dciPages,
