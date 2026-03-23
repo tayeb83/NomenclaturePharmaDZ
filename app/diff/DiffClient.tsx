@@ -88,7 +88,7 @@ function AddedDrugRow({ drug }: { drug: AddedDrug }) {
         {drug.pays && <> · <span style={{ fontWeight: 600 }}>Pays : </span>{drug.pays}</>}
       </div>
       {drug.n_enreg && (
-        <div style={{ fontSize: 11, color: '#94a3b8' }}>N° {drug.n_enreg}</div>
+        <div style={{ fontSize: 11, color: '#475569' }}>N° {drug.n_enreg}</div>
       )}
       <div style={{ marginTop: 4 }}>
         <Link
@@ -123,7 +123,7 @@ function RemovedDrugRow({ drug }: { drug: RemovedDrug }) {
         {drug.pays && <> · <span style={{ fontWeight: 600 }}>Pays : </span>{drug.pays}</>}
       </div>
       {drug.n_enreg && (
-        <div style={{ fontSize: 11, color: '#94a3b8' }}>N° {drug.n_enreg}</div>
+        <div style={{ fontSize: 11, color: '#475569' }}>N° {drug.n_enreg}</div>
       )}
     </div>
   )
@@ -352,7 +352,7 @@ export function DiffClient({
           {tab === 'added' && (
             <div>
               {filteredAdded.length === 0 ? (
-                <div style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0' }}>
+                <div style={{ textAlign: 'center', color: '#475569', padding: '40px 0' }}>
                   {addedCount === 0
                     ? t('Aucun médicament ajouté dans cette version.', 'لا يوجد دواء مضاف في هذا الإصدار.')
                     : t('Aucun résultat pour ce filtre.', 'لا توجد نتائج لهذا التصفية.')}
@@ -366,7 +366,7 @@ export function DiffClient({
           {tab === 'removed' && (
             <div>
               {filteredRemoved.length === 0 ? (
-                <div style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0' }}>
+                <div style={{ textAlign: 'center', color: '#475569', padding: '40px 0' }}>
                   {removedCount === 0
                     ? t('Aucun médicament supprimé enregistré pour cette version.', 'لا يوجد دواء محذوف مسجل لهذا الإصدار.')
                     : t('Aucun résultat pour ce filtre.', 'لا توجد نتائج لهذا التصفية.')}

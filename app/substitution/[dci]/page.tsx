@@ -98,9 +98,9 @@ export default async function SubstitutionDciPage({ params }: { params: { dci: s
           <TypeBadge typeProd={med.type_prod} />
           {med.statut === 'F'
             ? <span className="badge badge-green" style={{ fontSize: 11 }}>🇩🇿 {lang === 'ar' ? 'جزائري' : 'DZ'}</span>
-            : med.pays && <span style={{ fontSize: 11, color: '#94a3b8' }}>{getCountryFlag(med.pays)} {med.pays}</span>
+            : med.pays && <span style={{ fontSize: 11, color: '#475569' }}>{getCountryFlag(med.pays)} {med.pays}</span>
           }
-          {med.labo && <span style={{ fontSize: 11, color: '#94a3b8' }}>🏭 {med.labo}</span>}
+          {med.labo && <span style={{ fontSize: 11, color: '#475569' }}>🏭 {med.labo}</span>}
           {med.conditionnement && <span style={{ fontSize: 10, color: '#cbd5e1' }}>{med.conditionnement}</span>}
         </div>
       </Link>

@@ -196,7 +196,7 @@ export function HomeClient({
                 </h2>
                 <button
                   onClick={() => setShowSearch(false)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: 18 }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569', fontSize: 18 }}
                   title={t('Masquer la recherche', 'إخفاء البحث')}
                 >
                   ✕

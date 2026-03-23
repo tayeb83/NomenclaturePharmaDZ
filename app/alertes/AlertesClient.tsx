@@ -2,6 +2,8 @@
 
 import { DrugCard } from '@/components/drug/DrugCard'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
+import { PrintButton } from '@/components/ui/PrintButton'
+import { GlossarySection } from '@/components/ui/GlossarySection'
 
 export function AlertesClient({
   retraits,
@@ -19,11 +21,18 @@ export function AlertesClient({
     <>
       <div className="page-header" style={{ background: 'linear-gradient(135deg, #7f1d1d, #991b1b)' }}>
         <div className="container">
-          <h1>🚨 {t('Alertes & Retraits', 'التنبيهات والانسحابات')}</h1>
-          <p>{t(
-            'Liste des médicaments retirés du marché algérien et des AMM non renouvelées — Source : MIPH',
-            'قائمة الأدوية المسحوبة من السوق الجزائري والـ AMM غير المجددة — المصدر: MIPH'
-          )}</p>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+            <div>
+              <h1>🚨 {t('Alertes & Retraits', 'التنبيهات والانسحابات')}</h1>
+              <p>{t(
+                'Liste des médicaments retirés du marché algérien et des AMM non renouvelées — Source : MIPH',
+                'قائمة الأدوية المسحوبة من السوق الجزائري والـ AMM غير المجددة — المصدر: MIPH'
+              )}</p>
+            </div>
+            <div style={{ paddingTop: 4 }}>
+              <PrintButton label={t('Imprimer / PDF', 'طباعة / PDF')} />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -71,7 +80,7 @@ export function AlertesClient({
                   <div key={motif} style={{ marginBottom: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 600, color: '#334155', marginBottom: 4 }}>
                       <span style={{ flex: 1, paddingRight: 8, lineHeight: 1.4 }}>{motif}</span>
-                      <span style={{ color: '#0284c7', flexShrink: 0 }}>{count}</span>
+                      <span style={{ color: '#0369a1', flexShrink: 0 }}>{count}</span>
                     </div>
                     <div style={{ height: 4, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden' }}>
                       <div style={{ height: '100%', background: '#0284c7', width: `${Math.min(100, (count / motifStats[0][1]) * 100)}%`, borderRadius: 4 }} />
@@ -94,6 +103,9 @@ export function AlertesClient({
               </div>
             </div>
           </div>
+
+          {/* ─── Glossaire des abréviations ─────────────────── */}
+          <GlossarySection lang={lang} />
         </div>
       </div>
     </>

@@ -4,6 +4,8 @@ import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { getRetraitsByAnnee, getAllRetraitAnnees } from '@/lib/queries'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
+import { PrintButton } from '@/components/ui/PrintButton'
+import { GlossarySection } from '@/components/ui/GlossarySection'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
 
@@ -91,19 +93,22 @@ export default async function RetraitsAnneePage({ params }: { params: { annee: s
           <Link href="/alertes" className="detail-back-link">
             {pickLang(lang, { fr: '← Alertes & Retraits', ar: '→ التنبيهات والانسحابات' })}
           </Link>
-          <div style={{ marginTop: 12 }}>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '.08em', marginBottom: 6 }}>
-              {pickLang(lang, { fr: 'RETRAITS DU MARCHÉ ALGÉRIEN', ar: 'انسحابات من السوق الجزائري' })}
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginTop: 12 }}>
+            <div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '.08em', marginBottom: 6 }}>
+                {pickLang(lang, { fr: 'RETRAITS DU MARCHÉ ALGÉRIEN', ar: 'انسحابات من السوق الجزائري' })}
+              </div>
+              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 800, color: 'white', margin: 0 }}>
+                {pickLang(lang, { fr: `🚫 Retraits ${annee}`, ar: `🚫 انسحابات ${annee}` })}
+              </h1>
+              <p style={{ color: 'rgba(255,255,255,0.75)', marginTop: 8, fontSize: 15 }}>
+                {pickLang(lang, {
+                  fr: `${retraits.length} médicament${retraits.length > 1 ? 's' : ''} retiré${retraits.length > 1 ? 's' : ''} — ${motifGroups.length} motif${motifGroups.length > 1 ? 's' : ''} différent${motifGroups.length > 1 ? 's' : ''}`,
+                  ar: `${retraits.length} دواء مسحوب — ${motifGroups.length} سبب مختلف`,
+                })}
+              </p>
             </div>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 800, color: 'white', margin: 0 }}>
-              {pickLang(lang, { fr: `🚫 Retraits ${annee}`, ar: `🚫 انسحابات ${annee}` })}
-            </h1>
-            <p style={{ color: 'rgba(255,255,255,0.65)', marginTop: 8, fontSize: 15 }}>
-              {pickLang(lang, {
-                fr: `${retraits.length} médicament${retraits.length > 1 ? 's' : ''} retiré${retraits.length > 1 ? 's' : ''} — ${motifGroups.length} motif${motifGroups.length > 1 ? 's' : ''} différent${motifGroups.length > 1 ? 's' : ''}`,
-                ar: `${retraits.length} دواء مسحوب — ${motifGroups.length} سبب مختلف`,
-              })}
-            </p>
+            <PrintButton label={pickLang(lang, { fr: 'Imprimer / PDF', ar: 'طباعة / PDF' })} />
           </div>
         </div>
       </div>
@@ -114,7 +119,7 @@ export default async function RetraitsAnneePage({ params }: { params: { annee: s
 
           {/* Navigation années */}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 28, alignItems: 'center' }}>
-            <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>
+            <span style={{ fontSize: 12, color: '#475569', fontWeight: 600 }}>
               {pickLang(lang, { fr: 'Autres années :', ar: 'سنوات أخرى:' })}
             </span>
             {annees.slice(0, 8).map(a => (
@@ -165,7 +170,7 @@ export default async function RetraitsAnneePage({ params }: { params: { annee: s
                 borderLeft: `4px solid ${motifColor(motif)}`,
                 paddingLeft: 12, marginBottom: 12,
               }}>
-                {motif} <span style={{ fontWeight: 400, color: '#94a3b8', fontSize: 12 }}>({items.length})</span>
+                {motif} <span style={{ fontWeight: 400, color: '#475569', fontSize: 12 }}>({items.length})</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
                 {items.map(med => (
@@ -178,11 +183,11 @@ export default async function RetraitsAnneePage({ params }: { params: { annee: s
                     }}
                   >
                     <div style={{ fontWeight: 700, color: '#0f172a', fontSize: 13, marginBottom: 3 }}>{med.nom_marque}</div>
-                    {med.dci && <div style={{ fontSize: 11, color: '#64748b', marginBottom: 4 }}>{med.dci}</div>}
+                    {med.dci && <div style={{ fontSize: 11, color: '#475569', marginBottom: 4 }}>{med.dci}</div>}
                     {(med.forme || med.dosage) && (
-                      <div style={{ fontSize: 11, color: '#94a3b8' }}>{[med.forme, med.dosage].filter(Boolean).join(' — ')}</div>
+                      <div style={{ fontSize: 11, color: '#475569' }}>{[med.forme, med.dosage].filter(Boolean).join(' — ')}</div>
                     )}
-                    {med.labo && <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>🏭 {med.labo}</div>}
+                    {med.labo && <div style={{ fontSize: 11, color: '#475569', marginTop: 4 }}>🏭 {med.labo}</div>}
                     {med.date_retrait && (
                       <div style={{ fontSize: 10, color: '#dc2626', marginTop: 4, fontWeight: 600 }}>
                         📅 {new Date(med.date_retrait).toLocaleDateString('fr-DZ', { day: '2-digit', month: 'long', year: 'numeric' })}
@@ -193,6 +198,9 @@ export default async function RetraitsAnneePage({ params }: { params: { annee: s
               </div>
             </div>
           ))}
+
+          {/* ─── Glossaire des abréviations ───────────────── */}
+          <GlossarySection lang={lang} />
 
           {/* Navigation */}
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 20 }}>

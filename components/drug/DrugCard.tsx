@@ -110,7 +110,7 @@ export function DrugCard({
       {isRetrait && drug.motif_retrait && (
         <div className="drug-alert retrait">
           ⚠️ {drug.motif_retrait}
-          {drug.date_retrait && <span style={{ fontWeight: 400, color: '#9ca3af', marginLeft: 8 }}>({drug.date_retrait})</span>}
+          {drug.date_retrait && <span style={{ fontWeight: 400, color: '#991b1b', marginLeft: 8 }}>({drug.date_retrait})</span>}
         </div>
       )}
       {isNonRenouv && drug.date_final && (

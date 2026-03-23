@@ -340,7 +340,7 @@ export function SearchClient({
           placeholder={lang === 'ar' ? 'بحث شامل: DCI، الاسم التجاري، الشكل، الجرعة، المخبر...' : 'Recherche simple sur tout: DCI, marque, forme, dosage, labo...'}
           autoFocus
         />
-        <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#94a3b8', fontFamily: 'monospace', background: '#f1f5f9', padding: '2px 6px', borderRadius: 4, pointerEvents: 'none', userSelect: 'none' }}>/</span>
+        <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#475569', fontFamily: 'monospace', background: '#f1f5f9', padding: '2px 6px', borderRadius: 4, pointerEvents: 'none', userSelect: 'none' }}>/</span>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>

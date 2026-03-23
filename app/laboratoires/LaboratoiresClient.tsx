@@ -185,7 +185,7 @@ export function LaboratoiresClient({ labos }: Props) {
       {/* Résultats de recherche (liste plate) */}
       {isSearching ? (
         filtered.length === 0 ? (
-          <p style={{ color: '#94a3b8', textAlign: 'center', padding: '40px 0' }}>
+          <p style={{ color: '#475569', textAlign: 'center', padding: '40px 0' }}>
             Aucun laboratoire trouvé pour &quot;{search}&quot;
           </p>
         ) : (
@@ -237,7 +237,7 @@ export function LaboratoiresClient({ labos }: Props) {
                   }}>
                     {countryLabos.length} labo{countryLabos.length > 1 ? 's' : ''}
                   </span>
-                  <span style={{ color: '#94a3b8', fontSize: 14, marginLeft: 4 }}>
+                  <span style={{ color: '#475569', fontSize: 14, marginLeft: 4 }}>
                     {isOpen ? '▲' : '▼'}
                   </span>
                 </button>

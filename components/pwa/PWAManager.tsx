@@ -84,7 +84,7 @@ export function PWAManager() {
         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 3 }}>
           Installer PharmaVeille DZ
         </div>
-        <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>
+        <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 12 }}>
           Accès rapide depuis votre écran d&apos;accueil, fonctionne hors-ligne.
         </div>
       </div>
@@ -111,7 +111,7 @@ export function PWAManager() {
           style={{
             background: 'transparent',
             border: '1px solid rgba(255,255,255,0.15)',
-            color: 'rgba(255,255,255,0.4)',
+            color: 'rgba(255,255,255,0.75)',
             borderRadius: 8,
             padding: '7px 10px',
             fontSize: 13,
