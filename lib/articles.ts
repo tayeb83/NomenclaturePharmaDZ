@@ -1,6 +1,17 @@
 export type ArticleLang = 'fr' | 'ar'
 export type ArticleAudience = 'professionnel' | 'etudiant'
 
+export interface ArticleLink {
+  label: string
+  url: string
+  external?: boolean
+}
+
+export interface ArticleFaq {
+  question: string
+  answer: string
+}
+
 export interface Article {
   slug: string
   lang: ArticleLang
@@ -8,10 +19,15 @@ export interface Article {
   title: string
   subtitle: string
   description: string
+  seoTitle?: string
+  seoKeywords?: string[]
   date: string
   readingTime: number // minutes
   tags: string[]
   content: ArticleSection[]
+  sourceLinks?: ArticleLink[]
+  relatedLinks?: ArticleLink[]
+  faq?: ArticleFaq[]
 }
 
 export interface ArticleSection {
@@ -32,153 +48,199 @@ export interface QcmQuestion {
 }
 
 export const ARTICLES: Article[] = [
-  // ─── Article 1 — FR Professionnels ────────────────────────────
   {
     slug: 'loi-18-11-exercice-officinal-2026',
     lang: 'fr',
     audience: 'professionnel',
     title: 'Loi 18-11 et exercice officinal en Algérie : Ce qui change pour le titulaire en 2026',
-    subtitle: 'Analyse réglementaire pour les pharmaciens titulaires',
+    subtitle: 'Analyse réglementaire pratique pour les pharmaciens titulaires',
     description:
-      'Décryptage de la Loi n°18-11 et des décrets d\'application attendus en 2026 : nouvelles règles d\'installation, réorganisation de la garde, digitalisation et mise en conformité des officines algériennes.',
+      'Décryptage de la Loi n°18-11 et des décrets d’application attendus en 2026 : installation, garde, traçabilité, Data Matrix et conformité de l’officine en Algérie.',
+    seoTitle: 'Loi 18-11 en Algérie : obligations du pharmacien titulaire en 2026',
+    seoKeywords: ['loi 18-11 algérie', 'pharmacien titulaire algérie', 'officine algérie 2026', 'garde pharmacie algérie'],
     date: '2026-03-01',
-    readingTime: 7,
+    readingTime: 8,
     tags: ['Loi 18-11', 'Réglementation officine', 'Pharmacien titulaire', 'MIPH', 'Algérie 2026'],
+    sourceLinks: [
+      { label: 'Télécharger le Journal Officiel (Loi 18-11)', url: 'https://www.joradp.dz/FTP/JO-FRANCAIS/2018/F2018046.pdf', external: true },
+      { label: 'Consulter le site officiel du MIPH', url: 'https://www.miph.gov.dz/fr/', external: true },
+    ],
+    relatedLinks: [
+      { label: 'Rechercher un médicament sous surveillance', url: '/recherche' },
+      { label: 'Voir les derniers retraits officiels', url: '/alertes' },
+      { label: 'Suivre les nouveautés réglementaires', url: '/veille' },
+    ],
+    faq: [
+      {
+        question: 'La Loi 18-11 change-t-elle le rôle du pharmacien titulaire ?',
+        answer: 'Oui. Elle renforce son rôle sanitaire, sa présence effective et son obligation de conformité documentaire et technique au sein de l’officine.',
+      },
+      {
+        question: 'Quels points doivent être vérifiés en priorité en 2026 ?',
+        answer: 'Les titulaires doivent prioriser la garde, la traçabilité, la chaîne du froid, la gestion des périmés et la formalisation écrite des procédures internes.',
+      },
+    ],
     content: [
       {
         type: 'intro',
-        text: 'Le paysage législatif de la pharmacie en Algérie connaît une accélération sans précédent. Si la Loi n°18-11 relative à la santé constitue le socle, les décrets d\'application attendus pour 2026 viennent préciser les contours de votre exercice quotidien. Entre nouvelles règles d\'installation et réorganisation de la garde, voici l\'analyse de PharmaVeille DZ pour anticiper ces mutations.',
+        text: 'Le paysage législatif de la pharmacie en Algérie connaît une accélération sans précédent. Si la Loi n°18-11 relative à la santé constitue le socle, les décrets d’application attendus pour 2026 viennent préciser les contours de votre exercice quotidien. Entre nouvelles règles d’installation, présence effective et réorganisation de la garde, voici l’analyse de PharmaVeille DZ pour anticiper ces mutations.',
       },
       {
         type: 'h2',
-        title: '1. La Loi 18-11 : Le nouveau "Code de la Route" officinal',
-        text: 'La Loi 18-11 n\'est plus seulement un texte théorique. Elle redéfinit l\'officine non plus comme un simple commerce, mais comme une structure de santé de proximité.',
+        title: '1. La Loi 18-11 : le nouveau cadre de référence de l’officine',
+        text: 'La Loi 18-11 ne se limite plus à un texte de principe. Elle repositionne l’officine comme une structure de santé de proximité avec des obligations plus formalisées.',
       },
       {
         type: 'list',
         items: [
-          '**Missions élargies** : Au-delà de la dispensation, le titulaire est désormais un acteur de l\'éducation sanitaire et du bon usage du médicament.',
-          '**Responsabilité accrue** : La loi insiste sur la présence effective du titulaire. La traçabilité des produits sensibles et le respect des bonnes pratiques de stockage sont désormais des points non négociables lors des inspections.',
+          '**Missions élargies** : le titulaire participe à l’éducation sanitaire, au bon usage du médicament et à l’orientation du patient.',
+          '**Responsabilité renforcée** : la présence effective du titulaire, la qualité du stockage et la traçabilité des produits sensibles deviennent des axes centraux des inspections.',
+          '**Gestion documentaire** : les procédures internes, registres et preuves de conformité doivent être accessibles et actualisés.',
         ],
       },
       {
         type: 'h2',
-        title: '2. Vers une nouvelle "Carte Pharmaceutique"',
-        text: 'Les projets de décrets en discussion pour 2026 visent à équilibrer deux objectifs contradictoires :',
+        title: '2. Vers une nouvelle carte pharmaceutique en 2026',
+        text: 'Les projets de textes d’application cherchent à équilibrer deux impératifs parfois contradictoires :',
       },
       {
         type: 'list',
         items: [
-          '**L\'accessibilité** : Augmenter le nombre d\'officines dans les zones d\'ombre.',
-          '**La viabilité** : Préserver l\'équilibre économique des pharmacies déjà installées.',
+          '**L’accessibilité territoriale** : augmenter le nombre d’officines dans les zones insuffisamment couvertes.',
+          '**La viabilité économique** : éviter une fragmentation excessive de l’activité dans les zones déjà denses.',
         ],
       },
       {
         type: 'callout',
         variant: 'warning',
-        text: 'Point d\'attention : Une révision des critères de distance minimale et de densité de population pourrait modifier la concurrence locale. Il est crucial de surveiller les publications du MIPH (Ministère de l\'Industrie et de la Production Pharmaceutique).',
+        text: 'Point d’attention : une révision des critères de distance minimale ou de densité de population pourrait modifier la concurrence locale. Une veille des publications officielles du MIPH et du Journal Officiel reste indispensable.',
       },
       {
         type: 'h2',
         title: '3. Les 4 piliers de votre mise en conformité',
-        text: 'Pour naviguer sereinement dans ce nouveau cadre, voici les axes prioritaires :',
+        text: 'Pour sécuriser votre exercice officinal, concentrez-vous sur les axes les plus opérationnels :',
       },
       {
         type: 'list',
         items: [
-          '**Réorganisation de la Garde** : Les nouveaux textes prévoient une modulation de la garde selon les besoins réels des communes. Anticipez vos plannings RH en conséquence.',
-          '**Statut du Pharmacien Assistant** : La clarification de son rôle facilitera les recrutements, mais imposera une définition plus stricte des délégations de tâches.',
-          '**Digitalisation & Traçabilité** : Préparez-vous à l\'intégration du Data Matrix et à la numérisation des rapports de pharmacovigilance.',
-          '**Auto-diagnostic** : Assurez-vous que vos modes opératoires (chaîne du froid, gestion des périmés) sont écrits et archivés.',
+          '**Réorganisation de la garde** : préparez des plannings RH adaptés aux besoins réels de la commune et aux contraintes de continuité de service.',
+          '**Statut du pharmacien assistant** : clarifiez les délégations de tâches, les horaires couverts et la supervision effective.',
+          '**Digitalisation & traçabilité** : anticipez l’usage du Data Matrix, l’archivage numérique et la remontée des signalements de pharmacovigilance.',
+          '**Auto-diagnostic interne** : formalisez la chaîne du froid, la gestion des périmés, les retours produits et les procédures de rappel.',
+        ],
+      },
+      {
+        type: 'h2',
+        title: '4. Checklist express du titulaire',
+        text: 'Avant toute inspection ou mise à jour réglementaire, vérifiez notamment :',
+      },
+      {
+        type: 'list',
+        items: [
+          'La disponibilité des **SOP** et procédures signées.',
+          'La présence des preuves de suivi de **température** et de maintenance.',
+          'L’actualisation du **tableau de garde** et des relais d’équipe.',
+          'La capacité à identifier rapidement un lot via **code Data Matrix** ou documents de traçabilité.',
         ],
       },
       {
         type: 'callout',
         variant: 'tip',
-        text: '💡 Un doute sur un décret ? Consultez notre base de données réglementaire mise à jour en temps réel sur PharmaVeille DZ.',
+        text: '💡 Un doute sur un décret ou un retrait ? Croisez systématiquement vos procédures internes avec les sources officielles puis reliez l’article à vos pages Alertes, Veille et Recherche pour renforcer votre maillage interne SEO.',
       },
     ],
   },
-
-  // ─── Article 2 — FR Étudiants ──────────────────────────────────
   {
     slug: 'fiche-revision-reglementation-officine-algerie',
     lang: 'fr',
     audience: 'etudiant',
-    title: 'Fiche de Révision : La Réglementation de l\'Officine en Algérie (Loi 18-11)',
-    subtitle: 'Essentiel pour les examens et les stages en pharmacie',
+    title: 'Fiche de Révision : la réglementation de l’officine en Algérie (Loi 18-11)',
+    subtitle: 'Essentiel pour les examens, stages et entretiens en pharmacie',
     description:
-      'Tout ce que les étudiants en pharmacie doivent savoir sur la Loi n°18-11 : définition légale de l\'officine, responsabilités du titulaire et de l\'assistant, conditions d\'installation, garde pharmaceutique et QCM d\'auto-évaluation.',
+      'Résumé clair de la Loi n°18-11 pour les étudiants en pharmacie : définition légale de l’officine, rôle du titulaire et de l’assistant, installation, garde et QCM de révision.',
+    seoTitle: 'Fiche de révision Loi 18-11 : réglementation de l’officine en Algérie',
+    seoKeywords: ['fiche révision pharmacie algérie', 'loi 18-11 étudiant', 'officine algérie cours'],
     date: '2026-03-01',
-    readingTime: 5,
+    readingTime: 6,
     tags: ['Fiche de révision', 'Étudiant pharmacie', 'Loi 18-11', 'Officine Algérie', 'Législation'],
+    sourceLinks: [
+      { label: 'Télécharger le Journal Officiel (version FR)', url: 'https://www.joradp.dz/FTP/JO-FRANCAIS/2018/F2018046.pdf', external: true },
+    ],
+    relatedLinks: [
+      { label: 'Comparer deux versions de la nomenclature', url: '/diff' },
+      { label: 'Explorer la veille réglementaire', url: '/veille' },
+    ],
+    faq: [
+      {
+        question: 'Qui délivre l’autorisation d’ouverture d’une officine en Algérie ?',
+        answer: 'Les autorités sanitaires compétentes, notamment la DSP et les instances ministérielles selon le cadre applicable.',
+      },
+      {
+        question: 'Le pharmacien assistant peut-il remplacer définitivement le titulaire ?',
+        answer: 'Non. Il exerce sous la responsabilité du titulaire et ne se substitue pas définitivement à lui sans cadre réglementaire spécifique.',
+      },
+    ],
     content: [
       {
         type: 'intro',
-        text: 'Futurs confrères, la Loi n°18-11 est le texte majeur de votre cursus de législation pharmaceutique. Elle encadre votre futur métier, de l\'ouverture de l\'officine jusqu\'à la responsabilité civile et pénale du pharmacien. Voici l\'essentiel à retenir pour vos examens et vos stages.',
+        text: 'Futurs confrères, la Loi n°18-11 est un texte pivot de votre cursus de législation pharmaceutique. Elle encadre votre futur métier, depuis l’ouverture de l’officine jusqu’à la responsabilité civile et pénale du pharmacien. Voici la synthèse à retenir.',
       },
       {
         type: 'h2',
-        title: '🟢 1. Définition légale de l\'Officine',
-        text: 'Selon la loi algérienne, l\'officine est l\'établissement destiné à la dispensation au détail des médicaments et des dispositifs médicaux.',
+        title: '🟢 1. Définition légale de l’officine',
+        text: 'Selon la loi algérienne, l’officine est l’établissement destiné à la dispensation au détail des médicaments et des dispositifs médicaux.',
       },
       {
         type: 'list',
         items: [
-          '**Exclusivité** : Seul le pharmacien peut détenir et préparer des médicaments (préparations magistrales et officinales).',
-          '**Intérêt public** : L\'officine assure une mission de service public à travers la permanence des soins (garde).',
+          '**Exclusivité pharmaceutique** : seul le pharmacien peut détenir et préparer certains médicaments et préparations.',
+          '**Mission de service public** : la garde et la continuité d’accès au médicament font partie de la fonction officinale.',
         ],
       },
-      {
-        type: 'h2',
-        title: '🔵 2. Le Pharmacien Titulaire vs Assistant',
-      },
+      { type: 'h2', title: '🔵 2. Titulaire vs assistant' },
       {
         type: 'table',
         headers: ['Fonction', 'Responsabilité', 'Rôle clé'],
         rows: [
-          { cells: ['Titulaire', 'Totale (Technique, Civile, Pénale)', 'Propriétaire de l\'agrément, doit assurer une présence effective.'] },
-          { cells: ['Assistant', 'Sous l\'autorité du titulaire', 'Seconde le titulaire, participe à la dispensation et à la gestion technique.'] },
+          { cells: ['Titulaire', 'Totale (technique, civile, pénale)', 'Détient l’agrément et garantit la présence effective ainsi que l’organisation globale.'] },
+          { cells: ['Assistant', 'Sous l’autorité du titulaire', 'Seconde le titulaire dans la dispensation et l’organisation technique quotidienne.'] },
         ],
       },
       {
         type: 'h2',
-        title: '🟡 3. Installation et Autorisation',
-        text: 'L\'ouverture d\'une pharmacie en Algérie n\'est pas libre :',
+        title: '🟡 3. Installation et autorisation',
+        text: 'L’ouverture d’une pharmacie est encadrée et suppose notamment :',
       },
       {
         type: 'list',
         items: [
-          '**Agrément préalable** : Délivré par les autorités sanitaires (DSP/Ministère).',
-          '**Numerus Clausus** : Basé sur la population (tranches d\'habitants) et la distance entre les officines.',
-          '**Locaux** : Doivent répondre à des normes strictes de superficie, de sécurité et d\'hygiène.',
+          '**Un agrément préalable** délivré par les autorités sanitaires compétentes.',
+          '**Des critères géographiques et démographiques** pour encadrer l’implantation.',
+          '**Des locaux conformes** aux exigences d’hygiène, de sécurité et d’organisation.',
         ],
       },
       {
         type: 'h2',
-        title: '🔴 4. La Garde : Une obligation légale',
-        text: 'Le service de garde est obligatoire pour garantir l\'accès au médicament 24h/24. Le non-respect du tableau de garde affiché peut entraîner des sanctions administratives sévères (fermeture temporaire).',
+        title: '🔴 4. La garde : une obligation légale',
+        text: 'Le service de garde garantit l’accès au médicament en dehors des horaires habituels. Le non-respect du tableau affiché peut entraîner des sanctions.',
       },
-      {
-        type: 'h2',
-        title: '🧠 Testez vos connaissances (QCM Rapide)',
-      },
+      { type: 'h2', title: '🧠 5. QCM rapide' },
       {
         type: 'qcm',
         questions: [
           {
-            question: 'Qui délivre l\'autorisation d\'ouverture d\'une officine en Algérie ?',
+            question: 'Qui délivre l’autorisation d’ouverture d’une officine en Algérie ?',
             options: [
-              { label: 'A', text: 'La Wilaya' },
+              { label: 'A', text: 'La wilaya' },
               { label: 'B', text: 'Les autorités sanitaires compétentes (Ministère/DSP)' },
-              { label: 'C', text: 'La Chambre de commerce' },
+              { label: 'C', text: 'La chambre de commerce' },
             ],
             answer: 'B',
           },
           {
             question: 'Le pharmacien assistant peut-il remplacer définitivement le titulaire sans autorisation ?',
             options: [
-              { label: 'A', text: 'Oui, s\'il a plus de 5 ans d\'expérience.' },
+              { label: 'A', text: 'Oui, s’il a plus de 5 ans d’expérience.' },
               { label: 'B', text: 'Non, il seconde le titulaire sous sa responsabilité.' },
             ],
             answer: 'B',
@@ -188,23 +250,168 @@ export const ARTICLES: Article[] = [
       {
         type: 'callout',
         variant: 'info',
-        text: '📚 Envie d\'approfondir ? Téléchargez le texte intégral de la Loi 18-11 sur notre plateforme PharmaVeille DZ.',
+        text: '📚 Conseil SEO/contenu : cette fiche peut servir de page pilier et renvoyer vers des articles plus détaillés sur la garde, la pharmacovigilance et la traçabilité pour capter des requêtes longue traîne.',
       },
     ],
   },
-
-  // ─── Article 3 — AR Professionnels ────────────────────────────
+  {
+    slug: 'data-matrix-officine-algerie-checklist-2026',
+    lang: 'fr',
+    audience: 'professionnel',
+    title: 'Data Matrix en officine en Algérie : checklist pratique pour 2026',
+    subtitle: 'Traçabilité, réception des lots et organisation comptoir',
+    description:
+      'Guide pratique Data Matrix pour les pharmacies d’Algérie : réception, stockage, traçabilité, rappel de lots et bonnes pratiques pour préparer l’officine en 2026.',
+    seoTitle: 'Data Matrix pharmacie Algérie : checklist officine 2026',
+    seoKeywords: ['data matrix algérie', 'traçabilité pharmacie algérie', 'lot médicament algérie'],
+    date: '2026-03-08',
+    readingTime: 6,
+    tags: ['Data Matrix', 'Traçabilité', 'Officine', 'Checklist', 'Pharmacie Algérie'],
+    sourceLinks: [
+      { label: 'Portail officiel MIPH', url: 'https://www.miph.gov.dz/fr/', external: true },
+    ],
+    relatedLinks: [
+      { label: 'Accéder aux alertes de retraits', url: '/alertes' },
+      { label: 'Consulter les nouveautés produits', url: '/veille' },
+      { label: 'Rechercher une spécialité', url: '/recherche' },
+    ],
+    faq: [
+      {
+        question: 'Pourquoi le Data Matrix est-il important en officine ?',
+        answer: 'Il facilite l’identification des lots, la traçabilité interne et la gestion plus rapide des rappels ou retraits de médicaments.',
+      },
+    ],
+    content: [
+      {
+        type: 'intro',
+        text: 'La traçabilité devient un levier majeur de conformité et d’efficacité opérationnelle. Pour une officine, intégrer les bons réflexes autour du Data Matrix améliore la réception, le rangement, la dispensation et la gestion des rappels de lots.',
+      },
+      {
+        type: 'h2',
+        title: '1. Ce que le Data Matrix change concrètement',
+        text: 'Au comptoir comme en réserve, il permet d’identifier plus vite le produit et d’associer chaque boîte à un lot et à une logique de suivi interne.',
+      },
+      {
+        type: 'list',
+        items: [
+          '**Réception** : contrôle visuel et rapprochement documentaire des références livrées.',
+          '**Stockage** : classement plus fiable par lot, date et rotation.',
+          '**Retraits/rappels** : extraction rapide des boîtes concernées.',
+        ],
+      },
+      {
+        type: 'h2',
+        title: '2. Checklist de mise en place',
+        text: 'Voici les points à formaliser dans vos procédures :',
+      },
+      {
+        type: 'list',
+        items: [
+          'Nommer un référent **traçabilité** dans l’équipe.',
+          'Définir une procédure de **réception des lots** et de traitement des anomalies.',
+          'Documenter le parcours des produits **sensibles** ou sous surveillance.',
+          'Prévoir un protocole de **rappel de lot** relié à vos alertes réglementaires.',
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'tip',
+        text: '💡 Sur le plan SEO, cet article capte des recherches transactionnelles et informationnelles utiles : “Data Matrix pharmacie Algérie”, “traçabilité officine Algérie”, “rappel de lot médicament”.',
+      },
+    ],
+  },
+  {
+    slug: 'pharmacovigilance-officine-algerie-guide-etudiant',
+    lang: 'fr',
+    audience: 'etudiant',
+    title: 'Pharmacovigilance en officine en Algérie : guide simple pour étudiants et internes',
+    subtitle: 'Comprendre le signalement, l’observation et le rôle du pharmacien',
+    description:
+      'Guide d’initiation à la pharmacovigilance en officine en Algérie : effets indésirables, réflexes de signalement, points à observer en stage et vocabulaire essentiel.',
+    seoTitle: 'Pharmacovigilance officine Algérie : guide étudiant',
+    seoKeywords: ['pharmacovigilance algérie étudiant', 'effet indésirable officine algérie'],
+    date: '2026-03-10',
+    readingTime: 5,
+    tags: ['Pharmacovigilance', 'Étudiant', 'Officine', 'Effets indésirables', 'Stage'],
+    sourceLinks: [
+      { label: 'Portail officiel MIPH', url: 'https://www.miph.gov.dz/fr/', external: true },
+    ],
+    relatedLinks: [
+      { label: 'Lire la fiche de révision sur la Loi 18-11', url: '/articles/fiche-revision-reglementation-officine-algerie' },
+      { label: 'Explorer la veille réglementaire', url: '/veille' },
+    ],
+    faq: [
+      {
+        question: 'Qu’est-ce qu’un effet indésirable à retenir en stage ?',
+        answer: 'C’est une réaction nocive et non voulue suspectée d’être liée à l’utilisation d’un médicament. En stage, l’objectif est surtout de savoir l’identifier, la documenter et la signaler selon le cadre applicable.',
+      },
+    ],
+    content: [
+      {
+        type: 'intro',
+        text: 'La pharmacovigilance fait partie des compétences que les étudiants voient en cours, mais aussi en stage. En officine, il faut savoir reconnaître un signal, recueillir les informations essentielles et orienter le patient selon les procédures en vigueur.',
+      },
+      {
+        type: 'h2',
+        title: '1. Les réflexes à retenir',
+        text: 'Devant un effet indésirable suspecté, la priorité est de recueillir une information utile, claire et exploitable.',
+      },
+      {
+        type: 'list',
+        items: [
+          '**Identifier le médicament** suspect et le contexte d’utilisation.',
+          '**Décrire l’effet observé** avec une chronologie simple.',
+          '**Informer le titulaire ou l’encadrant** avant tout signalement formel.',
+        ],
+      },
+      {
+        type: 'h2',
+        title: '2. Ce que vous pouvez observer en stage',
+        text: 'Même sans être responsable du signalement final, vous pouvez apprendre à structurer l’observation clinique et documentaire.',
+      },
+      {
+        type: 'list',
+        items: [
+          'Repérer les cas qui nécessitent une **escalade immédiate**.',
+          'Comprendre la différence entre **mésusage**, **inefficacité** et **effet indésirable**.',
+          'Voir comment l’officine archive les **preuves utiles** au dossier.',
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        text: '📚 Cet article complète très bien une fiche de révision sur la Loi 18-11 et permet de travailler un champ lexical recherché par les étudiants : pharmacovigilance, effet indésirable, stage officine, rôle du pharmacien.',
+      },
+    ],
+  },
   {
     slug: 'loi-18-11-exercice-officinal-2026-ar',
     lang: 'ar',
     audience: 'professionnel',
     title: 'القانون 18-11 وممارسة مهنة الصيدلة في الجزائر: ما يجب على الصيدلي صاحب المحل معرفته في 2026',
-    subtitle: 'تحليل تنظيمي للصيادلة أصحاب المحلات',
+    subtitle: 'تحليل تنظيمي عملي للصيادلة أصحاب المحلات',
     description:
-      'تحليل القانون رقم 18-11 والنصوص التطبيقية المنتظرة لعام 2026: شروط الاعتماد الجديدة، تنظيم المناوبة، الرقمنة وضمان الامتثال القانوني للصيدليات الجزائرية.',
+      'قراءة عملية للقانون 18-11 والنصوص التطبيقية المنتظرة في 2026: شروط الاعتماد، المناوبة، التتبع، Data Matrix والامتثال القانوني داخل الصيدلية.',
+    seoTitle: 'القانون 18-11 في الجزائر: التزامات الصيدلي صاحب المحل في 2026',
+    seoKeywords: ['القانون 18-11 الجزائر', 'صيدلي صاحب المحل', 'تنظيم الصيدلية 2026'],
     date: '2026-03-01',
-    readingTime: 7,
+    readingTime: 8,
     tags: ['القانون 18-11', 'تنظيم الصيدليات', 'الصيدلي صاحب المحل', 'MIPH', 'الجزائر 2026'],
+    sourceLinks: [
+      { label: 'تحميل الجريدة الرسمية', url: 'https://www.joradp.dz/FTP/JO-ARABE/2018/A2018046.pdf', external: true },
+      { label: 'الموقع الرسمي لوزارة الصناعة الصيدلانية', url: 'https://www.miph.gov.dz/ar/', external: true },
+    ],
+    relatedLinks: [
+      { label: 'البحث عن دواء خاضع للمتابعة', url: '/recherche' },
+      { label: 'متابعة آخر السحوبات الرسمية', url: '/alertes' },
+      { label: 'الاطلاع على المستجدات التنظيمية', url: '/veille' },
+    ],
+    faq: [
+      {
+        question: 'هل غيّر القانون 18-11 دور الصيدلي صاحب المحل؟',
+        answer: 'نعم، فقد عزز دوره الصحي وكرّس أهمية حضوره الفعلي وامتثاله الوثائقي والتقني داخل الصيدلية.',
+      },
+    ],
     content: [
       {
         type: 'intro',
@@ -212,113 +419,126 @@ export const ARTICLES: Article[] = [
       },
       {
         type: 'h2',
-        title: '1. القانون 18-11: الدعامة الأساسية لتنظيم الصيدليات',
-        text: 'لم يعد القانون 18-11 مجرد نص نظري، بل أعاد تعريف الصيدلية كـ هيكل صحي جواري وليس مجرد محل تجاري.',
+        title: '1. القانون 18-11: الإطار المرجعي الجديد للصيدلية',
+        text: 'لم يعد القانون 18-11 مجرد نص نظري، بل أعاد تموقع الصيدلية كهيكل صحي جواري مع التزامات أكثر وضوحاً.',
       },
       {
         type: 'list',
         items: [
-          '**مهام موسعة**: بالإضافة إلى صرف الأدوية، أصبح الصيدلي فاعلاً في التربية الصحية والاستخدام العقلاني للدواء.',
-          '**المسؤولية المباشرة**: يشدد القانون على الحضور الفعلي للصيدلي صاحب المحل. أصبح تتبع المنتجات الحساسة واحترام قواعد التخزين نقاطاً غير قابلة للتفاوض أثناء عمليات التفتيش.',
+          '**مهام موسعة**: بالإضافة إلى صرف الأدوية، أصبح الصيدلي فاعلاً في التوعية الصحية والاستعمال العقلاني للدواء.',
+          '**مسؤولية معززة**: الحضور الفعلي، جودة التخزين وتتبع المنتجات الحساسة أصبحت محاور أساسية في التفتيش.',
+          '**تدبير وثائقي**: يجب أن تكون الإجراءات الداخلية والسجلات وأدلة الامتثال محدثة ومتاحة.',
         ],
       },
       {
         type: 'h2',
-        title: '2. نحو "خريطة صيدلانية" جديدة',
-        text: 'تهدف مشاريع المراسيم قيد المناقشة لعام 2026 إلى تحقيق توازن بين هدفين:',
+        title: '2. نحو خريطة صيدلانية جديدة في 2026',
+        text: 'تهدف مشاريع النصوص التطبيقية إلى تحقيق توازن بين هدفين رئيسيين:',
       },
       {
         type: 'list',
         items: [
-          '**التغطية الصحية**: زيادة عدد الصيدليات في "مناطق الظل".',
-          '**الاستقرار الاقتصادي**: الحفاظ على التوازن المالي للصيدليات القائمة حالياً.',
+          '**التغطية الصحية**: زيادة عدد الصيدليات في المناطق الأقل تغطية.',
+          '**الاستقرار الاقتصادي**: الحد من الاختلال في المناطق المشبعة.',
         ],
       },
       {
+        type: 'callout',
+        variant: 'warning',
+        text: 'نقطة انتباه: مراجعة معايير المسافة الدنيا أو الكثافة السكانية قد تؤثر في المنافسة المحلية. لذلك تبقى متابعة الجريدة الرسمية وموقع الوزارة أمراً ضرورياً.',
+      },
+      {
         type: 'h2',
-        title: '3. الركائز الأربع للامتثال القانوني',
-        text: 'لإدارة صيدليتكم بهدوء في ظل الإطار الجديد، إليكم المحاور ذات الأولوية:',
+        title: '3. أربع ركائز للامتثال العملي',
+        text: 'لضمان ممارسة أكثر أماناً، ركزوا على المحاور التالية:',
       },
       {
         type: 'list',
         items: [
-          '**تنظيم المناوبة**: تتوقع النصوص الجديدة تكييف المناوبة حسب الاحتياجات الحقيقية للبلديات.',
-          '**وضع الصيدلي المساعد**: توضيح دوره سيسهل عملية التوظيف مع فرض تحديد أدق للمهام المفوضة.',
-          '**الرقمنة والتتبع**: استعدوا لإدراج نظام Data Matrix ورقمنة تقارير اليقظة الصيدلانية.',
-          '**الامتثال التشغيلي**: تأكدوا من توثيق إجراءاتكم التشغيلية (سلسلة البرودة، إدارة المنتهية صلاحيتها) وأرشفتها.',
+          '**تنظيم المناوبة**: إعداد جداول بشرية مرنة تستجيب لحاجيات البلدية.',
+          '**وضع الصيدلي المساعد**: توضيح المهام المفوضة وحدود الإشراف.',
+          '**الرقمنة والتتبع**: الاستعداد لاستخدام Data Matrix وأرشفة التبليغات.',
+          '**التقييم الذاتي**: توثيق سلسلة البرودة، الأدوية منتهية الصلاحية وإجراءات الاسترجاع.',
         ],
       },
       {
         type: 'callout',
         variant: 'tip',
-        text: '💡 هل لديكم شك حول مرسوم معين؟ راجعوا قاعدة بياناتنا التنظيمية المحينة دورياً عبر موقعنا PharmaVeille DZ.',
+        text: '💡 لتحسين السيو، اربطوا هذا المقال داخلياً بصفحات السحب، المستجدات والبحث عن الأدوية حتى يحصل الزائر ومحركات البحث على مسار محتوى متكامل.',
       },
     ],
   },
-
-  // ─── Article 4 — AR Étudiants ──────────────────────────────────
   {
     slug: 'fiche-revision-reglementation-officine-algerie-ar',
     lang: 'ar',
     audience: 'etudiant',
     title: 'بطاقة مراجعة: تنظيم الصيدليات في الجزائر وفق القانون 18-11',
-    subtitle: 'ملخص شامل للامتحانات والتربصات',
+    subtitle: 'ملخص عملي للامتحانات والتربصات',
     description:
-      'ملخص شامل لأهم ما يجب أن يعرفه طلاب الصيدلة حول القانون رقم 18-11: التعريف القانوني للصيدلية، مسؤوليات الصيدلي صاحب المحل والمساعد، شروط الفتح والاعتماد، المناوبة وأسئلة اختبار الفهم.',
+      'ملخص منظم لطلاب الصيدلة حول القانون 18-11: التعريف القانوني للصيدلية، الفرق بين صاحب المحل والمساعد، شروط الفتح، المناوبة وأسئلة مراجعة سريعة.',
+    seoTitle: 'بطاقة مراجعة القانون 18-11: تنظيم الصيدليات في الجزائر',
+    seoKeywords: ['بطاقة مراجعة صيدلة', 'القانون 18-11 طالب صيدلة'],
     date: '2026-03-01',
-    readingTime: 5,
+    readingTime: 6,
     tags: ['بطاقة مراجعة', 'طالب صيدلة', 'القانون 18-11', 'صيدلية الجزائر', 'تشريع صيدلاني'],
+    sourceLinks: [
+      { label: 'تحميل الجريدة الرسمية', url: 'https://www.joradp.dz/FTP/JO-ARABE/2018/A2018046.pdf', external: true },
+    ],
+    relatedLinks: [
+      { label: 'استكشاف المراقبة التنظيمية', url: '/veille' },
+      { label: 'مقارنة نسخ التسمية الصيدلانية', url: '/diff' },
+    ],
+    faq: [
+      {
+        question: 'من يسلم رخصة فتح صيدلية في الجزائر؟',
+        answer: 'تسلمها السلطات الصحية المختصة وفق الإطار التنظيمي المعمول به.',
+      },
+    ],
     content: [
       {
         type: 'intro',
-        text: 'زملائي المستقبليين، يعتبر القانون رقم 18-11 النص الأهم في مساركم الدراسي في تشريع الصيدلة. فهو يؤطر مهنتكم المستقبلية، من فتح الصيدلية إلى المسؤولية المدنية والجزائية. إليكم ملخص لأهم النقاط لامتحاناتكم وتربصاتكم.',
+        text: 'زملائي المستقبليين، يعتبر القانون رقم 18-11 من أهم النصوص في مساركم الدراسي. فهو يؤطر الممارسة الصيدلانية من فتح الصيدلية إلى المسؤولية المدنية والجزائية. إليكم الخلاصة الأساسية.',
       },
       {
         type: 'h2',
         title: '🟢 1. التعريف القانوني للصيدلية',
-        text: 'وفقاً للقانون الجزائري، الصيدلية هي مؤسسة مخصصة لصرف الأدوية والمستلزمات الطبية بالتجزئة للجمهور.',
+        text: 'الصيدلية هي مؤسسة مخصصة لصرف الأدوية والمستلزمات الطبية بالتجزئة للجمهور.',
       },
       {
         type: 'list',
         items: [
-          '**الحصرية**: الصيدلي وحده هو المؤهل لحيازة وتحضير الأدوية (التحضيرات الوصفية والطبية).',
-          '**المصلحة العامة**: تضمن الصيدلية مهمة الخدمة العمومية من خلال استمرارية العلاج (المناوبة).',
+          '**الحصرية**: الصيدلي هو المؤهل لحيازة وتحضير بعض الأدوية والتحضيرات.',
+          '**الخدمة العمومية**: المناوبة جزء من استمرارية العلاج والوصول إلى الدواء.',
         ],
       },
-      {
-        type: 'h2',
-        title: '🔵 2. الصيدلي صاحب المحل مقابل الصيدلي المساعد',
-      },
+      { type: 'h2', title: '🔵 2. صاحب المحل مقابل المساعد' },
       {
         type: 'table',
         headers: ['الوظيفة', 'المسؤولية', 'الدور الأساسي'],
         rows: [
-          { cells: ['صاحب المحل', 'كاملة (تقنية، مدنية، جزائية)', 'صاحب الاعتماد، يجب أن يضمن الحضور الفعلي.'] },
-          { cells: ['المساعد', 'تحت سلطة صاحب المحل', 'يعاون صاحب المحل، يشارك في الصرف والإدارة التقنية.'] },
+          { cells: ['صاحب المحل', 'كاملة (تقنية، مدنية، جزائية)', 'صاحب الاعتماد ويضمن الحضور الفعلي والتنظيم العام.'] },
+          { cells: ['المساعد', 'تحت سلطة صاحب المحل', 'يساعد في الصرف والتنظيم التقني اليومي.'] },
         ],
       },
       {
         type: 'h2',
         title: '🟡 3. شروط الفتح والاعتماد',
-        text: 'فتح صيدلية في الجزائر ليس حراً تماماً، بل يخضع لـ:',
+        text: 'فتح صيدلية في الجزائر يخضع لعدة شروط، منها:',
       },
       {
         type: 'list',
         items: [
-          '**اعتماد مسبق**: يسلم من طرف السلطات الصحية المختصة (الوزارة أو مديرية الصحة).',
-          '**المقاييس الجغرافية**: تعتمد على عدد السكان (نسمة لكل صيدلية) والمسافة الدنيا بين الصيدليات.',
-          '**المحل**: يجب أن يستوفي معايير صارمة من حيث المساحة، الأمن، والنظافة.',
+          '**اعتماد مسبق** من السلطات الصحية المختصة.',
+          '**معايير جغرافية وديموغرافية** تؤطر التموقع.',
+          '**محل مطابق** لشروط السلامة والنظافة والتنظيم.',
         ],
       },
       {
         type: 'h2',
         title: '🔴 4. المناوبة: واجب قانوني',
-        text: 'خدمة المناوبة إجبارية لضمان وصول المواطن للدواء خارج أوقات العمل الرسمية. وأي إخلال بجدول المناوبة المعلق قد يؤدي إلى عقوبات إدارية صارمة.',
+        text: 'تضمن المناوبة وصول المواطن إلى الدواء خارج أوقات العمل العادية، وعدم احترامها قد يؤدي إلى عقوبات.',
       },
-      {
-        type: 'h2',
-        title: '🧠 اختبر معلوماتك (سؤال وجواب)',
-      },
+      { type: 'h2', title: '🧠 5. اختبر معلوماتك' },
       {
         type: 'qcm',
         questions: [
@@ -332,10 +552,10 @@ export const ARTICLES: Article[] = [
             answer: 'ب',
           },
           {
-            question: 'هل يمكن للصيدلي المساعد تعويض صاحب المحل نهائياً بدون رخصة؟',
+            question: 'هل يمكن للصيدلي المساعد أن يعوض صاحب المحل نهائياً بدون ترخيص؟',
             options: [
-              { label: 'أ', text: 'نعم، إذا كان لديه خبرة أكثر من 5 سنوات.' },
-              { label: 'ب', text: 'لا، فهو يعاون صاحب المحل تحت مسؤوليته فقط.' },
+              { label: 'أ', text: 'نعم، إذا كانت لديه خبرة كافية.' },
+              { label: 'ب', text: 'لا، فهو يعمل تحت مسؤوليته فقط.' },
             ],
             answer: 'ب',
           },
@@ -344,7 +564,114 @@ export const ARTICLES: Article[] = [
       {
         type: 'callout',
         variant: 'info',
-        text: '📚 نصائح تقنية: تأكد من إضافة علامات lang="ar" في كود HTML الخاص بالصفحات العربية. استخدم خطوطاً عربية واضحة مثل Cairo أو Amiri لتسهيل القراءة على الهاتف.',
+        text: '📚 تقنياً، وجود صفحات عربية واضحة مع lang="ar" وروابط متبادلة مع النسخة الفرنسية يساعد على تحسين الفهرسة وتجربة القراءة على الهاتف.',
+      },
+    ],
+  },
+  {
+    slug: 'data-matrix-officine-algerie-checklist-2026-ar',
+    lang: 'ar',
+    audience: 'professionnel',
+    title: 'Data Matrix في الصيدلية بالجزائر: قائمة عملية للتحضير في 2026',
+    subtitle: 'التتبع، استلام الدفعات وتنظيم العمل داخل الصيدلية',
+    description:
+      'دليل عملي للصيادلة في الجزائر حول Data Matrix: الاستلام، التخزين، التتبع وسرعة التعامل مع سحب الدفعات أو المنتجات.',
+    seoTitle: 'Data Matrix في الصيدلية الجزائرية: قائمة امتثال 2026',
+    seoKeywords: ['Data Matrix الجزائر', 'تتبع الأدوية الجزائر', 'دفعات الدواء'],
+    date: '2026-03-08',
+    readingTime: 6,
+    tags: ['Data Matrix', 'التتبع', 'صيدلية', 'قائمة عملية', 'الجزائر'],
+    sourceLinks: [
+      { label: 'الموقع الرسمي لوزارة الصناعة الصيدلانية', url: 'https://www.miph.gov.dz/ar/', external: true },
+    ],
+    relatedLinks: [
+      { label: 'الاطلاع على تنبيهات السحب', url: '/alertes' },
+      { label: 'متابعة المستجدات', url: '/veille' },
+    ],
+    content: [
+      {
+        type: 'intro',
+        text: 'أصبحت قابلية التتبع عنصراً أساسياً في الامتثال والكفاءة التشغيلية. وفي الصيدلية، يساعد اعتماد الممارسات الصحيحة المرتبطة بـ Data Matrix على تحسين الاستلام، التخزين، الصرف وإدارة سحب الدفعات.',
+      },
+      {
+        type: 'h2',
+        title: '1. ما الذي يغيّره Data Matrix عملياً؟',
+        text: 'يساعد على التعرف السريع على المنتج وربطه بالدفعة ومسار التتبع الداخلي داخل الصيدلية.',
+      },
+      {
+        type: 'list',
+        items: [
+          '**الاستلام**: مطابقة أوضح بين الوثائق والمنتجات.',
+          '**التخزين**: فرز أكثر دقة حسب الدفعة والتاريخ.',
+          '**السحب والاسترجاع**: تحديد أسرع للعلب المعنية.',
+        ],
+      },
+      {
+        type: 'h2',
+        title: '2. قائمة تطبيق مختصرة',
+        text: 'من الأفضل توثيق النقاط التالية في الإجراءات الداخلية:',
+      },
+      {
+        type: 'list',
+        items: [
+          'تعيين مسؤول داخلي عن **التتبع**.',
+          'وضع مسطرة **استلام الدفعات** ومعالجة الحالات غير المطابقة.',
+          'توثيق مسار المنتجات **الحساسة** أو الخاضعة للمتابعة.',
+          'ربط بروتوكول **سحب الدفعات** بصفحة التنبيهات الرسمية في الموقع.',
+        ],
+      },
+    ],
+  },
+  {
+    slug: 'pharmacovigilance-officine-algerie-guide-etudiant-ar',
+    lang: 'ar',
+    audience: 'etudiant',
+    title: 'اليقظة الدوائية في الصيدلية بالجزائر: دليل مبسط للطلبة والمتربصين',
+    subtitle: 'فهم التبليغ، الملاحظة ودور الصيدلي في الميدان',
+    description:
+      'مقدمة مبسطة لليقظة الدوائية في الصيدلية بالجزائر: التعرف على الأثر غير المرغوب فيه، ما الذي يجب ملاحظته في التربص، وكيفية بناء reflexe مهني صحيح.',
+    seoTitle: 'اليقظة الدوائية في الصيدلية الجزائرية: دليل للطلبة',
+    seoKeywords: ['اليقظة الدوائية الجزائر', 'أثر جانبي دواء طالب صيدلة'],
+    date: '2026-03-10',
+    readingTime: 5,
+    tags: ['اليقظة الدوائية', 'طالب', 'صيدلية', 'أثر غير مرغوب فيه', 'تربص'],
+    sourceLinks: [
+      { label: 'الموقع الرسمي لوزارة الصناعة الصيدلانية', url: 'https://www.miph.gov.dz/ar/', external: true },
+    ],
+    relatedLinks: [
+      { label: 'قراءة بطاقة مراجعة القانون 18-11', url: '/articles/fiche-revision-reglementation-officine-algerie-ar' },
+      { label: 'استكشاف المستجدات التنظيمية', url: '/veille' },
+    ],
+    content: [
+      {
+        type: 'intro',
+        text: 'تعتبر اليقظة الدوائية من المواضيع المهمة في الدراسة والتربص. داخل الصيدلية، يجب معرفة كيفية رصد الإشارة، جمع المعطيات الأساسية، ثم رفعها وفق الإطار المهني المعمول به.',
+      },
+      {
+        type: 'h2',
+        title: '1. reflexes أساسية',
+        text: 'عند الاشتباه في أثر غير مرغوب فيه، ينبغي جمع معطيات مفيدة وواضحة.',
+      },
+      {
+        type: 'list',
+        items: [
+          '**تحديد الدواء** المشتبه به وسياق استعماله.',
+          '**وصف الأثر** وترتيبه الزمني بشكل مختصر.',
+          '**إبلاغ المؤطر أو الصيدلي المسؤول** قبل أي إجراء رسمي.',
+        ],
+      },
+      {
+        type: 'h2',
+        title: '2. ماذا تلاحظ في التربص؟',
+        text: 'حتى لو لم تكن مسؤولاً عن التصريح النهائي، يمكنك تعلم كيفية بناء ملاحظة منظمة.',
+      },
+      {
+        type: 'list',
+        items: [
+          'تمييز الحالات التي تحتاج إلى **تصعيد فوري**.',
+          'فهم الفرق بين **سوء الاستعمال** و**الأثر غير المرغوب فيه**.',
+          'معرفة كيفية حفظ **الأدلة المفيدة** في ملف الحالة.',
+        ],
       },
     ],
   },
@@ -358,6 +685,17 @@ export function getArticlesByLang(lang: ArticleLang): Article[] {
   return ARTICLES.filter(a => a.lang === lang)
 }
 
+export function getFeaturedArticles(lang: ArticleLang, limit = 3): Article[] {
+  return ARTICLES.filter(a => a.lang === lang).slice(0, limit)
+}
+
 export function getRelatedArticles(slug: string, lang: ArticleLang): Article[] {
-  return ARTICLES.filter(a => a.slug !== slug && a.lang === lang).slice(0, 3)
+  const current = getArticleBySlug(slug)
+  return ARTICLES.filter(a => a.slug !== slug && a.lang === lang)
+    .sort((a, b) => {
+      const audienceScoreA = current && a.audience === current.audience ? 1 : 0
+      const audienceScoreB = current && b.audience === current.audience ? 1 : 0
+      return audienceScoreB - audienceScoreA
+    })
+    .slice(0, 3)
 }

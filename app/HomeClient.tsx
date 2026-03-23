@@ -7,6 +7,7 @@ import { SearchClient } from './recherche/SearchClient'
 import { AdHorizontal } from '@/components/ads/AdBanner'
 import type { SearchResult } from '@/lib/db'
 import { useState } from 'react'
+import { getFeaturedArticles } from '@/lib/articles'
 
 // Remplacez ces IDs par vos vrais slots AdSense (disponibles dans Google AdSense > Annonces > Par bloc)
 const AD_SLOT_HOME_TOP = process.env.NEXT_PUBLIC_AD_SLOT_HOME_TOP || '1234567890'
@@ -65,6 +66,8 @@ export function HomeClient({
   const t = (fr: string, ar: string) => lang === 'ar' ? ar : fr
   const formattedDate = formatDate(lastVersionDate)
   const [showSearch, setShowSearch] = useState(initialQuery.trim().length > 0)
+
+  const featuredArticles = getFeaturedArticles(lang, 3)
 
   const quickLinks = [
     {
@@ -276,9 +279,64 @@ export function HomeClient({
             </div>
           </div>
 
+          <section style={{ marginTop: 36, marginBottom: 8 }}>
+            <div className="section-title">📰 {t('Articles SEO & dossiers', 'مقالات ودراسات محسّنة للسيو')}</div>
+            <div className="section-sub">
+              {t(
+                'Des contenus FR/AR pour capter les requêtes réglementaires et renvoyer vers les pages clés du site.',
+                'محتوى فرنسي/عربي لالتقاط الكلمات المفتاحية التنظيمية وربط الزائر بالصفحات الأساسية.'
+              )}
+            </div>
+            <div className="home-articles-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 14, marginTop: 14 }}>
+              {featuredArticles.map(article => (
+                <Link
+                  key={article.slug}
+                  href={`/articles/${article.slug}`}
+                  style={{
+                    textDecoration: 'none',
+                    background: 'white',
+                    border: '1.5px solid #e2e8f0',
+                    borderRadius: 14,
+                    padding: '16px 18px',
+                    display: 'block',
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+                    <span style={{ background: '#dbeafe', color: '#0369a1', borderRadius: 999, padding: '3px 10px', fontSize: 11, fontWeight: 700 }}>
+                      {article.audience === 'professionnel' ? t('Professionnel', 'مهني') : t('Étudiant', 'طالب')}
+                    </span>
+                    <span style={{ color: '#64748b', fontSize: 11.5 }}>{article.readingTime} {lang === 'ar' ? 'دقائق' : 'min'}</span>
+                  </div>
+                  <div style={{ fontWeight: 800, color: '#0f172a', lineHeight: 1.5, marginBottom: 8, direction: article.lang === 'ar' ? 'rtl' : 'ltr' }}>
+                    {article.title}
+                  </div>
+                  <div style={{ fontSize: 13, color: '#64748b', lineHeight: 1.6, direction: article.lang === 'ar' ? 'rtl' : 'ltr' }}>
+                    {article.description}
+                  </div>
+                </Link>
+              ))}
+            </div>
+            <div style={{ marginTop: 14 }}>
+              <Link
+                href="/articles"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none', padding: '10px 16px', borderRadius: 10, background: '#eff6ff', color: '#0369a1', fontWeight: 700 }}
+              >
+                📰 {t('Voir tous les articles', 'عرض كل المقالات')}
+              </Link>
+            </div>
+          </section>
+
           <AdHorizontal slot={AD_SLOT_HOME_MIDDLE} />
         </div>
       </div>
+
+      <style jsx>{`
+        @media (max-width: 900px) {
+          .home-articles-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </>
   )
 }
