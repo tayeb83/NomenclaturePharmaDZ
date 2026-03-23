@@ -6,6 +6,8 @@ import { ARTICLES } from '@/lib/articles'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Articles & Veille Réglementaire | PharmaVeille DZ',
   description:
