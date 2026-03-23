@@ -7,6 +7,8 @@ import { ARTICLES, getArticleBySlug, getRelatedArticles, type ArticleSection } f
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
 
+export const dynamic = 'force-dynamic'
+
 export async function generateStaticParams() {
   return ARTICLES.map(a => ({ slug: a.slug }))
 }
