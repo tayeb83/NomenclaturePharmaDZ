@@ -301,7 +301,7 @@ export default async function MedicamentDetailPage(
                 {atcHierarchy.map((level, idx) => (
                   <div key={level.code} style={{ display: 'flex', alignItems: 'center' }}>
                     {idx > 0 && (
-                      <span style={{ color: '#94a3b8', fontSize: 16, margin: '0 6px' }}>›</span>
+                      <span style={{ color: '#64748b', fontSize: 16, margin: '0 6px' }}>›</span>
                     )}
                     <div style={{
                       display: 'flex',

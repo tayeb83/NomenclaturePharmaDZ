@@ -265,7 +265,7 @@ body {
 .footer-links a:hover { color: white; }
 .footer-bottom { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 20px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; flex-wrap: wrap; gap: 8px; }
 .footer-social { display: flex; gap: 10px; }
-.footer-social a { color: rgba(255,255,255,0.4); font-size: 18px; transition: color .15s; }
+.footer-social a { color: rgba(255,255,255,0.65); font-size: 18px; transition: color .15s; }
 .footer-social a:hover { color: white; }
 .footer-badge { background: rgba(2,132,199,0.2); color: #38bdf8; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: .06em; }
 .footer-mobile-quicklinks { display: none; border-top: 1px solid rgba(255,255,255,0.08); padding: 14px 0; gap: 0; }
@@ -281,7 +281,7 @@ body {
 .data-table tr:hover td { background: var(--slate-50); }
 
 /* ─── LOADING ────────────────────────────────────────────── */
-.loading-spinner { display: flex; align-items: center; justify-content: center; padding: 60px; gap: 12px; color: var(--slate-400); }
+.loading-spinner { display: flex; align-items: center; justify-content: center; padding: 60px; gap: 12px; color: var(--slate-500); }
 .spinner { width: 24px; height: 24px; border: 3px solid var(--slate-200); border-top-color: var(--blue); border-radius: 50%; animation: spin .7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 

@@ -154,7 +154,7 @@ export default async function FormePage({ params }: { params: { slug: string } }
                 }}>
                   {dci}
                 </Link>
-                <span style={{ fontSize: 12, color: '#94a3b8' }}>{drugs.length} méd.</span>
+                <span style={{ fontSize: 12, color: '#475569' }}>{drugs.length} méd.</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 8 }}>
                 {drugs.map(med => (
@@ -175,7 +175,7 @@ export default async function FormePage({ params }: { params: { slug: string } }
                         </span>
                       )}
                       {med.statut === 'F' && <span className="badge badge-green" style={{ fontSize: 10 }}>🇩🇿</span>}
-                      {med.labo && <span style={{ fontSize: 10, color: '#94a3b8' }}>🏭 {med.labo}</span>}
+                      {med.labo && <span style={{ fontSize: 10, color: '#475569' }}>🏭 {med.labo}</span>}
                     </div>
                   </Link>
                 ))}

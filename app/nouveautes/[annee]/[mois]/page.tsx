@@ -123,7 +123,7 @@ export default async function NouveautesAnneeMoisPage({ params }: { params: { an
 
           {/* Navigation périodes */}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 28, alignItems: 'center' }}>
-            <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>
+            <span style={{ fontSize: 12, color: '#475569', fontWeight: 600 }}>
               {pickLang(lang, { fr: 'Autres mois :', ar: 'أشهر أخرى:' })}
             </span>
             {allPeriodes.slice(0, 10).map(p => {
@@ -207,7 +207,7 @@ export default async function NouveautesAnneeMoisPage({ params }: { params: { an
                   )}
                   {med.type_prod === 'BIO' && <span className="badge badge-purple" style={{ fontSize: 11 }}>Bio</span>}
                   {med.statut === 'F' && <span className="badge badge-green" style={{ fontSize: 11 }}>🇩🇿</span>}
-                  {med.labo && <span style={{ fontSize: 10, color: '#94a3b8' }}>🏭 {med.labo}</span>}
+                  {med.labo && <span style={{ fontSize: 10, color: '#475569' }}>🏭 {med.labo}</span>}
                 </div>
               </Link>
             ))}

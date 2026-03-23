@@ -68,7 +68,7 @@ export function SubstitutionClient({ generiques }: { generiques: any[] }) {
                   <span style={{ background: '#d1fae5', color: '#065f46', fontSize: 12, fontWeight: 700, padding: '3px 10px', borderRadius: 12 }}>
                     {g.count} {t('spécialités', 'تخصص')}
                   </span>
-                  <span style={{ color: '#94a3b8', fontSize: 18 }}>{expanded === g.dci ? '▲' : '▼'}</span>
+                  <span style={{ color: '#475569', fontSize: 18 }}>{expanded === g.dci ? '▲' : '▼'}</span>
                 </div>
               </button>
 
@@ -81,7 +81,7 @@ export function SubstitutionClient({ generiques }: { generiques: any[] }) {
                         <div style={{ fontSize: 11.5, color: '#64748b', marginTop: 4 }}>
                           {m.forme}{m.dosage ? ` — ${m.dosage}` : ''}
                         </div>
-                        <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 3 }}>
+                        <div style={{ fontSize: 11, color: '#475569', marginTop: 3 }}>
                           🏭 {m.labo} ({m.pays})
                         </div>
                         <div style={{ marginTop: 6, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
@@ -99,7 +99,7 @@ export function SubstitutionClient({ generiques }: { generiques: any[] }) {
           ))}
 
           {filtered.length === 0 && search && (
-            <div style={{ textAlign: 'center', padding: '48px 20px', color: '#94a3b8' }}>
+            <div style={{ textAlign: 'center', padding: '48px 20px', color: '#475569' }}>
               <div style={{ fontSize: 40, marginBottom: 10 }}>🔍</div>
               <div style={{ fontWeight: 600, color: '#475569' }}>
                 {t(`Aucun générique trouvé pour "${search}"`, `لا يوجد جنيس لـ "${search}"`)}

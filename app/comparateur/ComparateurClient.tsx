@@ -50,7 +50,7 @@ function HBar({
         <span style={{ color, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>{value.toLocaleString()}</span>
       </div>
       {subLabel && (
-        <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 3 }}>{subLabel}</div>
+        <div style={{ fontSize: 11, color: '#475569', marginBottom: 3 }}>{subLabel}</div>
       )}
       <div style={{ height: 6, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden' }}>
         <div style={{ height: '100%', background: color, width: `${pct}%`, borderRadius: 4, transition: 'width .4s ease' }} />
@@ -181,7 +181,7 @@ function TopLabosSection({ data, lang }: { data: MarketComparatorData['topLabos'
           <div key={labo.labo} style={{ marginBottom: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 3 }}>
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: 8 }}>
-                <span style={{ color: '#94a3b8', marginRight: 6, fontSize: 11 }}>#{i + 1}</span>
+                <span style={{ color: '#475569', marginRight: 6, fontSize: 11 }}>#{i + 1}</span>
                 {labo.labo}
               </span>
               <span style={{ color: '#0284c7', flexShrink: 0 }}>{labo.nb.toLocaleString()}</span>
@@ -191,7 +191,7 @@ function TopLabosSection({ data, lang }: { data: MarketComparatorData['topLabos'
               <div style={{ flex: labo.etranger, background: '#7c3aed' }} />
               {labo.inconnu > 0 && <div style={{ flex: labo.inconnu, background: '#cbd5e1' }} />}
             </div>
-            <div style={{ fontSize: 11, color: '#94a3b8' }}>
+            <div style={{ fontSize: 11, color: '#475569' }}>
               🟢 {algeriePct}% {t('local (Algérie)', 'محلي (الجزائر)')} · 🟣 {etrangerPct}% {t('étranger (hors Algérie)', 'أجنبي (خارج الجزائر)')}
               {labo.inconnu > 0 && ` · ⚪ ${100 - algeriePct - etrangerPct}% ${t('non renseigné', 'غير محدد')}`}
             </div>
@@ -263,7 +263,7 @@ export function ComparateurClient({ data }: { data: MarketComparatorData }) {
               {' '}
               {t('enregistrements actifs', 'تسجيل نشط')}
             </div>
-            <div style={{ fontSize: 12, color: '#94a3b8' }}>
+            <div style={{ fontSize: 12, color: '#475569' }}>
               {t('Données MIPH — Nomenclature officielle', 'بيانات MIPH — التسمية الرسمية')}
             </div>
           </div>

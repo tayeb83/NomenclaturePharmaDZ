@@ -69,7 +69,7 @@ function StatCard({
       <div style={{ fontSize: 26, marginBottom: 8 }}>{icon}</div>
       <div style={{ fontSize: 28, fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
       <div style={{ fontSize: 13, fontWeight: 600, color: '#334155', marginTop: 4 }}>{label}</div>
-      {sub && <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>{sub}</div>}
+      {sub && <div style={{ fontSize: 11, color: '#475569', marginTop: 2 }}>{sub}</div>}
     </div>
   )
 }
@@ -97,7 +97,7 @@ export function LaboClient({
     <main style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 16px' }}>
 
       {/* Breadcrumb */}
-      <nav style={{ fontSize: 13, color: '#94a3b8', marginBottom: 20 }}>
+      <nav style={{ fontSize: 13, color: '#475569', marginBottom: 20 }}>
         <Link href="/laboratoires" style={{ color: '#3b82f6', textDecoration: 'none' }}>
           ← Laboratoires
         </Link>
@@ -255,7 +255,7 @@ export function LaboClient({
                       {p.statut === 'A' ? 'Actif' : p.statut === 'RET' ? 'Retiré' : (p.statut ?? '—')}
                     </span>
                   </td>
-                  <td style={{ padding: '8px 12px', color: '#94a3b8' }}>{p.annee ?? '—'}</td>
+                  <td style={{ padding: '8px 12px', color: '#475569' }}>{p.annee ?? '—'}</td>
                 </tr>
               ))}
             </tbody>

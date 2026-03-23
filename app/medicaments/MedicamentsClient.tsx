@@ -268,7 +268,7 @@ export function MedicamentsClient() {
       )}
 
       {loading && (
-        <div style={{ textAlign: 'center', padding: '48px 0', color: '#94a3b8', fontSize: 15 }}>
+        <div style={{ textAlign: 'center', padding: '48px 0', color: '#475569', fontSize: 15 }}>
           ⏳ Chargement…
         </div>
       )}
@@ -330,7 +330,7 @@ export function MedicamentsClient() {
                 </div>
               </div>
               {med.labo && (
-                <div style={{ marginTop: 6, fontSize: 12, color: '#94a3b8' }}>
+                <div style={{ marginTop: 6, fontSize: 12, color: '#475569' }}>
                   {med.labo}{med.pays && ` · ${med.pays}`}
                   {mode === 'removed' ? (med.retrait_annee ? ` · Retiré en ${med.retrait_annee}` : '') : (med.annee ? ` · ${med.annee}` : '')}
                 </div>

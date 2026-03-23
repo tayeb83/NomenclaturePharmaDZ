@@ -163,9 +163,9 @@ export default async function DciPage({ params }: { params: { slug: string } }) 
                   {med.statut === 'F' && (
                     <span className="badge badge-green" style={{ fontSize: 11 }}>🇩🇿 {lang === 'ar' ? 'جزائري' : 'DZ'}</span>
                   )}
-                  {med.labo && <span style={{ fontSize: 11, color: '#94a3b8' }}>🏭 {med.labo}</span>}
+                  {med.labo && <span style={{ fontSize: 11, color: '#475569' }}>🏭 {med.labo}</span>}
                   {med.pays && med.statut !== 'F' && (
-                    <span style={{ fontSize: 11, color: '#94a3b8' }}>{getCountryFlag(med.pays)} {med.pays}</span>
+                    <span style={{ fontSize: 11, color: '#475569' }}>{getCountryFlag(med.pays)} {med.pays}</span>
                   )}
                 </div>
               </Link>
