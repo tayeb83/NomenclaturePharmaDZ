@@ -53,7 +53,7 @@ export function AdBanner({ slot, format = 'auto', responsive = true, style }: Ad
           borderRadius: 8,
           padding: '16px',
           textAlign: 'center',
-          color: 'rgba(255,255,255,0.3)',
+          color: 'rgba(255,255,255,0.65)',
           fontSize: 12,
           ...style,
         }}>

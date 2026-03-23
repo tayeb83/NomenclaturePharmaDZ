@@ -323,7 +323,7 @@ export default async function MedicamentDetailPage(
                       </span>
                       <span style={{
                         fontSize: 10,
-                        color: level.niveau === 5 ? '#1e40af' : '#94a3b8',
+                        color: level.niveau === 5 ? '#1e40af' : '#475569',
                         maxWidth: 140,
                         lineHeight: 1.3,
                         marginTop: 2,

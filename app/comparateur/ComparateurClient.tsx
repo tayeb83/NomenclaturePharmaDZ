@@ -85,7 +85,7 @@ function LocalImporteSection({ data, lang }: { data: MarketComparatorData['local
         {data.inconnu > 0 && (
           <>
             <div style={{ width: 1, background: '#e2e8f0', flexShrink: 0 }} />
-            <StatPill label={t('Non renseigné', 'غير محدد')} value={data.inconnu} color="#94a3b8" />
+            <StatPill label={t('Non renseigné', 'غير محدد')} value={data.inconnu} color="#475569" />
           </>
         )}
       </div>
