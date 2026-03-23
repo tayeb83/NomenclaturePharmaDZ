@@ -3,13 +3,12 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
-import { ARTICLES, getArticleBySlug, getRelatedArticles, type ArticleSection } from '@/lib/articles'
+import { getArticleBySlug, getRelatedArticles, type ArticleSection } from '@/lib/articles'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
 
-export async function generateStaticParams() {
-  return ARTICLES.map(a => ({ slug: a.slug }))
-}
+// Force dynamic rendering — cookies() requires request context
+export const dynamic = 'force-dynamic'
 
 export async function generateMetadata(
   { params }: { params: { slug: string } }
