@@ -47,8 +47,9 @@ export async function generateMetadata(
   const med = await getMedicamentById(params.source, id)
   if (!med) return { title: 'Médicament introuvable' }
   const dosageSuffix = med.dosage ? ` ${med.dosage}` : ''
-  const title = `${med.nom_marque}${dosageSuffix} — Fiche médicament | PharmaVeille DZ`
-  const description = `${med.nom_marque}${dosageSuffix} (${med.dci})${med.forme ? ` — ${med.forme}` : ''}${med.labo ? ` — ${med.labo}` : ''}. Nomenclature MIPH Algérie.`
+  const dciSuffix = med.dci ? ` (${med.dci})` : ''
+  const title = `${med.nom_marque}${dosageSuffix} — Fiche technique et substitution | PharmaVeille DZ`
+  const description = `${med.nom_marque}${dosageSuffix}${dciSuffix}${med.forme ? ` — ${med.forme}` : ''}${med.labo ? ` — ${med.labo}` : ''}. Médicament disponible en Algérie, substituts génériques et nomenclature MIPH officielle.`
   const canonical = `${APP_URL}/medicament/${params.source}/${params.id}`
   return {
     title,

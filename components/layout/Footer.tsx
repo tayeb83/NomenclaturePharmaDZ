@@ -32,6 +32,7 @@ export function Footer() {
               <li><Link href="/alertes">{t('Alertes & Retraits', 'التنبيهات والسحب')}</Link></li>
               <li><Link href="/substitution">{t('Substitution générique', 'الاستبدال الجنيس')}</Link></li>
               <li><Link href="/veille">{t('Veille réglementaire', 'المراقبة التنظيمية')}</Link></li>
+              <li><Link href="/articles">{t('Articles & Dossiers', 'مقالات ودراسات')}</Link></li>
             </ul>
           </div>
 

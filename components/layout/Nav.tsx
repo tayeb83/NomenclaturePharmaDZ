@@ -17,6 +17,7 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
     { href: '/medicaments', label: lang === 'ar' ? '💊 كل الأدوية' : '💊 Médicaments' },
     { href: '/diff', label: lang === 'ar' ? '🆕 الجديد' : '🆕 Nouveautés' },
     { href: '/alertes', label: lang === 'ar' ? '🚨 التنبيهات' : '🚨 Alertes', badge: true },
+    { href: '/articles', label: lang === 'ar' ? '📰 مقالات' : '📰 Articles' },
     { href: '/substitution', label: lang === 'ar' ? 'الاستبدال' : 'Substitution' },
     { href: '/comparateur', label: lang === 'ar' ? '📊 مقارنة السوق' : '📊 Comparateur' },
     { href: '/laboratoires', label: lang === 'ar' ? '🏭 المخابر' : '🏭 Laboratoires' },
