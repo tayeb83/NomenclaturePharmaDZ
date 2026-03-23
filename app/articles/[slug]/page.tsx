@@ -397,7 +397,7 @@ export default async function ArticleDetailPage({ params }: { params: { slug: st
             </section>
           )}
 
-          <article style={{ direction: isRtl ? 'rtl' : 'ltr' }}>
+          <article lang={article.lang} dir={isRtl ? 'rtl' : 'ltr'} style={{ direction: isRtl ? 'rtl' : 'ltr' }}>
             {article.content.map((section, i) => (
               <RenderSection key={i} section={section} isRtl={isRtl} />
             ))}
