@@ -6,6 +6,8 @@ import type { MedicamentDetail, AtcCode } from '@/lib/db'
 import { getCountryFlag } from '@/lib/countryFlag'
 import { cookies } from 'next/headers'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
+import { PrintButton } from '@/components/ui/PrintButton'
+import { GlossarySection } from '@/components/ui/GlossarySection'
 
 const TYPE_LABELS: Record<string, { fr: string; ar: string }> = {
   GE: { fr: 'Générique', ar: 'جنيس' }, 'Gé': { fr: 'Générique', ar: 'جنيس' }, RE: { fr: 'Référence étrangère', ar: 'مرجعي أجنبي' },
@@ -151,7 +153,7 @@ export default async function MedicamentDetailPage(
           {isRetrait && med.motif_retrait && (
             <div className="alert-banner error" style={{ borderColor: motifColor(med.motif_retrait), color: motifColor(med.motif_retrait), background: '#fef2f2', marginBottom: 24 }}>
               <strong>Motif de retrait :</strong> {med.motif_retrait}
-              {med.date_retrait && <span style={{ marginLeft: 12, fontWeight: 400, color: '#9ca3af' }}>({med.date_retrait})</span>}
+              {med.date_retrait && <span style={{ marginLeft: 12, fontWeight: 400, color: '#7f1d1d' }}>({med.date_retrait})</span>}
             </div>
           )}
           {isNonRenouv && med.date_final && (
@@ -379,7 +381,7 @@ export default async function MedicamentDetailPage(
           )}
 
           {/* ─── Actions ─────────────────────────────────────── */}
-          <div style={{ marginTop: 40, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ marginTop: 40, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
             <Link href="/recherche" style={{
               padding: '10px 20px', background: '#f1f5f9', color: '#334155',
               borderRadius: 8, fontWeight: 600, fontSize: 13, textDecoration: 'none',
@@ -394,7 +396,13 @@ export default async function MedicamentDetailPage(
             }}>
               🔍 Tous les médicaments avec cette DCI
             </Link>
+            <PrintButton
+              label={pickLang(lang, { fr: 'Imprimer / PDF', ar: 'طباعة / PDF' })}
+            />
           </div>
+
+          {/* ─── Glossaire des abréviations ───────────────────── */}
+          <GlossarySection lang={lang} />
         </div>
       </div>
     </>

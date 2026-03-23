@@ -15,6 +15,7 @@
   --slate-200: #e2e8f0;
   --slate-400: #94a3b8;
   --slate-500: #64748b;
+  --slate-600: #475569;
   --slate-700: #334155;
   --slate-900: #0f172a;
   --font-display: 'Playfair Display', Georgia, serif;
@@ -62,7 +63,7 @@ body {
   font-size: 18px;
 }
 .nav-logo-text { font-family: var(--font-display); font-size: 17px; font-weight: 800; color: white; }
-.nav-logo-sub { font-size: 10px; color: rgba(255,255,255,0.45); font-weight: 500; letter-spacing: .04em; }
+.nav-logo-sub { font-size: 10px; color: rgba(255,255,255,0.65); font-weight: 500; letter-spacing: .04em; }
 .nav-links {
   display: flex;
   flex-wrap: wrap;
@@ -153,7 +154,7 @@ body {
 .stat-card.red .stat-value { color: var(--red); }
 .stat-card.amber .stat-value { color: var(--amber); }
 .stat-label { font-size: 13px; font-weight: 700; color: var(--slate-900); margin-bottom: 2px; }
-.stat-sub { font-size: 11px; color: var(--slate-400); }
+.stat-sub { font-size: 11px; color: var(--slate-600); }
 
 /* ─── DRUG CARD ──────────────────────────────────────────── */
 .drug-card {
@@ -167,7 +168,7 @@ body {
 .drug-card.non-renouvele { border-left-color: var(--amber); border-color: #fde68a; }
 .drug-card.enregistrement { border-left-color: var(--blue); }
 .drug-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
-.drug-dci { font-size: 11px; color: var(--slate-400); font-family: var(--font-mono); font-weight: 600; letter-spacing: .06em; margin-bottom: 3px; }
+.drug-dci { font-size: 11px; color: var(--slate-600); font-family: var(--font-mono); font-weight: 600; letter-spacing: .06em; margin-bottom: 3px; }
 .drug-name { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--navy); }
 .drug-card.retrait .drug-name { color: #991b1b; }
 .drug-card.non-renouvele .drug-name { color: #92400e; }
@@ -208,7 +209,7 @@ body {
   transition: border-color .15s; color: var(--navy);
 }
 .search-bar input:focus { border-color: var(--blue); }
-.search-bar-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 17px; color: var(--slate-400); }
+.search-bar-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 17px; color: var(--slate-500); }
 .filter-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
 .filter-tab {
   padding: 6px 14px; border-radius: 20px;
@@ -219,7 +220,7 @@ body {
 }
 .filter-tab:hover { border-color: var(--blue); color: var(--blue); }
 .filter-tab.active { background: var(--blue); border-color: var(--blue); color: white; }
-.search-count { font-size: 12.5px; color: var(--slate-400); margin-bottom: 14px; }
+.search-count { font-size: 12.5px; color: var(--slate-600); margin-bottom: 14px; }
 
 /* ─── SECTION TITLES ─────────────────────────────────────── */
 .section-title { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
@@ -337,7 +338,7 @@ body {
 
 .detail-field { margin-bottom: 12px; }
 .detail-field:last-child { margin-bottom: 0; }
-.detail-field-label { font-size: 11px; color: var(--slate-400); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 3px; }
+.detail-field-label { font-size: 11px; color: var(--slate-600); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 3px; }
 .detail-field-value { font-size: 13.5px; color: var(--slate-700); font-weight: 500; line-height: 1.5; }
 
 .detail-alt-grid {
@@ -384,4 +385,78 @@ body {
 @media (max-width: 480px) {
   .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
   .footer-grid { grid-template-columns: 1fr; }
+}
+
+/* ─── PRINT / PDF ────────────────────────────────────────── */
+.print-only { display: none; }
+
+@media print {
+  /* Hide interactive / navigation elements */
+  .no-print,
+  .nav,
+  .footer,
+  .footer-mobile-quicklinks,
+  .detail-back-link,
+  .detail-alt-grid,
+  .pagination,
+  .hero-search-btn,
+  .filter-tabs { display: none !important; }
+
+  /* Reset background */
+  html, body { background: white !important; color: #000 !important; font-size: 10pt; }
+
+  /* Page header — strip gradient, use dark text */
+  .page-header {
+    background: none !important;
+    color: #000 !important;
+    padding: 12pt 0 8pt;
+    border-bottom: 2pt solid #0f172a;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .page-header h1 { color: #000 !important; font-size: 18pt; margin-bottom: 4pt; }
+  .page-header p { color: #333 !important; font-size: 10pt; }
+
+  .page-body { padding: 8pt 0; }
+
+  /* Detail cards */
+  .detail-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    box-shadow: none !important;
+    border: 1pt solid #bbb !important;
+  }
+  .detail-grid { grid-template-columns: repeat(2, 1fr); gap: 6pt; }
+
+  /* Drug cards */
+  .drug-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    box-shadow: none !important;
+  }
+
+  /* Alert banners — keep background colour for clarity */
+  .alert-banner {
+    break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Don't append hrefs after links */
+  a[href]::after { content: none !important; }
+
+  /* Section that is only visible when printing */
+  .print-only { display: block !important; }
+
+  /* Branding watermark at top of every printed page */
+  .container::before {
+    content: 'PharmaVeille DZ — pharmaveille-dz.vercel.app';
+    display: block;
+    font-size: 8pt;
+    color: #666;
+    text-align: right;
+    margin-bottom: 4pt;
+    border-bottom: 0.5pt solid #ddd;
+    padding-bottom: 3pt;
+  }
 }
