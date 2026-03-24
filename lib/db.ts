@@ -55,7 +55,7 @@ function createPool() {
         if (oid === 1082 || oid === 1114 || oid === 1184) {
           return (val: string) => val  // garder comme string
         }
-        return pgTypes.getTypeParser(oid, format)
+        return pgTypes.getTypeParser(oid, format as 'text' | 'binary' | undefined)
       }
     },
     max: 10,
