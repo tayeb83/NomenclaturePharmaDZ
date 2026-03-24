@@ -15,6 +15,7 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
     { href: '/', label: lang === 'ar' ? 'الرئيسية' : 'Accueil' },
     { href: '/recherche', label: lang === 'ar' ? 'البحث' : 'Recherche' },
     { href: '/medicaments', label: lang === 'ar' ? '💊 كل الأدوية' : '💊 Médicaments' },
+    { href: '/medicaments-critiques', label: lang === 'ar' ? '🚨 الأدوية الحرجة' : '🚨 Critiques' },
     { href: '/diff', label: lang === 'ar' ? '🆕 الجديد' : '🆕 Nouveautés' },
     { href: '/alertes', label: lang === 'ar' ? '🚨 التنبيهات' : '🚨 Alertes', badge: true },
     { href: '/articles', label: lang === 'ar' ? '📰 مقالات' : '📰 Articles' },
