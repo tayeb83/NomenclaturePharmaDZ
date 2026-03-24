@@ -5,7 +5,7 @@ import { DrugCard } from '@/components/drug/DrugCard'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 import { SearchClient } from './recherche/SearchClient'
 import { AdHorizontal } from '@/components/ads/AdBanner'
-import type { SearchResult } from '@/lib/db'
+import type { SearchResult } from '@/lib/db-types'
 import { useState } from 'react'
 import { getFeaturedArticles } from '@/lib/articles'
 

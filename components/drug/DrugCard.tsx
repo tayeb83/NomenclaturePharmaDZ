@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import type { SearchResult } from '@/lib/db'
+import type { SearchResult } from '@/lib/db-types'
 import { getCountryFlag } from '@/lib/countryFlag'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 

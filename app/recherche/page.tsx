@@ -1,5 +1,5 @@
 import { searchMedicaments } from '@/lib/queries'
-import type { SearchResult } from '@/lib/db'
+import type { SearchResult } from '@/lib/db-types'
 import { SearchClient } from './SearchClient'
 import type { Metadata } from 'next'
 
