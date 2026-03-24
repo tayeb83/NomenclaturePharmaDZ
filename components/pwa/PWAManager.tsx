@@ -18,11 +18,18 @@ export function PWAManager() {
   const [dismissed, setDismissed] = useState(false)
 
   useEffect(() => {
-    // Enregistrement du Service Worker
+    // En dev, un SW peut mettre en cache des chunks Next obsolètes
+    // et provoquer des erreurs runtime après refresh (ex: options.factory / webpack).
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .register('/sw.js')
-        .catch(() => { /* silencieux en prod */ })
+      if (process.env.NODE_ENV !== 'production') {
+        navigator.serviceWorker.getRegistrations()
+          .then((registrations) => Promise.all(registrations.map((r) => r.unregister())))
+          .catch(() => { /* silencieux */ })
+      } else {
+        navigator.serviceWorker
+          .register('/sw.js')
+          .catch(() => { /* silencieux en prod */ })
+      }
     }
 
     // Vérifier si déjà installée (standalone) ou bannière déjà refusée
