@@ -73,7 +73,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     // Silencieux : la nav affiche le fallback si la DB est inaccessible
   }
 
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const session = cookieStore.get('admin_session')?.value
   const isAdmin = isAdminSessionValid(session)
   const cookieLang = cookieStore.get('lang')?.value
