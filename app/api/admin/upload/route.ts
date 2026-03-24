@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkAdminAuth } from '@/lib/admin-auth'
-import { pool } from '@/lib/db'
+import { getPool } from '@/lib/db'
 import {
   parseNomenclatureFile,
   parseReferenceDate,
@@ -222,7 +222,7 @@ export async function POST(req: NextRequest) {
     }, { status: 422 })
   }
 
-  const client = await pool.connect()
+  const client = await getPool().connect()
   try {
     await client.query('BEGIN')
 

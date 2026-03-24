@@ -65,16 +65,22 @@ function createPool() {
   })
 }
 
-// En dev, Next.js recharge les modules → on réutilise le pool existant
-export const pool = globalForPg._pgPool ?? createPool()
-if (process.env.NODE_ENV !== 'production') globalForPg._pgPool = pool
+let pool: Pool | undefined = globalForPg._pgPool
+
+export function getPool(): Pool {
+  if (pool) return pool
+
+  pool = createPool()
+  if (process.env.NODE_ENV !== 'production') globalForPg._pgPool = pool
+  return pool
+}
 
 // Helper typé pour les requêtes
 export async function query<T = any>(
   text: string,
   params?: any[]
 ): Promise<T[]> {
-  const client = await pool.connect()
+  const client = await getPool().connect()
   try {
     const result: QueryResult<any> = await client.query(text, params)
     return result.rows
