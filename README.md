@@ -247,3 +247,12 @@ python scripts/import_critical_medicaments.py \
 Après import:
 - la page `/medicaments-critiques` affiche la liste complète,
 - les résultats de recherche et fiches médicaments affichent un badge **🚨 Critique** si `DCI + forme + dosage` correspondent.
+
+### Import direct depuis Vercel (sans terminal)
+
+1. Ouvre `/admin` sur ton site déployé (ex: `https://ton-site.vercel.app/admin`).
+2. Connecte-toi en admin.
+3. Dans l’onglet **Importer un fichier**, utilise le bloc **Importer la liste des médicaments critiques (CSV/XLSX)**.
+4. Sélectionne ton export Google Sheets (`.csv`), puis clique **Importer la liste critique**.
+
+L’API `/api/admin/upload-critical` crée automatiquement la table `critical_medicaments` si nécessaire puis fait un upsert des lignes.
