@@ -300,6 +300,7 @@ body {
   text-decoration: none; padding: 4px 10px; border-radius: 5px;
   background: #dcfce7; transition: all .15s;
   display: inline-flex; align-items: center; gap: 5px;
+  border: none; cursor: pointer;
 }
 .drug-whatsapp-btn:hover { background: #16a34a; color: white; }
 .drug-detail-link {
