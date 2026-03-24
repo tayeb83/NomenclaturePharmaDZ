@@ -13,6 +13,12 @@ type CriticalRow = {
   classe_therapeutique: string | null
 }
 
+type ParseCriticalResult = {
+  rows: CriticalRow[]
+  totalRows: number
+  skippedMissingRequired: number
+}
+
 function normalizeHeader(value: string): string {
   return value
     .normalize('NFD')
@@ -30,10 +36,16 @@ function pick(row: Record<string, string>, candidates: string[]): string {
   return ''
 }
 
-function parseCriticalRows(buffer: Buffer): CriticalRow[] {
+function parseCriticalRows(buffer: Buffer): ParseCriticalResult {
   const workbook = XLSX.read(buffer, { type: 'buffer' })
   const firstSheetName = workbook.SheetNames[0]
-  if (!firstSheetName) return []
+  if (!firstSheetName) {
+    return {
+      rows: [],
+      totalRows: 0,
+      skippedMissingRequired: 0,
+    }
+  }
 
   const sheet = workbook.Sheets[firstSheetName]
   const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
@@ -42,6 +54,7 @@ function parseCriticalRows(buffer: Buffer): CriticalRow[] {
   })
 
   const rows: CriticalRow[] = []
+  let skippedMissingRequired = 0
 
   for (const source of json) {
     const normalized: Record<string, string> = {}
@@ -54,7 +67,10 @@ function parseCriticalRows(buffer: Buffer): CriticalRow[] {
     const dosage = pick(normalized, ['dosage'])
     const classe = pick(normalized, ['classe_therapeutique', 'classe_therapeutique_'])
 
-    if (!dci || !forme || !dosage) continue
+    if (!dci || !forme || !dosage) {
+      skippedMissingRequired += 1
+      continue
+    }
 
     rows.push({
       dci,
@@ -64,7 +80,11 @@ function parseCriticalRows(buffer: Buffer): CriticalRow[] {
     })
   }
 
-  return rows
+  return {
+    rows,
+    totalRows: json.length,
+    skippedMissingRequired,
+  }
 }
 
 async function ensureCriticalTable(client: any) {
@@ -159,16 +179,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Lecture du fichier impossible.' }, { status: 400 })
   }
 
-  let rows: CriticalRow[] = []
+  let parseResult: ParseCriticalResult = {
+    rows: [],
+    totalRows: 0,
+    skippedMissingRequired: 0,
+  }
   try {
-    rows = parseCriticalRows(buffer)
+    parseResult = parseCriticalRows(buffer)
   } catch (error: any) {
     return NextResponse.json({ error: `Erreur de parsing: ${error?.message ?? 'format invalide'}` }, { status: 422 })
   }
 
+  const { rows, totalRows, skippedMissingRequired } = parseResult
+
   if (!rows.length) {
     return NextResponse.json({
-      error: 'Aucune ligne valide. Colonnes attendues: DCI, Forme, Dosage (+ Classe thérapeutique optionnelle).',
+      error: 'Aucune ligne valide. Colonnes attendues: DCI, Forme, Dosage (+ Classe thérapeutique optionnelle). Les lignes sans DCI/Forme/Dosage sont ignorées.',
+      totalRows,
+      skippedMissingRequired,
     }, { status: 422 })
   }
 
@@ -182,6 +210,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       imported,
+      totalRows,
+      skippedMissingRequired,
       sourceLabel,
       publishedAt,
     })
