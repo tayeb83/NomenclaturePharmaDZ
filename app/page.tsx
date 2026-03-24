@@ -24,15 +24,17 @@ function parseAdvanced(raw: string | undefined): AdvancedSearchCondition[] {
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams?: { q?: string; scope?: string; labo?: string; substance?: string; activeOnly?: string; advanced?: string; algerieOnly?: string }
+  searchParams?: Promise<{ q?: string; scope?: string; labo?: string; substance?: string; activeOnly?: string; advanced?: string; algerieOnly?: string }>
 }) {
-  const q = searchParams?.q || ''
-  const scope = searchParams?.scope || 'all'
-  const labo = searchParams?.labo || ''
-  const substance = searchParams?.substance || ''
-  const activeOnly = searchParams?.activeOnly === '1'
-  const algerieOnly = searchParams?.algerieOnly === '1'
-  const advanced = parseAdvanced(searchParams?.advanced)
+  const resolvedSearchParams = await searchParams
+
+  const q = resolvedSearchParams?.q || ''
+  const scope = resolvedSearchParams?.scope || 'all'
+  const labo = resolvedSearchParams?.labo || ''
+  const substance = resolvedSearchParams?.substance || ''
+  const activeOnly = resolvedSearchParams?.activeOnly === '1'
+  const algerieOnly = resolvedSearchParams?.algerieOnly === '1'
+  const advanced = parseAdvanced(resolvedSearchParams?.advanced)
 
   const effectiveAdvanced = algerieOnly
     ? [...advanced, { field: 'statut', operator: 'equals', value: 'F', bool: 'AND' as const }]
