@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as XLSX from 'xlsx'
 import { checkAdminAuth } from '@/lib/admin-auth'
-import { pool } from '@/lib/db'
+import { getPool } from '@/lib/db'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -200,7 +200,7 @@ export async function POST(req: NextRequest) {
     }, { status: 422 })
   }
 
-  const client = await pool.connect()
+  const client = await getPool().connect()
   try {
     await client.query('BEGIN')
     await ensureCriticalTable(client)
