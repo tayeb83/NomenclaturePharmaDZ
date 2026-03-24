@@ -4,7 +4,7 @@
  * (Railway, Render, Neon, ElephantSQL, Heroku, etc.)
  */
 
-import { Pool, type QueryResult } from 'pg'
+import { Pool, types as pgTypes, type QueryResult } from 'pg'
 
 // Pool de connexions — réutilisé entre les requêtes en dev et prod
 const globalForPg = globalThis as unknown as { _pgPool?: Pool }
@@ -55,8 +55,7 @@ function createPool() {
         if (oid === 1082 || oid === 1114 || oid === 1184) {
           return (val: string) => val  // garder comme string
         }
-        const { types } = require('pg')
-        return types.getTypeParser(oid, format)
+        return pgTypes.getTypeParser(oid, format)
       }
     },
     max: 10,
