@@ -4,7 +4,7 @@
  */
 
 import { query, queryOne } from './db'
-import type { Enregistrement, Retrait, NonRenouvele, SearchResult, Stats, MedicamentDetail, AtcCode } from './db'
+import type { Enregistrement, Retrait, NonRenouvele, SearchResult, Stats, MedicamentDetail, AtcCode, CriticalMedicament } from './db'
 
 const schemaFeatureCache = new Map<string, boolean>()
 
@@ -43,6 +43,10 @@ async function hasColumn(tableName: string, columnName: string): Promise<boolean
   const exists = row?.exists ?? false
   schemaFeatureCache.set(cacheKey, exists)
   return exists
+}
+
+function normalizedSql(columnExpr: string): string {
+  return `UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(${columnExpr}, '')), '[^A-Z0-9]+', '', 'g'))`
 }
 
 export type SearchClickEventInput = {
@@ -167,12 +171,46 @@ export async function searchMedicaments(
 
   const advancedClause = buildAdvancedSearchClause(advanced, 8)
   const hasAtcMapping = await hasTable('dci_atc_mapping')
+  const hasCriticalTable = await hasTable('critical_medicaments')
   const codeAtcEnr = hasAtcMapping ? 'atc_e.code_atc' : 'NULL::TEXT'
   const codeAtcRet = hasAtcMapping ? 'atc_r.code_atc' : 'NULL::TEXT'
   const codeAtcNon = hasAtcMapping ? 'atc_n.code_atc' : 'NULL::TEXT'
+  const criticalClassEnr = hasCriticalTable ? 'crit_e.classe_therapeutique' : 'NULL::TEXT'
+  const criticalClassRet = hasCriticalTable ? 'crit_r.classe_therapeutique' : 'NULL::TEXT'
+  const criticalClassNon = hasCriticalTable ? 'crit_n.classe_therapeutique' : 'NULL::TEXT'
   const atcJoinEnr = hasAtcMapping ? 'LEFT JOIN dci_atc_mapping atc_e ON atc_e.dci = e.dci' : ''
   const atcJoinRet = hasAtcMapping ? 'LEFT JOIN dci_atc_mapping atc_r ON atc_r.dci = r.dci' : ''
   const atcJoinNon = hasAtcMapping ? 'LEFT JOIN dci_atc_mapping atc_n ON atc_n.dci = n.dci' : ''
+  const criticalJoinEnr = hasCriticalTable
+    ? `LEFT JOIN LATERAL (
+        SELECT c.classe_therapeutique
+        FROM critical_medicaments c
+        WHERE c.dci_norm = ${normalizedSql('e.dci')}
+          AND c.forme_norm = ${normalizedSql('e.forme')}
+          AND c.dosage_norm = ${normalizedSql('e.dosage')}
+        LIMIT 1
+      ) crit_e ON TRUE`
+    : ''
+  const criticalJoinRet = hasCriticalTable
+    ? `LEFT JOIN LATERAL (
+        SELECT c.classe_therapeutique
+        FROM critical_medicaments c
+        WHERE c.dci_norm = ${normalizedSql('r.dci')}
+          AND c.forme_norm = ${normalizedSql('r.forme')}
+          AND c.dosage_norm = ${normalizedSql('r.dosage')}
+        LIMIT 1
+      ) crit_r ON TRUE`
+    : ''
+  const criticalJoinNon = hasCriticalTable
+    ? `LEFT JOIN LATERAL (
+        SELECT c.classe_therapeutique
+        FROM critical_medicaments c
+        WHERE c.dci_norm = ${normalizedSql('n.dci')}
+          AND c.forme_norm = ${normalizedSql('n.forme')}
+          AND c.dosage_norm = ${normalizedSql('n.dosage')}
+        LIMIT 1
+      ) crit_n ON TRUE`
+    : ''
 
   const results = await query<SearchResult>(`
     SELECT * FROM (
@@ -183,9 +221,12 @@ export async function searchMedicaments(
         NULL::DATE AS date_retrait,
         NULL::TEXT AS motif_retrait,
         e.date_final,
-        ${codeAtcEnr} AS code_atc
+        ${codeAtcEnr} AS code_atc,
+        (${criticalClassEnr} IS NOT NULL) AS is_critical,
+        ${criticalClassEnr} AS critical_class_therapeutique
       FROM enregistrements e
       ${atcJoinEnr}
+      ${criticalJoinEnr}
       WHERE (
         $1 = ''
         OR CONCAT_WS(' ', e.n_enreg, e.dci, e.nom_marque, e.forme, e.dosage, e.labo, e.pays, e.type_prod, e.statut, e.annee::TEXT, ${codeAtcEnr}) ILIKE $2
@@ -201,9 +242,12 @@ export async function searchMedicaments(
         r.type_prod, r.statut, NULL::SMALLINT AS annee,
         r.date_retrait, r.motif_retrait,
         NULL::DATE AS date_final,
-        ${codeAtcRet} AS code_atc
+        ${codeAtcRet} AS code_atc,
+        (${criticalClassRet} IS NOT NULL) AS is_critical,
+        ${criticalClassRet} AS critical_class_therapeutique
       FROM retraits r
       ${atcJoinRet}
+      ${criticalJoinRet}
       WHERE (
         $1 = ''
         OR CONCAT_WS(' ', r.n_enreg, r.dci, r.nom_marque, r.forme, r.dosage, r.labo, r.pays, r.type_prod, r.statut, r.motif_retrait, ${codeAtcRet}) ILIKE $2
@@ -220,9 +264,12 @@ export async function searchMedicaments(
         NULL::DATE AS date_retrait,
         NULL::TEXT AS motif_retrait,
         n.date_final,
-        ${codeAtcNon} AS code_atc
+        ${codeAtcNon} AS code_atc,
+        (${criticalClassNon} IS NOT NULL) AS is_critical,
+        ${criticalClassNon} AS critical_class_therapeutique
       FROM non_renouveles n
       ${atcJoinNon}
+      ${criticalJoinNon}
       WHERE (
         $1 = ''
         OR CONCAT_WS(' ', n.n_enreg, n.dci, n.nom_marque, n.forme, n.dosage, n.labo, n.pays, n.type_prod, n.statut, n.date_final::TEXT, ${codeAtcNon}) ILIKE $2
@@ -699,11 +746,30 @@ export async function getMedicamentById(
   id: number
 ): Promise<MedicamentDetail | null> {
   if (!['enregistrement', 'retrait', 'non_renouvele'].includes(source)) return null
+  const hasCriticalTable = await hasTable('critical_medicaments')
+
+  const getCriticalInfo = async (
+    dci: string | null,
+    forme: string | null,
+    dosage: string | null
+  ): Promise<{ isCritical: boolean; classe: string | null }> => {
+    if (!hasCriticalTable || !dci || !forme || !dosage) return { isCritical: false, classe: null }
+    const row = await queryOne<{ classe_therapeutique: string | null }>(`
+      SELECT classe_therapeutique
+      FROM critical_medicaments
+      WHERE dci_norm = ${normalizedSql('$1')}
+        AND forme_norm = ${normalizedSql('$2')}
+        AND dosage_norm = ${normalizedSql('$3')}
+      LIMIT 1
+    `, [dci, forme, dosage])
+    return { isCritical: Boolean(row), classe: row?.classe_therapeutique ?? null }
+  }
 
   if (source === 'enregistrement') {
     const row = await queryOne<any>(`SELECT * FROM enregistrements WHERE id = $1`, [id])
     if (!row) return null
     const atc = await getAtcByDci(row.dci)
+    const critical = await getCriticalInfo(row.dci ?? null, row.forme ?? null, row.dosage ?? null)
     return {
       source: 'enregistrement',
       id: row.id, n_enreg: row.n_enreg, code: row.code ?? null,
@@ -721,6 +787,8 @@ export async function getMedicamentById(
       code_atc: atc?.code_atc ?? null,
       atc_label_fr: atc?.atc_label_fr ?? null,
       atc_label_en: atc?.atc_label_en ?? null,
+      is_critical: critical.isCritical,
+      critical_class_therapeutique: critical.classe,
     }
   }
 
@@ -728,6 +796,7 @@ export async function getMedicamentById(
     const row = await queryOne<any>(`SELECT * FROM retraits WHERE id = $1`, [id])
     if (!row) return null
     const atc = await getAtcByDci(row.dci)
+    const critical = await getCriticalInfo(row.dci ?? null, row.forme ?? null, row.dosage ?? null)
     return {
       source: 'retrait',
       id: row.id, n_enreg: row.n_enreg ?? null, code: row.code ?? null,
@@ -743,6 +812,8 @@ export async function getMedicamentById(
       code_atc: atc?.code_atc ?? null,
       atc_label_fr: atc?.atc_label_fr ?? null,
       atc_label_en: atc?.atc_label_en ?? null,
+      is_critical: critical.isCritical,
+      critical_class_therapeutique: critical.classe,
     }
   }
 
@@ -750,6 +821,7 @@ export async function getMedicamentById(
   const row = await queryOne<any>(`SELECT * FROM non_renouveles WHERE id = $1`, [id])
   if (!row) return null
   const atc = await getAtcByDci(row.dci)
+  const critical = await getCriticalInfo(row.dci ?? null, row.forme ?? null, row.dosage ?? null)
   return {
     source: 'non_renouvele',
     id: row.id, n_enreg: row.n_enreg ?? null, code: row.code ?? null,
@@ -765,7 +837,27 @@ export async function getMedicamentById(
     code_atc: atc?.code_atc ?? null,
     atc_label_fr: atc?.atc_label_fr ?? null,
     atc_label_en: atc?.atc_label_en ?? null,
+    is_critical: critical.isCritical,
+    critical_class_therapeutique: critical.classe,
   }
+}
+
+export async function getCriticalMedicaments(
+  search: string = '',
+  limit: number = 500
+): Promise<CriticalMedicament[]> {
+  if (!await hasTable('critical_medicaments')) return []
+  const q = search.trim()
+  return query<CriticalMedicament>(`
+    SELECT id, dci, forme, dosage, classe_therapeutique, source_label, created_at
+    FROM critical_medicaments
+    WHERE (
+      $1 = ''
+      OR CONCAT_WS(' ', dci, forme, dosage, classe_therapeutique) ILIKE $2
+    )
+    ORDER BY dci ASC, forme ASC, dosage ASC
+    LIMIT $3
+  `, [q, `%${q}%`, limit])
 }
 
 // ─── SEO : PAGES CIBLÉES ──────────────────────────────────────

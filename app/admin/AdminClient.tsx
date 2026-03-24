@@ -20,6 +20,14 @@ type UploadResult = {
   error?: string
 }
 
+type CriticalUploadResult = {
+  success: boolean
+  imported: number
+  sourceLabel: string
+  publishedAt: string | null
+  error?: string
+}
+
 
 
 type AnalyticsRow = {
@@ -204,7 +212,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             Gestion de la Nomenclature
           </h1>
           <p style={{ color: '#64748b', fontSize: 14, marginTop: 6 }}>
-            Importez un fichier Excel MIPH pour mettre à jour la base de données
+            Importez la nomenclature MIPH et la liste CSV des médicaments critiques directement depuis Vercel
           </p>
         </div>
 
@@ -250,6 +258,13 @@ function UploadTab() {
   const [error, setError] = useState('')
   const [dragOver, setDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const criticalFileInputRef = useRef<HTMLInputElement>(null)
+  const [criticalFile, setCriticalFile] = useState<File | null>(null)
+  const [criticalLoading, setCriticalLoading] = useState(false)
+  const [criticalError, setCriticalError] = useState('')
+  const [criticalResult, setCriticalResult] = useState<CriticalUploadResult | null>(null)
+  const [criticalSourceLabel, setCriticalSourceLabel] = useState('Ministère de la Santé Algérie')
+  const [criticalPublishedAt, setCriticalPublishedAt] = useState(new Date().toISOString().slice(0, 10))
 
   function handleFileChange(f: File | null) {
     if (!f) return
@@ -302,6 +317,40 @@ function UploadTab() {
       setError('Erreur réseau — vérifiez votre connexion')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleCriticalUpload(e: React.FormEvent) {
+    e.preventDefault()
+    if (!criticalFile) return
+
+    setCriticalLoading(true)
+    setCriticalError('')
+    setCriticalResult(null)
+
+    try {
+      const fd = new FormData()
+      fd.append('file', criticalFile)
+      if (criticalSourceLabel.trim()) fd.append('sourceLabel', criticalSourceLabel.trim())
+      if (criticalPublishedAt.trim()) fd.append('publishedAt', criticalPublishedAt.trim())
+
+      const res = await fetch('/api/admin/upload-critical', {
+        method: 'POST',
+        body: fd,
+      })
+      const data = await res.json()
+
+      if (res.ok) {
+        setCriticalResult(data)
+        setCriticalFile(null)
+        if (criticalFileInputRef.current) criticalFileInputRef.current.value = ''
+      } else {
+        setCriticalError(data.error || 'Erreur lors de l’import du CSV critique')
+      }
+    } catch {
+      setCriticalError('Erreur réseau — impossible d’envoyer le fichier')
+    } finally {
+      setCriticalLoading(false)
     }
   }
 
@@ -426,6 +475,76 @@ function UploadTab() {
           <div style={{ color: '#64748b', fontSize: 11.5, marginTop: 8 }}>
             La nomenclature actuelle sera remplacée. L&apos;historique est conservé dans l&apos;archive.
           </div>
+        </div>
+
+        <div style={{ background: 'white', borderRadius: 14, padding: 24, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', marginTop: 16 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', marginTop: 0, marginBottom: 12 }}>
+            🚨 Importer la liste des médicaments critiques (CSV/XLSX)
+          </h3>
+          <p style={{ color: '#64748b', fontSize: 12.5, marginTop: 0, marginBottom: 16 }}>
+            Chargez le fichier exporté depuis Google Sheets (colonnes: DCI, Forme, Dosage, Classe thérapeutique).
+          </p>
+
+          <form onSubmit={handleCriticalUpload}>
+            <div style={{ marginBottom: 12 }}>
+              <input
+                ref={criticalFileInputRef}
+                type="file"
+                accept=".csv,.xlsx,.xls"
+                onChange={e => setCriticalFile(e.target.files?.[0] ?? null)}
+                style={{ width: '100%' }}
+              />
+              {criticalFile && (
+                <div style={{ marginTop: 6, fontSize: 12, color: '#065f46' }}>
+                  ✅ {criticalFile.name} ({(criticalFile.size / 1024).toFixed(1)} Ko)
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 160px', gap: 10, marginBottom: 12 }}>
+              <input
+                type="text"
+                value={criticalSourceLabel}
+                onChange={e => setCriticalSourceLabel(e.target.value)}
+                placeholder="Source"
+                style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '2px solid #e2e8f0', fontSize: 13 }}
+              />
+              <input
+                type="date"
+                value={criticalPublishedAt}
+                onChange={e => setCriticalPublishedAt(e.target.value)}
+                style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '2px solid #e2e8f0', fontSize: 13 }}
+              />
+            </div>
+
+            {criticalError && (
+              <div style={{ marginBottom: 10, background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', borderRadius: 8, padding: '8px 10px', fontSize: 12 }}>
+                ⚠️ {criticalError}
+              </div>
+            )}
+            {criticalResult && (
+              <div style={{ marginBottom: 10, background: '#ecfeff', border: '1px solid #a5f3fc', color: '#0e7490', borderRadius: 8, padding: '8px 10px', fontSize: 12 }}>
+                ✅ {criticalResult.imported} ligne(s) critique(s) importée(s).
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={!criticalFile || criticalLoading}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                borderRadius: 8,
+                border: 'none',
+                background: !criticalFile || criticalLoading ? '#94a3b8' : '#dc2626',
+                color: 'white',
+                fontWeight: 700,
+                cursor: !criticalFile || criticalLoading ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {criticalLoading ? 'Import critique en cours…' : 'Importer la liste critique'}
+            </button>
+          </form>
         </div>
       </div>
 
