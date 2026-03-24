@@ -1,5 +1,5 @@
 import { getStats, getLatestNouveautes, getLastRetraits, getLastVersionDate, searchMedicaments } from '@/lib/queries'
-import type { SearchResult } from '@/lib/db'
+import type { SearchResult } from '@/lib/db-types'
 import { HomeClient } from './HomeClient'
 
 export const revalidate = 3600

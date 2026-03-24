@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query, queryOne } from '@/lib/db'
-import type { Enregistrement } from '@/lib/db'
+import type { Enregistrement } from '@/lib/db-types'
 
 const PAGE_SIZE_DEFAULT = 50
 const PAGE_SIZE_MAX = 100

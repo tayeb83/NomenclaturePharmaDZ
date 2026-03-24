@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useCallback, useRef, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import type { SearchResult } from '@/lib/db'
+import type { SearchResult } from '@/lib/db-types'
 import { DrugCard } from '@/components/drug/DrugCard'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 
