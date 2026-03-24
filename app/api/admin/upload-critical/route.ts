@@ -67,12 +67,9 @@ function parseCriticalRows(buffer: Buffer): ParseCriticalResult {
     const dosage = pick(normalized, ['dosage'])
     const classe = pick(normalized, ['classe_therapeutique', 'classe_therapeutique_'])
 
-    if (!dci || !forme || !dosage) {
-      skippedMissingRequired += 1
-      continue
-    }
-
     rows.push({
+      // On n'ignore plus les lignes incomplètes :
+      // les champs manquants sont conservés comme chaînes vides.
       dci,
       forme,
       dosage,
@@ -194,7 +191,7 @@ export async function POST(req: NextRequest) {
 
   if (!rows.length) {
     return NextResponse.json({
-      error: 'Aucune ligne valide. Colonnes attendues: DCI, Forme, Dosage (+ Classe thérapeutique optionnelle). Les lignes sans DCI/Forme/Dosage sont ignorées.',
+      error: 'Aucune ligne détectée. Colonnes attendues: DCI, Forme, Dosage (+ Classe thérapeutique optionnelle).',
       totalRows,
       skippedMissingRequired,
     }, { status: 422 })
