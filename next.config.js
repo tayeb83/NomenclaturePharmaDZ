@@ -3,7 +3,7 @@ const nextConfig = {
   // Empêche webpack de bundler ces packages Node.js côté serveur (RSC / API routes)
   serverExternalPackages: ['pg', 'pg-native', 'nodemailer', 'xlsx'],
   images: {
-    domains: ['pharmaveille-dz.com'],
+    remotePatterns: [{ hostname: 'pharmaveille-dz.com' }],
   },
   experimental: {
     serverActions: {
@@ -11,6 +11,9 @@ const nextConfig = {
       bodySizeLimit: '50mb',
     },
   },
+  // Turbopack (Next.js 16+ default) — pas de config custom nécessaire,
+  // les modules Node.js-only sont gérés automatiquement côté serveur
+  turbopack: {},
   webpack(config, { isServer }) {
     if (!isServer) {
       // Côté client, remplacer les modules Node.js-only par des stubs vides
