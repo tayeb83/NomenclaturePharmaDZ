@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Empêche webpack de bundler ces packages Node.js côté client
+  serverExternalPackages: ['pg', 'pg-native', 'nodemailer', 'xlsx'],
   images: {
     domains: ['pharmaveille-dz.com'],
   },
