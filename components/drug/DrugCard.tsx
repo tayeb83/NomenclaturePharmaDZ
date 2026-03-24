@@ -1,6 +1,8 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import type { KeyboardEvent } from 'react'
 import type { SearchResult } from '@/lib/db-types'
 import { getCountryFlag } from '@/lib/countryFlag'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
@@ -46,13 +48,28 @@ export function DrugCard({
   const isRetrait = type === 'retrait'
   const isNonRenouv = type === 'non_renouvele'
   const { lang } = useLanguage()
+  const router = useRouter()
   const href = `/medicament/${drug.source || type}/${drug.id}`
 
+  const openDetails = () => {
+    if (onOpen) onOpen()
+    router.push(href)
+  }
+
+  const handleCardKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      openDetails()
+    }
+  }
+
   return (
-    <Link
-      href={href}
+    <div
+      role="link"
+      tabIndex={0}
       style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}
-      onClick={onOpen}
+      onClick={openDetails}
+      onKeyDown={handleCardKeyDown}
     >
     <div className={`drug-card ${isRetrait ? 'retrait' : isNonRenouv ? 'non-renouvele' : 'enregistrement'}`} style={{ cursor: 'pointer' }}>
       <div className="drug-card-top">
@@ -136,11 +153,18 @@ export function DrugCard({
           <span>{lang === 'ar' ? 'واتساب' : 'WhatsApp'}</span>
         </button>
 
-        <span className="drug-detail-btn">
+        <Link
+          href={href}
+          className="drug-detail-btn"
+          onClick={(e) => {
+            e.stopPropagation()
+            if (onOpen) onOpen()
+          }}
+        >
           {lang === 'ar' ? 'عرض البطاقة' : 'Voir la fiche'}
-        </span>
+        </Link>
       </div>
     </div>
-    </Link>
+    </div>
   )
 }
