@@ -163,6 +163,8 @@ export type SearchResult = {
   date_final: string | null
   // Code ATC (présent uniquement si enrichi, optionnel)
   code_atc?: string | null
+  is_critical?: boolean
+  critical_class_therapeutique?: string | null
 }
 
 export type Stats = {
@@ -213,4 +215,16 @@ export type MedicamentDetail = {
   code_atc: string | null
   atc_label_fr: string | null
   atc_label_en: string | null
+  is_critical?: boolean
+  critical_class_therapeutique?: string | null
+}
+
+export type CriticalMedicament = {
+  id: number
+  dci: string
+  forme: string
+  dosage: string
+  classe_therapeutique: string | null
+  source_label: string | null
+  created_at: string
 }

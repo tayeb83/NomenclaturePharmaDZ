@@ -90,6 +90,11 @@ export function DrugCard({
               ATC {drug.code_atc}
             </span>
           )}
+          {drug.is_critical && (
+            <span className="badge badge-red">
+              🚨 {lang === 'ar' ? 'حرج' : 'Critique'}
+            </span>
+          )}
           {isRetrait && <span className="badge badge-red">🚫 {lang === 'ar' ? 'مسحوب' : 'Retiré'}</span>}
           {isNonRenouv && <span className="badge badge-amber">⚠️ {lang === 'ar' ? 'غير مجدد' : 'Non renouvelé'}</span>}
         </div>

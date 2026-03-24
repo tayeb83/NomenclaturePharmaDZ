@@ -138,6 +138,23 @@ export default async function MedicamentDetailPage(
                   {[med.forme, med.dosage].filter(Boolean).join(' — ')}
                 </div>
               )}
+              {med.is_critical && (
+                <div style={{
+                  marginTop: 10,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '5px 10px',
+                  borderRadius: 999,
+                  background: 'rgba(239, 68, 68, 0.2)',
+                  border: '1px solid rgba(252, 165, 165, 0.6)',
+                  color: '#fee2e2',
+                  fontSize: 12,
+                  fontWeight: 700,
+                }}>
+                  🚨 {pickLang(lang, { fr: 'Médicament critique', ar: 'دواء حرج' })}
+                </div>
+              )}
             </div>
             <span style={{ padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: statusBadge.bg, color: statusBadge.color, flexShrink: 0, marginTop: 4 }}>
               {statusBadge.label}
@@ -160,6 +177,15 @@ export default async function MedicamentDetailPage(
           {isNonRenouv && med.date_final && (
             <div className="alert-banner warning" style={{ marginBottom: 24 }}>
               <strong>AMM expirée :</strong> Date de fin de validité — {med.date_final}
+            </div>
+          )}
+          {med.is_critical && (
+            <div className="alert-banner error" style={{ marginBottom: 24 }}>
+              <strong>{pickLang(lang, { fr: 'Statut critique:', ar: 'الحالة الحرجة:' })}</strong>{' '}
+              {pickLang(lang, { fr: 'Ce médicament figure sur la liste ministérielle des médicaments critiques.', ar: 'هذا الدواء مدرج في القائمة الوزارية للأدوية الحرجة.' })}
+              {med.critical_class_therapeutique && (
+                <> {pickLang(lang, { fr: 'Classe thérapeutique', ar: 'الفئة العلاجية' })} : <strong>{med.critical_class_therapeutique}</strong></>
+              )}
             </div>
           )}
 
@@ -225,6 +251,14 @@ export default async function MedicamentDetailPage(
               <div className="detail-card-title">{pickLang(lang, { fr: '💊 Conditionnement', ar: '💊 الخصائص' })}</div>
               <Field label={pickLang(lang, { fr: 'Forme pharmaceutique', ar: 'الشكل الصيدلاني' })} value={med.forme} />
               <Field label={pickLang(lang, { fr: 'Dosage', ar: 'الجرعة' })} value={med.dosage} />
+              {med.is_critical && (
+                <Field
+                  label={pickLang(lang, { fr: 'Criticité', ar: 'الحرجية' })}
+                  value={med.critical_class_therapeutique
+                    ? pickLang(lang, { fr: `Critique (${med.critical_class_therapeutique})`, ar: `حرج (${med.critical_class_therapeutique})` })
+                    : pickLang(lang, { fr: 'Critique', ar: 'حرج' })}
+                />
+              )}
               <Field label={pickLang(lang, { fr: 'Conditionnement', ar: 'التعبئة' })} value={med.conditionnement} />
               <Field label={pickLang(lang, { fr: 'Liste', ar: 'القائمة' })} value={med.liste} />
               <Field label={pickLang(lang, { fr: 'Prescription', ar: 'الوصفة' })} value={med.prescription} />
