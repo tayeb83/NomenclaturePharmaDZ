@@ -9,6 +9,7 @@ import { useLanguage } from '@/components/i18n/LanguageProvider'
 export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | null; isAdmin?: boolean }) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null)
   const { lang } = useLanguage()
 
   const primaryLinks = useMemo(() => [
@@ -21,6 +22,7 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
 
   const groupedLinks = useMemo(() => [
     {
+      id: 'meds',
       label: lang === 'ar' ? '📦 الأدوية' : '📦 Médicaments',
       links: [
         { href: '/medicaments', label: lang === 'ar' ? '💊 كل الأدوية' : '💊 Médicaments' },
@@ -29,13 +31,22 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
       ],
     },
     {
+      id: 'stats',
       label: lang === 'ar' ? '📊 إحصائيات' : '📊 Stats',
       links: [
         { href: '/comparateur', label: lang === 'ar' ? '📊 مقارنة السوق' : '📊 Comparateur' },
         { href: '/laboratoires', label: lang === 'ar' ? '🏭 المخابر' : '🏭 Laboratoires' },
       ],
     },
-  ], [lang])
+    {
+      id: 'more',
+      label: lang === 'ar' ? '⋯ المزيد' : '⋯ Plus',
+      links: [
+        { href: '/api-docs', label: lang === 'ar' ? '🧪 توثيق API' : '🧪 API (docs)' },
+        ...(isAdmin ? [{ href: '/admin', label: lang === 'ar' ? '🛠️ الإدارة' : '🛠️ Admin' }] : []),
+      ],
+    },
+  ], [isAdmin, lang])
 
   return (
     <nav className="nav">
@@ -63,15 +74,25 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
           ))}
 
           {groupedLinks.map(group => (
-            <div key={group.label} className="nav-group">
-              <span className="nav-group-label">{group.label}</span>
-              <div className="nav-group-links">
+            <div key={group.id} className={`nav-dropdown${openDropdown === group.id ? ' open' : ''}`}>
+              <button
+                type="button"
+                className="nav-dropdown-trigger"
+                onClick={() => setOpenDropdown(prev => prev === group.id ? null : group.id)}
+              >
+                {group.label}
+                <span className="nav-dropdown-caret">▾</span>
+              </button>
+              <div className="nav-dropdown-menu">
                 {group.links.map(l => (
                   <Link
                     key={l.href}
                     href={l.href}
                     className={`nav-link${pathname === l.href ? ' active' : ''}`}
-                    onClick={() => setOpen(false)}
+                    onClick={() => {
+                      setOpen(false)
+                      setOpenDropdown(null)
+                    }}
                   >
                     {l.label}
                     {l.badge && <span className="nav-link-badge">!</span>}
