@@ -11,20 +11,31 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
   const [open, setOpen] = useState(false)
   const { lang } = useLanguage()
 
-  const links = useMemo(() => [
+  const primaryLinks = useMemo(() => [
     { href: '/', label: lang === 'ar' ? 'الرئيسية' : 'Accueil' },
     { href: '/recherche', label: lang === 'ar' ? 'البحث' : 'Recherche' },
-    { href: '/medicaments', label: lang === 'ar' ? '💊 كل الأدوية' : '💊 Médicaments' },
-    { href: '/medicaments-critiques', label: lang === 'ar' ? '🚨 الأدوية الحرجة' : '🚨 Critiques' },
     { href: '/diff', label: lang === 'ar' ? '🆕 الجديد' : '🆕 Nouveautés' },
-    { href: '/alertes', label: lang === 'ar' ? '🚨 التنبيهات' : '🚨 Alertes', badge: true },
-    { href: '/articles', label: lang === 'ar' ? '📰 مقالات' : '📰 Articles' },
     { href: '/substitution', label: lang === 'ar' ? 'الاستبدال' : 'Substitution' },
-    { href: '/comparateur', label: lang === 'ar' ? '📊 مقارنة السوق' : '📊 Comparateur' },
-    { href: '/laboratoires', label: lang === 'ar' ? '🏭 المخابر' : '🏭 Laboratoires' },
-    { href: '/api-docs', label: lang === 'ar' ? '🔗 واجهة API' : '🔗 API' },
     { href: '/a-propos', label: lang === 'ar' ? 'حول' : 'À propos' },
-  ], [lang, isAdmin])
+  ], [lang])
+
+  const groupedLinks = useMemo(() => [
+    {
+      label: lang === 'ar' ? '📦 الأدوية' : '📦 Médicaments',
+      links: [
+        { href: '/medicaments', label: lang === 'ar' ? '💊 كل الأدوية' : '💊 Médicaments' },
+        { href: '/medicaments-critiques', label: lang === 'ar' ? '🚨 الأدوية الحرجة' : '🚨 Critiques' },
+        { href: '/alertes', label: lang === 'ar' ? '🚨 التنبيهات' : '🚨 Alertes', badge: true },
+      ],
+    },
+    {
+      label: lang === 'ar' ? '📊 إحصائيات' : '📊 Stats',
+      links: [
+        { href: '/comparateur', label: lang === 'ar' ? '📊 مقارنة السوق' : '📊 Comparateur' },
+        { href: '/laboratoires', label: lang === 'ar' ? '🏭 المخابر' : '🏭 Laboratoires' },
+      ],
+    },
+  ], [lang])
 
   return (
     <nav className="nav">
@@ -40,7 +51,7 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
         </Link>
 
         <div className={`nav-links${open ? ' open' : ''}`}>
-          {links.map(l => (
+          {primaryLinks.map(l => (
             <Link
               key={l.href}
               href={l.href}
@@ -48,8 +59,26 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
               onClick={() => setOpen(false)}
             >
               {l.label}
-              {l.badge && <span className="nav-link-badge">!</span>}
             </Link>
+          ))}
+
+          {groupedLinks.map(group => (
+            <div key={group.label} className="nav-group">
+              <span className="nav-group-label">{group.label}</span>
+              <div className="nav-group-links">
+                {group.links.map(l => (
+                  <Link
+                    key={l.href}
+                    href={l.href}
+                    className={`nav-link${pathname === l.href ? ' active' : ''}`}
+                    onClick={() => setOpen(false)}
+                  >
+                    {l.label}
+                    {l.badge && <span className="nav-link-badge">!</span>}
+                  </Link>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
 

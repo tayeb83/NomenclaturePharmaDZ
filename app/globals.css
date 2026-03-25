@@ -81,6 +81,27 @@ body {
 .nav-link:hover { background: rgba(255,255,255,0.08); color: #fff; border-color: rgba(255,255,255,0.2); }
 .nav-link.active { background: rgba(2,132,199,0.25); color: #7dd3fc; border-color: rgba(56,189,248,0.45); }
 .nav-link-badge { background: var(--red); color: white; font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 10px; margin-left: 5px; vertical-align: top; }
+.nav-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 999px;
+  padding: 4px;
+  background: rgba(255,255,255,0.03);
+}
+.nav-group-label {
+  padding: 0 8px 0 6px;
+  color: rgba(255,255,255,0.72);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+.nav-group-links {
+  display: flex;
+  gap: 6px;
+}
 .nav-newsletter-btn {
   flex-shrink: 0;
   padding: 8px 16px; border-radius: 7px;
@@ -377,6 +398,19 @@ body {
     border-top: 1px solid rgba(255,255,255,0.1);
   }
   .nav-links.open { display: flex; }
+  .nav-group {
+    width: 100%;
+    border-radius: 10px;
+    flex-wrap: wrap;
+  }
+  .nav-group-label {
+    width: 100%;
+    padding: 2px 8px;
+  }
+  .nav-group-links {
+    width: 100%;
+    flex-wrap: wrap;
+  }
   .nav-newsletter-btn { order: 3; margin-left: 0; }
   .container { padding: 0 16px; }
   .page-header h1 { font-size: 24px; }
