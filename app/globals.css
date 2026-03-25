@@ -82,6 +82,11 @@ body {
 .nav-link.active { background: rgba(2,132,199,0.25); color: #7dd3fc; border-color: rgba(56,189,248,0.45); }
 .nav-link-badge { background: var(--red); color: white; font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 10px; margin-left: 5px; vertical-align: top; }
 .nav-dropdown { position: relative; }
+.nav-dropdown-lg .nav-dropdown-trigger,
+.nav-dropdown-trigger-lg {
+  padding: 7px 14px;
+  font-size: 14px;
+}
 .nav-dropdown-trigger {
   display: inline-flex;
   align-items: center;

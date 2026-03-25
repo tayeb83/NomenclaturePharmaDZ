@@ -17,8 +17,12 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
     { href: '/recherche', label: lang === 'ar' ? 'البحث' : 'Recherche' },
     { href: '/diff', label: lang === 'ar' ? '🆕 الجديد' : '🆕 Nouveautés' },
     { href: '/substitution', label: lang === 'ar' ? 'الاستبدال' : 'Substitution' },
-    { href: '/a-propos', label: lang === 'ar' ? 'حول' : 'À propos' },
   ], [lang])
+
+  const aboutLink = useMemo(
+    () => ({ href: '/a-propos', label: lang === 'ar' ? 'حول' : 'À propos' }),
+    [lang],
+  )
 
   const groupedLinks = useMemo(() => [
     {
@@ -62,7 +66,7 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
         </Link>
 
         <div className={`nav-links${open ? ' open' : ''}`}>
-          {primaryLinks.map(l => (
+          {primaryLinks.slice(0, 2).map(l => (
             <Link
               key={l.href}
               href={l.href}
@@ -73,8 +77,8 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
             </Link>
           ))}
 
-          {groupedLinks.map(group => (
-            <div key={group.id} className={`nav-dropdown${openDropdown === group.id ? ' open' : ''}`}>
+          {groupedLinks.filter(group => group.id === 'meds').map(group => (
+            <div key={group.id} className={`nav-dropdown nav-dropdown-lg${openDropdown === group.id ? ' open' : ''}`}>
               <button
                 type="button"
                 className="nav-dropdown-trigger"
@@ -101,6 +105,54 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
               </div>
             </div>
           ))}
+
+          {primaryLinks.slice(2).map(l => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className={`nav-link${pathname === l.href ? ' active' : ''}`}
+              onClick={() => setOpen(false)}
+            >
+              {l.label}
+            </Link>
+          ))}
+
+          {groupedLinks.filter(group => group.id !== 'meds').map(group => (
+            <div key={group.id} className={`nav-dropdown${openDropdown === group.id ? ' open' : ''}`}>
+              <button
+                type="button"
+                className={`nav-dropdown-trigger${group.id === 'stats' ? ' nav-dropdown-trigger-lg' : ''}`}
+                onClick={() => setOpenDropdown(prev => prev === group.id ? null : group.id)}
+              >
+                {group.label}
+                <span className="nav-dropdown-caret">▾</span>
+              </button>
+              <div className="nav-dropdown-menu">
+                {group.links.map(l => (
+                  <Link
+                    key={l.href}
+                    href={l.href}
+                    className={`nav-link${pathname === l.href ? ' active' : ''}`}
+                    onClick={() => {
+                      setOpen(false)
+                      setOpenDropdown(null)
+                    }}
+                  >
+                    {l.label}
+                    {l.badge && <span className="nav-link-badge">!</span>}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          <Link
+            href={aboutLink.href}
+            className={`nav-link${pathname === aboutLink.href ? ' active' : ''}`}
+            onClick={() => setOpen(false)}
+          >
+            {aboutLink.label}
+          </Link>
         </div>
 
         {currentVersion && (
