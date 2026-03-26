@@ -111,6 +111,63 @@ function formeMatchCondition(criticalFormeExpr: string, medFormeExpr: string): s
   )`
 }
 
+function normalizedDosageSql(columnExpr: string): string {
+  const base = `UPPER(UNACCENT(COALESCE(${columnExpr}, '')))`
+  return `REGEXP_REPLACE(
+    REGEXP_REPLACE(
+      ${base},
+      ',',
+      '.',
+      'g'
+    ),
+    '[^A-Z0-9./]+',
+    '',
+    'g'
+  )`
+}
+
+function dosageCoreSql(columnExpr: string): string {
+  const dosageNorm = normalizedDosageSql(columnExpr)
+  return `REGEXP_REPLACE(
+    REGEXP_REPLACE(
+      ${dosageNorm},
+      '/[0-9.]+(ML|L)$',
+      '',
+      'g'
+    ),
+    '/[0-9.]+(ML|L)(/|$)',
+    '/',
+    'g'
+  )`
+}
+
+function dosageMatchCondition(criticalDosageExpr: string, medDosageExpr: string): string {
+  const criticalNorm = normalizedDosageSql(criticalDosageExpr)
+  const medNorm = normalizedDosageSql(medDosageExpr)
+  const criticalCore = dosageCoreSql(criticalDosageExpr)
+  const medCore = dosageCoreSql(medDosageExpr)
+
+  return `(
+    ${medNorm} = ${criticalNorm}
+    OR (
+      LEAST(LENGTH(${medNorm}), LENGTH(${criticalNorm})) >= 4
+      AND (
+        POSITION(${medNorm} IN ${criticalNorm}) > 0
+        OR POSITION(${criticalNorm} IN ${medNorm}) > 0
+      )
+    )
+    OR (
+      ${medCore} <> ''
+      AND ${criticalCore} <> ''
+      AND (
+        ${medCore} = ${criticalCore}
+        OR POSITION(${medCore} IN ${criticalCore}) > 0
+        OR POSITION(${criticalCore} IN ${medCore}) > 0
+      )
+    )
+  )`
+}
+
 export type SearchClickEventInput = {
   search_query: string
   scope: string
@@ -249,7 +306,7 @@ export async function searchMedicaments(
         FROM critical_medicaments c
         WHERE ${dciMatchCondition('c.dci', 'e.dci')}
           AND ${formeMatchCondition('c.forme', 'e.forme')}
-          AND c.dosage_norm = ${normalizedSql('e.dosage')}
+          AND ${dosageMatchCondition('c.dosage', 'e.dosage')}
         LIMIT 1
       ) crit_e ON TRUE`
     : ''
@@ -259,7 +316,7 @@ export async function searchMedicaments(
         FROM critical_medicaments c
         WHERE ${dciMatchCondition('c.dci', 'r.dci')}
           AND ${formeMatchCondition('c.forme', 'r.forme')}
-          AND c.dosage_norm = ${normalizedSql('r.dosage')}
+          AND ${dosageMatchCondition('c.dosage', 'r.dosage')}
         LIMIT 1
       ) crit_r ON TRUE`
     : ''
@@ -269,7 +326,7 @@ export async function searchMedicaments(
         FROM critical_medicaments c
         WHERE ${dciMatchCondition('c.dci', 'n.dci')}
           AND ${formeMatchCondition('c.forme', 'n.forme')}
-          AND c.dosage_norm = ${normalizedSql('n.dosage')}
+          AND ${dosageMatchCondition('c.dosage', 'n.dosage')}
         LIMIT 1
       ) crit_n ON TRUE`
     : ''
