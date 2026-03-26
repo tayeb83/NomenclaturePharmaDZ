@@ -7,12 +7,15 @@ import type { CriticalWithMed } from '@/lib/queries'
 
 type Med = {
   med_id: number
+  med_source: 'enregistrement' | 'retrait'
   nom_marque: string
   n_enreg: string | null
   labo: string | null
   pays: string | null
   statut: string | null
   source_version: string | null
+  date_retrait: string | null
+  motif_retrait: string | null
   med_forme: string | null
   forme_approx: boolean
 }
@@ -59,12 +62,15 @@ function groupRows(rows: CriticalWithMed[]): DciGroup[] {
       if (!already) {
         dosageGroup.meds.push({
           med_id: row.med_id,
+          med_source: row.med_source!,
           nom_marque: row.nom_marque!,
           n_enreg: row.n_enreg,
           labo: row.labo,
           pays: row.pays,
           statut: row.statut,
           source_version: row.source_version,
+          date_retrait: row.date_retrait,
+          motif_retrait: row.motif_retrait,
           med_forme: row.med_forme,
           forme_approx: row.forme_approx,
         })
@@ -225,6 +231,23 @@ export function ClassificationView({ rows }: { rows: CriticalWithMed[] }) {
                                             {med.statut}
                                           </span>
                                         )}
+                                        <span style={{
+                                          ...styles.statutBadge,
+                                          background: med.med_source === 'retrait' ? '#fee2e2' : '#dbeafe',
+                                          color: med.med_source === 'retrait' ? '#991b1b' : '#1e40af',
+                                        }}>
+                                          {med.med_source === 'retrait' ? 'Retiré' : 'Actif'}
+                                        </span>
+                                        {med.med_source === 'retrait' && med.date_retrait && (
+                                          <span style={styles.withdrawMeta}>
+                                            📅 Retrait: {new Date(med.date_retrait).toLocaleDateString('fr-FR')}
+                                          </span>
+                                        )}
+                                        {med.med_source === 'retrait' && med.motif_retrait && (
+                                          <span style={styles.withdrawMeta} title={med.motif_retrait}>
+                                            📝 {med.motif_retrait}
+                                          </span>
+                                        )}
                                       </div>
                                     </div>
                                   ))}
@@ -342,5 +365,9 @@ const styles: Record<string, React.CSSProperties> = {
   },
   statutBadge: {
     fontSize: 10.5, fontWeight: 700, padding: '1px 7px', borderRadius: 5,
+  },
+  withdrawMeta: {
+    fontSize: 10.5,
+    color: '#7f1d1d',
   },
 }
