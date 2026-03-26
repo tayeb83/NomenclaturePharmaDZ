@@ -931,12 +931,15 @@ export type CriticalWithMed = {
   dosage: string
   classe_therapeutique: string | null
   med_id: number | null
+  med_source: 'enregistrement' | 'retrait' | null
   nom_marque: string | null
   n_enreg: string | null
   labo: string | null
   pays: string | null
   statut: string | null
   source_version: string | null
+  date_retrait: string | null
+  motif_retrait: string | null
   med_forme: string | null
   forme_approx: boolean
 }
@@ -951,30 +954,65 @@ export async function getCriticalWithMeds(search: string = ''): Promise<Critical
       cm.forme,
       cm.dosage,
       cm.classe_therapeutique,
-      e.id           AS med_id,
-      e.nom_marque,
-      e.n_enreg,
-      e.labo,
-      e.pays,
-      e.statut,
-      e.source_version,
-      e.forme        AS med_forme,
+      med.id         AS med_id,
+      med.source     AS med_source,
+      med.nom_marque,
+      med.n_enreg,
+      med.labo,
+      med.pays,
+      med.statut,
+      med.source_version,
+      med.date_retrait,
+      med.motif_retrait,
+      med.forme      AS med_forme,
       CASE
-        WHEN e.id IS NULL THEN false
-        WHEN ${normalizedFormeSql('e.forme')} = ${normalizedFormeSql('cm.forme')} THEN false
+        WHEN med.id IS NULL THEN false
+        WHEN ${normalizedFormeSql('med.forme')} = ${normalizedFormeSql('cm.forme')} THEN false
         ELSE true
       END            AS forme_approx
     FROM critical_medicaments cm
-    LEFT JOIN enregistrements e ON (
-      ${dciMatchCondition('cm.dci', 'e.dci')}
-      AND UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(e.dosage,  '')), '[^A-Z0-9]+', '', 'g')) = cm.dosage_norm
-      AND ${formeMatchCondition('cm.forme', 'e.forme')}
+    LEFT JOIN (
+      SELECT
+        e.id,
+        'enregistrement'::TEXT AS source,
+        e.dci,
+        e.forme,
+        e.dosage,
+        e.nom_marque,
+        e.n_enreg,
+        e.labo,
+        e.pays,
+        e.statut,
+        e.source_version,
+        NULL::DATE AS date_retrait,
+        NULL::TEXT AS motif_retrait
+      FROM enregistrements e
+      UNION ALL
+      SELECT
+        r.id,
+        'retrait'::TEXT AS source,
+        r.dci,
+        r.forme,
+        r.dosage,
+        r.nom_marque,
+        r.n_enreg,
+        r.labo,
+        r.pays,
+        r.statut,
+        NULL::TEXT AS source_version,
+        r.date_retrait,
+        r.motif_retrait
+      FROM retraits r
+    ) med ON (
+      ${dciMatchCondition('cm.dci', 'med.dci')}
+      AND UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(med.dosage,  '')), '[^A-Z0-9]+', '', 'g')) = cm.dosage_norm
+      AND ${formeMatchCondition('cm.forme', 'med.forme')}
     )
     WHERE (
       $1 = ''
       OR CONCAT_WS(' ', cm.dci, cm.forme, cm.dosage, cm.classe_therapeutique) ILIKE $2
     )
-    ORDER BY cm.dci ASC, cm.forme ASC, cm.dosage ASC, e.nom_marque ASC
+    ORDER BY cm.dci ASC, cm.forme ASC, cm.dosage ASC, med.source ASC, med.nom_marque ASC
   `, [q, `%${q}%`])
 }
 
