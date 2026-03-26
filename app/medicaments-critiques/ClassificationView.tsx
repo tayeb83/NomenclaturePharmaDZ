@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import type { CSSProperties } from 'react'
+import * as XLSX from 'xlsx'
 import type { CriticalWithMed } from '@/lib/queries'
 
 // ─── Types internes ────────────────────────────────────────────
@@ -87,9 +89,88 @@ function groupRows(rows: CriticalWithMed[]): DciGroup[] {
   return result
 }
 
+// ─── Export helpers ────────────────────────────────────────────
+
+type FlatRow = {
+  DCI: string
+  'Classe thérapeutique': string
+  Forme: string
+  Dosage: string
+  'Nom de marque': string
+  'N° Enregistrement': string
+  Laboratoire: string
+  Pays: string
+  Statut: string
+}
+
+function buildFlatRows(groups: DciGroup[]): FlatRow[] {
+  const rows: FlatRow[] = []
+  for (const dciGroup of groups) {
+    for (const formeGroup of dciGroup.formes) {
+      for (const dosageGroup of formeGroup.dosages) {
+        if (dosageGroup.meds.length === 0) {
+          rows.push({
+            DCI: dciGroup.dci,
+            'Classe thérapeutique': dciGroup.classe ?? '',
+            Forme: formeGroup.forme,
+            Dosage: dosageGroup.dosage,
+            'Nom de marque': '',
+            'N° Enregistrement': '',
+            Laboratoire: '',
+            Pays: '',
+            Statut: '',
+          })
+        } else {
+          for (const med of dosageGroup.meds) {
+            rows.push({
+              DCI: dciGroup.dci,
+              'Classe thérapeutique': dciGroup.classe ?? '',
+              Forme: formeGroup.forme,
+              Dosage: dosageGroup.dosage,
+              'Nom de marque': med.nom_marque,
+              'N° Enregistrement': med.n_enreg ?? '',
+              Laboratoire: med.labo ?? '',
+              Pays: med.pays ?? '',
+              Statut: med.statut ?? '',
+            })
+          }
+        }
+      }
+    }
+  }
+  return rows
+}
+
+function exportCsv(groups: DciGroup[], filename: string) {
+  const flat = buildFlatRows(groups)
+  if (flat.length === 0) return
+  const headers = Object.keys(flat[0]) as (keyof FlatRow)[]
+  const escape = (v: string) => `"${v.replace(/"/g, '""')}"`
+  const lines = [
+    headers.map(escape).join(','),
+    ...flat.map(row => headers.map(h => escape(row[h])).join(',')),
+  ]
+  const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+function exportXlsx(groups: DciGroup[], filename: string) {
+  const flat = buildFlatRows(groups)
+  if (flat.length === 0) return
+  const ws = XLSX.utils.json_to_sheet(flat)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Médicaments critiques')
+  XLSX.writeFile(wb, filename)
+}
+
 // ─── Composant principal ───────────────────────────────────────
 
-export function ClassificationView({ rows }: { rows: CriticalWithMed[] }) {
+export function ClassificationView({ rows, searchQuery = '' }: { rows: CriticalWithMed[]; searchQuery?: string }) {
   const groups = useMemo(() => groupRows(rows), [rows])
   const [openDcis, setOpenDcis] = useState<Set<string>>(new Set())
   const [openFormes, setOpenFormes] = useState<Set<string>>(new Set())
@@ -108,6 +189,8 @@ export function ClassificationView({ rows }: { rows: CriticalWithMed[] }) {
       return s
     })
 
+  const fileBaseName = `medicaments-critiques${searchQuery ? `-${searchQuery.replace(/\s+/g, '_')}` : ''}`
+
   if (groups.length === 0) {
     return (
       <div className="empty-state">
@@ -117,129 +200,177 @@ export function ClassificationView({ rows }: { rows: CriticalWithMed[] }) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      {groups.map(dciGroup => {
-        const isDciOpen = openDcis.has(dciGroup.dci)
-        return (
-          <div key={dciGroup.dci} style={styles.dciCard}>
-            {/* ─── En-tête DCI ─────────────────────────────── */}
-            <button
-              type="button"
-              onClick={() => toggleDci(dciGroup.dci)}
-              style={styles.dciHeader}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-                <span style={styles.dciCaret}>{isDciOpen ? '▾' : '▸'}</span>
-                <div style={{ minWidth: 0 }}>
-                  <div style={styles.dciName}>{dciGroup.dci}</div>
-                  {dciGroup.classe && (
-                    <div style={styles.dciClasse}>{dciGroup.classe}</div>
-                  )}
+    <div>
+      {/* ─── Boutons d'export ─────────────────────────────── */}
+      <div style={styles.exportBar}>
+        <span style={styles.exportLabel}>Exporter :</span>
+        <button
+          type="button"
+          onClick={() => exportCsv(groups, `${fileBaseName}.csv`)}
+          style={styles.exportBtn}
+        >
+          📄 CSV
+        </button>
+        <button
+          type="button"
+          onClick={() => exportXlsx(groups, `${fileBaseName}.xlsx`)}
+          style={{ ...styles.exportBtn, background: '#166534', borderColor: '#166534' }}
+        >
+          📊 Excel
+        </button>
+      </div>
+
+      {/* ─── Vue classification ───────────────────────────── */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {groups.map(dciGroup => {
+          const isDciOpen = openDcis.has(dciGroup.dci)
+          return (
+            <div key={dciGroup.dci} style={styles.dciCard}>
+              {/* ─── En-tête DCI ─────────────────────────────── */}
+              <button
+                type="button"
+                onClick={() => toggleDci(dciGroup.dci)}
+                style={styles.dciHeader}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+                  <span style={styles.dciCaret}>{isDciOpen ? '▾' : '▸'}</span>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={styles.dciName}>{dciGroup.dci}</div>
+                    {dciGroup.classe && (
+                      <div style={styles.dciClasse}>{dciGroup.classe}</div>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div style={styles.dciStats}>
-                <span style={styles.statPill}>
-                  {dciGroup.totalCombos} combinaison{dciGroup.totalCombos > 1 ? 's' : ''}
-                </span>
-                <span style={{
-                  ...styles.statPill,
-                  background: dciGroup.totalMeds > 0 ? '#dcfce7' : '#f1f5f9',
-                  color: dciGroup.totalMeds > 0 ? '#15803d' : '#64748b',
-                }}>
-                  {dciGroup.totalMeds > 0
-                    ? `${dciGroup.totalMeds} médicament${dciGroup.totalMeds > 1 ? 's' : ''}`
-                    : 'Aucune correspondance'}
-                </span>
-              </div>
-            </button>
+                <div style={styles.dciStats}>
+                  <span style={styles.statPill}>
+                    {dciGroup.totalCombos} combinaison{dciGroup.totalCombos > 1 ? 's' : ''}
+                  </span>
+                  <span style={{
+                    ...styles.statPill,
+                    background: dciGroup.totalMeds > 0 ? '#dcfce7' : '#f1f5f9',
+                    color: dciGroup.totalMeds > 0 ? '#15803d' : '#64748b',
+                  }}>
+                    {dciGroup.totalMeds > 0
+                      ? `${dciGroup.totalMeds} médicament${dciGroup.totalMeds > 1 ? 's' : ''}`
+                      : 'Aucune correspondance'}
+                  </span>
+                </div>
+              </button>
 
-            {/* ─── Contenu DCI déroulé ──────────────────────── */}
-            {isDciOpen && (
-              <div style={styles.dciBody}>
-                {dciGroup.formes.map(formeGroup => {
-                  const formeKey = `${dciGroup.dci}||${formeGroup.forme}`
-                  const isFormeOpen = openFormes.has(formeKey)
-                  const formeMedsCount = formeGroup.dosages.reduce((s, d) => s + d.meds.length, 0)
+              {/* ─── Contenu DCI déroulé ──────────────────────── */}
+              {isDciOpen && (
+                <div style={styles.dciBody}>
+                  {dciGroup.formes.map(formeGroup => {
+                    const formeKey = `${dciGroup.dci}||${formeGroup.forme}`
+                    const isFormeOpen = openFormes.has(formeKey)
+                    const formeMedsCount = formeGroup.dosages.reduce((s, d) => s + d.meds.length, 0)
 
-                  return (
-                    <div key={formeGroup.forme} style={styles.formeCard}>
-                      {/* ─── En-tête Forme ─────────────────── */}
-                      <button
-                        type="button"
-                        onClick={() => toggleForme(formeKey)}
-                        style={styles.formeHeader}
-                      >
-                        <span style={styles.formeCaret}>{isFormeOpen ? '▾' : '▸'}</span>
-                        <span style={styles.formeName}>
-                          <span style={styles.formeBadge}>FORME</span>
-                          {formeGroup.forme}
-                        </span>
-                        <div style={styles.formeStats}>
-                          <span style={styles.statPillSm}>
-                            {formeGroup.dosages.length} dosage{formeGroup.dosages.length > 1 ? 's' : ''}
+                    return (
+                      <div key={formeGroup.forme} style={styles.formeCard}>
+                        {/* ─── En-tête Forme ─────────────────── */}
+                        <button
+                          type="button"
+                          onClick={() => toggleForme(formeKey)}
+                          style={styles.formeHeader}
+                        >
+                          <span style={styles.formeCaret}>{isFormeOpen ? '▾' : '▸'}</span>
+                          <span style={styles.formeName}>
+                            <span style={styles.formeBadge}>FORME</span>
+                            {formeGroup.forme}
                           </span>
-                          {formeMedsCount > 0 && (
-                            <span style={{ ...styles.statPillSm, background: '#dcfce7', color: '#15803d' }}>
-                              {formeMedsCount} méd.
+                          <div style={styles.formeStats}>
+                            <span style={styles.statPillSm}>
+                              {formeGroup.dosages.length} dosage{formeGroup.dosages.length > 1 ? 's' : ''}
                             </span>
-                          )}
-                        </div>
-                      </button>
+                            {formeMedsCount > 0 && (
+                              <span style={{ ...styles.statPillSm, background: '#dcfce7', color: '#15803d' }}>
+                                {formeMedsCount} méd.
+                              </span>
+                            )}
+                          </div>
+                        </button>
 
-                      {/* ─── Dosages ───────────────────────── */}
-                      {isFormeOpen && (
-                        <div style={styles.formeBody}>
-                          {formeGroup.dosages.map(dosageGroup => (
-                            <div key={dosageGroup.dosage} style={styles.dosageRow}>
-                              <div style={styles.dosageHeader}>
-                                <span style={styles.dosageBadge}>DOSAGE</span>
-                                <span style={styles.dosageValue}>{dosageGroup.dosage}</span>
-                                {dosageGroup.meds.length === 0 && (
-                                  <span style={styles.noMatchBadge}>Aucun médicament correspondant</span>
+                        {/* ─── Dosages ───────────────────────── */}
+                        {isFormeOpen && (
+                          <div style={styles.formeBody}>
+                            {formeGroup.dosages.map(dosageGroup => (
+                              <div key={dosageGroup.dosage} style={styles.dosageRow}>
+                                <div style={styles.dosageHeader}>
+                                  <span style={styles.dosageBadge}>DOSAGE</span>
+                                  <span style={styles.dosageValue}>{dosageGroup.dosage}</span>
+                                  {dosageGroup.meds.length === 0 && (
+                                    <span style={styles.noMatchBadge}>Aucun médicament correspondant</span>
+                                  )}
+                                </div>
+                                {dosageGroup.meds.length > 0 && (
+                                  <div style={styles.medsList}>
+                                    {dosageGroup.meds.map(med => (
+                                      <div key={med.med_id} style={styles.medCard}>
+                                        <div style={styles.medName}>{med.nom_marque}</div>
+                                        <div style={styles.medMeta}>
+                                          {med.n_enreg && <span>{med.n_enreg}</span>}
+                                          {med.labo && <span>🏭 {med.labo}</span>}
+                                          {med.pays && <span>🌍 {med.pays}</span>}
+                                          {med.statut && (
+                                            <span style={{
+                                              ...styles.statutBadge,
+                                              background: med.statut.toLowerCase().includes('actif') ? '#dcfce7' : '#fff7ed',
+                                              color: med.statut.toLowerCase().includes('actif') ? '#15803d' : '#9a3412',
+                                            }}>
+                                              {med.statut}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
                                 )}
                               </div>
-                              {dosageGroup.meds.length > 0 && (
-                                <div style={styles.medsList}>
-                                  {dosageGroup.meds.map(med => (
-                                    <div key={med.med_id} style={styles.medCard}>
-                                      <div style={styles.medName}>{med.nom_marque}</div>
-                                      <div style={styles.medMeta}>
-                                        {med.n_enreg && <span>{med.n_enreg}</span>}
-                                        {med.labo && <span>🏭 {med.labo}</span>}
-                                        {med.pays && <span>🌍 {med.pays}</span>}
-                                        {med.statut && (
-                                          <span style={{
-                                            ...styles.statutBadge,
-                                            background: med.statut.toLowerCase().includes('actif') ? '#dcfce7' : '#fff7ed',
-                                            color: med.statut.toLowerCase().includes('actif') ? '#15803d' : '#9a3412',
-                                          }}>
-                                            {med.statut}
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        )
-      })}
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
 
 // ─── Styles inline ─────────────────────────────────────────────
 
-const styles: Record<string, React.CSSProperties> = {
+const styles: Record<string, CSSProperties> = {
+  exportBar: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+    flexWrap: 'wrap',
+  },
+  exportLabel: {
+    fontSize: 13,
+    fontWeight: 600,
+    color: '#475569',
+  },
+  exportBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 5,
+    padding: '6px 14px',
+    borderRadius: 7,
+    border: '1.5px solid #0284c7',
+    background: '#0284c7',
+    color: 'white',
+    fontSize: 12.5,
+    fontWeight: 700,
+    cursor: 'pointer',
+    transition: 'opacity .12s',
+  },
   dciCard: {
     background: 'white',
     border: '1.5px solid #e2e8f0',
