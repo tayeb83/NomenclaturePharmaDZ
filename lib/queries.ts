@@ -185,8 +185,8 @@ export async function searchMedicaments(
     ? `LEFT JOIN LATERAL (
         SELECT c.classe_therapeutique
         FROM critical_medicaments c
-        WHERE c.dci_norm = ${normalizedSql('e.dci')}
-          AND c.forme_norm = ${normalizedSql('e.forme')}
+        WHERE (c.dci_norm = ${normalizedSql('e.dci')} OR ${normalizedSql('e.dci')} LIKE c.dci_norm || '%')
+          AND (c.forme_norm = ${normalizedSql('e.forme')} OR UPPER(COALESCE(e.forme, '')) ILIKE REPLACE(UPPER(COALESCE(c.forme, '')), ' ', '%') || '%')
           AND c.dosage_norm = ${normalizedSql('e.dosage')}
         LIMIT 1
       ) crit_e ON TRUE`
@@ -195,8 +195,8 @@ export async function searchMedicaments(
     ? `LEFT JOIN LATERAL (
         SELECT c.classe_therapeutique
         FROM critical_medicaments c
-        WHERE c.dci_norm = ${normalizedSql('r.dci')}
-          AND c.forme_norm = ${normalizedSql('r.forme')}
+        WHERE (c.dci_norm = ${normalizedSql('r.dci')} OR ${normalizedSql('r.dci')} LIKE c.dci_norm || '%')
+          AND (c.forme_norm = ${normalizedSql('r.forme')} OR UPPER(COALESCE(r.forme, '')) ILIKE REPLACE(UPPER(COALESCE(c.forme, '')), ' ', '%') || '%')
           AND c.dosage_norm = ${normalizedSql('r.dosage')}
         LIMIT 1
       ) crit_r ON TRUE`
@@ -205,8 +205,8 @@ export async function searchMedicaments(
     ? `LEFT JOIN LATERAL (
         SELECT c.classe_therapeutique
         FROM critical_medicaments c
-        WHERE c.dci_norm = ${normalizedSql('n.dci')}
-          AND c.forme_norm = ${normalizedSql('n.forme')}
+        WHERE (c.dci_norm = ${normalizedSql('n.dci')} OR ${normalizedSql('n.dci')} LIKE c.dci_norm || '%')
+          AND (c.forme_norm = ${normalizedSql('n.forme')} OR UPPER(COALESCE(n.forme, '')) ILIKE REPLACE(UPPER(COALESCE(c.forme, '')), ' ', '%') || '%')
           AND c.dosage_norm = ${normalizedSql('n.dosage')}
         LIMIT 1
       ) crit_n ON TRUE`
@@ -757,8 +757,8 @@ export async function getMedicamentById(
     const row = await queryOne<{ classe_therapeutique: string | null }>(`
       SELECT classe_therapeutique
       FROM critical_medicaments
-      WHERE dci_norm = ${normalizedSql('$1')}
-        AND forme_norm = ${normalizedSql('$2')}
+      WHERE (dci_norm = ${normalizedSql('$1')} OR ${normalizedSql('$1')} LIKE dci_norm || '%')
+        AND (forme_norm = ${normalizedSql('$2')} OR UPPER(COALESCE($2, '')) ILIKE REPLACE(UPPER(COALESCE(forme, '')), ' ', '%') || '%')
         AND dosage_norm = ${normalizedSql('$3')}
       LIMIT 1
     `, [dci, forme, dosage])
@@ -896,9 +896,15 @@ export async function getCriticalWithMeds(search: string = ''): Promise<Critical
       e.source_version
     FROM critical_medicaments cm
     LEFT JOIN enregistrements e ON (
-      UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(e.dci,    '')), '[^A-Z0-9]+', '', 'g')) = cm.dci_norm
-      AND UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(e.forme,   '')), '[^A-Z0-9]+', '', 'g')) = cm.forme_norm
-      AND UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(e.dosage,  '')), '[^A-Z0-9]+', '', 'g')) = cm.dosage_norm
+      (
+        UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(e.dci, '')), '[^A-Z0-9]+', '', 'g')) = cm.dci_norm
+        OR UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(e.dci, '')), '[^A-Z0-9]+', '', 'g')) LIKE cm.dci_norm || '%'
+      )
+      AND (
+        UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(e.forme, '')), '[^A-Z0-9]+', '', 'g')) = cm.forme_norm
+        OR UPPER(COALESCE(e.forme, '')) ILIKE REPLACE(UPPER(COALESCE(cm.forme, '')), ' ', '%') || '%'
+      )
+      AND UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(e.dosage, '')), '[^A-Z0-9]+', '', 'g')) = cm.dosage_norm
     )
     WHERE (
       $1 = ''
