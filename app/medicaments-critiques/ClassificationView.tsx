@@ -18,7 +18,9 @@ type Med = {
   date_retrait: string | null
   motif_retrait: string | null
   med_forme: string | null
+  med_dosage: string | null
   forme_approx: boolean
+  match_quality: 'full' | 'dci_only' | null
 }
 
 type DosageGroup = {
@@ -38,6 +40,8 @@ type DciGroup = {
   formes: FormeGroup[]
   totalCombos: number
   totalMeds: number
+  /** Médicaments avec la même DCI mais une forme/dosage différente */
+  dciOnlyMeds: Med[]
 }
 
 // ─── Groupement des données ────────────────────────────────────
@@ -45,11 +49,14 @@ type DciGroup = {
 function groupRows(rows: CriticalWithMed[]): DciGroup[] {
   const dciMap = new Map<string, Map<string, Map<string, DosageGroup>>>()
   const dciClasse = new Map<string, string | null>()
+  // dci → Map<"med_id:source", Med> to deduplicate across multiple critical entries for same DCI
+  const dciOnlyMap = new Map<string, Map<string, Med>>()
 
   for (const row of rows) {
     if (!dciMap.has(row.dci)) {
       dciMap.set(row.dci, new Map())
       dciClasse.set(row.dci, row.classe_therapeutique)
+      dciOnlyMap.set(row.dci, new Map())
     }
     const formeMap = dciMap.get(row.dci)!
     if (!formeMap.has(row.forme)) formeMap.set(row.forme, new Map())
@@ -57,24 +64,34 @@ function groupRows(rows: CriticalWithMed[]): DciGroup[] {
     if (!dosageMap.has(row.dosage)) {
       dosageMap.set(row.dosage, { dosage: row.dosage, classe: row.classe_therapeutique, meds: [] })
     }
-    const dosageGroup = dosageMap.get(row.dosage)!
+
     if (row.med_id !== null) {
-      const already = dosageGroup.meds.some(m => m.med_id === row.med_id && m.med_source === row.med_source)
-      if (!already) {
-          dosageGroup.meds.push({
-            med_id: row.med_id,
-            med_source: row.med_source,
-            nom_marque: row.nom_marque!,
-            n_enreg: row.n_enreg,
-            labo: row.labo,
-            pays: row.pays,
-            statut: row.statut,
-            source_version: row.source_version,
-            date_retrait: row.date_retrait,
-            motif_retrait: row.motif_retrait,
-            med_forme: row.med_forme,
-            forme_approx: row.forme_approx,
-          })
+      const med: Med = {
+        med_id: row.med_id,
+        med_source: row.med_source,
+        nom_marque: row.nom_marque!,
+        n_enreg: row.n_enreg,
+        labo: row.labo,
+        pays: row.pays,
+        statut: row.statut,
+        source_version: row.source_version,
+        date_retrait: row.date_retrait,
+        motif_retrait: row.motif_retrait,
+        med_forme: row.med_forme,
+        med_dosage: row.med_dosage,
+        forme_approx: row.forme_approx,
+        match_quality: row.match_quality,
+      }
+
+      if (row.match_quality === 'dci_only') {
+        // Add at DCI level, deduplicated
+        const key = `${row.med_id}:${row.med_source}`
+        dciOnlyMap.get(row.dci)!.set(key, med)
+      } else {
+        // Full match — add to specific dosage group
+        const dosageGroup = dosageMap.get(row.dosage)!
+        const already = dosageGroup.meds.some(m => m.med_id === row.med_id && m.med_source === row.med_source)
+        if (!already) dosageGroup.meds.push(med)
       }
     }
   }
@@ -93,9 +110,66 @@ function groupRows(rows: CriticalWithMed[]): DciGroup[] {
       }
       formes.push({ forme, dosages })
     }
-    result.push({ dci, classe: dciClasse.get(dci) ?? null, formes, totalCombos, totalMeds })
+    // DCI-only meds that didn't match any specific forme/dosage combination
+    const allDciOnly = Array.from(dciOnlyMap.get(dci)!.values())
+    // Exclude any that are already surfaced as full matches
+    const fullMatchKeys = new Set(
+      formes.flatMap(f => f.dosages.flatMap(d => d.meds.map(m => `${m.med_id}:${m.med_source}`)))
+    )
+    const dciOnlyMeds = allDciOnly.filter(m => !fullMatchKeys.has(`${m.med_id}:${m.med_source}`))
+
+    result.push({ dci, classe: dciClasse.get(dci) ?? null, formes, totalCombos, totalMeds, dciOnlyMeds })
   }
   return result
+}
+
+// ─── Carte médicament ──────────────────────────────────────────
+
+function MedCard({ med, showFormeDosage = false }: { med: Med; showFormeDosage?: boolean }) {
+  return (
+    <div style={styles.medCard}>
+      <Link
+        href={`/recherche?q=${encodeURIComponent(med.nom_marque)}`}
+        style={styles.medNameLink}
+        title={`Rechercher ${med.nom_marque}`}
+      >
+        {med.nom_marque}
+      </Link>
+      <div style={styles.medMeta}>
+        {med.n_enreg && <span>{med.n_enreg}</span>}
+        {med.labo && <span>🏭 {med.labo}</span>}
+        {med.pays && <span>🌍 {med.pays}</span>}
+        {showFormeDosage && med.med_forme && (
+          <span style={styles.formeDosageBadge}>
+            {med.med_forme}{med.med_dosage ? ` · ${med.med_dosage}` : ''}
+          </span>
+        )}
+        {!showFormeDosage && med.forme_approx && med.med_forme && (
+          <span style={styles.approxBadge} title="Forme approchante">
+            ~ {med.med_forme}
+          </span>
+        )}
+        {med.statut && (
+          <span style={{
+            ...styles.statutBadge,
+            background: med.statut.toLowerCase().includes('actif') ? '#dcfce7' : '#fff7ed',
+            color: med.statut.toLowerCase().includes('actif') ? '#15803d' : '#9a3412',
+          }}>
+            {med.statut}
+          </span>
+        )}
+        {med.med_source === 'retrait' && (
+          <span style={styles.retraitBadge}>🚫 Retiré</span>
+        )}
+        {med.med_source === 'retrait' && med.date_retrait && (
+          <span style={styles.retraitDate}>📅 {med.date_retrait}</span>
+        )}
+        {med.med_source === 'retrait' && med.motif_retrait && (
+          <span style={styles.retraitMotif}>⚠️ {med.motif_retrait}</span>
+        )}
+      </div>
+    </div>
+  )
 }
 
 // ─── Composant principal ───────────────────────────────────────
@@ -161,6 +235,11 @@ export function ClassificationView({ rows }: { rows: CriticalWithMed[] }) {
                     ? `${dciGroup.totalMeds} médicament${dciGroup.totalMeds > 1 ? 's' : ''}`
                     : 'Aucune correspondance'}
                 </span>
+                {dciGroup.dciOnlyMeds.length > 0 && (
+                  <span style={styles.statPillDciOnly}>
+                    ~{dciGroup.dciOnlyMeds.length} autre{dciGroup.dciOnlyMeds.length > 1 ? 's' : ''} (DCI)
+                  </span>
+                )}
               </div>
             </button>
 
@@ -212,43 +291,7 @@ export function ClassificationView({ rows }: { rows: CriticalWithMed[] }) {
                               {dosageGroup.meds.length > 0 && (
                                 <div style={styles.medsList}>
                                   {dosageGroup.meds.map(med => (
-                                    <div key={med.med_id} style={styles.medCard}>
-                                      <Link
-                                        href={`/recherche?q=${encodeURIComponent(med.nom_marque)}`}
-                                        style={styles.medNameLink}
-                                        title={`Rechercher ${med.nom_marque}`}
-                                      >
-                                        {med.nom_marque}
-                                      </Link>
-                                      <div style={styles.medMeta}>
-                                        {med.n_enreg && <span>{med.n_enreg}</span>}
-                                        {med.labo && <span>🏭 {med.labo}</span>}
-                                        {med.pays && <span>🌍 {med.pays}</span>}
-                                        {med.forme_approx && med.med_forme && (
-                                          <span style={styles.approxBadge} title="Forme approchante">
-                                            ~ {med.med_forme}
-                                          </span>
-                                        )}
-                                        {med.statut && (
-                                          <span style={{
-                                            ...styles.statutBadge,
-                                            background: med.statut.toLowerCase().includes('actif') ? '#dcfce7' : '#fff7ed',
-                                            color: med.statut.toLowerCase().includes('actif') ? '#15803d' : '#9a3412',
-                                          }}>
-                                            {med.statut}
-                                          </span>
-                                        )}
-                                        {med.med_source === 'retrait' && (
-                                          <span style={styles.retraitBadge}>🚫 Retiré</span>
-                                        )}
-                                        {med.med_source === 'retrait' && med.date_retrait && (
-                                          <span style={styles.retraitDate}>📅 {med.date_retrait}</span>
-                                        )}
-                                        {med.med_source === 'retrait' && med.motif_retrait && (
-                                          <span style={styles.retraitMotif}>⚠️ {med.motif_retrait}</span>
-                                        )}
-                                      </div>
-                                    </div>
+                                    <MedCard key={`${med.med_id}-${med.med_source}`} med={med} />
                                   ))}
                                 </div>
                               )}
@@ -259,6 +302,20 @@ export function ClassificationView({ rows }: { rows: CriticalWithMed[] }) {
                     </div>
                   )
                 })}
+
+                {/* ─── Correspondances DCI uniquement ───── */}
+                {dciGroup.dciOnlyMeds.length > 0 && (
+                  <div style={styles.dciOnlySection}>
+                    <div style={styles.dciOnlyTitle}>
+                      Médicaments avec la même DCI (forme ou dosage différent)
+                    </div>
+                    <div style={styles.medsList}>
+                      {dciGroup.dciOnlyMeds.map(med => (
+                        <MedCard key={`${med.med_id}-${med.med_source}`} med={med} showFormeDosage />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -370,6 +427,25 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 10.5, fontWeight: 600, padding: '2px 7px', borderRadius: 4,
     background: '#fef9c3', color: '#854d0e', border: '1px solid #fde68a',
     whiteSpace: 'nowrap' as const,
+  },
+  formeDosageBadge: {
+    fontSize: 10.5, fontWeight: 600, padding: '2px 7px', borderRadius: 4,
+    background: '#f0f9ff', color: '#0369a1', border: '1px solid #bae6fd',
+    whiteSpace: 'nowrap' as const,
+  },
+  dciOnlySection: {
+    background: '#fffbeb',
+    border: '1px dashed #fbbf24',
+    borderRadius: 8,
+    padding: '10px 14px',
+  },
+  dciOnlyTitle: {
+    fontSize: 11, fontWeight: 700, color: '#92400e', letterSpacing: '.04em',
+    textTransform: 'uppercase' as const, marginBottom: 8,
+  },
+  statPillDciOnly: {
+    fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 20,
+    background: '#fef3c7', color: '#92400e', whiteSpace: 'nowrap' as const,
   },
   statutBadge: {
     fontSize: 10.5, fontWeight: 700, padding: '1px 7px', borderRadius: 5,
