@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useMemo } from 'react'
 import type { CriticalWithMed } from '@/lib/queries'
 
@@ -212,7 +213,13 @@ export function ClassificationView({ rows }: { rows: CriticalWithMed[] }) {
                                 <div style={styles.medsList}>
                                   {dosageGroup.meds.map(med => (
                                     <div key={med.med_id} style={styles.medCard}>
-                                      <div style={styles.medName}>{med.nom_marque}</div>
+                                      <Link
+                                        href={`/recherche?q=${encodeURIComponent(med.nom_marque)}`}
+                                        style={styles.medNameLink}
+                                        title={`Rechercher ${med.nom_marque}`}
+                                      >
+                                        {med.nom_marque}
+                                      </Link>
                                       <div style={styles.medMeta}>
                                         {med.n_enreg && <span>{med.n_enreg}</span>}
                                         {med.labo && <span>🏭 {med.labo}</span>}
@@ -332,6 +339,15 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '8px 12px',
   },
   medName: { fontWeight: 700, fontSize: 13, color: '#0369a1', marginBottom: 4 },
+  medNameLink: {
+    display: 'inline-block',
+    fontWeight: 700,
+    fontSize: 13,
+    color: '#0369a1',
+    marginBottom: 4,
+    textDecoration: 'underline',
+    textUnderlineOffset: 2,
+  },
   medMeta: { display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 11.5, color: '#64748b', alignItems: 'center' },
 
   statPill: {
