@@ -49,6 +49,68 @@ function normalizedSql(columnExpr: string): string {
   return `UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(${columnExpr}, '')), '[^A-Z0-9]+', '', 'g'))`
 }
 
+function normalizedFormeSql(columnExpr: string): string {
+  const base = `UPPER(UNACCENT(COALESCE(${columnExpr}, '')))`
+  return `REGEXP_REPLACE(
+    REGEXP_REPLACE(
+      REGEXP_REPLACE(
+        REGEXP_REPLACE(
+          REGEXP_REPLACE(
+            REGEXP_REPLACE(
+              REGEXP_REPLACE(
+                ${base},
+                '\\mSOLUTION\\M',
+                'SOL',
+                'g'
+              ),
+              '\\mBUVABLE\\M',
+              'BUV',
+              'g'
+            ),
+            '\\mCOMPRIMES?\\M',
+            'COMP',
+            'g'
+          ),
+          '\\mGELULES?\\M',
+          'GLES',
+          'g'
+        ),
+        '\\mINJECTABLE\\M',
+        'INJ',
+        'g'
+      ),
+      '\\mINJECTION\\M',
+      'INJ',
+      'g'
+    ),
+    '[^A-Z0-9]+',
+    '',
+    'g'
+  )`
+}
+
+function dciMatchCondition(criticalDciExpr: string, medDciExpr: string): string {
+  const criticalNorm = normalizedSql(criticalDciExpr)
+  const medNorm = normalizedSql(medDciExpr)
+  return `(
+    ${medNorm} = ${criticalNorm}
+    OR (LENGTH(${medNorm}) >= 4 AND POSITION(${medNorm} IN ${criticalNorm}) > 0)
+    OR (LENGTH(${criticalNorm}) >= 4 AND POSITION(${criticalNorm} IN ${medNorm}) > 0)
+  )`
+}
+
+function formeMatchCondition(criticalFormeExpr: string, medFormeExpr: string): string {
+  const criticalFormeNorm = normalizedFormeSql(criticalFormeExpr)
+  const medFormeNorm = normalizedFormeSql(medFormeExpr)
+  return `(
+    ${medFormeNorm} = ${criticalFormeNorm}
+    OR (
+      LEAST(LENGTH(${medFormeNorm}), LENGTH(${criticalFormeNorm})) >= 4
+      AND LEFT(${medFormeNorm}, 4) = LEFT(${criticalFormeNorm}, 4)
+    )
+  )`
+}
+
 export type SearchClickEventInput = {
   search_query: string
   scope: string
@@ -185,8 +247,8 @@ export async function searchMedicaments(
     ? `LEFT JOIN LATERAL (
         SELECT c.classe_therapeutique
         FROM critical_medicaments c
-        WHERE c.dci_norm = ${normalizedSql('e.dci')}
-          AND c.forme_norm = ${normalizedSql('e.forme')}
+        WHERE ${dciMatchCondition('c.dci', 'e.dci')}
+          AND ${formeMatchCondition('c.forme', 'e.forme')}
           AND c.dosage_norm = ${normalizedSql('e.dosage')}
         LIMIT 1
       ) crit_e ON TRUE`
@@ -195,8 +257,8 @@ export async function searchMedicaments(
     ? `LEFT JOIN LATERAL (
         SELECT c.classe_therapeutique
         FROM critical_medicaments c
-        WHERE c.dci_norm = ${normalizedSql('r.dci')}
-          AND c.forme_norm = ${normalizedSql('r.forme')}
+        WHERE ${dciMatchCondition('c.dci', 'r.dci')}
+          AND ${formeMatchCondition('c.forme', 'r.forme')}
           AND c.dosage_norm = ${normalizedSql('r.dosage')}
         LIMIT 1
       ) crit_r ON TRUE`
@@ -205,8 +267,8 @@ export async function searchMedicaments(
     ? `LEFT JOIN LATERAL (
         SELECT c.classe_therapeutique
         FROM critical_medicaments c
-        WHERE c.dci_norm = ${normalizedSql('n.dci')}
-          AND c.forme_norm = ${normalizedSql('n.forme')}
+        WHERE ${dciMatchCondition('c.dci', 'n.dci')}
+          AND ${formeMatchCondition('c.forme', 'n.forme')}
           AND c.dosage_norm = ${normalizedSql('n.dosage')}
         LIMIT 1
       ) crit_n ON TRUE`
@@ -757,15 +819,9 @@ export async function getMedicamentById(
     const row = await queryOne<{ classe_therapeutique: string | null }>(`
       SELECT classe_therapeutique
       FROM critical_medicaments
-      WHERE dci_norm = ${normalizedSql('$1')}
+      WHERE ${dciMatchCondition('dci', '$1')}
         AND dosage_norm = ${normalizedSql('$3')}
-        AND (
-          forme_norm = ${normalizedSql('$2')}
-          OR (
-            LENGTH(forme_norm) >= 4
-            AND LEFT(${normalizedSql('$2')}, 4) = LEFT(forme_norm, 4)
-          )
-        )
+        AND ${formeMatchCondition('forme', '$2')}
       LIMIT 1
     `, [dci, forme, dosage])
     return { isCritical: Boolean(row), classe: row?.classe_therapeutique ?? null }
@@ -905,21 +961,14 @@ export async function getCriticalWithMeds(search: string = ''): Promise<Critical
       e.forme        AS med_forme,
       CASE
         WHEN e.id IS NULL THEN false
-        WHEN UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(e.forme, '')), '[^A-Z0-9]+', '', 'g')) = cm.forme_norm THEN false
+        WHEN ${normalizedFormeSql('e.forme')} = ${normalizedFormeSql('cm.forme')} THEN false
         ELSE true
       END            AS forme_approx
     FROM critical_medicaments cm
     LEFT JOIN enregistrements e ON (
-      UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(e.dci,    '')), '[^A-Z0-9]+', '', 'g')) = cm.dci_norm
+      ${dciMatchCondition('cm.dci', 'e.dci')}
       AND UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(e.dosage,  '')), '[^A-Z0-9]+', '', 'g')) = cm.dosage_norm
-      AND (
-        UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(e.forme, '')), '[^A-Z0-9]+', '', 'g')) = cm.forme_norm
-        OR (
-          LENGTH(cm.forme_norm) >= 4
-          AND LEFT(UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(e.forme, '')), '[^A-Z0-9]+', '', 'g')), 4)
-              = LEFT(cm.forme_norm, 4)
-        )
-      )
+      AND ${formeMatchCondition('cm.forme', 'e.forme')}
     )
     WHERE (
       $1 = ''
