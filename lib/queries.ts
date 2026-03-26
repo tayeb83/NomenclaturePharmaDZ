@@ -51,42 +51,45 @@ function normalizedSql(columnExpr: string): string {
 
 function normalizedFormeSql(columnExpr: string): string {
   const base = `UPPER(UNACCENT(COALESCE(${columnExpr}, '')))`
-  return `REGEXP_REPLACE(
-    REGEXP_REPLACE(
-      REGEXP_REPLACE(
-        REGEXP_REPLACE(
-          REGEXP_REPLACE(
-            REGEXP_REPLACE(
-              REGEXP_REPLACE(
-                ${base},
-                '\\mSOLUTION\\M',
-                'SOL',
-                'g'
-              ),
-              '\\mBUVABLE\\M',
-              'BUV',
-              'g'
-            ),
-            '\\mCOMPRIMES?\\M',
-            'COMP',
-            'g'
-          ),
-          '\\mGELULES?\\M',
-          'GLES',
-          'g'
-        ),
-        '\\mINJECTABLE\\M',
-        'INJ',
-        'g'
-      ),
-      '\\mINJECTION\\M',
-      'INJ',
-      'g'
-    ),
-    '[^A-Z0-9]+',
-    '',
-    'g'
-  )`
+  // Each entry: [pattern, replacement] — applied as whole-word substitutions before stripping non-alphanum.
+  // Long pharmaceutical form names → canonical short codes, so both "SOLUTION INJECTABLE" and "SOL.INJ." normalize identically.
+  const replacements: [string, string][] = [
+    ['\\mSOLUTIONS?\\M',        'SOL'],
+    ['\\mBUVABLE\\M',           'BUV'],
+    ['\\mCOMPRIMES?\\M',        'COMP'],
+    ['\\mGELULES?\\M',          'GLES'],
+    ['\\mCAPSULES?\\M',         'CAPS'],
+    ['\\mINJECTABLE\\M',        'INJ'],
+    ['\\mINJECTION\\M',         'INJ'],
+    ['\\mSUSPENSION\\M',        'SUSP'],
+    ['\\mSIROPS?\\M',           'SIR'],
+    ['\\mSACHETS?\\M',          'SACH'],
+    ['\\mAMPOULES?\\M',         'AMP'],
+    ['\\mSUPPOSITOIRES?\\M',    'SUPP'],
+    ['\\mPOMMADES?\\M',         'POMM'],
+    ['\\mCOLLYRES?\\M',         'COLL'],
+    ['\\mLYOPHILISATS?\\M',     'LYOPH'],
+    ['\\mPOUDRES?\\M',          'POUDR'],
+    ['\\mPERFUSION\\M',         'PERF'],
+    ['\\mAEROSOLS?\\M',         'AERO'],
+    ['\\mGRANULES?\\M',         'GRAN'],
+    ['\\mOVULES?\\M',           'OVUL'],
+    ['\\mCREMES?\\M',           'CRM'],
+    ['\\mEMULSION\\M',          'EMUL'],
+    ['\\mSUBLINGUAL\\M',        'SUBL'],
+    ['\\mGOUTTES?\\M',          'GOUTT'],
+    ['\\mPATCH(ES)?\\M',        'PATCH'],
+    ['\\mTRANSDERMIQUE\\M',     'TRANSD'],
+    ['\\mINTRAVEINEU[XSE]?\\M', 'IV'],
+    ['\\mINTRAMUSCULAIRE\\M',   'IM'],
+  ]
+  // Build nested REGEXP_REPLACE chain from innermost to outermost
+  let sql = base
+  for (const [pattern, replacement] of replacements) {
+    sql = `REGEXP_REPLACE(${sql}, '${pattern}', '${replacement}', 'g')`
+  }
+  // Final pass: strip all non-alphanumeric characters
+  return `REGEXP_REPLACE(${sql}, '[^A-Z0-9]+', '', 'g')`
 }
 
 function dciMatchCondition(criticalDciExpr: string, medDciExpr: string): string {
@@ -998,21 +1001,27 @@ export type CriticalWithMed = {
   date_retrait: string | null
   motif_retrait: string | null
   med_forme: string | null
+  med_dosage: string | null
   forme_approx: boolean
+  /** 'full' = DCI + forme + dosage matched; 'dci_only' = DCI matched but forme/dosage differ; null = no match */
+  match_quality: 'full' | 'dci_only' | null
 }
 
 export async function getCriticalWithMeds(search: string = ''): Promise<CriticalWithMed[]> {
   if (!await hasTable('critical_medicaments')) return []
   const q = search.trim()
+
+  // LATERAL subquery: match on DCI first (broad), then classify as 'full' or 'dci_only'.
+  // This surfaces DCI-only matches so the UI can flag "same DCI, different form/dosage".
   return query<CriticalWithMed>(`
     SELECT
-      cm.id          AS critical_id,
+      cm.id                     AS critical_id,
       cm.dci,
       cm.forme,
       cm.dosage,
       cm.classe_therapeutique,
-      med.id         AS med_id,
-      med.source     AS med_source,
+      med.id                    AS med_id,
+      med.source                AS med_source,
       med.nom_marque,
       med.n_enreg,
       med.labo,
@@ -1021,55 +1030,70 @@ export async function getCriticalWithMeds(search: string = ''): Promise<Critical
       med.source_version,
       med.date_retrait,
       med.motif_retrait,
-      med.forme      AS med_forme,
+      med.forme                 AS med_forme,
+      med.dosage                AS med_dosage,
+      med.match_quality,
       CASE
-        WHEN med.id IS NULL THEN false
+        WHEN med.id IS NULL                   THEN false
+        WHEN med.match_quality = 'dci_only'   THEN false
         WHEN ${normalizedFormeSql('med.forme')} = ${normalizedFormeSql('cm.forme')} THEN false
         ELSE true
-      END            AS forme_approx
+      END                       AS forme_approx
     FROM critical_medicaments cm
-    LEFT JOIN (
+    LEFT JOIN LATERAL (
       SELECT
-        e.id,
-        'enregistrement'::TEXT AS source,
-        e.dci,
-        e.forme,
-        e.dosage,
-        e.nom_marque,
-        e.n_enreg,
-        e.labo,
-        e.pays,
-        e.statut,
-        e.source_version,
-        NULL::DATE AS date_retrait,
-        NULL::TEXT AS motif_retrait
-      FROM enregistrements e
-      UNION ALL
-      SELECT
-        r.id,
-        'retrait'::TEXT AS source,
-        r.dci,
-        r.forme,
-        r.dosage,
-        r.nom_marque,
-        r.n_enreg,
-        r.labo,
-        r.pays,
-        r.statut,
-        NULL::TEXT AS source_version,
-        r.date_retrait,
-        r.motif_retrait
-      FROM retraits r
-    ) med ON (
-      ${dciMatchCondition('cm.dci', 'med.dci')}
-      AND UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(med.dosage,  '')), '[^A-Z0-9]+', '', 'g')) = cm.dosage_norm
-      AND ${formeMatchCondition('cm.forme', 'med.forme')}
-    )
+        m.id,
+        m.source,
+        m.dci,
+        m.forme,
+        m.dosage,
+        m.nom_marque,
+        m.n_enreg,
+        m.labo,
+        m.pays,
+        m.statut,
+        m.source_version,
+        m.date_retrait,
+        m.motif_retrait,
+        CASE
+          WHEN ${formeMatchCondition('cm.forme', 'm.forme')}
+            AND ${dosageMatchCondition('cm.dosage', 'm.dosage')}
+          THEN 'full'::TEXT
+          ELSE 'dci_only'::TEXT
+        END AS match_quality
+      FROM (
+        SELECT
+          e.id,
+          'enregistrement'::TEXT AS source,
+          e.dci, e.forme, e.dosage,
+          e.nom_marque, e.n_enreg, e.labo, e.pays,
+          e.statut, e.source_version,
+          NULL::DATE AS date_retrait,
+          NULL::TEXT AS motif_retrait
+        FROM enregistrements e
+        UNION ALL
+        SELECT
+          r.id,
+          'retrait'::TEXT AS source,
+          r.dci, r.forme, r.dosage,
+          r.nom_marque, r.n_enreg, r.labo, r.pays,
+          r.statut, NULL::TEXT AS source_version,
+          r.date_retrait, r.motif_retrait
+        FROM retraits r
+      ) m
+      WHERE ${dciMatchCondition('cm.dci', 'm.dci')}
+    ) med ON TRUE
     WHERE (
       $1 = ''
       OR CONCAT_WS(' ', cm.dci, cm.forme, cm.dosage, cm.classe_therapeutique) ILIKE $2
     )
-    ORDER BY cm.dci ASC, cm.forme ASC, cm.dosage ASC, med.source ASC, med.nom_marque ASC
+    ORDER BY
+      cm.dci ASC,
+      cm.forme ASC,
+      cm.dosage ASC,
+      CASE med.match_quality WHEN 'full' THEN 1 WHEN 'dci_only' THEN 2 ELSE 3 END,
+      med.source ASC,
+      med.nom_marque ASC
   `, [q, `%${q}%`])
 }
 
