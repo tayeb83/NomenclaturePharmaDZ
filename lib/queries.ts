@@ -758,8 +758,14 @@ export async function getMedicamentById(
       SELECT classe_therapeutique
       FROM critical_medicaments
       WHERE dci_norm = ${normalizedSql('$1')}
-        AND forme_norm = ${normalizedSql('$2')}
         AND dosage_norm = ${normalizedSql('$3')}
+        AND (
+          forme_norm = ${normalizedSql('$2')}
+          OR (
+            LENGTH(forme_norm) >= 4
+            AND LEFT(${normalizedSql('$2')}, 4) = LEFT(forme_norm, 4)
+          )
+        )
       LIMIT 1
     `, [dci, forme, dosage])
     return { isCritical: Boolean(row), classe: row?.classe_therapeutique ?? null }
@@ -875,6 +881,8 @@ export type CriticalWithMed = {
   pays: string | null
   statut: string | null
   source_version: string | null
+  med_forme: string | null
+  forme_approx: boolean
 }
 
 export async function getCriticalWithMeds(search: string = ''): Promise<CriticalWithMed[]> {
@@ -893,12 +901,25 @@ export async function getCriticalWithMeds(search: string = ''): Promise<Critical
       e.labo,
       e.pays,
       e.statut,
-      e.source_version
+      e.source_version,
+      e.forme        AS med_forme,
+      CASE
+        WHEN e.id IS NULL THEN false
+        WHEN UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(e.forme, '')), '[^A-Z0-9]+', '', 'g')) = cm.forme_norm THEN false
+        ELSE true
+      END            AS forme_approx
     FROM critical_medicaments cm
     LEFT JOIN enregistrements e ON (
       UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(e.dci,    '')), '[^A-Z0-9]+', '', 'g')) = cm.dci_norm
-      AND UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(e.forme,   '')), '[^A-Z0-9]+', '', 'g')) = cm.forme_norm
       AND UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(e.dosage,  '')), '[^A-Z0-9]+', '', 'g')) = cm.dosage_norm
+      AND (
+        UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(e.forme, '')), '[^A-Z0-9]+', '', 'g')) = cm.forme_norm
+        OR (
+          LENGTH(cm.forme_norm) >= 4
+          AND LEFT(UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(e.forme, '')), '[^A-Z0-9]+', '', 'g')), 4)
+              = LEFT(cm.forme_norm, 4)
+        )
+      )
     )
     WHERE (
       $1 = ''

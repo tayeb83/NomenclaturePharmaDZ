@@ -13,6 +13,8 @@ type Med = {
   pays: string | null
   statut: string | null
   source_version: string | null
+  med_forme: string | null
+  forme_approx: boolean
 }
 
 type DosageGroup = {
@@ -63,6 +65,8 @@ function groupRows(rows: CriticalWithMed[]): DciGroup[] {
           pays: row.pays,
           statut: row.statut,
           source_version: row.source_version,
+          med_forme: row.med_forme,
+          forme_approx: row.forme_approx,
         })
       }
     }
@@ -207,6 +211,11 @@ export function ClassificationView({ rows }: { rows: CriticalWithMed[] }) {
                                         {med.n_enreg && <span>{med.n_enreg}</span>}
                                         {med.labo && <span>🏭 {med.labo}</span>}
                                         {med.pays && <span>🌍 {med.pays}</span>}
+                                        {med.forme_approx && med.med_forme && (
+                                          <span style={styles.approxBadge} title="Forme approchante">
+                                            ~ {med.med_forme}
+                                          </span>
+                                        )}
                                         {med.statut && (
                                           <span style={{
                                             ...styles.statutBadge,
@@ -325,6 +334,11 @@ const styles: Record<string, React.CSSProperties> = {
   dosageBadge: {
     fontSize: 9, fontWeight: 900, letterSpacing: '.06em',
     background: '#fef3c7', color: '#92400e', padding: '2px 6px', borderRadius: 4,
+  },
+  approxBadge: {
+    fontSize: 10.5, fontWeight: 600, padding: '2px 7px', borderRadius: 4,
+    background: '#fef9c3', color: '#854d0e', border: '1px solid #fde68a',
+    whiteSpace: 'nowrap' as const,
   },
   statutBadge: {
     fontSize: 10.5, fontWeight: 700, padding: '1px 7px', borderRadius: 5,
