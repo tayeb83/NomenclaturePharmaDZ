@@ -78,7 +78,7 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
           ))}
 
           {groupedLinks.filter(group => group.id === 'meds').map(group => (
-            <div key={group.id} className={`nav-dropdown nav-dropdown-lg${openDropdown === group.id ? ' open' : ''}`}>
+            <div key={group.id} className={`nav-dropdown${openDropdown === group.id ? ' open' : ''}`}>
               <button
                 type="button"
                 className="nav-dropdown-trigger"
@@ -121,7 +121,7 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
             <div key={group.id} className={`nav-dropdown${openDropdown === group.id ? ' open' : ''}`}>
               <button
                 type="button"
-                className={`nav-dropdown-trigger${group.id === 'stats' ? ' nav-dropdown-trigger-lg' : ''}`}
+                className="nav-dropdown-trigger"
                 onClick={() => setOpenDropdown(prev => prev === group.id ? null : group.id)}
               >
                 {group.label}

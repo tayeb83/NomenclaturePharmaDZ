@@ -860,6 +860,54 @@ export async function getCriticalMedicaments(
   `, [q, `%${q}%`, limit])
 }
 
+// ─── MÉDICAMENTS CRITIQUES AVEC CORRESPONDANCES ───────────────
+
+export type CriticalWithMed = {
+  critical_id: number
+  dci: string
+  forme: string
+  dosage: string
+  classe_therapeutique: string | null
+  med_id: number | null
+  nom_marque: string | null
+  n_enreg: string | null
+  labo: string | null
+  pays: string | null
+  statut: string | null
+  source_version: string | null
+}
+
+export async function getCriticalWithMeds(search: string = ''): Promise<CriticalWithMed[]> {
+  if (!await hasTable('critical_medicaments')) return []
+  const q = search.trim()
+  return query<CriticalWithMed>(`
+    SELECT
+      cm.id          AS critical_id,
+      cm.dci,
+      cm.forme,
+      cm.dosage,
+      cm.classe_therapeutique,
+      e.id           AS med_id,
+      e.nom_marque,
+      e.n_enreg,
+      e.labo,
+      e.pays,
+      e.statut,
+      e.source_version
+    FROM critical_medicaments cm
+    LEFT JOIN enregistrements e ON (
+      UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(e.dci,    '')), '[^A-Z0-9]+', '', 'g')) = cm.dci_norm
+      AND UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(e.forme,   '')), '[^A-Z0-9]+', '', 'g')) = cm.forme_norm
+      AND UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(e.dosage,  '')), '[^A-Z0-9]+', '', 'g')) = cm.dosage_norm
+    )
+    WHERE (
+      $1 = ''
+      OR CONCAT_WS(' ', cm.dci, cm.forme, cm.dosage, cm.classe_therapeutique) ILIKE $2
+    )
+    ORDER BY cm.dci ASC, cm.forme ASC, cm.dosage ASC, e.nom_marque ASC
+  `, [q, `%${q}%`])
+}
+
 // ─── SEO : PAGES CIBLÉES ──────────────────────────────────────
 
 export type DciSlug = { dci: string; count: number }
