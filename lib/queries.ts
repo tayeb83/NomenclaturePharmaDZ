@@ -1133,6 +1133,50 @@ export async function getCriticalWithMeds(search: string = ''): Promise<Critical
   `, [q, `%${q}%`])
 }
 
+// ─── MAPPING PRÉ-CALCULÉ (critical_mapping) ──────────────────
+
+export type CriticalMappingRow = {
+  id: number
+  n_critique: number | null
+  classe_therapeutique: string | null
+  dci_critique: string
+  forme_critique: string | null
+  dosage_critique: string | null
+  statut_match: 'OUI' | 'A_REVOIR' | null
+  score_global: number | null
+  score_dci: number | null
+  score_forme: number | null
+  score_dosage: number | null
+  source_base: 'ACTIVE' | 'RETRAIT' | 'NON_RENOUVELE' | null
+  n_base: number | null
+  code_base: string | null
+  n_enregistrement: string | null
+  dci_base: string | null
+  marque: string | null
+  forme_base: string | null
+  dosage_base: string | null
+  conditionnement: string | null
+}
+
+export async function getCriticalMapping(search = ''): Promise<CriticalMappingRow[]> {
+  if (!await hasTable('critical_mapping')) return []
+  const q = search.trim()
+  return query<CriticalMappingRow>(`
+    SELECT *
+    FROM critical_mapping
+    WHERE (
+      $1 = ''
+      OR CONCAT_WS(' ', dci_critique, forme_critique, dosage_critique,
+                        classe_therapeutique, marque, dci_base) ILIKE $2
+    )
+    ORDER BY
+      classe_therapeutique ASC NULLS LAST,
+      n_critique ASC NULLS LAST,
+      dci_critique ASC,
+      score_global DESC NULLS LAST
+  `, [q, `%${q}%`])
+}
+
 // ─── SEO : PAGES CIBLÉES ──────────────────────────────────────
 
 export type DciSlug = { dci: string; count: number }
