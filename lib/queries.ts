@@ -108,8 +108,11 @@ function formeMatchCondition(criticalFormeExpr: string, medFormeExpr: string): s
   return `(
     ${medFormeNorm} = ${criticalFormeNorm}
     OR (
-      LEAST(LENGTH(${medFormeNorm}), LENGTH(${criticalFormeNorm})) >= 4
-      AND LEFT(${medFormeNorm}, 4) = LEFT(${criticalFormeNorm}, 4)
+      LEAST(LENGTH(${medFormeNorm}), LENGTH(${criticalFormeNorm})) >= 3
+      AND (
+        POSITION(${medFormeNorm} IN ${criticalFormeNorm}) > 0
+        OR POSITION(${criticalFormeNorm} IN ${medFormeNorm}) > 0
+      )
     )
   )`
 }
@@ -1003,8 +1006,8 @@ export type CriticalWithMed = {
   med_forme: string | null
   med_dosage: string | null
   forme_approx: boolean
-  /** 'full' = DCI + forme + dosage matched; 'dci_only' = DCI matched but forme/dosage differ; null = no match */
-  match_quality: 'full' | 'dci_only' | null
+  /** 'full' = DCI + forme + dosage matched; 'dci_partial' = DCI + (forme OR dosage) matched; 'dci_only' = DCI only; null = no match */
+  match_quality: 'full' | 'dci_partial' | 'dci_only' | null
 }
 
 export async function getCriticalWithMeds(search: string = ''): Promise<CriticalWithMed[]> {
@@ -1034,8 +1037,9 @@ export async function getCriticalWithMeds(search: string = ''): Promise<Critical
       med.dosage                AS med_dosage,
       med.match_quality,
       CASE
-        WHEN med.id IS NULL                   THEN false
-        WHEN med.match_quality = 'dci_only'   THEN false
+        WHEN med.id IS NULL                      THEN false
+        WHEN med.match_quality = 'dci_only'      THEN false
+        WHEN med.match_quality = 'dci_partial'   THEN false
         WHEN ${normalizedFormeSql('med.forme')} = ${normalizedFormeSql('cm.forme')} THEN false
         ELSE true
       END                       AS forme_approx
@@ -1059,6 +1063,9 @@ export async function getCriticalWithMeds(search: string = ''): Promise<Critical
           WHEN ${formeMatchCondition('cm.forme', 'm.forme')}
             AND ${dosageMatchCondition('cm.dosage', 'm.dosage')}
           THEN 'full'::TEXT
+          WHEN ${formeMatchCondition('cm.forme', 'm.forme')}
+            OR ${dosageMatchCondition('cm.dosage', 'm.dosage')}
+          THEN 'dci_partial'::TEXT
           ELSE 'dci_only'::TEXT
         END AS match_quality
       FROM (
@@ -1091,7 +1098,7 @@ export async function getCriticalWithMeds(search: string = ''): Promise<Critical
       cm.dci ASC,
       cm.forme ASC,
       cm.dosage ASC,
-      CASE med.match_quality WHEN 'full' THEN 1 WHEN 'dci_only' THEN 2 ELSE 3 END,
+      CASE med.match_quality WHEN 'full' THEN 1 WHEN 'dci_partial' THEN 2 WHEN 'dci_only' THEN 3 ELSE 4 END,
       med.source ASC,
       med.nom_marque ASC
   `, [q, `%${q}%`])

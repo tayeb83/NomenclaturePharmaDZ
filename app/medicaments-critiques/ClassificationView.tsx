@@ -20,7 +20,7 @@ type Med = {
   med_forme: string | null
   med_dosage: string | null
   forme_approx: boolean
-  match_quality: 'full' | 'dci_only' | null
+  match_quality: 'full' | 'dci_partial' | 'dci_only' | null
 }
 
 type DosageGroup = {
@@ -40,6 +40,8 @@ type DciGroup = {
   formes: FormeGroup[]
   totalCombos: number
   totalMeds: number
+  /** Médicaments avec la même DCI et une forme ou dosage approchant (mais pas les deux) */
+  dciPartialMeds: Med[]
   /** Médicaments avec la même DCI mais une forme/dosage différente */
   dciOnlyMeds: Med[]
 }
@@ -50,12 +52,14 @@ function groupRows(rows: CriticalWithMed[]): DciGroup[] {
   const dciMap = new Map<string, Map<string, Map<string, DosageGroup>>>()
   const dciClasse = new Map<string, string | null>()
   // dci → Map<"med_id:source", Med> to deduplicate across multiple critical entries for same DCI
+  const dciPartialMap = new Map<string, Map<string, Med>>()
   const dciOnlyMap = new Map<string, Map<string, Med>>()
 
   for (const row of rows) {
     if (!dciMap.has(row.dci)) {
       dciMap.set(row.dci, new Map())
       dciClasse.set(row.dci, row.classe_therapeutique)
+      dciPartialMap.set(row.dci, new Map())
       dciOnlyMap.set(row.dci, new Map())
     }
     const formeMap = dciMap.get(row.dci)!
@@ -87,6 +91,10 @@ function groupRows(rows: CriticalWithMed[]): DciGroup[] {
         // Add at DCI level, deduplicated
         const key = `${row.med_id}:${row.med_source}`
         dciOnlyMap.get(row.dci)!.set(key, med)
+      } else if (row.match_quality === 'dci_partial') {
+        // Partial match (forme OR dosage) — deduplicated at DCI level
+        const key = `${row.med_id}:${row.med_source}`
+        dciPartialMap.get(row.dci)!.set(key, med)
       } else {
         // Full match — add to specific dosage group
         const dosageGroup = dosageMap.get(row.dosage)!
@@ -110,15 +118,19 @@ function groupRows(rows: CriticalWithMed[]): DciGroup[] {
       }
       formes.push({ forme, dosages })
     }
-    // DCI-only meds that didn't match any specific forme/dosage combination
-    const allDciOnly = Array.from(dciOnlyMap.get(dci)!.values())
     // Exclude any that are already surfaced as full matches
     const fullMatchKeys = new Set(
       formes.flatMap(f => f.dosages.flatMap(d => d.meds.map(m => `${m.med_id}:${m.med_source}`)))
     )
-    const dciOnlyMeds = allDciOnly.filter(m => !fullMatchKeys.has(`${m.med_id}:${m.med_source}`))
+    // Partial matches (forme OR dosage) not already in full matches
+    const allDciPartial = Array.from(dciPartialMap.get(dci)!.values())
+    const dciPartialMeds = allDciPartial.filter(m => !fullMatchKeys.has(`${m.med_id}:${m.med_source}`))
+    const partialAndFullKeys = new Set([...fullMatchKeys, ...dciPartialMeds.map(m => `${m.med_id}:${m.med_source}`)])
+    // DCI-only meds not already in full or partial matches
+    const allDciOnly = Array.from(dciOnlyMap.get(dci)!.values())
+    const dciOnlyMeds = allDciOnly.filter(m => !partialAndFullKeys.has(`${m.med_id}:${m.med_source}`))
 
-    result.push({ dci, classe: dciClasse.get(dci) ?? null, formes, totalCombos, totalMeds, dciOnlyMeds })
+    result.push({ dci, classe: dciClasse.get(dci) ?? null, formes, totalCombos, totalMeds, dciPartialMeds, dciOnlyMeds })
   }
   return result
 }
@@ -235,6 +247,11 @@ export function ClassificationView({ rows }: { rows: CriticalWithMed[] }) {
                     ? `${dciGroup.totalMeds} médicament${dciGroup.totalMeds > 1 ? 's' : ''}`
                     : 'Aucune correspondance'}
                 </span>
+                {dciGroup.dciPartialMeds.length > 0 && (
+                  <span style={styles.statPillDciPartial}>
+                    ~{dciGroup.dciPartialMeds.length} partiel{dciGroup.dciPartialMeds.length > 1 ? 's' : ''}
+                  </span>
+                )}
                 {dciGroup.dciOnlyMeds.length > 0 && (
                   <span style={styles.statPillDciOnly}>
                     ~{dciGroup.dciOnlyMeds.length} autre{dciGroup.dciOnlyMeds.length > 1 ? 's' : ''} (DCI)
@@ -302,6 +319,20 @@ export function ClassificationView({ rows }: { rows: CriticalWithMed[] }) {
                     </div>
                   )
                 })}
+
+                {/* ─── Correspondances partielles (forme OU dosage) ─ */}
+                {dciGroup.dciPartialMeds.length > 0 && (
+                  <div style={styles.dciPartialSection}>
+                    <div style={styles.dciPartialTitle}>
+                      Correspondance partielle — même DCI, forme ou dosage approchant
+                    </div>
+                    <div style={styles.medsList}>
+                      {dciGroup.dciPartialMeds.map(med => (
+                        <MedCard key={`${med.med_id}-${med.med_source}`} med={med} showFormeDosage />
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* ─── Correspondances DCI uniquement ───── */}
                 {dciGroup.dciOnlyMeds.length > 0 && (
@@ -432,6 +463,20 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 10.5, fontWeight: 600, padding: '2px 7px', borderRadius: 4,
     background: '#f0f9ff', color: '#0369a1', border: '1px solid #bae6fd',
     whiteSpace: 'nowrap' as const,
+  },
+  dciPartialSection: {
+    background: '#fff7ed',
+    border: '1px dashed #fb923c',
+    borderRadius: 8,
+    padding: '10px 14px',
+  },
+  dciPartialTitle: {
+    fontSize: 11, fontWeight: 700, color: '#9a3412', letterSpacing: '.04em',
+    textTransform: 'uppercase' as const, marginBottom: 8,
+  },
+  statPillDciPartial: {
+    fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 20,
+    background: '#ffedd5', color: '#9a3412', whiteSpace: 'nowrap' as const,
   },
   dciOnlySection: {
     background: '#fffbeb',
