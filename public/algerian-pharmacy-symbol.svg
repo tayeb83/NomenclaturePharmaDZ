@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Symbole de la pharmacie algérienne</title>
+  <desc id="desc">Croissant rouge et coupe au serpent verte.</desc>
+  <rect width="512" height="512" fill="#ffffff"/>
+  <path fill="#ed1c24" d="M333 65C220 65 129 156 129 269s91 204 204 204c34 0 66-8 95-23-42 36-96 58-156 58-132 0-239-107-239-239S140 30 272 30c60 0 114 22 156 58-29-15-61-23-95-23z"/>
+  <path fill="#0f9d58" d="M335 186c-7 0-13 6-13 13 0 4 2 8 5 10l11 10c4 3 6 8 6 13 0 8-6 14-14 14h-11v29h44c12 0 22 10 22 22s-10 22-22 22h-28v73h22v10h-92v-10h22v-73h-27c-12 0-22-10-22-22s10-22 22-22h43v-39c-19-8-32-26-32-47 0-29 23-52 52-52s52 23 52 52h-22c0-17-13-30-29-30z"/>
+  <path fill="#0f9d58" d="M286 392h56l-4 40h-48z"/>
+  <path fill="#0f9d58" d="M304 172h22v260h-22z"/>
+</svg>

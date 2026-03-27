@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Carte de l'Algérie</title>
+  <desc id="desc">Silhouette stylisée de la carte de l'Algérie en vert.</desc>
+  <rect width="512" height="512" fill="none"/>
+  <path fill="#0f9d58" d="M126 98l40 14 37-18 53 16 41-15 45 26 28 43 42 30-17 33 18 34-30 22 4 36-22 28 6 41-41 8-29 34-31-10-37 23-34-8-32 12-30-17-38 9-31-17-6-35-29-26 17-28-19-29 10-40-13-28 21-34 34-12 13-35z"/>
+  <path fill="#ffffff" opacity="0.22" d="M256 121l28 12-2 28 19 19-8 31-27 11-13-23-19 9-19-20 3-29 20-9z"/>
+  <circle cx="226" cy="307" r="13" fill="#ffffff" opacity="0.75"/>
+</svg>

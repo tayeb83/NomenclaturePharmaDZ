@@ -100,16 +100,53 @@ export function HomeClient({
     <>
       <section className="hero">
         <div className="container hero-content">
-          <h1>
-            {t('La nomenclature pharmaceutique', 'التسمية الصيدلانية')}<br />
-            <span>{t('algérienne', 'الجزائرية')}</span> {t('en un clic', 'بنقرة واحدة')}
-          </h1>
-          <p>
-            {t(
-              `Recherchez parmi ${stats?.total_enregistrements?.toLocaleString('fr') || '—'} médicaments, consultez les alertes officielles et trouvez des alternatives de substitution.`,
-              `ابحث بين ${stats?.total_enregistrements?.toLocaleString('fr') || '—'} دواء، اطّلع على التنبيهات الرسمية وابحث عن بدائل الاستبدال.`
-            )}
-          </p>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1.3fr 1fr',
+            gap: 24,
+            alignItems: 'center',
+          }}>
+            <div>
+              <h1>
+                {t('La nomenclature pharmaceutique', 'التسمية الصيدلانية')}<br />
+                <span>{t('algérienne', 'الجزائرية')}</span> {t('en un clic', 'بنقرة واحدة')}
+              </h1>
+              <p>
+                {t(
+                  `Recherchez parmi ${stats?.total_enregistrements?.toLocaleString('fr') || '—'} médicaments, consultez les alertes officielles et trouvez des alternatives de substitution.`,
+                  `ابحث بين ${stats?.total_enregistrements?.toLocaleString('fr') || '—'} دواء، اطّلع على التنبيهات الرسمية وابحث عن بدائل الاستبدال.`
+                )}
+              </p>
+            </div>
+
+            <div style={{
+              background: 'rgba(255,255,255,0.92)',
+              borderRadius: 14,
+              border: '1px solid #e2e8f0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 12,
+              padding: '14px 12px',
+              boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
+              flexWrap: 'wrap',
+            }}>
+              <img
+                src="/algeria-map.svg"
+                alt={t("Carte de l'Algérie", "خريطة الجزائر")}
+                width={118}
+                height={118}
+                style={{ objectFit: 'contain' }}
+              />
+              <img
+                src="/algerian-pharmacy-symbol.svg"
+                alt={t('Symbole de la pharmacie algérienne', 'رمز الصيدلة الجزائرية')}
+                width={118}
+                height={118}
+                style={{ objectFit: 'contain' }}
+              />
+            </div>
+          </div>
         </div>
       </section>
 
