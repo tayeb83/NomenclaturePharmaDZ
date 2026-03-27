@@ -106,6 +106,16 @@ function ScoreBar({ label, value }: { label: string; value: number | null }) {
   )
 }
 
+function getScoreLabel(statut: 'OUI' | 'A_REVOIR' | null, score: number | null): { label: string; color: string; bg: string } | null {
+  if (statut === 'OUI') {
+    return { label: 'Correspondance validée', color: '#166534', bg: '#dcfce7' }
+  }
+  if (score === null) return null
+  if (score >= 90) return { label: 'Correspondance très probable', color: '#166534', bg: '#dcfce7' }
+  if (score >= 75) return { label: 'Correspondance probable', color: '#92400e', bg: '#fef3c7' }
+  return { label: 'Correspondance faible', color: '#991b1b', bg: '#fee2e2' }
+}
+
 // ─── Badge statut match ───────────────────────────────────────
 
 function StatutBadge({ statut }: { statut: 'OUI' | 'A_REVOIR' | null }) {
@@ -160,6 +170,7 @@ function MatchCard({ match, idx }: { match: MatchRow; idx: number }) {
     match.source_base === 'ACTIVE'       ? '#f0fdf4' :
     match.source_base === 'RETRAIT'      ? '#fff5f5' :
     match.source_base === 'NON_RENOUVELE'? '#fff7ed' : '#f8fafc'
+  const scoreLabel = getScoreLabel(match.statut_match, match.score_global)
 
   return (
     <div style={{
@@ -188,7 +199,20 @@ function MatchCard({ match, idx }: { match: MatchRow; idx: number }) {
               background: 'white', padding: '2px 7px', borderRadius: 20,
               border: '1px solid #e2e8f0',
             }}>
-              Score {match.score_global}%
+              Score global {match.score_global}%
+            </span>
+          )}
+          {scoreLabel && (
+            <span style={{
+              fontSize: 11,
+              fontWeight: 700,
+              padding: '2px 8px',
+              borderRadius: 20,
+              color: scoreLabel.color,
+              background: scoreLabel.bg,
+              border: `1px solid ${scoreLabel.color}33`,
+            }}>
+              {scoreLabel.label}
             </span>
           )}
         </div>
