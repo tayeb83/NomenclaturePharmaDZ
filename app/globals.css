@@ -39,9 +39,9 @@ body {
 /* ─── NAV ────────────────────────────────────────────────── */
 .site-nav {
   position: sticky; top: 0; z-index: 200;
-  background: #e3f2fd;
-  border-bottom: 2px solid #90caf9;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  background: linear-gradient(135deg, #0f2747 0%, #123663 100%);
+  border-bottom: 1px solid rgba(147, 197, 253, 0.35);
+  box-shadow: 0 8px 20px rgba(2, 6, 23, 0.28);
 }
 .site-nav-inner {
   max-width: 1200px; margin: 0 auto;
@@ -59,8 +59,8 @@ body {
   display: flex; align-items: center; justify-content: center;
   font-size: 17px;
 }
-.site-nav-logo-text { font-family: var(--font-display); font-size: 16px; font-weight: 800; color: #0d47a1; }
-.site-nav-logo-sub { font-size: 10px; color: #5c85c8; font-weight: 500; }
+.site-nav-logo-text { font-family: var(--font-display); font-size: 16px; font-weight: 800; color: #f8fafc; }
+.site-nav-logo-sub { font-size: 10px; color: #bfdbfe; font-weight: 500; }
 
 /* Bootstrap-style nav tabs */
 .site-nav-tabs {
@@ -73,14 +73,14 @@ body {
 .site-nav-link {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 0 14px; height: 56px;
-  color: #1565c0; font-size: 13.5px; font-weight: 600;
+  color: #e2e8f0; font-size: 13.5px; font-weight: 600;
   text-decoration: none; transition: all .15s; white-space: nowrap;
   border-bottom: 3px solid transparent;
   background: transparent; border-top: none; border-left: none; border-right: none;
   cursor: pointer; font-family: var(--font-body);
 }
-.site-nav-link:hover { background: rgba(21,101,192,0.07); color: #0d47a1; border-bottom-color: #90caf9; }
-.site-nav-link.active { color: #0d47a1; border-bottom-color: #1565c0; background: rgba(21,101,192,0.1); font-weight: 700; }
+.site-nav-link:hover { background: rgba(148, 163, 184, 0.18); color: #ffffff; border-bottom-color: #93c5fd; }
+.site-nav-link.active { color: #ffffff; border-bottom-color: #60a5fa; background: rgba(96, 165, 250, 0.22); font-weight: 700; }
 .site-nav-caret { font-size: 10px; opacity: 0.65; }
 .site-nav-badge { background: #ef5350; color: white; font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 10px; margin-left: 4px; }
 
@@ -112,8 +112,8 @@ body {
   font-size: 13px; font-weight: 700; text-decoration: none;
   transition: background .15s; white-space: nowrap;
 }
-.site-nav-contact-btn:hover { background: #0d47a1; }
-.site-nav-mobile-toggle { display: none; background: none; border: none; color: #1565c0; font-size: 22px; cursor: pointer; margin-left: auto; }
+.site-nav-contact-btn:hover { background: #1d4ed8; }
+.site-nav-mobile-toggle { display: none; background: none; border: none; color: #f8fafc; font-size: 22px; cursor: pointer; margin-left: auto; }
 
 /* ─── LAYOUT ─────────────────────────────────────────────── */
 .main-content { min-height: calc(100vh - 64px - 200px); }
@@ -397,13 +397,13 @@ body {
     flex-direction: column;
     padding-top: 8px;
     padding-bottom: 8px;
-    border-top: 1px solid #90caf9;
+    border-top: 1px solid rgba(147, 197, 253, 0.35);
   }
   .site-nav-tabs.open { display: flex; }
   .site-nav-item { width: 100%; }
   .site-nav-link { height: auto; padding: 10px 12px; width: 100%; border-bottom: none; border-left: 3px solid transparent; }
-  .site-nav-link:hover { border-left-color: #90caf9; border-bottom-color: transparent; }
-  .site-nav-link.active { border-left-color: #1565c0; border-bottom-color: transparent; }
+  .site-nav-link:hover { border-left-color: #93c5fd; border-bottom-color: transparent; }
+  .site-nav-link.active { border-left-color: #60a5fa; border-bottom-color: transparent; }
   .site-nav-dropdown-menu {
     position: static;
     border-radius: 0 0 6px 6px;
