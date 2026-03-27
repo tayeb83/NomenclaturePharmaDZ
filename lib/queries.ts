@@ -49,6 +49,24 @@ function normalizedSql(columnExpr: string): string {
   return `UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(${columnExpr}, '')), '[^A-Z0-9]+', '', 'g'))`
 }
 
+/** DCI normalization with French↔INN pharmaceutical name variant substitutions */
+function normalizedDciSql(columnExpr: string): string {
+  const base = `UPPER(UNACCENT(COALESCE(${columnExpr}, '')))`
+  // Known French pharmaceutical spellings → INN standard form
+  const variants: [string, string][] = [
+    ['\\mBARYUM\\M',   'BARIUM'],    // Baryum (French) = Barium (INN)
+    ['\\mKALIUM\\M',   'POTASSIUM'], // Kalium = Potassium
+    ['\\mNATRIUM\\M',  'SODIUM'],    // Natrium = Sodium
+    ['\\mFERREUX\\M',  'FER'],       // Ferreux = Fer
+    ['\\mFERRIQUE\\M', 'FER'],       // Ferrique = Fer
+  ]
+  let sql = base
+  for (const [pattern, replacement] of variants) {
+    sql = `REGEXP_REPLACE(${sql}, '${pattern}', '${replacement}', 'g')`
+  }
+  return `REGEXP_REPLACE(${sql}, '[^A-Z0-9]+', '', 'g')`
+}
+
 function normalizedFormeSql(columnExpr: string): string {
   const base = `UPPER(UNACCENT(COALESCE(${columnExpr}, '')))`
   // Each entry: [pattern, replacement] — applied as whole-word substitutions before stripping non-alphanum.
@@ -82,6 +100,9 @@ function normalizedFormeSql(columnExpr: string): string {
     ['\\mTRANSDERMIQUE\\M',     'TRANSD'],
     ['\\mINTRAVEINEU[XSE]?\\M', 'IV'],
     ['\\mINTRAMUSCULAIRE\\M',   'IM'],
+    // Remove French coordinating words used in dual-route form names (e.g. "BUV. OU RECT." → "BUV.RECT.")
+    ['\\mOU\\M',                 ''],
+    ['\\mET\\M',                 ''],
   ]
   // Build nested REGEXP_REPLACE chain from innermost to outermost
   let sql = base
@@ -93,8 +114,8 @@ function normalizedFormeSql(columnExpr: string): string {
 }
 
 function dciMatchCondition(criticalDciExpr: string, medDciExpr: string): string {
-  const criticalNorm = normalizedSql(criticalDciExpr)
-  const medNorm = normalizedSql(medDciExpr)
+  const criticalNorm = normalizedDciSql(criticalDciExpr)
+  const medNorm = normalizedDciSql(medDciExpr)
   return `(
     ${medNorm} = ${criticalNorm}
     OR (LENGTH(${medNorm}) >= 4 AND POSITION(${medNorm} IN ${criticalNorm}) > 0)
@@ -1089,6 +1110,14 @@ export async function getCriticalWithMeds(search: string = ''): Promise<Critical
         FROM retraits r
       ) m
       WHERE ${dciMatchCondition('cm.dci', 'm.dci')}
+      ORDER BY
+        CASE
+          WHEN ${formeMatchCondition('cm.forme', 'm.forme')} AND ${dosageMatchCondition('cm.dosage', 'm.dosage')} THEN 1
+          WHEN ${formeMatchCondition('cm.forme', 'm.forme')} OR ${dosageMatchCondition('cm.dosage', 'm.dosage')} THEN 2
+          ELSE 3
+        END,
+        m.nom_marque ASC
+      LIMIT 30
     ) med ON TRUE
     WHERE (
       $1 = ''
