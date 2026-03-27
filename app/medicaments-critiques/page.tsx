@@ -3,6 +3,8 @@ import type { CSSProperties } from 'react'
 import { getCriticalWithMeds } from '@/lib/queries'
 import { ClassificationView } from './ClassificationView'
 
+export const revalidate = 3600
+
 export const metadata = {
   title: 'Médicaments critiques — PharmaVeille DZ',
   description: 'Liste des médicaments critiques (DCI + forme + dosage) publiée par les autorités sanitaires.',
