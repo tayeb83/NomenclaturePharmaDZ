@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { DrugCard } from '@/components/drug/DrugCard'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 import { PrintButton } from '@/components/ui/PrintButton'
@@ -87,6 +88,31 @@ export function AlertesClient({
                     </div>
                   </div>
                 ))}
+              </div>
+
+              <div style={{
+                background: '#f8fafc', borderRadius: 10, padding: '16px',
+                border: '1.5px solid #e2e8f0', marginBottom: 16,
+                display: 'flex', flexDirection: 'column', gap: 10,
+              }}>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <span style={{ fontSize: 24 }}>📩</span>
+                  <div>
+                    <div style={{ fontWeight: 700, color: '#0f172a', fontSize: 13, marginBottom: 2 }}>
+                      {t('Signaler une erreur ou nous contacter', 'الإبلاغ عن خطأ أو التواصل معنا')}
+                    </div>
+                    <div style={{ color: '#64748b', fontSize: 12 }}>
+                      {t('Pour toute question sur les alertes et retraits.', 'لأي سؤال حول التنبيهات والانسحابات.')}
+                    </div>
+                  </div>
+                </div>
+                <Link href="/contact" style={{
+                  background: '#991b1b', color: '#fff', padding: '8px 16px',
+                  borderRadius: 8, fontSize: 12, fontWeight: 600, textDecoration: 'none',
+                  textAlign: 'center',
+                }}>
+                  {t('Contacter →', 'تواصل →')}
+                </Link>
               </div>
 
               <div style={{ background: '#fffbeb', border: '1.5px solid #fde68a', borderRadius: 10, padding: '16px', fontSize: 13 }}>

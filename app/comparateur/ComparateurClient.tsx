@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 import type { MarketComparatorData } from '@/lib/queries'
 
@@ -266,6 +267,30 @@ export function ComparateurClient({ data }: { data: MarketComparatorData }) {
             <div style={{ fontSize: 12, color: '#475569' }}>
               {t('Données MIPH — Nomenclature officielle', 'بيانات MIPH — التسمية الرسمية')}
             </div>
+          </div>
+
+          {/* Contact banner */}
+          <div style={{
+            background: '#f8fafc', borderRadius: 12, padding: '16px 24px',
+            border: '1.5px solid #e2e8f0', marginBottom: 28,
+            display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
+          }}>
+            <span style={{ fontSize: 26 }}>📩</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ color: '#0f172a', fontWeight: 700, fontSize: 14, marginBottom: 2 }}>
+                {t('Une question sur ces statistiques ?', 'سؤال حول هذه الإحصائيات؟')}
+              </div>
+              <div style={{ color: '#64748b', fontSize: 12 }}>
+                {t('Contactez notre équipe pour toute demande liée aux données du marché.', 'تواصل مع فريقنا لأي طلب متعلق ببيانات السوق.')}
+              </div>
+            </div>
+            <Link href="/contact" style={{
+              background: '#4f46e5', color: '#fff', padding: '8px 18px',
+              borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: 'none',
+              whiteSpace: 'nowrap',
+            }}>
+              {t('Contacter →', 'تواصل →')}
+            </Link>
           </div>
 
           {/* Grid layout */}
