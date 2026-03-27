@@ -6,14 +6,24 @@ import { useMemo, useState } from 'react'
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 
-type NavLinkItem = { type: 'link'; href: string; label: string }
-type NavDropdownItem = {
+type NavLink = {
+  type: 'link'
+  href: string
+  label: string
+  locked?: boolean
+}
+type NavDropdown = {
   type: 'dropdown'
   id: string
   label: string
-  links: { href: string; label: string; badge?: boolean }[]
+  links: { href: string; label: string; locked?: boolean }[]
 }
-type NavItem = NavLinkItem | NavDropdownItem
+type NavItem = NavLink | NavDropdown
+
+/** Locked features redirect to /contact with a source hint */
+function lockedHref(feature: string) {
+  return `/contact?s=${encodeURIComponent(feature)}`
+}
 
 export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | null; isAdmin?: boolean }) {
   const pathname = usePathname()
@@ -21,43 +31,66 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
   const { lang } = useLanguage()
 
-  const navItems = useMemo<NavItem[]>(() => [
-    { type: 'link', href: '/', label: lang === 'ar' ? '🏠 الرئيسية' : '🏠 Accueil' },
-    { type: 'link', href: '/recherche', label: lang === 'ar' ? '🔍 البحث' : '🔍 Recherche' },
-    {
-      type: 'dropdown', id: 'meds',
-      label: lang === 'ar' ? '💊 الأدوية' : '💊 Médicaments',
-      links: [
-        { href: '/medicaments', label: lang === 'ar' ? '💊 كل الأدوية' : '💊 Tous les médicaments' },
-        { href: '/medicaments-critiques', label: lang === 'ar' ? '🚨 الحرجة' : '🚨 Critiques' },
-        { href: '/alertes', label: lang === 'ar' ? '🔔 التنبيهات' : '🔔 Alertes', badge: true },
-      ],
-    },
-    { type: 'link', href: '/diff', label: lang === 'ar' ? '🆕 الجديد' : '🆕 Nouveautés' },
-    { type: 'link', href: '/substitution', label: lang === 'ar' ? '🔄 الاستبدال' : '🔄 Substitution' },
-    {
-      type: 'dropdown', id: 'stats',
-      label: lang === 'ar' ? '📊 إحصائيات' : '📊 Stats',
-      links: [
-        { href: '/comparateur', label: lang === 'ar' ? '📊 مقارنة' : '📊 Comparateur' },
-        { href: '/laboratoires', label: lang === 'ar' ? '🏭 المخابر' : '🏭 Laboratoires' },
-      ],
-    },
-    {
-      type: 'dropdown', id: 'more',
-      label: lang === 'ar' ? '⋯ المزيد' : '⋯ Plus',
-      links: [
-        { href: '/a-propos', label: lang === 'ar' ? 'ℹ️ حول' : 'ℹ️ À propos' },
-        { href: '/api-docs', label: lang === 'ar' ? '🧪 API' : '🧪 API (docs)' },
-        ...(isAdmin ? [{ href: '/admin', label: lang === 'ar' ? '🛠️ الإدارة' : '🛠️ Admin' }] : []),
-      ],
-    },
-  ], [isAdmin, lang])
+  const navItems = useMemo<NavItem[]>(() => {
+    const fr = lang !== 'ar'
+    return [
+      {
+        type: 'link',
+        href: '/',
+        label: fr ? 'Accueil' : 'الرئيسية',
+      },
+      {
+        type: 'dropdown',
+        id: 'nomenclature',
+        label: fr ? 'Nomenclature' : 'القائمة',
+        links: [
+          { href: '/medicaments',          label: fr ? '💊 Tous les médicaments' : '💊 كل الأدوية' },
+          { href: '/medicaments-critiques', label: fr ? '🚨 Médicaments critiques' : '🚨 الأدوية الحرجة' },
+          { href: '/retraits',             label: fr ? '🚫 Médicaments retirés' : '🚫 المسحوبة' },
+          { href: '/diff',                 label: fr ? '🆕 Mises à jour' : '🆕 التحديثات' },
+        ],
+      },
+      {
+        type: 'link',
+        href: '/recherche',
+        label: fr ? 'Rechercher' : 'بحث',
+      },
+      {
+        type: 'link',
+        href: lockedHref('substitution'),
+        label: fr ? '🔒 Substitution' : '🔒 الاستبدال',
+        locked: true,
+      },
+      {
+        type: 'dropdown',
+        id: 'stats',
+        label: fr ? '🔒 Statistiques' : '🔒 إحصائيات',
+        links: [
+          { href: lockedHref('comparateur'), label: fr ? 'Comparer des médicaments' : 'مقارنة الأدوية', locked: true },
+          { href: lockedHref('laboratoires'), label: fr ? 'Par laboratoire' : 'حسب المخبر', locked: true },
+        ],
+      },
+      {
+        type: 'link',
+        href: lockedHref('alertes'),
+        label: fr ? '🔒 Alertes' : '🔒 التنبيهات',
+        locked: true,
+      },
+      ...(isAdmin ? [{
+        type: 'link' as const,
+        href: '/admin',
+        label: fr ? '🛠 Admin' : '🛠 الإدارة',
+      }] : []),
+    ]
+  }, [isAdmin, lang])
+
+  const close = () => { setOpen(false); setOpenDropdown(null) }
 
   return (
     <nav className="site-nav">
       <div className="site-nav-inner">
-        <Link href="/" className="site-nav-logo" onClick={() => setOpen(false)}>
+        {/* Logo */}
+        <Link href="/" className="site-nav-logo" onClick={close}>
           <div className="site-nav-logo-icon">💊</div>
           <div>
             <div className="site-nav-logo-text">PharmaVeille DZ</div>
@@ -67,6 +100,7 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
           </div>
         </Link>
 
+        {/* Mobile toggle */}
         <button
           className="site-nav-mobile-toggle"
           onClick={() => setOpen(p => !p)}
@@ -75,16 +109,18 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
           {open ? '✕' : '☰'}
         </button>
 
+        {/* Nav items */}
         <ul className={`site-nav-tabs${open ? ' open' : ''}`} role="tablist">
           {navItems.map(item => {
             if (item.type === 'link') {
-              const isActive = pathname === item.href
+              const isActive = !item.locked && pathname === item.href
               return (
                 <li key={item.href} className="site-nav-item">
                   <Link
                     href={item.href}
-                    className={`site-nav-link${isActive ? ' active' : ''}`}
-                    onClick={() => setOpen(false)}
+                    className={`site-nav-link${isActive ? ' active' : ''}${item.locked ? ' locked' : ''}`}
+                    onClick={close}
+                    title={item.locked ? 'Fonctionnalité disponible sur abonnement — contactez-nous' : undefined}
                   >
                     {item.label}
                   </Link>
@@ -92,7 +128,7 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
               )
             }
 
-            const isGroupActive = item.links.some(l => pathname === l.href)
+            const isGroupActive = item.links.some(l => !l.locked && pathname === l.href)
             const isOpen = openDropdown === item.id
 
             return (
@@ -110,11 +146,12 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
                     <Link
                       key={l.href}
                       href={l.href}
-                      className={`site-nav-dropdown-item${pathname === l.href ? ' active' : ''}`}
-                      onClick={() => { setOpen(false); setOpenDropdown(null) }}
+                      className={`site-nav-dropdown-item${pathname === l.href ? ' active' : ''}${l.locked ? ' locked' : ''}`}
+                      onClick={close}
+                      title={l.locked ? 'Fonctionnalité disponible sur abonnement — contactez-nous' : undefined}
                     >
+                      {l.locked && <span style={{ marginRight: 4, fontSize: 11 }}>🔒</span>}
                       {l.label}
-                      {l.badge && <span className="site-nav-badge">!</span>}
                     </Link>
                   ))}
                 </div>
@@ -123,10 +160,11 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
           })}
         </ul>
 
+        {/* Right side */}
         <div className="site-nav-right">
           <LanguageSwitcher />
-          <Link href="/contact" className="site-nav-contact-btn" onClick={() => setOpen(false)}>
-            📬 {lang === 'ar' ? 'اتصل بنا' : 'Contact'}
+          <Link href="/contact" className="site-nav-contact-btn" onClick={close}>
+            {lang === 'ar' ? 'اتصل بنا' : 'Contact'}
           </Link>
         </div>
       </div>
