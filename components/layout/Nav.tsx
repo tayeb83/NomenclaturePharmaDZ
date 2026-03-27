@@ -57,24 +57,22 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
       },
       {
         type: 'link',
-        href: lockedHref('substitution'),
-        label: fr ? '🔒 Substitution' : '🔒 الاستبدال',
-        locked: true,
+        href: '/substitution',
+        label: fr ? 'Substitution' : 'الاستبدال',
       },
       {
         type: 'dropdown',
         id: 'stats',
-        label: fr ? '🔒 Statistiques' : '🔒 إحصائيات',
+        label: fr ? 'Statistiques' : 'إحصائيات',
         links: [
-          { href: lockedHref('comparateur'), label: fr ? 'Comparer des médicaments' : 'مقارنة الأدوية', locked: true },
-          { href: lockedHref('laboratoires'), label: fr ? 'Par laboratoire' : 'حسب المخبر', locked: true },
+          { href: '/comparateur', label: fr ? 'Comparer des médicaments' : 'مقارنة الأدوية' },
+          { href: '/laboratoires', label: fr ? 'Par laboratoire' : 'حسب المخبر' },
         ],
       },
       {
         type: 'link',
-        href: lockedHref('alertes'),
-        label: fr ? '🔒 Alertes' : '🔒 التنبيهات',
-        locked: true,
+        href: '/alertes',
+        label: fr ? 'Alertes' : 'التنبيهات',
       },
       ...(isAdmin ? [{
         type: 'link' as const,
