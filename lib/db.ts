@@ -1,5 +1,5 @@
 /**
- * PharmaVeille DZ — Client PostgreSQL direct (sans Supabase)
+ * DwaDZ — Client PostgreSQL direct (sans Supabase)
  * Fonctionne en local et sur n'importe quel hébergeur PostgreSQL
  * (Railway, Render, Neon, ElephantSQL, Heroku, etc.)
  */

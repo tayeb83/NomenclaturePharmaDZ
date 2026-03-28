@@ -8,7 +8,7 @@ import { MappingView } from './MappingView'
 export const revalidate = 3600
 
 export const metadata = {
-  title: 'Médicaments critiques — PharmaVeille DZ',
+  title: 'Médicaments critiques — DwaDZ',
   description: 'Liste des médicaments critiques (DCI + forme + dosage) publiée par les autorités sanitaires, avec correspondances dans la nomenclature pharmaceutique algérienne.',
 }
 

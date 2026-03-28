@@ -53,11 +53,10 @@ body {
   text-decoration: none; flex-shrink: 0; margin-right: 8px;
 }
 .site-nav-logo-icon {
-  width: 36px; height: 36px;
-  background: linear-gradient(135deg, #1565c0 0%, #42a5f5 100%);
-  border-radius: 9px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 17px;
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.22));
 }
 .site-nav-logo-text { font-family: var(--font-display); font-size: 16px; font-weight: 800; color: #f8fafc; }
 .site-nav-logo-sub { font-size: 10px; color: #bfdbfe; font-weight: 500; }
@@ -284,7 +283,8 @@ body {
 /* ─── FOOTER ─────────────────────────────────────────────── */
 .footer { background: var(--navy); color: rgba(255,255,255,0.5); padding: 40px 0 24px; }
 .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 32px; margin-bottom: 32px; }
-.footer-logo { font-family: var(--font-display); font-size: 18px; font-weight: 800; color: white; margin-bottom: 10px; }
+.footer-logo { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: 18px; font-weight: 800; color: white; margin-bottom: 10px; }
+.footer-logo-image { width: 56px; height: auto; object-fit: contain; }
 .footer-desc { font-size: 13px; line-height: 1.7; }
 .footer-col h4 { color: rgba(255,255,255,0.8); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
 .footer-links { list-style: none; }
@@ -490,7 +490,7 @@ body {
 
   /* Branding watermark at top of every printed page */
   .container::before {
-    content: 'PharmaVeille DZ — pharmaveille-dz.vercel.app';
+    content: 'DwaDZ — pharmaveille-dz.vercel.app';
     display: block;
     font-size: 8pt;
     color: #666;

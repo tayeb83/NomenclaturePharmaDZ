@@ -110,7 +110,7 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>💊</div>
           <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 800, color: '#0f172a', margin: 0 }}>
-            PharmaVeille DZ
+            DwaDZ
           </h1>
           <p style={{ color: '#64748b', fontSize: 13, marginTop: 6 }}>Administration — Accès restreint</p>
         </div>
@@ -188,7 +188,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           }}>💊</div>
           <div>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 800 }}>
-              PharmaVeille DZ
+              DwaDZ
             </div>
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>
               ADMINISTRATION

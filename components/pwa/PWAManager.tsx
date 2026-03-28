@@ -89,7 +89,7 @@ export function PWAManager() {
       <div style={{ fontSize: 32, flexShrink: 0 }}>💊</div>
       <div style={{ flex: 1 }}>
         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 3 }}>
-          Installer PharmaVeille DZ
+          Installer DwaDZ
         </div>
         <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 12 }}>
           Accès rapide depuis votre écran d&apos;accueil, fonctionne hors-ligne.

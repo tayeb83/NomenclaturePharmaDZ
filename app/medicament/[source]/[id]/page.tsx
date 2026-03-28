@@ -48,7 +48,7 @@ export async function generateMetadata(
   if (!med) return { title: 'Médicament introuvable' }
   const dosageSuffix = med.dosage ? ` ${med.dosage}` : ''
   const dciSuffix = med.dci ? ` (${med.dci})` : ''
-  const title = `${med.nom_marque}${dosageSuffix} — Fiche technique et substitution | PharmaVeille DZ`
+  const title = `${med.nom_marque}${dosageSuffix} — Fiche technique et substitution | DwaDZ`
   const description = `${med.nom_marque}${dosageSuffix}${dciSuffix}${med.forme ? ` — ${med.forme}` : ''}${med.labo ? ` — ${med.labo}` : ''}. Médicament disponible en Algérie, substituts génériques et nomenclature MIPH officielle.`
   const canonical = `${APP_URL}/medicament/${params.source}/${params.id}`
   return {
@@ -59,7 +59,7 @@ export async function generateMetadata(
       title,
       description,
       type: 'article',
-      siteName: 'PharmaVeille DZ',
+      siteName: 'DwaDZ',
       locale: 'fr_DZ',
       url: canonical,
     },

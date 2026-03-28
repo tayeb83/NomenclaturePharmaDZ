@@ -4,7 +4,7 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.verc
 
 export const metadata: Metadata = {
   title: 'À propos',
-  description: 'PharmaVeille DZ — Plateforme de consultation de la nomenclature pharmaceutique algérienne officielle MIPH. Recherche, alertes retraits, substitution générique.',
+  description: 'DwaDZ — Plateforme de consultation de la nomenclature pharmaceutique algérienne officielle MIPH. Recherche, alertes retraits, substitution générique.',
   alternates: { canonical: `${APP_URL}/a-propos` },
 }
 

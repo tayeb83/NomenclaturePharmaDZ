@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: { params: { annee: string } }
   if (isNaN(annee)) return { title: 'Année invalide' }
 
   const canonical = `${APP_URL}/retraits/${annee}`
-  const title = `Médicaments retirés en ${annee} — Algérie | PharmaVeille DZ`
+  const title = `Médicaments retirés en ${annee} — Algérie | DwaDZ`
   const description = `Liste complète des médicaments retirés du marché algérien en ${annee}. Source officielle MIPH.`
 
   return {
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: { params: { annee: string } }
       title,
       description,
       type: 'website',
-      siteName: 'PharmaVeille DZ',
+      siteName: 'DwaDZ',
       locale: 'fr_DZ',
       url: canonical,
     },
