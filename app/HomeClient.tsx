@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { DrugCard } from '@/components/drug/DrugCard'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 import { SearchClient } from './recherche/SearchClient'
@@ -100,6 +101,34 @@ export function HomeClient({
     <>
       <section className="hero">
         <div className="container hero-content">
+          <div style={{ display: 'flex', gap: 12, marginBottom: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              background: 'rgba(255,255,255,0.75)',
+              padding: '6px 10px',
+              borderRadius: 999,
+              border: '1px solid rgba(148,163,184,0.35)',
+              backdropFilter: 'blur(2px)',
+            }}>
+              <Image src="/algeria-flag.svg" alt={t('Drapeau algérien', 'علم الجزائر')} width={38} height={26} />
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#065f46' }}>{t('Algérie', 'الجزائر')}</span>
+            </div>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              background: 'rgba(255,255,255,0.75)',
+              padding: '6px 10px',
+              borderRadius: 999,
+              border: '1px solid rgba(148,163,184,0.35)',
+              backdropFilter: 'blur(2px)',
+            }}>
+              <Image src="/algeria-pharma-symbol.svg" alt={t('Symbole de la pharmacie algérienne', 'رمز الصيدلة الجزائرية')} width={28} height={28} />
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#0f766e' }}>{t('Pharmacie DZ', 'صيدلة DZ')}</span>
+            </div>
+          </div>
           <h1>
             {t('La nomenclature pharmaceutique', 'التسمية الصيدلانية')}<br />
             <span>{t('algérienne', 'الجزائرية')}</span> {t('en un clic', 'بنقرة واحدة')}
