@@ -13,7 +13,7 @@ import { getDir, isLang } from '@/lib/i18n'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
 
 export const metadata: Metadata = {
-  title: { default: 'PharmaVeille DZ — Médicaments en Algérie', template: '%s | PharmaVeille DZ' },
+  title: { default: 'DwaDZ — Médicaments en Algérie', template: '%s | DwaDZ' },
   description: 'Trouvez n\'importe quel médicament en Algérie — nomenclature pharmaceutique officielle MIPH, alertes retraits, génériques, nouveaux enregistrements. البحث عن الأدوية في الجزائر.',
   keywords: [
     // Français
@@ -36,19 +36,19 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'PharmaVeille DZ',
+    title: 'DwaDZ',
   },
   openGraph: {
-    title: 'PharmaVeille DZ — Médicaments en Algérie',
+    title: 'DwaDZ — Médicaments en Algérie',
     description: 'Trouvez n\'importe quel médicament en Algérie — nomenclature MIPH officielle, alertes et génériques.',
     url: APP_URL,
-    siteName: 'PharmaVeille DZ',
+    siteName: 'DwaDZ',
     locale: 'fr_DZ',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'PharmaVeille DZ — Médicaments en Algérie',
+    title: 'DwaDZ — Médicaments en Algérie',
     description: 'Nomenclature pharmaceutique algérienne officielle MIPH — recherche, alertes, génériques.',
     site: '@pharmaveilledz',
   },
@@ -82,8 +82,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'PharmaVeille DZ',
-    alternateName: 'فارما فيل DZ',
+    name: 'DwaDZ',
+    alternateName: 'DwaDZ… كلش على دوا البلاد',
     url: APP_URL,
     description: 'Nomenclature pharmaceutique algérienne officielle — recherche, alertes retraits, génériques. التسمية الصيدلانية الجزائرية الرسمية.',
     inLanguage: ['fr', 'ar'],
@@ -97,7 +97,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     },
     publisher: {
       '@type': 'Organization',
-      name: 'PharmaVeille DZ',
+      name: 'DwaDZ',
       url: APP_URL,
     },
   }

@@ -1,5 +1,5 @@
 /**
- * PharmaVeille DZ — Service Worker
+ * DwaDZ — Service Worker
  * Stratégie : Network First avec fallback cache pour les pages, Cache First pour les assets statiques.
  */
 

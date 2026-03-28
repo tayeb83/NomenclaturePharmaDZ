@@ -4,8 +4,8 @@ import Link from 'next/link'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://nomenclature-pharma.org'
 
 export const metadata: Metadata = {
-  title: 'Documentation API — PharmaVeille DZ',
-  description: 'Documentation complète de l\'API publique PharmaVeille DZ. Accédez à la nomenclature pharmaceutique algérienne via une API REST.',
+  title: 'Documentation API — DwaDZ',
+  description: 'Documentation complète de l\'API publique DwaDZ. Accédez à la nomenclature pharmaceutique algérienne via une API REST.',
   alternates: { canonical: `${APP_URL}/api-docs` },
 }
 

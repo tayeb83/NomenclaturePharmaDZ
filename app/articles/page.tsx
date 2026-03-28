@@ -9,15 +9,15 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.verc
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Articles & Veille Réglementaire | PharmaVeille DZ',
+  title: 'Articles & Veille Réglementaire | DwaDZ',
   description:
     'Articles de fond sur la réglementation pharmaceutique en Algérie : Loi 18-11, exercice officinal, Data Matrix, pharmacovigilance et fiches de révision pour étudiants en pharmacie.',
   alternates: { canonical: `${APP_URL}/articles` },
   openGraph: {
-    title: 'Articles & Veille Réglementaire | PharmaVeille DZ',
-    description: 'Loi 18-11, réglementation officine, Data Matrix, pharmacovigilance et fiches de révision — PharmaVeille DZ.',
+    title: 'Articles & Veille Réglementaire | DwaDZ',
+    description: 'Loi 18-11, réglementation officine, Data Matrix, pharmacovigilance et fiches de révision — DwaDZ.',
     url: `${APP_URL}/articles`,
-    siteName: 'PharmaVeille DZ',
+    siteName: 'DwaDZ',
     locale: 'fr_DZ',
     type: 'website',
   },
@@ -39,7 +39,7 @@ export default async function ArticlesPage() {
   const itemListJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: lang === 'ar' ? 'مقالات PharmaVeille DZ' : 'Articles PharmaVeille DZ',
+    name: lang === 'ar' ? 'مقالات DwaDZ' : 'Articles DwaDZ',
     itemListElement: visibleArticles.map((article, index) => ({
       '@type': 'ListItem',
       position: index + 1,

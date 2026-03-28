@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   if (!meds.length) return { title: 'DCI introuvable' }
 
   const canonical = `${APP_URL}/dci/${params.slug}`
-  const title = `${dci} — médicaments enregistrés en Algérie | PharmaVeille DZ`
+  const title = `${dci} — médicaments enregistrés en Algérie | DwaDZ`
   const description = `Tous les médicaments contenant ${dci} enregistrés dans la nomenclature officielle MIPH Algérie. ${meds.length}+ références actives.`
 
   return {
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       title,
       description,
       type: 'website',
-      siteName: 'PharmaVeille DZ',
+      siteName: 'DwaDZ',
       locale: 'fr_DZ',
       url: canonical,
     },

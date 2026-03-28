@@ -22,7 +22,7 @@ export async function generateMetadata(
 
   const canonical = `${APP_URL}/articles/${article.slug}`
   return {
-    title: `${article.seoTitle || article.title} | PharmaVeille DZ`,
+    title: `${article.seoTitle || article.title} | DwaDZ`,
     description: article.description,
     keywords: article.seoKeywords,
     alternates: { canonical },
@@ -31,7 +31,7 @@ export async function generateMetadata(
       description: article.description,
       type: 'article',
       publishedTime: article.date,
-      siteName: 'PharmaVeille DZ',
+      siteName: 'DwaDZ',
       locale: article.lang === 'ar' ? 'ar_DZ' : 'fr_DZ',
       url: canonical,
       tags: article.tags,
@@ -228,7 +228,7 @@ export default async function ArticleDetailPage({ params }: { params: { slug: st
     keywords: [...article.tags, ...(article.seoKeywords || [])].join(', '),
     publisher: {
       '@type': 'Organization',
-      name: 'PharmaVeille DZ',
+      name: 'DwaDZ',
       url: APP_URL,
     },
     url: `${APP_URL}/articles/${article.slug}`,

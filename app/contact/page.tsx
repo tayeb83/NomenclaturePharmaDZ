@@ -5,10 +5,10 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.verc
 
 export const metadata: Metadata = {
   title: 'Contact',
-  description: 'Contactez PharmaVeille DZ — questions, suggestions, signalement d\'erreurs sur la nomenclature pharmaceutique algérienne.',
+  description: 'Contactez DwaDZ — questions, suggestions, signalement d\'erreurs sur la nomenclature pharmaceutique algérienne.',
   alternates: { canonical: `${APP_URL}/contact` },
   openGraph: {
-    title: 'Contact | PharmaVeille DZ',
+    title: 'Contact | DwaDZ',
     description: 'Contactez-nous pour toute question sur les médicaments en Algérie.',
     url: `${APP_URL}/contact`,
   },

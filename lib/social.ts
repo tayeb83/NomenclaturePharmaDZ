@@ -1,5 +1,5 @@
 /**
- * PharmaVeille DZ — Module de publication réseaux sociaux & newsletter
+ * DwaDZ — Module de publication réseaux sociaux & newsletter
  */
 
 import axios from 'axios'
@@ -32,7 +32,7 @@ export async function sendEmailViaGmail(
   if (!transporter) return { success: false, error: 'Gmail non configuré (GMAIL_USER / GMAIL_APP_PASSWORD manquants)' }
 
   const from = process.env.GMAIL_USER!
-  const senderName = process.env.BREVO_SENDER_NAME || 'PharmaVeille DZ'
+  const senderName = process.env.BREVO_SENDER_NAME || 'DwaDZ'
 
   try {
     await transporter.sendMail({
@@ -69,7 +69,7 @@ export async function sendNewsletterViaGmail(
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.com'
-  const senderName = process.env.BREVO_SENDER_NAME || 'PharmaVeille DZ'
+  const senderName = process.env.BREVO_SENDER_NAME || 'DwaDZ'
   const from = process.env.GMAIL_USER!
 
   let sent = 0
@@ -108,7 +108,7 @@ export function formatRetrait(drug: { dci: string; nom_marque: string; dosage?: 
   const emoji = getMotifEmoji(drug.motif_retrait)
   return {
     short: `🚨 RETRAIT | ${drug.nom_marque}® (${drug.dci}${drug.dosage ? ' ' + drug.dosage : ''})\n${emoji} ${drug.motif_retrait || 'Motif non précisé'}\n\n⚠️ Ce produit n'est plus autorisé sur le marché algérien.\n\n🔗 pharmaveille-dz.com\n#Pharmacie #Algérie #Retrait #Médicament`,
-    facebook: `🚨 ALERTE RETRAIT — Marché Pharmaceutique Algérien\n\n📋 Médicament : ${drug.nom_marque}® \n🧪 DCI : ${drug.dci}${drug.dosage ? '\n💊 Dosage : ' + drug.dosage : ''}${drug.labo ? '\n🏭 Laboratoire : ' + drug.labo : ''}\n\n${emoji} Motif du retrait : ${drug.motif_retrait || 'Non précisé'}\n\n⚠️ Chers pharmaciens, ce produit ne doit plus être délivré. Consultez la liste complète des retraits sur notre site.\n\n🔗 www.pharmaveille-dz.com/alertes\n\n#PharmaVeilleDZ #Pharmacie #Algérie #RetiraitMédicament #MIPH`,
+    facebook: `🚨 ALERTE RETRAIT — Marché Pharmaceutique Algérien\n\n📋 Médicament : ${drug.nom_marque}® \n🧪 DCI : ${drug.dci}${drug.dosage ? '\n💊 Dosage : ' + drug.dosage : ''}${drug.labo ? '\n🏭 Laboratoire : ' + drug.labo : ''}\n\n${emoji} Motif du retrait : ${drug.motif_retrait || 'Non précisé'}\n\n⚠️ Chers pharmaciens, ce produit ne doit plus être délivré. Consultez la liste complète des retraits sur notre site.\n\n🔗 www.pharmaveille-dz.com/alertes\n\n#DwaDZ #Pharmacie #Algérie #RetiraitMédicament #MIPH`,
     newsletter_subject: `🚨 ALERTE : Retrait du ${drug.nom_marque}® du marché algérien`,
     newsletter_html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 2px solid #dc2626; border-radius: 8px;">
@@ -133,7 +133,7 @@ export function formatRetrait(drug: { dci: string; nom_marque: string; dosage?: 
           </div>
         </div>
         <div style="padding:16px; background:#f1f5f9; text-align:center; font-size:12px; color:#94a3b8; border-radius:0 0 6px 6px;">
-          PharmaVeille DZ — Données officielles MIPH Algérie<br>
+          DwaDZ — Données officielles MIPH Algérie<br>
           <a href="${process.env.NEXT_PUBLIC_APP_URL}/unsubscribe?token={{unsubscribe_token}}" style="color:#94a3b8;">Se désabonner</a>
         </div>
       </div>
@@ -144,8 +144,8 @@ export function formatRetrait(drug: { dci: string; nom_marque: string; dosage?: 
 export function formatNouveaute(drug: { dci: string; nom_marque: string; dosage?: string | null; labo?: string | null; pays?: string | null; type_prod?: string | null; annee?: number | null }) {
   const typeLabel = { GE: 'Générique', RE: 'Référence', BIO: 'Biologique', I: 'Innovateur' }[drug.type_prod || ''] || drug.type_prod
   return {
-    short: `✅ NOUVEAU | ${drug.nom_marque}® enregistré en ${drug.annee}\n🧪 ${drug.dci}${drug.dosage ? ' ' + drug.dosage : ''}\n🏭 ${drug.labo} (${drug.pays})\n📋 ${typeLabel}\n\n🔗 pharmaveille-dz.com/veille\n#PharmaVeilleDZ #Algérie #NouveauMédicament`,
-    facebook: `✅ NOUVEL ENREGISTREMENT — ${drug.annee}\n\n📋 Nom : ${drug.nom_marque}®\n🧪 DCI : ${drug.dci}${drug.dosage ? '\n💊 Dosage : ' + drug.dosage : ''}\n🏭 Laboratoire : ${drug.labo}${drug.pays ? ' (' + drug.pays + ')' : ''}\n📊 Type : ${typeLabel}\n\nCe médicament vient d'obtenir son enregistrement sur le marché pharmaceutique algérien.\n\n🔗 www.pharmaveille-dz.com/veille\n#PharmaVeilleDZ #Pharmacie #Algérie #NouveauMédicament #MIPH`,
+    short: `✅ NOUVEAU | ${drug.nom_marque}® enregistré en ${drug.annee}\n🧪 ${drug.dci}${drug.dosage ? ' ' + drug.dosage : ''}\n🏭 ${drug.labo} (${drug.pays})\n📋 ${typeLabel}\n\n🔗 pharmaveille-dz.com/veille\n#DwaDZ #Algérie #NouveauMédicament`,
+    facebook: `✅ NOUVEL ENREGISTREMENT — ${drug.annee}\n\n📋 Nom : ${drug.nom_marque}®\n🧪 DCI : ${drug.dci}${drug.dosage ? '\n💊 Dosage : ' + drug.dosage : ''}\n🏭 Laboratoire : ${drug.labo}${drug.pays ? ' (' + drug.pays + ')' : ''}\n📊 Type : ${typeLabel}\n\nCe médicament vient d'obtenir son enregistrement sur le marché pharmaceutique algérien.\n\n🔗 www.pharmaveille-dz.com/veille\n#DwaDZ #Pharmacie #Algérie #NouveauMédicament #MIPH`,
   }
 }
 
@@ -223,7 +223,7 @@ export async function sendNewsletter(subject: string, htmlContent: string): Prom
   // Priorité 1 : Brevo campaign
   if (apiKey) {
     const senderEmail = process.env.BREVO_SENDER_EMAIL || 'noreply@pharmaveille-dz.com'
-    const senderName = process.env.BREVO_SENDER_NAME || 'PharmaVeille DZ'
+    const senderName = process.env.BREVO_SENDER_NAME || 'DwaDZ'
     const listId = parseInt(process.env.BREVO_LIST_ID || '1')
     try {
       await axios.post(
@@ -285,13 +285,13 @@ function buildConfirmHtml(prenom: string, confirmUrl: string, appUrl: string): s
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, #0f172a, #1e293b); color: white; padding: 24px; border-radius: 10px 10px 0 0; text-align: center;">
-        <h1 style="margin: 0; font-size: 22px;">💊 PharmaVeille DZ</h1>
+        <h1 style="margin: 0; font-size: 22px;">💊 DwaDZ</h1>
         <p style="margin: 8px 0 0; font-size: 13px; opacity: 0.7;">Nomenclature pharmaceutique algérienne</p>
       </div>
       <div style="background: white; padding: 28px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 10px 10px;">
         <p style="font-size: 16px; color: #334155;">Bonjour ${prenom},</p>
         <p style="color: #475569; line-height: 1.7;">
-          Merci de vous être inscrit(e) à la newsletter <strong>PharmaVeille DZ</strong>.
+          Merci de vous être inscrit(e) à la newsletter <strong>DwaDZ</strong>.
           Vous recevrez les alertes de retraits de médicaments et les résumés hebdomadaires
           des nouveaux enregistrements sur le marché pharmaceutique algérien.
         </p>
@@ -308,7 +308,7 @@ function buildConfirmHtml(prenom: string, confirmUrl: string, appUrl: string): s
         </p>
         <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
         <p style="font-size: 12px; color: #94a3b8; text-align: center;">
-          PharmaVeille DZ — Données officielles MIPH Algérie<br>
+          DwaDZ — Données officielles MIPH Algérie<br>
           <a href="${appUrl}" style="color: #0284c7;">${appUrl}</a>
         </p>
       </div>
@@ -324,14 +324,14 @@ export async function sendConfirmationEmail(
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.com'
   const confirmUrl = `${appUrl}/api/newsletter?action=confirm&token=${confirmToken}`
   const prenom = nom || 'Pharmacien(ne)'
-  const subject = '✅ Confirmez votre abonnement — PharmaVeille DZ'
+  const subject = '✅ Confirmez votre abonnement — DwaDZ'
   const htmlContent = buildConfirmHtml(prenom, confirmUrl, appUrl)
 
   // Priorité 1 : Brevo
   const apiKey = process.env.BREVO_API_KEY
   if (apiKey) {
     const senderEmail = process.env.BREVO_SENDER_EMAIL || 'noreply@pharmaveille-dz.com'
-    const senderName = process.env.BREVO_SENDER_NAME || 'PharmaVeille DZ'
+    const senderName = process.env.BREVO_SENDER_NAME || 'DwaDZ'
     try {
       await axios.post(
         'https://api.brevo.com/v3/smtp/email',

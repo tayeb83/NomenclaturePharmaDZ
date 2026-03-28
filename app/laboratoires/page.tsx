@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: `${APP_URL}/laboratoires` },
   openGraph: {
-    title: 'Laboratoires pharmaceutiques — PharmaVeille DZ',
+    title: 'Laboratoires pharmaceutiques — DwaDZ',
     description: "Annuaire des laboratoires pharmaceutiques enregistrés en Algérie avec statistiques produits.",
     url: `${APP_URL}/laboratoires`,
     type: 'website',

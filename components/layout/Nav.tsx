@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useMemo, useState } from 'react'
@@ -89,11 +90,11 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
       <div className="site-nav-inner">
         {/* Logo */}
         <Link href="/" className="site-nav-logo" onClick={close}>
-          <div className="site-nav-logo-icon">💊</div>
+          <Image src="/dwadz-logo.svg" alt="Logo DwaDZ" width={42} height={42} className="site-nav-logo-icon" />
           <div>
-            <div className="site-nav-logo-text">PharmaVeille DZ</div>
+            <div className="site-nav-logo-text">DwaDZ</div>
             <div className="site-nav-logo-sub">
-              {currentVersion ? `v${currentVersion}` : 'MIPH — Données officielles'}
+              {currentVersion ? `v${currentVersion}` : 'DwaDZ… كلش على دوا البلاد'}
             </div>
           </div>
         </Link>

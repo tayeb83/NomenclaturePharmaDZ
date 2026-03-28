@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: { params: { annee: string; mo
 
   const canonical = `${APP_URL}/nouveautes/${annee}/${String(mois).padStart(2, '0')}`
   const moisLabel = MOIS_FR[mois] ?? String(mois)
-  const title = `Nouveaux médicaments — ${moisLabel} ${annee} — Algérie | PharmaVeille DZ`
+  const title = `Nouveaux médicaments — ${moisLabel} ${annee} — Algérie | DwaDZ`
   const description = `Liste des nouveaux médicaments enregistrés en Algérie en ${moisLabel} ${annee}. Nomenclature officielle MIPH.`
 
   return {
@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: { params: { annee: string; mo
       title,
       description,
       type: 'website',
-      siteName: 'PharmaVeille DZ',
+      siteName: 'DwaDZ',
       locale: 'fr_DZ',
       url: canonical,
     },

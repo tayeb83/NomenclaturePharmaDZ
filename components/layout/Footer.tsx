@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 
@@ -12,10 +13,13 @@ export function Footer() {
       <div className="container">
         <div className="footer-grid">
           <div>
-            <div className="footer-logo">💊 PharmaVeille DZ</div>
+            <div className="footer-logo">
+              <Image src="/dwadz-logo.svg" alt="Logo DwaDZ" width={120} height={48} className="footer-logo-image" />
+              <span>DwaDZ</span>
+            </div>
             <p className="footer-desc">
               {t(
-                "La référence pour les pharmaciens algériens. Données officielles du Ministère de l'Industrie Pharmaceutique (MIPH). Recherche, alertes retraits, nouveaux enregistrements.",
+                "DwaDZ… كلش على دوا البلاد. Données officielles du Ministère de l'Industrie Pharmaceutique (MIPH). Recherche, alertes retraits, nouveaux enregistrements.",
                 'المرجع للصيادلة الجزائريين. بيانات رسمية من وزارة الصناعة الصيدلانية (MIPH). بحث، تنبيهات السحب، التسجيلات الجديدة.',
               )}
             </p>
@@ -65,7 +69,7 @@ export function Footer() {
 
         <div className="footer-bottom">
           <span>
-            © {new Date().getFullYear()} PharmaVeille DZ —{' '}
+            © {new Date().getFullYear()} DwaDZ —{' '}
             {t(
               'Données à titre informatif uniquement. Consultez toujours les sources officielles.',
               'البيانات لأغراض إعلامية فقط. استشر دائمًا المصادر الرسمية.',

@@ -23,7 +23,7 @@ function buildWhatsAppUrl(drug: SearchResult, type: string, lang: 'fr' | 'ar'): 
   }
   if (drug.forme || drug.dosage) msg += `${lang === 'ar' ? 'الشكل' : 'Forme'} : ${[drug.forme, drug.dosage].filter(Boolean).join(' ')}\n`
   if (drug.labo) msg += `${lang === 'ar' ? 'المخبر' : 'Labo'} : ${drug.labo}\n`
-  msg += `\n🔗 ${lang === 'ar' ? 'البطاقة' : 'Fiche'} : ${ficheUrl}\n_Source : PharmaVeille DZ_`
+  msg += `\n🔗 ${lang === 'ar' ? 'البطاقة' : 'Fiche'} : ${ficheUrl}\n_Source : DwaDZ_`
   return `https://wa.me/?text=${encodeURIComponent(msg)}`
 }
 
