@@ -75,6 +75,11 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
         href: '/alertes',
         label: fr ? 'Alertes' : 'التنبيهات',
       },
+      {
+        type: 'link',
+        href: '/help',
+        label: fr ? 'Aide' : 'مساعدة',
+      },
       ...(isAdmin ? [{
         type: 'link' as const,
         href: '/admin',
