@@ -98,9 +98,7 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
           <Image src="/dwadz-logo.svg" alt="Logo DwaDZ" width={42} height={42} className="site-nav-logo-icon" />
           <div>
             <div className="site-nav-logo-text">DwaDZ</div>
-            <div className="site-nav-logo-sub">
-              {currentVersion ? `v${currentVersion}` : 'DwaDZ… كلش على دوا البلاد'}
-            </div>
+            <div className="site-nav-logo-sub">DwaDZ… كلش على دوا البلاد</div>
           </div>
         </Link>
 
