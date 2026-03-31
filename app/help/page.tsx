@@ -60,7 +60,7 @@ const sections: HelpSection[] = [
         detailsFr: [
           ‘Pourquoi cette liste ? Elle recense les médicaments jugés essentiels à la continuité des soins par le Ministère de la Santé Algérie ; leur indisponibilité représente un risque direct pour les patients.’,
           ‘Comment les entrées sont-elles construites ? Chaque médicament critique est automatiquement croisé avec les enregistrements actifs et les retraits de la nomenclature pour détecter un équivalent disponible sur le marché algérien.’,
-          ‘Lire les scores de correspondance : chaque match affiche un score DCI, un score forme pharmaceutique et un score dosage (0–100), ainsi qu’un score global résumant la qualité de la concordance.’,
+          ‘Lire les scores de correspondance : chaque match affiche un score DCI, un score forme pharmaceutique et un score dosage (0–100), ainsi qu\u2019un score global résumant la qualité de la concordance.’,
           ‘Le point coloré en tête de chaque entrée critique : vert = au moins une spécialité correspondante trouvée dans la nomenclature ; gris = aucune correspondance détectée.’,
           ‘Le badge de statut du match : ✓ OUI = correspondance confirmée (scores élevés sur les trois critères) ; ⚠ À REVOIR = correspondance partielle ou incertaine, à vérifier manuellement.’,
           ‘La couleur du badge source indique le statut réglementaire du médicament trouvé : vert = actif et enregistré ; rouge = retiré du marché ; orange = non renouvelé.’,
