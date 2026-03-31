@@ -8,6 +8,7 @@ import { cookies } from 'next/headers'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
 import { PrintButton } from '@/components/ui/PrintButton'
 import { GlossarySection } from '@/components/ui/GlossarySection'
+import { BackButton } from '@/components/ui/BackButton'
 
 const TYPE_LABELS: Record<string, { fr: string; ar: string }> = {
   GE: { fr: 'Générique', ar: 'جنيس' }, 'Gé': { fr: 'Générique', ar: 'جنيس' }, RE: { fr: 'Référence étrangère', ar: 'مرجعي أجنبي' },
@@ -121,9 +122,12 @@ export default async function MedicamentDetailPage(
       {/* ─── Header ─────────────────────────────────────────── */}
       <div className="page-header" style={{ background: headerBg }}>
         <div className="container">
-          <Link href="/recherche" className="detail-back-link">
-            {pickLang(lang, { fr: '← Retour à la recherche', ar: '→ العودة إلى البحث' })}
-          </Link>
+          <BackButton
+            label={pickLang(lang, { fr: '← Retour', ar: '→ رجوع' })}
+            fallbackHref="/recherche"
+            className="detail-back-link"
+            style={{}}
+          />
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap', marginTop: 12 }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '.06em', marginBottom: 4 }}>
@@ -417,13 +421,10 @@ export default async function MedicamentDetailPage(
 
           {/* ─── Actions ─────────────────────────────────────── */}
           <div style={{ marginTop: 40, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-            <Link href="/recherche" style={{
-              padding: '10px 20px', background: '#f1f5f9', color: '#334155',
-              borderRadius: 8, fontWeight: 600, fontSize: 13, textDecoration: 'none',
-              border: '1.5px solid #e2e8f0', transition: 'all .15s',
-            }}>
-              {pickLang(lang, { fr: '← Retour à la recherche', ar: '→ العودة إلى البحث' })}
-            </Link>
+            <BackButton
+              label={pickLang(lang, { fr: '← Retour', ar: '→ رجوع' })}
+              fallbackHref="/recherche"
+            />
             <Link href={`/recherche?q=${encodeURIComponent(med.dci)}`} style={{
               padding: '10px 20px', background: '#0284c7', color: 'white',
               borderRadius: 8, fontWeight: 600, fontSize: 13, textDecoration: 'none',

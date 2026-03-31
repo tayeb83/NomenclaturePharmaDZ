@@ -279,7 +279,7 @@ export function MedicamentsClient() {
           {data.map((med) => (
             <Link
               key={`${mode}-${med.id}-${med.version_label || ''}`}
-              href={mode === 'removed' ? '/diff' : `/medicament/enregistrement/${med.id}`}
+              href={`/medicament/enregistrement/${med.id}`}
               style={{
                 display: 'block', textDecoration: 'none', color: 'inherit',
                 background: '#fff',
