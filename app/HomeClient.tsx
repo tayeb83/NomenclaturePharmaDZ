@@ -153,6 +153,19 @@ export function HomeClient({
         </div>
       </div>
 
+      <section className="container" style={{ paddingTop: 16, paddingBottom: 4 }}>
+        <h2 style={{ fontSize: 20, marginBottom: 8, color: '#0f172a' }}>
+          {t('Pharma DZ : votre guide médicaments en Algérie', 'Pharma DZ: دليلك لأدوية الجزائر')}
+        </h2>
+        <p style={{ margin: 0, color: '#334155', lineHeight: 1.6 }}>
+          {lang === 'ar' ? (
+            <>إذا كنت تبحث عن <strong>Pharma DZ</strong> أو <strong>صيدلية الجزائر</strong> أو <strong>أدوية الجزائر</strong>، يوفر لك DwaDZ البحث السريع في التسمية الرسمية مع صفحات مخصصة لـ <Link href="/medicaments">الأدوية</Link> و<Link href="/alertes">التنبيهات</Link> و<Link href="/substitution">البدائل الجنيسة</Link>.</>
+          ) : (
+            <>Si vous cherchez <strong>Pharma DZ</strong>, <strong>pharmacie Algérie</strong> ou <strong>médicaments Algérie</strong>, DwaDZ centralise la nomenclature officielle avec des pages dédiées aux <Link href="/medicaments">médicaments</Link>, aux <Link href="/alertes">alertes</Link> et à la <Link href="/substitution">substitution générique</Link>.</>
+          )}
+        </p>
+      </section>
+
       {/* Bannière pub — entre le hero et les stats */}
       <div className="container" style={{ paddingTop: 8 }}>
         <AdHorizontal slot={AD_SLOT_HOME_TOP} />

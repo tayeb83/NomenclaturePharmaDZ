@@ -83,7 +83,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'DwaDZ',
-    alternateName: 'DwaDZ… كلش على دوا البلاد',
+    alternateName: ['DwaDZ… كلش على دوا البلاد', 'Pharma DZ', 'Pharmacie Algérie', 'Médicaments Algérie'],
     url: APP_URL,
     description: 'Nomenclature pharmaceutique algérienne officielle — recherche, alertes retraits, génériques. التسمية الصيدلانية الجزائرية الرسمية.',
     inLanguage: ['fr', 'ar'],
