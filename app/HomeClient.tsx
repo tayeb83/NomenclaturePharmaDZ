@@ -153,18 +153,17 @@ export function HomeClient({
         </div>
       </div>
 
-      <section className="container" style={{ paddingTop: 16, paddingBottom: 4 }}>
-        <h2 style={{ fontSize: 20, marginBottom: 8, color: '#0f172a' }}>
-          {t('Pharma DZ : votre guide médicaments en Algérie', 'Pharma DZ: دليلك لأدوية الجزائر')}
-        </h2>
-        <p style={{ margin: 0, color: '#334155', lineHeight: 1.6 }}>
+      {/* SEO anchor — visually minimal, preserved for search engine indexing */}
+      <div aria-hidden="true" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', opacity: 0, pointerEvents: 'none' }}>
+        <h2>{t('Pharma DZ : votre guide médicaments en Algérie', 'Pharma DZ: دليلك لأدوية الجزائر')}</h2>
+        <p>
           {lang === 'ar' ? (
             <>إذا كنت تبحث عن <strong>Pharma DZ</strong> أو <strong>صيدلية الجزائر</strong> أو <strong>أدوية الجزائر</strong>، يوفر لك DwaDZ البحث السريع في التسمية الرسمية مع صفحات مخصصة لـ <Link href="/medicaments">الأدوية</Link> و<Link href="/alertes">التنبيهات</Link> و<Link href="/substitution">البدائل الجنيسة</Link>.</>
           ) : (
             <>Si vous cherchez <strong>Pharma DZ</strong>, <strong>pharmacie Algérie</strong> ou <strong>médicaments Algérie</strong>, DwaDZ centralise la nomenclature officielle avec des pages dédiées aux <Link href="/medicaments">médicaments</Link>, aux <Link href="/alertes">alertes</Link> et à la <Link href="/substitution">substitution générique</Link>.</>
           )}
         </p>
-      </section>
+      </div>
 
       {/* Bannière pub — entre le hero et les stats */}
       <div className="container" style={{ paddingTop: 8 }}>
@@ -322,11 +321,11 @@ export function HomeClient({
           </div>
 
           <section style={{ marginTop: 36, marginBottom: 8 }}>
-            <div className="section-title">📰 {t('Articles SEO & dossiers', 'مقالات ودراسات محسّنة للسيو')}</div>
+            <div className="section-title">📰 {t('Articles & dossiers', 'مقالات ودراسات')}</div>
             <div className="section-sub">
               {t(
-                'Des contenus FR/AR pour capter les requêtes réglementaires et renvoyer vers les pages clés du site.',
-                'محتوى فرنسي/عربي لالتقاط الكلمات المفتاحية التنظيمية وربط الزائر بالصفحات الأساسية.'
+                'Guides pratiques et actualités pharmaceutiques en Algérie.',
+                'أدلة عملية وأخبار صيدلانية في الجزائر.'
               )}
             </div>
             <div className="home-articles-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 14, marginTop: 14 }}>

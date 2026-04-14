@@ -137,7 +137,7 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
               <li key={item.id} className={`site-nav-item site-nav-dropdown${isOpen ? ' open' : ''}`}>
                 <button
                   type="button"
-                  className={`site-nav-link dropdown-toggle${isGroupActive ? ' active' : ''}`}
+                  className={`site-nav-link${isGroupActive ? ' active' : ''}`}
                   onClick={() => setOpenDropdown(p => p === item.id ? null : item.id)}
                   aria-expanded={isOpen}
                 >
