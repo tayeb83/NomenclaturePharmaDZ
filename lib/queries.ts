@@ -358,7 +358,7 @@ export async function searchMedicaments(
       ) crit_n ON TRUE`
     : ''
 
-  const results = await query<SearchResult>(`
+  const fullSearchSql = `
     SELECT * FROM (
       SELECT
         'enregistrement' AS source,
@@ -429,9 +429,81 @@ export async function searchMedicaments(
       CASE source WHEN 'enregistrement' THEN 1 WHEN 'retrait' THEN 2 ELSE 3 END,
       nom_marque
     LIMIT $7
-  `, [trimmedQuery, searchPattern, labo, laboPattern, substance, substancePattern, limit, ...advancedClause.params])
+  `
 
-  return results
+  const fallbackSearchSql = `
+    SELECT * FROM (
+      SELECT
+        'enregistrement' AS source,
+        e.id, e.n_enreg, e.dci, e.nom_marque, e.forme, e.dosage, e.labo, e.pays,
+        e.type_prod, e.statut, e.annee,
+        NULL::DATE AS date_retrait,
+        NULL::TEXT AS motif_retrait,
+        e.date_final,
+        NULL::TEXT AS code_atc,
+        FALSE AS is_critical,
+        NULL::TEXT AS critical_class_therapeutique
+      FROM enregistrements e
+      WHERE (
+        $1 = ''
+        OR CONCAT_WS(' ', e.n_enreg, e.dci, e.nom_marque, e.forme, e.dosage, e.labo, e.pays, e.type_prod, e.statut, e.annee::TEXT) ILIKE $2
+      )
+      AND ($3 = '' OR e.labo ILIKE $4)
+      AND ($5 = '' OR e.dci ILIKE $6)
+
+      UNION ALL
+
+      SELECT
+        'retrait' AS source,
+        r.id, r.n_enreg, r.dci, r.nom_marque, r.forme, r.dosage, r.labo, r.pays,
+        r.type_prod, r.statut, NULL::SMALLINT AS annee,
+        r.date_retrait, r.motif_retrait,
+        NULL::DATE AS date_final,
+        NULL::TEXT AS code_atc,
+        FALSE AS is_critical,
+        NULL::TEXT AS critical_class_therapeutique
+      FROM retraits r
+      WHERE (
+        $1 = ''
+        OR CONCAT_WS(' ', r.n_enreg, r.dci, r.nom_marque, r.forme, r.dosage, r.labo, r.pays, r.type_prod, r.statut, r.motif_retrait) ILIKE $2
+      )
+      AND ($3 = '' OR r.labo ILIKE $4)
+      AND ($5 = '' OR r.dci ILIKE $6)
+
+      UNION ALL
+
+      SELECT
+        'non_renouvele' AS source,
+        n.id, n.n_enreg, n.dci, n.nom_marque, n.forme, n.dosage, n.labo, n.pays,
+        n.type_prod, n.statut, NULL::SMALLINT AS annee,
+        NULL::DATE AS date_retrait,
+        NULL::TEXT AS motif_retrait,
+        n.date_final,
+        NULL::TEXT AS code_atc,
+        FALSE AS is_critical,
+        NULL::TEXT AS critical_class_therapeutique
+      FROM non_renouveles n
+      WHERE (
+        $1 = ''
+        OR CONCAT_WS(' ', n.n_enreg, n.dci, n.nom_marque, n.forme, n.dosage, n.labo, n.pays, n.type_prod, n.statut, n.date_final::TEXT) ILIKE $2
+      )
+      AND ($3 = '' OR n.labo ILIKE $4)
+      AND ($5 = '' OR n.dci ILIKE $6)
+    ) AS combined
+    ${scopeFilter ? `${scopeFilter} ${advancedClause.sql ? 'AND' : ''}` : `${advancedClause.sql ? 'WHERE' : ''}`}
+    ${advancedClause.sql}
+    ORDER BY
+      CASE source WHEN 'enregistrement' THEN 1 WHEN 'retrait' THEN 2 ELSE 3 END,
+      nom_marque
+    LIMIT $7
+  `
+
+  try {
+    return await query<SearchResult>(fullSearchSql, [trimmedQuery, searchPattern, labo, laboPattern, substance, substancePattern, limit, ...advancedClause.params])
+  } catch (error) {
+    if ((error as { code?: string }).code !== '57014') throw error
+    return await query<SearchResult>(fallbackSearchSql, [trimmedQuery, searchPattern, labo, laboPattern, substance, substancePattern, limit, ...advancedClause.params])
+  }
 }
 
 // ─── ANALYTICS CLICS RECHERCHE ───────────────────────────────
