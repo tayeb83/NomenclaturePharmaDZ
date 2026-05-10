@@ -19,12 +19,22 @@ export function Footer() {
             </div>
             <p className="footer-desc">
               {t(
-                "DwaDZ… كلش على دوا البلاد. Données officielles du Ministère de l'Industrie Pharmaceutique (MIPH). Recherche, alertes retraits, nouveaux enregistrements.",
-                'المرجع للصيادلة الجزائريين. بيانات رسمية من وزارة الصناعة الصيدلانية (MIPH). بحث، تنبيهات السحب، التسجيلات الجديدة.',
+                "DwaDZ… كلش على دوا البلاد. Moteur de recherche indépendant sur les données de la Nomenclature Nationale des Produits Pharmaceutiques, publiées par le Ministère de l'Industrie Pharmaceutique (MIPH). DwaDZ n'est pas le site officiel — il offre une interface de recherche fluide et avancée sur ces données.",
+                'DwaDZ… كلش على دوا البلاد. محرك بحث مستقل على بيانات التسمية الوطنية للمستحضرات الصيدلانية الصادرة عن وزارة الصناعة الصيدلانية (MIPH). DwaDZ ليس الموقع الرسمي، بل يوفر واجهة بحث سلسة ومتقدمة على هذه البيانات.',
               )}
             </p>
-            <div style={{ marginTop: 14 }}>
-              <span className="footer-badge">{t('DONNÉES MIPH 2025', 'بيانات MIPH 2025')}</span>
+            <div style={{ marginTop: 10, marginBottom: 4 }}>
+              <a
+                href="https://www.miph.gov.dz/fr/nomenclature-nationale-des-produits-pharmaceutiques/"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: 12, color: '#94a3b8', textDecoration: 'underline', wordBreak: 'break-all' }}
+              >
+                {t('Source officielle : miph.gov.dz', 'المصدر الرسمي: miph.gov.dz')}
+              </a>
+            </div>
+            <div style={{ marginTop: 8 }}>
+              <span className="footer-badge">{t('DONNÉES SOURCE MIPH', 'بيانات من MIPH')}</span>
             </div>
           </div>
 

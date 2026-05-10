@@ -17,9 +17,15 @@ type FieldType = 'text' | 'number'
 
 const TEXT_OPERATORS = [
   { value: 'contains', label: { fr: 'contient', ar: 'يحتوي' } },
+  { value: 'not_contains', label: { fr: 'ne contient pas', ar: 'لا يحتوي' } },
   { value: 'equals', label: { fr: 'égal à', ar: 'يساوي' } },
   { value: 'starts_with', label: { fr: 'commence par', ar: 'يبدأ بـ' } },
+  { value: 'ends_with', label: { fr: 'se termine par', ar: 'ينتهي بـ' } },
+  { value: 'is_empty', label: { fr: 'est vide', ar: 'فارغ' } },
+  { value: 'is_not_empty', label: { fr: "n'est pas vide", ar: 'غير فارغ' } },
 ]
+
+const NO_VALUE_OPERATORS = new Set(['is_empty', 'is_not_empty'])
 
 const NUMBER_OPERATORS = [
   { value: 'equals', label: { fr: '=', ar: '=' } },
@@ -407,13 +413,19 @@ export function SearchClient({
                   ))}
                 </select>
 
-                <input
-                  type={type === 'number' ? 'number' : 'text'}
-                  value={condition.value}
-                  onChange={(e) => updateAdvanced(index, { value: e.target.value })}
-                  placeholder={type === 'number' ? 'ex: 500' : (lang === 'ar' ? 'القيمة المراد البحث عنها' : 'valeur à rechercher')}
-                  style={{ width: '100%', padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 13 }}
-                />
+                {NO_VALUE_OPERATORS.has(condition.operator) ? (
+                  <div style={{ display: 'flex', alignItems: 'center', padding: '9px 10px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, color: '#94a3b8', background: '#f8fafc', fontStyle: 'italic' }}>
+                    {lang === 'ar' ? '(بدون قيمة)' : '(sans valeur)'}
+                  </div>
+                ) : (
+                  <input
+                    type={type === 'number' ? 'number' : 'text'}
+                    value={condition.value}
+                    onChange={(e) => updateAdvanced(index, { value: e.target.value })}
+                    placeholder={type === 'number' ? 'ex: 500' : (lang === 'ar' ? 'القيمة المراد البحث عنها' : 'valeur à rechercher')}
+                    style={{ width: '100%', padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 13 }}
+                  />
+                )}
 
                 <button onClick={() => removeAdvancedCondition(index)} style={{ border: '1px solid #fecaca', color: '#b91c1c', background: '#fff1f2', borderRadius: 8, padding: '0 10px', cursor: 'pointer', fontWeight: 700 }} title={lang === 'ar' ? 'حذف الشرط' : 'Supprimer la condition'}>
                   ✕

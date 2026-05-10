@@ -14,7 +14,7 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.verc
 
 export const metadata: Metadata = {
   title: { default: 'DwaDZ — Médicaments en Algérie', template: '%s | DwaDZ' },
-  description: 'Trouvez n\'importe quel médicament en Algérie — nomenclature pharmaceutique officielle MIPH, alertes retraits, génériques, nouveaux enregistrements. البحث عن الأدوية في الجزائر.',
+  description: 'Moteur de recherche indépendant sur la Nomenclature Nationale des Produits Pharmaceutiques (MIPH). DwaDZ n\'est pas le site officiel — il offre une interface fluide et avancée sur les données publiées par le Ministère de l\'Industrie Pharmaceutique. البحث عن الأدوية في الجزائر.',
   keywords: [
     // Français
     'médicament algérie', 'pharmacie algérie', 'nomenclature pharmaceutique algérienne',
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'DwaDZ — Médicaments en Algérie',
-    description: 'Trouvez n\'importe quel médicament en Algérie — nomenclature MIPH officielle, alertes et génériques.',
+    description: 'Moteur de recherche indépendant sur la nomenclature pharmaceutique algérienne (données MIPH) — recherche avancée, alertes retraits, génériques.',
     url: APP_URL,
     siteName: 'DwaDZ',
     locale: 'fr_DZ',
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'DwaDZ — Médicaments en Algérie',
-    description: 'Nomenclature pharmaceutique algérienne officielle MIPH — recherche, alertes, génériques.',
+    description: 'Moteur de recherche indépendant sur la nomenclature pharmaceutique algérienne (données source MIPH) — recherche avancée, alertes, génériques.',
     site: '@pharmaveilledz',
   },
   verification: {
@@ -85,7 +85,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     name: 'DwaDZ',
     alternateName: ['DwaDZ… كلش على دوا البلاد', 'Pharma DZ', 'Pharmacie Algérie', 'Médicaments Algérie'],
     url: APP_URL,
-    description: 'Nomenclature pharmaceutique algérienne officielle — recherche, alertes retraits, génériques. التسمية الصيدلانية الجزائرية الرسمية.',
+    description: 'Moteur de recherche indépendant sur la Nomenclature Nationale des Produits Pharmaceutiques publiée par le MIPH. Recherche avancée, alertes retraits, génériques.',
     inLanguage: ['fr', 'ar'],
     potentialAction: {
       '@type': 'SearchAction',

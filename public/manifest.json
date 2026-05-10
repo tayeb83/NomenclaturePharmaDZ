@@ -1,7 +1,7 @@
 {
   "name": "DwaDZ",
   "short_name": "DwaDZ",
-  "description": "DwaDZ… كلش على دوا البلاد. Nomenclature pharmaceutique algérienne — Recherche, alertes retraits, substitution générique.",
+  "description": "DwaDZ… كلش على دوا البلاد. Moteur de recherche indépendant sur la Nomenclature Nationale des Produits Pharmaceutiques (source : MIPH). Recherche avancée, alertes retraits, substitution générique.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",
