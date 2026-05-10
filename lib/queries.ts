@@ -375,10 +375,10 @@ export async function searchMedicaments(
       ${criticalJoinEnr}
       WHERE (
         $1 = ''
-        OR CONCAT_WS(' ', e.n_enreg, e.dci, e.nom_marque, e.forme, e.dosage, e.labo, e.pays, e.type_prod, e.statut, e.annee::TEXT, ${codeAtcEnr}) ILIKE $2
+        OR UNACCENT(CONCAT_WS(' ', e.n_enreg, e.dci, e.nom_marque, e.forme, e.dosage, e.labo, e.pays, e.type_prod, e.statut, e.annee::TEXT, ${codeAtcEnr})) ILIKE UNACCENT($2)
       )
-      AND ($3 = '' OR e.labo ILIKE $4)
-      AND ($5 = '' OR e.dci ILIKE $6)
+      AND ($3 = '' OR UNACCENT(COALESCE(e.labo, '')) ILIKE UNACCENT($4))
+      AND ($5 = '' OR UNACCENT(COALESCE(e.dci, '')) ILIKE UNACCENT($6))
 
       UNION ALL
 
@@ -396,10 +396,10 @@ export async function searchMedicaments(
       ${criticalJoinRet}
       WHERE (
         $1 = ''
-        OR CONCAT_WS(' ', r.n_enreg, r.dci, r.nom_marque, r.forme, r.dosage, r.labo, r.pays, r.type_prod, r.statut, r.motif_retrait, ${codeAtcRet}) ILIKE $2
+        OR UNACCENT(CONCAT_WS(' ', r.n_enreg, r.dci, r.nom_marque, r.forme, r.dosage, r.labo, r.pays, r.type_prod, r.statut, r.motif_retrait, ${codeAtcRet})) ILIKE UNACCENT($2)
       )
-      AND ($3 = '' OR r.labo ILIKE $4)
-      AND ($5 = '' OR r.dci ILIKE $6)
+      AND ($3 = '' OR UNACCENT(COALESCE(r.labo, '')) ILIKE UNACCENT($4))
+      AND ($5 = '' OR UNACCENT(COALESCE(r.dci, '')) ILIKE UNACCENT($6))
 
       UNION ALL
 
@@ -418,10 +418,10 @@ export async function searchMedicaments(
       ${criticalJoinNon}
       WHERE (
         $1 = ''
-        OR CONCAT_WS(' ', n.n_enreg, n.dci, n.nom_marque, n.forme, n.dosage, n.labo, n.pays, n.type_prod, n.statut, n.date_final::TEXT, ${codeAtcNon}) ILIKE $2
+        OR UNACCENT(CONCAT_WS(' ', n.n_enreg, n.dci, n.nom_marque, n.forme, n.dosage, n.labo, n.pays, n.type_prod, n.statut, n.date_final::TEXT, ${codeAtcNon})) ILIKE UNACCENT($2)
       )
-      AND ($3 = '' OR n.labo ILIKE $4)
-      AND ($5 = '' OR n.dci ILIKE $6)
+      AND ($3 = '' OR UNACCENT(COALESCE(n.labo, '')) ILIKE UNACCENT($4))
+      AND ($5 = '' OR UNACCENT(COALESCE(n.dci, '')) ILIKE UNACCENT($6))
     ) AS combined
     ${scopeFilter ? `${scopeFilter} ${advancedClause.sql ? 'AND' : ''}` : `${advancedClause.sql ? 'WHERE' : ''}`}
     ${advancedClause.sql}
@@ -446,10 +446,10 @@ export async function searchMedicaments(
       FROM enregistrements e
       WHERE (
         $1 = ''
-        OR CONCAT_WS(' ', e.n_enreg, e.dci, e.nom_marque, e.forme, e.dosage, e.labo, e.pays, e.type_prod, e.statut, e.annee::TEXT) ILIKE $2
+        OR UNACCENT(CONCAT_WS(' ', e.n_enreg, e.dci, e.nom_marque, e.forme, e.dosage, e.labo, e.pays, e.type_prod, e.statut, e.annee::TEXT)) ILIKE UNACCENT($2)
       )
-      AND ($3 = '' OR e.labo ILIKE $4)
-      AND ($5 = '' OR e.dci ILIKE $6)
+      AND ($3 = '' OR UNACCENT(COALESCE(e.labo, '')) ILIKE UNACCENT($4))
+      AND ($5 = '' OR UNACCENT(COALESCE(e.dci, '')) ILIKE UNACCENT($6))
 
       UNION ALL
 
@@ -465,10 +465,10 @@ export async function searchMedicaments(
       FROM retraits r
       WHERE (
         $1 = ''
-        OR CONCAT_WS(' ', r.n_enreg, r.dci, r.nom_marque, r.forme, r.dosage, r.labo, r.pays, r.type_prod, r.statut, r.motif_retrait) ILIKE $2
+        OR UNACCENT(CONCAT_WS(' ', r.n_enreg, r.dci, r.nom_marque, r.forme, r.dosage, r.labo, r.pays, r.type_prod, r.statut, r.motif_retrait)) ILIKE UNACCENT($2)
       )
-      AND ($3 = '' OR r.labo ILIKE $4)
-      AND ($5 = '' OR r.dci ILIKE $6)
+      AND ($3 = '' OR UNACCENT(COALESCE(r.labo, '')) ILIKE UNACCENT($4))
+      AND ($5 = '' OR UNACCENT(COALESCE(r.dci, '')) ILIKE UNACCENT($6))
 
       UNION ALL
 
@@ -485,10 +485,10 @@ export async function searchMedicaments(
       FROM non_renouveles n
       WHERE (
         $1 = ''
-        OR CONCAT_WS(' ', n.n_enreg, n.dci, n.nom_marque, n.forme, n.dosage, n.labo, n.pays, n.type_prod, n.statut, n.date_final::TEXT) ILIKE $2
+        OR UNACCENT(CONCAT_WS(' ', n.n_enreg, n.dci, n.nom_marque, n.forme, n.dosage, n.labo, n.pays, n.type_prod, n.statut, n.date_final::TEXT)) ILIKE UNACCENT($2)
       )
-      AND ($3 = '' OR n.labo ILIKE $4)
-      AND ($5 = '' OR n.dci ILIKE $6)
+      AND ($3 = '' OR UNACCENT(COALESCE(n.labo, '')) ILIKE UNACCENT($4))
+      AND ($5 = '' OR UNACCENT(COALESCE(n.dci, '')) ILIKE UNACCENT($6))
     ) AS combined
     ${scopeFilter ? `${scopeFilter} ${advancedClause.sql ? 'AND' : ''}` : `${advancedClause.sql ? 'WHERE' : ''}`}
     ${advancedClause.sql}
@@ -689,6 +689,8 @@ const ADVANCED_NUMBER_FIELDS: Record<string, string> = {
   dosage_num: `NULLIF(REPLACE((regexp_match(COALESCE(combined.dosage, ''), '([0-9]+(?:[\\.,][0-9]+)?)'))[1], ',', '.'), '')::numeric`,
 }
 
+const NO_VALUE_OPERATORS = new Set(['is_empty', 'is_not_empty'])
+
 function buildAdvancedSearchClause(conditions: AdvancedSearchCondition[], startIndex: number) {
   const sqlParts: string[] = []
   const params: Array<string | number> = []
@@ -697,7 +699,7 @@ function buildAdvancedSearchClause(conditions: AdvancedSearchCondition[], startI
   for (let i = 0; i < conditions.length; i += 1) {
     const condition = conditions[i]
     const value = condition.value?.trim()
-    if (!value) continue
+    if (!value && !NO_VALUE_OPERATORS.has(condition.operator)) continue
 
     const boolJoin = condition.bool === 'OR' ? 'OR' : 'AND'
     const prefix = sqlParts.length > 0 ? ` ${boolJoin} ` : ''
@@ -705,16 +707,29 @@ function buildAdvancedSearchClause(conditions: AdvancedSearchCondition[], startI
     if (condition.field in ADVANCED_STRING_FIELDS) {
       const fieldSql = ADVANCED_STRING_FIELDS[condition.field]
       if (condition.operator === 'equals') {
-        sqlParts.push(`${prefix}COALESCE(${fieldSql}, '') ILIKE $${paramIndex}`)
-        params.push(value)
+        sqlParts.push(`${prefix}UNACCENT(COALESCE(${fieldSql}, '')) ILIKE UNACCENT($${paramIndex})`)
+        params.push(value!)
         paramIndex += 1
       } else if (condition.operator === 'starts_with') {
-        sqlParts.push(`${prefix}COALESCE(${fieldSql}, '') ILIKE $${paramIndex}`)
-        params.push(`${value}%`)
+        sqlParts.push(`${prefix}UNACCENT(COALESCE(${fieldSql}, '')) ILIKE UNACCENT($${paramIndex})`)
+        params.push(`${value!}%`)
         paramIndex += 1
+      } else if (condition.operator === 'ends_with') {
+        sqlParts.push(`${prefix}UNACCENT(COALESCE(${fieldSql}, '')) ILIKE UNACCENT($${paramIndex})`)
+        params.push(`%${value!}`)
+        paramIndex += 1
+      } else if (condition.operator === 'not_contains') {
+        sqlParts.push(`${prefix}UNACCENT(COALESCE(${fieldSql}, '')) NOT ILIKE UNACCENT($${paramIndex})`)
+        params.push(`%${value!}%`)
+        paramIndex += 1
+      } else if (condition.operator === 'is_empty') {
+        sqlParts.push(`${prefix}(${fieldSql} IS NULL OR ${fieldSql} = '')`)
+      } else if (condition.operator === 'is_not_empty') {
+        sqlParts.push(`${prefix}(${fieldSql} IS NOT NULL AND ${fieldSql} <> '')`)
       } else {
-        sqlParts.push(`${prefix}COALESCE(${fieldSql}, '') ILIKE $${paramIndex}`)
-        params.push(`%${value}%`)
+        // contains (default)
+        sqlParts.push(`${prefix}UNACCENT(COALESCE(${fieldSql}, '')) ILIKE UNACCENT($${paramIndex})`)
+        params.push(`%${value!}%`)
         paramIndex += 1
       }
       continue
