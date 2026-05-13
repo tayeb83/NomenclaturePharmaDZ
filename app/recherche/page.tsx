@@ -5,10 +5,45 @@ import type { Metadata } from 'next'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
 
-export const metadata: Metadata = {
-  title: 'Recherche de médicaments',
-  description: 'Recherchez par DCI, nom de marque, laboratoire ou forme. Nomenclature pharmaceutique algérienne officielle MIPH.',
-  alternates: { canonical: `${APP_URL}/recherche` },
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; scope?: string }>
+}): Promise<Metadata> {
+  const params = await searchParams
+  const q = (params.q || '').trim()
+
+  if (q) {
+    const title = `${q} en Algérie — médicaments, prix et disponibilité | DwaDZ`
+    const description = `Résultats pour "${q}" dans la nomenclature pharmaceutique algérienne (MIPH). Statut, laboratoire, génériques disponibles en Algérie.`
+    return {
+      title,
+      description,
+      alternates: { canonical: `${APP_URL}/recherche?q=${encodeURIComponent(q)}` },
+      openGraph: {
+        title,
+        description,
+        type: 'website',
+        siteName: 'DwaDZ',
+        locale: 'fr_DZ',
+        url: `${APP_URL}/recherche?q=${encodeURIComponent(q)}`,
+      },
+    }
+  }
+
+  return {
+    title: 'Recherche de médicaments en Algérie | DwaDZ',
+    description: 'Recherchez par DCI, nom de marque, laboratoire ou forme. Nomenclature pharmaceutique algérienne officielle MIPH.',
+    alternates: { canonical: `${APP_URL}/recherche` },
+    openGraph: {
+      title: 'Recherche de médicaments en Algérie | DwaDZ',
+      description: 'Recherchez par DCI, nom de marque, laboratoire ou forme. Nomenclature pharmaceutique algérienne officielle MIPH.',
+      type: 'website',
+      siteName: 'DwaDZ',
+      locale: 'fr_DZ',
+      url: `${APP_URL}/recherche`,
+    },
+  }
 }
 
 type AdvancedSearchCondition = {
@@ -61,7 +96,13 @@ export default async function RecherchePage({
       : advanced,
   }
 
-  const results = await searchDrugs(query, scope, filters)
+  let results: SearchResult[] = []
+  let searchError = false
+  try {
+    results = await searchDrugs(query, scope, filters)
+  } catch {
+    searchError = true
+  }
 
   return (
     <>
@@ -73,6 +114,11 @@ export default async function RecherchePage({
       </div>
       <div className="page-body">
         <div className="container" style={{ maxWidth: 860 }}>
+          {searchError && (
+            <div style={{ background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: 10, padding: '14px 20px', marginBottom: 20, color: '#b91c1c', fontSize: 14 }}>
+              ⚠️ La base de données est temporairement indisponible. Veuillez réessayer dans quelques instants.
+            </div>
+          )}
           <SearchClient
             initialQuery={query}
             initialScope={scope}
