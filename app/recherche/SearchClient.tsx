@@ -130,6 +130,7 @@ export function SearchClient({
   const [advanced, setAdvanced] = useState<AdvancedSearchCondition[]>(initialAdvanced.length ? initialAdvanced : [{ field: 'dci', operator: 'contains', value: '', bool: 'AND' }])
   const [results, setResults] = useState<SearchResult[]>(initialResults)
   const [loading, setLoading] = useState(false)
+  const [displayLimit, setDisplayLimit] = useState(20)
   const [selectedPays, setSelectedPays] = useState('')
   const [selectedLaboFacet, setSelectedLaboFacet] = useState('')
   const [selectedSource, setSelectedSource] = useState('')
@@ -139,6 +140,8 @@ export function SearchClient({
   const router = useRouter()
   const [, startTransition] = useTransition()
   const inputRef = useRef<HTMLInputElement>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -161,23 +164,45 @@ export function SearchClient({
 
   const search = useCallback(async (q: string, s: string, l: string, sub: string, active: boolean, adv: AdvancedSearchCondition[]) => {
     if (!q.trim() && !l.trim() && !sub.trim() && !hasAdvancedFilters(adv)) { setResults([]); return }
+
+    // Annule la requête précédente encore en vol
+    abortRef.current?.abort()
+    abortRef.current = new AbortController()
+    const signal = abortRef.current.signal
+
     setLoading(true)
     try {
       const params = buildSearchParams(q, s, l, sub, active, adv, false)
-      const res = await fetch(`/api/search?${params.toString()}`)
+      params.set('limit', '20')
+      const res = await fetch(`/api/search?${params.toString()}`, { signal })
+      if (!res.ok) throw new Error('search-error')
       const data = await res.json()
       setResults(data.results || [])
-    } catch {
-      setResults([])
-    } finally { setLoading(false) }
+      setDisplayLimit(20)
+    } catch (err) {
+      if ((err as DOMException).name !== 'AbortError') setResults([])
+    } finally {
+      if (!signal.aborted) setLoading(false)
+    }
   }, [])
 
   function handleInput(val: string) {
     setQuery(val)
     syncUrl(val, scope, labo, substance, activeOnly, advanced, algerieOnly)
+
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+
     const effAdv = effectiveAdvanced(advanced, algerieOnly)
-    if (val.length >= 2 || labo || substance || hasAdvancedFilters(effAdv)) search(val, scope, labo, substance, activeOnly, effAdv)
-    else if (val.length === 0) setResults([])
+    if (!val.trim() && !labo && !substance && !hasAdvancedFilters(effAdv)) {
+      setResults([])
+      return
+    }
+
+    debounceRef.current = setTimeout(() => {
+      if (val.length >= 2 || labo || substance || hasAdvancedFilters(effAdv)) {
+        search(val, scope, labo, substance, activeOnly, effAdv)
+      }
+    }, 350)
   }
 
   function handleScope(s: string) {
@@ -211,9 +236,16 @@ export function SearchClient({
     })
     setAdvanced(next)
     syncUrl(query, scope, labo, substance, activeOnly, next, algerieOnly)
-    const effAdv = effectiveAdvanced(next, algerieOnly)
-    if (query.trim() || labo.trim() || substance.trim() || hasAdvancedFilters(effAdv)) search(query, scope, labo, substance, activeOnly, effAdv)
-    else setResults([])
+
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      const effAdv = effectiveAdvanced(next, algerieOnly)
+      if (query.trim() || labo.trim() || substance.trim() || hasAdvancedFilters(effAdv)) {
+        search(query, scope, labo, substance, activeOnly, effAdv)
+      } else {
+        setResults([])
+      }
+    }, 350)
   }
 
   function addAdvancedCondition() {
@@ -530,9 +562,22 @@ export function SearchClient({
         </div>
       )}
 
-      {!loading && filteredResults.map((d, i) => (
+      {!loading && filteredResults.slice(0, displayLimit).map((d, i) => (
         <DrugCard key={`${d.source}-${d.id}-${i}`} drug={d} type={d.source} onOpen={() => trackResultOpen(d)} />
       ))}
+
+      {!loading && filteredResults.length > displayLimit && (
+        <div style={{ textAlign: 'center', marginTop: 20 }}>
+          <button
+            onClick={() => setDisplayLimit(prev => prev + 20)}
+            style={{ padding: '10px 24px', borderRadius: 8, border: '1.5px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#334155' }}
+          >
+            {lang === 'ar'
+              ? `عرض المزيد (${filteredResults.length - displayLimit} متبقية)`
+              : `Voir plus (${filteredResults.length - displayLimit} restants)`}
+          </button>
+        </div>
+      )}
     </>
   )
 }

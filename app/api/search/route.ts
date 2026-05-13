@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const substance = searchParams.get('substance') || ''
   const activeOnly = searchParams.get('activeOnly') === '1'
   const advancedRaw = searchParams.get('advanced') || '[]'
-  const limit = Math.min(parseInt(searchParams.get('limit') || '30'), 80)
+  const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 60)
 
   let advanced: Array<{ field: string; operator: string; value: string; bool?: 'AND' | 'OR' }> = []
   try {

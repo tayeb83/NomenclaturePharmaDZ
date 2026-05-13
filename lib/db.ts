@@ -94,6 +94,24 @@ export async function queryOne<T = any>(text: string, params?: any[]): Promise<T
   return rows[0] ?? null
 }
 
+// Helper avec statement_timeout PostgreSQL — utilisé pour les recherches qui peuvent être longues.
+// Utilise BEGIN/SET LOCAL/COMMIT pour que le timeout ne se propage pas aux autres sessions du pool.
+export async function queryWithTimeout<T = any>(text: string, params?: any[], timeoutMs = 9000): Promise<T[]> {
+  const client = await getPool().connect()
+  try {
+    await client.query('BEGIN')
+    await client.query(`SET LOCAL statement_timeout = ${Math.floor(timeoutMs)}`)
+    const result: QueryResult<any> = await client.query(text, params)
+    await client.query('COMMIT')
+    return result.rows
+  } catch (e) {
+    await client.query('ROLLBACK').catch(() => {})
+    throw e
+  } finally {
+    client.release()
+  }
+}
+
 export type {
   AtcCode,
   CriticalMedicament,

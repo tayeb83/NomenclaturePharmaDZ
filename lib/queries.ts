@@ -3,10 +3,13 @@
  * Les pages importent depuis ce fichier, pas depuis lib/db.ts directement
  */
 
-import { query, queryOne } from './db'
+import { query, queryOne, queryWithTimeout } from './db'
 import type { Enregistrement, Retrait, NonRenouvele, SearchResult, Stats, MedicamentDetail, AtcCode, CriticalMedicament } from './db'
 
-const schemaFeatureCache = new Map<string, boolean>()
+// Cache persisté dans globalThis pour survivre aux hot-reloads (dev) et réduire les cold-starts (prod)
+const globalForQueries = globalThis as unknown as { _schemaCache?: Map<string, boolean> }
+if (!globalForQueries._schemaCache) globalForQueries._schemaCache = new Map<string, boolean>()
+const schemaFeatureCache = globalForQueries._schemaCache
 
 async function hasTable(tableName: string): Promise<boolean> {
   const cacheKey = `table.${tableName}`
@@ -316,8 +319,11 @@ export async function searchMedicaments(
   const substancePattern = `%${substance}%`
 
   const advancedClause = buildAdvancedSearchClause(advanced, 8)
-  const hasAtcMapping = await hasTable('dci_atc_mapping')
-  const hasCriticalTable = await hasTable('critical_medicaments')
+  // Parallélisé : évite 2 allers-retours DB séquentiels à chaque recherche
+  const [hasAtcMapping, hasCriticalTable] = await Promise.all([
+    hasTable('dci_atc_mapping'),
+    hasTable('critical_medicaments'),
+  ])
   const codeAtcEnr = hasAtcMapping ? 'atc_e.code_atc' : 'NULL::TEXT'
   const codeAtcRet = hasAtcMapping ? 'atc_r.code_atc' : 'NULL::TEXT'
   const codeAtcNon = hasAtcMapping ? 'atc_n.code_atc' : 'NULL::TEXT'
@@ -498,11 +504,14 @@ export async function searchMedicaments(
     LIMIT $7
   `
 
+  const searchParams = [trimmedQuery, searchPattern, labo, laboPattern, substance, substancePattern, limit, ...advancedClause.params]
   try {
-    return await query<SearchResult>(fullSearchSql, [trimmedQuery, searchPattern, labo, laboPattern, substance, substancePattern, limit, ...advancedClause.params])
+    // 9 secondes max : si trop lent (JOINs critiques/ATC), PostgreSQL lève 57014 → fallback
+    return await queryWithTimeout<SearchResult>(fullSearchSql, searchParams, 9000)
   } catch (error) {
     if ((error as { code?: string }).code !== '57014') throw error
-    return await query<SearchResult>(fallbackSearchSql, [trimmedQuery, searchPattern, labo, laboPattern, substance, substancePattern, limit, ...advancedClause.params])
+    // Fallback sans JOINs ATC/critiques, plus rapide
+    return await queryWithTimeout<SearchResult>(fallbackSearchSql, searchParams, 9000)
   }
 }
 
