@@ -177,6 +177,7 @@ async function ensureMappingTable(client: any) {
   await client.query(`CREATE INDEX IF NOT EXISTS idx_critical_mapping_statut ON critical_mapping (statut_match)`)
   await client.query(`CREATE INDEX IF NOT EXISTS idx_critical_mapping_source ON critical_mapping (source_base)`)
   await client.query(`CREATE INDEX IF NOT EXISTS idx_critical_mapping_n ON critical_mapping (n_critique)`)
+  await client.query(`CREATE INDEX IF NOT EXISTS idx_critical_mapping_lookup ON critical_mapping (source_base, n_enregistrement)`)
 }
 
 async function insertRows(client: any, rows: MappingRow[]) {
