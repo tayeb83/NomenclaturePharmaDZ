@@ -33,6 +33,7 @@ type Pagination = {
 
 type ApiMeta = {
   availableRemovedYears?: number[]
+  availableAnnees?: number[]
 }
 const TYPE_LABELS: Record<string, string> = {
   GE: 'Générique', 'Gé': 'Générique', I: 'Innovateur', RE: 'Référence', BIO: 'Biologique',
@@ -201,7 +202,7 @@ export function MedicamentsClient() {
             }}
           >
             <option value="">Toutes les années</option>
-            {[2025, 2024, 2023, 2022, 2021, 2020].map(y => (
+            {(meta.availableAnnees || []).map(y => (
               <option key={y} value={String(y)}>{y}</option>
             ))}
           </select>
