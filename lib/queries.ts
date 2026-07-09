@@ -26,6 +26,25 @@ async function hasTable(tableName: string): Promise<boolean> {
   return exists
 }
 
+let criticalMappingIndexEnsured = false
+
+/** critical_mapping (sql/07_critical_mapping.sql) n'a pas d'index sur la clé de jointure
+ *  utilisée par la recherche (source_base, n_enregistrement) — seuls dci_critique,
+ *  classe_therapeutique, statut_match, source_base et n_critique sont indexés. On crée
+ *  cet index une fois par process (idempotent, no-op si déjà présent). */
+async function ensureCriticalMappingIndex(): Promise<void> {
+  if (criticalMappingIndexEnsured) return
+  criticalMappingIndexEnsured = true
+  try {
+    await query(`
+      CREATE INDEX IF NOT EXISTS idx_critical_mapping_lookup
+      ON critical_mapping (source_base, n_enregistrement)
+    `)
+  } catch {
+    // Pas bloquant : au pire la jointure reste un scan sur une petite table.
+  }
+}
+
 async function hasColumn(tableName: string, columnName: string): Promise<boolean> {
   const cacheKey = `${tableName}.${columnName}`
   if (schemaFeatureCache.has(cacheKey)) return schemaFeatureCache.get(cacheKey) ?? false
@@ -317,17 +336,37 @@ export async function searchMedicaments(
 
   const advancedClause = buildAdvancedSearchClause(advanced, 8)
   const hasAtcMapping = await hasTable('dci_atc_mapping')
-  const hasCriticalTable = await hasTable('critical_medicaments')
+  // critical_mapping est pré-calculée hors ligne et indexable (jointure d'égalité sur
+  // n_enregistrement). On l'utilise en priorité pour éviter le LATERAL JOIN regex/UNACCENT
+  // contre critical_medicaments, dont le coût O(lignes × critiques) provoque le
+  // "canceling statement due to statement timeout" observé sur /api/search. On ne retombe
+  // sur le calcul à la volée (lent) que si critical_mapping n'existe pas encore.
+  const hasCriticalMapping = await hasTable('critical_mapping')
+  const hasCriticalTable = !hasCriticalMapping && await hasTable('critical_medicaments')
+  if (hasCriticalMapping) await ensureCriticalMappingIndex()
+  const hasCriticalEnrichment = hasCriticalMapping || hasCriticalTable
   const codeAtcEnr = hasAtcMapping ? 'atc_e.code_atc' : 'NULL::TEXT'
   const codeAtcRet = hasAtcMapping ? 'atc_r.code_atc' : 'NULL::TEXT'
   const codeAtcNon = hasAtcMapping ? 'atc_n.code_atc' : 'NULL::TEXT'
-  const criticalClassEnr = hasCriticalTable ? 'crit_e.classe_therapeutique' : 'NULL::TEXT'
-  const criticalClassRet = hasCriticalTable ? 'crit_r.classe_therapeutique' : 'NULL::TEXT'
-  const criticalClassNon = hasCriticalTable ? 'crit_n.classe_therapeutique' : 'NULL::TEXT'
+  const criticalClassEnr = hasCriticalEnrichment ? 'crit_e.classe_therapeutique' : 'NULL::TEXT'
+  const criticalClassRet = hasCriticalEnrichment ? 'crit_r.classe_therapeutique' : 'NULL::TEXT'
+  const criticalClassNon = hasCriticalEnrichment ? 'crit_n.classe_therapeutique' : 'NULL::TEXT'
   const atcJoinEnr = hasAtcMapping ? 'LEFT JOIN dci_atc_mapping atc_e ON atc_e.dci = e.dci' : ''
   const atcJoinRet = hasAtcMapping ? 'LEFT JOIN dci_atc_mapping atc_r ON atc_r.dci = r.dci' : ''
   const atcJoinNon = hasAtcMapping ? 'LEFT JOIN dci_atc_mapping atc_n ON atc_n.dci = n.dci' : ''
-  const criticalJoinEnr = hasCriticalTable
+
+  const criticalMappingJoin = (sourceBase: 'ACTIVE' | 'RETRAIT' | 'NON_RENOUVELE', alias: string, nEnregExpr: string) => `
+      LEFT JOIN LATERAL (
+        SELECT cm.classe_therapeutique
+        FROM critical_mapping cm
+        WHERE cm.source_base = '${sourceBase}' AND cm.n_enregistrement = ${nEnregExpr}
+        ORDER BY (cm.statut_match = 'OUI') DESC, cm.score_global DESC NULLS LAST
+        LIMIT 1
+      ) ${alias} ON TRUE`
+
+  const criticalJoinEnr = hasCriticalMapping
+    ? criticalMappingJoin('ACTIVE', 'crit_e', 'e.n_enreg')
+    : hasCriticalTable
     ? `LEFT JOIN LATERAL (
         SELECT c.classe_therapeutique
         FROM critical_medicaments c
@@ -337,7 +376,9 @@ export async function searchMedicaments(
         LIMIT 1
       ) crit_e ON TRUE`
     : ''
-  const criticalJoinRet = hasCriticalTable
+  const criticalJoinRet = hasCriticalMapping
+    ? criticalMappingJoin('RETRAIT', 'crit_r', 'r.n_enreg')
+    : hasCriticalTable
     ? `LEFT JOIN LATERAL (
         SELECT c.classe_therapeutique
         FROM critical_medicaments c
@@ -347,7 +388,9 @@ export async function searchMedicaments(
         LIMIT 1
       ) crit_r ON TRUE`
     : ''
-  const criticalJoinNon = hasCriticalTable
+  const criticalJoinNon = hasCriticalMapping
+    ? criticalMappingJoin('NON_RENOUVELE', 'crit_n', 'n.n_enreg')
+    : hasCriticalTable
     ? `LEFT JOIN LATERAL (
         SELECT c.classe_therapeutique
         FROM critical_medicaments c

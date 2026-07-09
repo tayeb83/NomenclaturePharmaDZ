@@ -35,3 +35,7 @@ CREATE INDEX IF NOT EXISTS idx_critical_mapping_classe    ON critical_mapping (c
 CREATE INDEX IF NOT EXISTS idx_critical_mapping_statut    ON critical_mapping (statut_match);
 CREATE INDEX IF NOT EXISTS idx_critical_mapping_source    ON critical_mapping (source_base);
 CREATE INDEX IF NOT EXISTS idx_critical_mapping_n         ON critical_mapping (n_critique);
+
+-- Clé de jointure utilisée par lib/queries.ts::searchMedicaments() pour retrouver le
+-- médicament critique correspondant à un enregistrement/retrait/non-renouvelé.
+CREATE INDEX IF NOT EXISTS idx_critical_mapping_lookup    ON critical_mapping (source_base, n_enregistrement);
