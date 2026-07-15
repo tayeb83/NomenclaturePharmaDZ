@@ -8,6 +8,11 @@ const SHIFT_FIELDS = `
   ph.address_fr, ph.address_ar, ph.phone_e164, ph.lat, ph.lng
 `
 
+const SHIFT_FIELDS_WITH_ACTIVE = `
+  ${SHIFT_FIELDS},
+  (dp.starts_at <= $4::timestamptz AND dp.ends_at > $4::timestamptz) AS active_now
+`
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const wilaya = searchParams.get('wilaya') || ''
@@ -44,14 +49,15 @@ export async function GET(request: NextRequest) {
         LIMIT 1
       `, [wilaya, commune, at]),
       // Planning complet du jour sélectionné (jour + nuit), pour l'onglet
-      // "Cette nuit" / "Vendredi" de l'app.
-      query<GardeShift>(`
-        SELECT ${SHIFT_FIELDS}
+      // "Cette nuit" / "Vendredi" de l'app. active_now reste calculé sur l'heure
+      // réelle ($4 = at), pas sur le fait que duty_date == aujourd'hui.
+      query<GardeShift & { active_now: boolean }>(`
+        SELECT ${SHIFT_FIELDS_WITH_ACTIVE}
         FROM garde_duty_periods dp
         JOIN garde_pharmacies ph ON ph.id = dp.pharmacy_id
         WHERE dp.wilaya_code = $1 AND dp.commune_code = $2 AND dp.duty_date = $3
         ORDER BY dp.starts_at ASC
-      `, [wilaya, commune, targetDate]),
+      `, [wilaya, commune, targetDate, at]),
       queryOne<GardeRosterMeta>(`
         SELECT wilaya_code, wilaya_name_fr, commune_code, commune_name_fr,
                period_from, period_to, review_status, issuer_fr, source_page
