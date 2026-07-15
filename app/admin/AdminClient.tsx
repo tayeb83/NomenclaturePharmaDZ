@@ -197,6 +197,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <Link href="/admin/garde" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
+            🏥 Géocodage garde
+          </Link>
           <Link href="/" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
             ← Site public
           </Link>
