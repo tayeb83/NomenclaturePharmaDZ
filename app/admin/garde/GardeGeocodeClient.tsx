@@ -23,6 +23,23 @@ type SearchResult = { label: string; lat: number; lng: number }
 // recherche/clic n'a encore positionné le repère.
 const DEFAULT_CENTER: [number, number] = [28.0, 2.5]
 
+// Accepte un lien copié depuis openstreetmap.org (?mlat=..&mlon=.. ou
+// #map=zoom/lat/lng) ou simplement "lat, lng" collé à la main.
+function parseCoordsInput(text: string): [number, number] | null {
+  const trimmed = text.trim()
+
+  const mlatMatch = trimmed.match(/mlat=(-?\d+\.?\d*)&mlon=(-?\d+\.?\d*)/)
+  if (mlatMatch) return [parseFloat(mlatMatch[1]), parseFloat(mlatMatch[2])]
+
+  const hashMatch = trimmed.match(/#map=\d+\.?\d*\/(-?\d+\.?\d*)\/(-?\d+\.?\d*)/)
+  if (hashMatch) return [parseFloat(hashMatch[1]), parseFloat(hashMatch[2])]
+
+  const plainMatch = trimmed.match(/(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/)
+  if (plainMatch) return [parseFloat(plainMatch[1]), parseFloat(plainMatch[2])]
+
+  return null
+}
+
 export function GardeGeocodeClient() {
   const [wilayaFilter, setWilayaFilter] = useState('')
   const [rows, setRows] = useState<PharmacyRow[]>([])
@@ -35,6 +52,8 @@ export function GardeGeocodeClient() {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [pasteInput, setPasteInput] = useState('')
+  const [pasteError, setPasteError] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -66,6 +85,18 @@ export function GardeGeocodeClient() {
     setSearchQuery([row.address_fr, row.commune_name_fr, 'Algérie'].filter(Boolean).join(', '))
     setSearchResults([])
     setPosition(DEFAULT_CENTER)
+    setPasteInput('')
+    setPasteError('')
+  }
+
+  function applyPaste() {
+    const coords = parseCoordsInput(pasteInput)
+    if (!coords) {
+      setPasteError('Format non reconnu. Collez "lat, lng" ou un lien openstreetmap.org.')
+      return
+    }
+    setPasteError('')
+    setPosition(coords)
   }
 
   async function runSearch() {
@@ -211,8 +242,35 @@ export function GardeGeocodeClient() {
                 </div>
               )}
 
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: 12, marginBottom: 12 }}>
+                <div style={{ fontSize: 12, color: '#334155', marginBottom: 8 }}>
+                  💡 Astuce : cherchez la pharmacie sur{' '}
+                  <a href="https://www.openstreetmap.org" target="_blank" rel="noopener noreferrer" style={{ color: '#0284c7' }}>
+                    openstreetmap.org
+                  </a>{' '}
+                  vous-même, puis clic droit sur le bon point → « Afficher l&apos;adresse » → collez le lien ou les coordonnées ici.
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    type="text"
+                    value={pasteInput}
+                    onChange={e => setPasteInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') applyPaste() }}
+                    placeholder="Ex: 34.83123, 0.15234 ou un lien openstreetmap.org"
+                    style={{ flex: 1, border: '1px solid #e2e8f0', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}
+                  />
+                  <button
+                    onClick={applyPaste}
+                    style={{ background: '#334155', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    Utiliser
+                  </button>
+                </div>
+                {pasteError && <div style={{ color: '#dc2626', fontSize: 12, marginTop: 6 }}>{pasteError}</div>}
+              </div>
+
               <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>
-                Cliquez sur la carte pour ajuster précisément le repère, puis enregistrez.
+                Ou cliquez directement sur la carte pour ajuster précisément le repère, puis enregistrez.
               </div>
 
               <div style={{ height: 420, borderRadius: 10, overflow: 'hidden', border: '1px solid #e2e8f0', marginBottom: 14 }}>
