@@ -154,6 +154,7 @@ export type GardeShift = GardePharmacy & {
   ends_at: string
   source: string
   source_ref: string | null
+  active_now?: boolean
 }
 
 export type GardeRosterMeta = {
