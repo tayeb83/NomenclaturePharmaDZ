@@ -131,3 +131,51 @@ export type CriticalMedicament = {
   source_label: string | null
   created_at: string
 }
+
+export type GardePharmacy = {
+  pharmacy_id: string
+  type: string
+  name_fr: string
+  name_ar: string | null
+  name_fr_confidence: string | null
+  address_fr: string | null
+  address_ar: string | null
+  phone_e164: string | null
+  lat: number | null
+  lng: number | null
+}
+
+export type GardeShift = GardePharmacy & {
+  id: string
+  shift: string
+  duty_date: string
+  weekday: string | null
+  starts_at: string
+  ends_at: string
+  source: string
+  source_ref: string | null
+}
+
+export type GardeRosterMeta = {
+  wilaya_code: string
+  wilaya_name_fr: string
+  commune_code: string
+  commune_name_fr: string
+  period_from: string
+  period_to: string
+  review_status: string
+  issuer_fr: string | null
+  source_page: string | null
+}
+
+export type GardeCoverageEntry = {
+  wilaya_code: string
+  wilaya_name_fr: string
+  wilaya_name_ar: string | null
+  commune_code: string
+  commune_name_fr: string
+  commune_name_ar: string | null
+  period_from: string
+  period_to: string
+  review_status: string
+}
