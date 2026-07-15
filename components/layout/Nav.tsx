@@ -58,6 +58,11 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
       },
       {
         type: 'link',
+        href: '/garde',
+        label: fr ? '🏥 Pharmacies de garde' : '🏥 صيدليات الحراسة',
+      },
+      {
+        type: 'link',
         href: '/substitution',
         label: fr ? 'Substitution' : 'الاستبدال',
       },
