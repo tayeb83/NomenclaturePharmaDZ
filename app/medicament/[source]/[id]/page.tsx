@@ -18,6 +18,20 @@ const STATUT_LABELS: Record<string, { fr: string; ar: string }> = {
   F: { fr: '🇩🇿 Fabriqué en Algérie', ar: '🇩🇿 مصنع في الجزائر' }, I: { fr: '📦 Importé', ar: '📦 مستورد' },
 }
 
+// Requête volontairement précise (nom de marque + DCI + dosage + forme +
+// laboratoire, jamais juste la DCI) pour que les premiers résultats
+// d'images Google soient bien la boîte de CE médicament vendu en Algérie,
+// et pas un générique homonyme d'un autre marché.
+function googleBoxSearchHref(med: { nom_marque: string; dci: string; dosage: string | null; forme: string | null; labo: string | null }) {
+  const parts = [med.nom_marque]
+  if (med.dci && med.dci !== med.nom_marque) parts.push(med.dci)
+  if (med.dosage) parts.push(med.dosage)
+  if (med.forme) parts.push(med.forme)
+  if (med.labo) parts.push(med.labo)
+  parts.push('boîte médicament Algérie')
+  return `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(parts.filter(Boolean).join(' '))}`
+}
+
 function motifColor(m: string | null) {
   if (!m) return '#6b7280'
   if (m.includes('INTERDICTION')) return '#dc2626'
@@ -432,6 +446,18 @@ export default async function MedicamentDetailPage(
             }}>
               🔍 Tous les médicaments avec cette DCI
             </Link>
+            <a
+              href={googleBoxSearchHref(med)}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                padding: '10px 20px', background: 'white', color: '#0f172a',
+                border: '1.5px solid #e2e8f0', borderRadius: 8, fontWeight: 600, fontSize: 13,
+                textDecoration: 'none', transition: 'all .15s',
+              }}
+            >
+              {pickLang(lang, { fr: '🔎 Voir la boîte (Google)', ar: '🔎 صورة العلبة (Google)' })}
+            </a>
             <PrintButton
               label={pickLang(lang, { fr: 'Imprimer / PDF', ar: 'طباعة / PDF' })}
             />
