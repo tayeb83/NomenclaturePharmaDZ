@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { query, queryOne } from '@/lib/db'
 import { formatRetrait, formatNouveaute, publishToAll, sendNewsletter } from '@/lib/social'
+import { sendPushToAll } from '@/lib/push'
 
 function secretsMatch(provided: string | null, expected: string | undefined): boolean {
   if (!provided || !expected) return false
@@ -41,7 +42,12 @@ export async function POST(request: NextRequest) {
 
       if (doNewsletter) await sendNewsletter(content.newsletter_subject, content.newsletter_html)
 
-      return NextResponse.json({ success: true, results })
+      const push = await sendPushToAll(
+        { title: '🚨 Retrait — ' + (drug as any).nom_marque, body: (drug as any).motif_retrait || 'Ce médicament ne doit plus être délivré.' },
+        { view: 'actualites', type: 'retrait' }
+      )
+
+      return NextResponse.json({ success: true, results, push })
     }
 
     if (type === 'nouveaute' && id) {
@@ -51,7 +57,12 @@ export async function POST(request: NextRequest) {
       const content = formatNouveaute(drug)
       const results = await publishToAll(content, id, 'enregistrements', 'nouveaute')
 
-      return NextResponse.json({ success: true, results })
+      const push = await sendPushToAll(
+        { title: '✅ Nouvelle AMM — ' + (drug as any).nom_marque, body: [(drug as any).dci, (drug as any).labo].filter(Boolean).join(' · ') },
+        { view: 'actualites', type: 'amm' }
+      )
+
+      return NextResponse.json({ success: true, results, push })
     }
 
     if (type === 'recap_hebdo') {

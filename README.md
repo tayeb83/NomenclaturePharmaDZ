@@ -256,3 +256,44 @@ Après import:
 4. Sélectionne ton export Google Sheets (`.csv`), puis clique **Importer la liste critique**.
 
 L’API `/api/admin/upload-critical` crée automatiquement la table `critical_medicaments` si nécessaire puis fait un upsert des lignes.
+
+---
+
+## Actualités & notifications push (app mobile DwaDZ)
+
+L'app mobile (Capacitor, repo `dwadz-mobile`) a un écran "Actualités" qui consomme :
+
+```
+GET /api/actualites?type=<amm|retrait>&page=<n>&limit=<n>
+```
+
+Implémentation : `app/api/actualites/route.ts`. Le flux est construit directement à partir des tables existantes, sans nouvelle ingestion :
+- `type=retrait` → table `retraits` (historique complet, déjà présent)
+- `type=amm` → `enregistrements WHERE is_new_vs_previous = TRUE` (nouveautés de la dernière version ingérée), daté avec `reference_date` de `nomenclature_versions`
+
+**`type=prix` renvoie toujours une liste vide** : le fichier nomenclature MIPH ingéré (`scripts/ingest_to_supabase.py`) ne contient aucune colonne prix ni remboursement CNAS — voir section dédiée ci-dessous.
+
+### Notifications push
+
+1. Exécuter la migration :
+```bash
+psql "$DATABASE_URL" -f sql/09_push_tokens.sql
+```
+2. Créer un projet Firebase (FCM), générer une clé de compte de service (Firebase Console → Paramètres du projet → Comptes de service → Générer une nouvelle clé privée), puis définir dans les variables d'environnement Vercel :
+```
+FIREBASE_SERVICE_ACCOUNT_JSON={"type":"service_account", ...}   # le JSON complet, sur une seule ligne
+```
+3. Sans cette variable, `lib/push.ts` renvoie simplement `{ success: false }` (comme Facebook/Twitter dans `lib/social.ts`) — `/api/publish` continue de fonctionner normalement, juste sans envoi push.
+
+Une fois configuré, `POST /api/publish` (`type: "retrait"` ou `"nouveaute"`) envoie automatiquement une notif push à tous les tokens actifs, en plus de Facebook/Twitter/newsletter. Un tap sur la notif ouvre l'app directement sur l'écran Actualités.
+
+---
+
+## Prix officiel / remboursement CNAS — état de l'investigation
+
+Aucune donnée de prix ni de remboursement n'est disponible dans ce projet à ce jour. Deux pistes officielles distinctes ont été identifiées, ni l'une ni l'autre encore intégrée :
+
+1. **Fichier nomenclature MIPH actuel** (`scripts/ingest_to_supabase.py`) : les colonnes lues sont n° enregistrement, code, DCI, nom de marque, forme, dosage, conditionnement, liste, prescription, obs, labo, pays, dates, type, statut, stabilité — **pas de prix ni de remboursement**. Une ancienne version du fichier source (2019, `sante.gov.dz`) semble en avoir contenu par le passé d'après un projet tiers ([mahmoudBens/Nomenclature-des-medicaments-en-algerie](https://github.com/mahmoudBens/Nomenclature-des-medicaments-en-algerie)), mais ce n'est pas le cas du fichier actuellement utilisé ici. À vérifier à chaque nouvelle version MIPH reçue : si ces colonnes réapparaissent, l'ajout au schéma est peu coûteux (2 colonnes sur `enregistrements`).
+2. **Liste CNAS des médicaments remboursables** — document officiel distinct, publié en PDF (voir [version 2023 relayée par l'OMS](https://www.who.int/publications/m/item/algeria--la-liste-des-m-dicaments-remboursables-par-la-s-curit--sociale-2023-(french))), avec conditions de remboursement et prix de référence. Pas de format structuré public connu : nécessiterait un parsing PDF + un rapprochement DCI/forme/dosage avec la nomenclature, avec un risque d'erreurs de correspondance à valider manuellement avant tout affichage (donnée sensible pour le patient).
+
+Recommandation : ne pas afficher de prix tant que l'une de ces deux sources n'est pas confirmée et vérifiée manuellement — un prix erroné dans une app médicale est pire que l'absence de prix.
