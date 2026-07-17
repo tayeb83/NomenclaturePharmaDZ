@@ -82,6 +82,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'yearly',
       priority: 0.3,
     },
+    {
+      url: `${APP_URL}/privacy`,
+      lastModified: new Date('2026-07-17'),
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
   ]
 
   // ─── Pages médicaments individuelles ──────────────────────────
