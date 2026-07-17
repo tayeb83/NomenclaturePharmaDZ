@@ -57,6 +57,7 @@ export function Footer() {
               <li><Link href="/contact">{t('Contact', 'اتصل بنا')}</Link></li>
               <li><Link href="/a-propos">{t('À propos', 'حول المنصة')}</Link></li>
               <li><Link href="/help">{t('Aide & guide', 'المساعدة والدليل')}</Link></li>
+              <li><Link href="/privacy">{t('Confidentialité', 'الخصوصية')}</Link></li>
               <li><a href="https://www.industrie.gov.dz" target="_blank" rel="noopener">{t('MIPH Algérie', 'MIPH الجزائر')}</a></li>
               <li><a href="https://www.ands.dz" target="_blank" rel="noopener">ANDS</a></li>
             </ul>
