@@ -143,6 +143,11 @@ export type GardePharmacy = {
   phone_e164: string | null
   lat: number | null
   lng: number | null
+  wilaya_code?: string
+  commune_code?: string
+  commune_name_fr?: string
+  commune_name_ar?: string | null
+  geocode_status?: string
 }
 
 export type GardeShift = GardePharmacy & {
