@@ -6,12 +6,43 @@ import type { GardeShift, GardeCoverageEntry, GardeRosterMeta } from '@/lib/db-t
 
 const GardeMap = dynamic(() => import('./GardeMap'), { ssr: false })
 
-type Mode = 'now' | 'tonight' | 'friday'
+type Mode = 'now' | 'tonight' | 'friday' | 'month'
 
 type GardeResponse = {
   current: GardeShift | null
   day_schedule: GardeShift[]
   coverage: GardeRosterMeta | null
+}
+
+type GardeMonthResponse = {
+  month: string
+  coverage: GardeRosterMeta | null
+  data: GardeShift[]
+}
+
+function currentMonthStr() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Algiers', year: 'numeric', month: '2-digit' })
+    .format(new Date()).replace('/', '-')
+}
+
+function shiftMonth(month: string, delta: number) {
+  const [y, m] = month.split('-').map(Number)
+  const d = new Date(Date.UTC(y, m - 1 + delta, 1))
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
+}
+
+function formatMonthLabel(month: string) {
+  const [y, m] = month.split('-').map(Number)
+  const d = new Date(Date.UTC(y, m - 1, 1))
+  return new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(d)
+}
+
+function formatDateShort(iso: string) {
+  const d = new Date(iso + 'T00:00:00Z')
+  return {
+    dnum: new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' }).format(d),
+    dow: new Intl.DateTimeFormat('fr-FR', { weekday: 'long', timeZone: 'UTC' }).format(d),
+  }
 }
 
 function algiersDateStr(d?: Date) {
@@ -65,6 +96,10 @@ export function GardeClient() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null)
+  const [monthStr, setMonthStr] = useState(currentMonthStr())
+  const [monthData, setMonthData] = useState<GardeMonthResponse | null>(null)
+  const [monthLoading, setMonthLoading] = useState(false)
+  const [monthError, setMonthError] = useState('')
 
   // Couverture disponible
   useEffect(() => {
@@ -111,7 +146,7 @@ export function GardeClient() {
   )
 
   const fetchGarde = useCallback(async () => {
-    if (!wilaya || !commune) return
+    if (!wilaya || !commune || mode === 'month') return
     setLoading(true)
     setError('')
     try {
@@ -131,6 +166,24 @@ export function GardeClient() {
   }, [wilaya, commune, mode])
 
   useEffect(() => { fetchGarde() }, [fetchGarde])
+
+  const fetchGardeMonth = useCallback(async () => {
+    if (!wilaya || !commune || mode !== 'month') return
+    setMonthLoading(true)
+    setMonthError('')
+    try {
+      const res = await fetch(`/api/garde/month?${new URLSearchParams({ wilaya, commune, month: monthStr })}`)
+      if (!res.ok) throw new Error('Erreur serveur')
+      const json = await res.json()
+      setMonthData(json)
+    } catch {
+      setMonthError('Impossible de charger le planning du mois.')
+    } finally {
+      setMonthLoading(false)
+    }
+  }, [wilaya, commune, mode, monthStr])
+
+  useEffect(() => { fetchGardeMonth() }, [fetchGardeMonth])
 
   const sortedSchedule = useMemo(() => {
     const rows = (data?.day_schedule || []).map(shift => ({
@@ -184,8 +237,8 @@ export function GardeClient() {
           </select>
         </div>
 
-        <div style={{ display: 'flex', gap: 8 }}>
-          {([['now', 'Maintenant'], ['tonight', 'Cette nuit'], ['friday', 'Vendredi']] as [Mode, string][]).map(([m, label]) => (
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {([['now', 'Maintenant'], ['tonight', 'Cette nuit'], ['friday', 'Vendredi'], ['month', 'Vue du mois']] as [Mode, string][]).map(([m, label]) => (
             <button
               key={m}
               onClick={() => setMode(m)}
@@ -210,13 +263,13 @@ export function GardeClient() {
         </div>
       )}
 
-      {error && <div className="alert-banner error">{error}</div>}
+      {mode !== 'month' && error && <div className="alert-banner error">{error}</div>}
 
-      {loading && (
+      {mode !== 'month' && loading && (
         <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--slate-600)', fontSize: 15 }}>⏳ Chargement…</div>
       )}
 
-      {!loading && !error && data && (
+      {mode !== 'month' && !loading && !error && data && (
         <>
           {/* Carte */}
           {(userPos || sortedSchedule.some(r => r.shift.lat != null)) && (
@@ -276,6 +329,100 @@ export function GardeClient() {
               </div>
             ))}
           </div>
+        </>
+      )}
+
+      {mode === 'month' && (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+            <button
+              onClick={() => setMonthStr(m => shiftMonth(m, -1))}
+              style={{ background: '#fff', border: '1px solid var(--slate-200)', borderRadius: 8, padding: '6px 12px', fontSize: 14, cursor: 'pointer' }}
+            >
+              ← Mois précédent
+            </button>
+            <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--navy)', textTransform: 'capitalize', minWidth: 160, textAlign: 'center' }}>
+              {formatMonthLabel(monthStr)}
+            </div>
+            <button
+              onClick={() => setMonthStr(m => shiftMonth(m, 1))}
+              style={{ background: '#fff', border: '1px solid var(--slate-200)', borderRadius: 8, padding: '6px 12px', fontSize: 14, cursor: 'pointer' }}
+            >
+              Mois suivant →
+            </button>
+          </div>
+
+          {monthError && <div className="alert-banner error">{monthError}</div>}
+
+          {monthLoading && (
+            <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--slate-600)', fontSize: 15 }}>⏳ Chargement…</div>
+          )}
+
+          {!monthLoading && !monthError && monthData && (
+            <>
+              {monthData.coverage && (
+                <div style={{ fontSize: 13, color: 'var(--slate-500)', marginBottom: 14 }}>
+                  Source : {monthData.coverage.issuer_fr || 'DSP'} · {monthData.data.length} garde(s) référencée(s) pour {communeName}
+                </div>
+              )}
+
+              {monthData.data.length === 0 && (
+                <div className="alert-banner info">Aucune garde référencée pour {formatMonthLabel(monthStr)} à {communeName}.</div>
+              )}
+
+              {monthData.data.length > 0 && (
+                <div style={{ overflowX: 'auto', border: '1px solid var(--slate-200)', borderRadius: 12, background: '#fff' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
+                    <thead>
+                      <tr style={{ background: 'var(--slate-50)' }}>
+                        {['Date', 'Horaire', 'Pharmacie', 'Adresse', 'Téléphone'].map(h => (
+                          <th key={h} style={{ textAlign: 'left', padding: '10px 14px', fontSize: 11, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--slate-500)', borderBottom: '1px solid var(--slate-200)' }}>
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {monthData.data.map(shift => {
+                        const { dnum, dow } = formatDateShort(shift.duty_date)
+                        const isFriday = dow.toLowerCase().startsWith('vendredi')
+                        return (
+                          <tr key={shift.id} style={{ background: isFriday ? '#fefbf2' : undefined, borderBottom: '1px solid var(--slate-200)' }}>
+                            <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
+                              <div style={{ fontWeight: 700, color: 'var(--navy)' }}>{dnum}</div>
+                              <div style={{ fontSize: 11.5, color: 'var(--slate-500)', textTransform: 'capitalize' }}>{dow}</div>
+                            </td>
+                            <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
+                              <span className={shift.shift === 'nuit' ? 'badge badge-blue' : 'badge badge-amber'}>
+                                {shift.shift === 'nuit' ? '☾ 19h → 08h' : '☀ 08h → 19h'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '10px 14px' }}>
+                              <div style={{ fontWeight: 600, color: 'var(--navy)' }}>{shift.name_fr}</div>
+                              {shift.name_ar && <div dir="rtl" lang="ar" style={{ color: 'var(--slate-500)', fontSize: 13 }}>{shift.name_ar}</div>}
+                            </td>
+                            <td style={{ padding: '10px 14px', maxWidth: 260 }}>
+                              <div>{shift.address_fr}</div>
+                              {shift.address_ar && <div dir="rtl" lang="ar" style={{ color: 'var(--slate-500)', fontSize: 13 }}>{shift.address_ar}</div>}
+                            </td>
+                            <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
+                              {shift.phone_e164 ? (
+                                <a href={`tel:${shift.phone_e164}`} style={{ color: 'var(--blue)', fontWeight: 600, textDecoration: 'none' }}>
+                                  {shift.phone_e164}
+                                </a>
+                              ) : (
+                                <span style={{ color: 'var(--slate-400)', fontStyle: 'italic' }}>non publié</span>
+                              )}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          )}
         </>
       )}
     </div>

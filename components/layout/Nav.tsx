@@ -57,9 +57,13 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
         label: fr ? 'Rechercher' : 'بحث',
       },
       {
-        type: 'link',
-        href: '/garde',
-        label: fr ? '🏥 Pharmacies de garde' : '🏥 صيدليات الحراسة',
+        type: 'dropdown',
+        id: 'pharmacies',
+        label: fr ? '🏥 Pharmacies' : '🏥 الصيدليات',
+        links: [
+          { href: '/garde',       label: fr ? '🏥 Pharmacies de garde' : '🏥 صيدليات الحراسة' },
+          { href: '/pharmacies',  label: fr ? '📍 Annuaire des pharmacies' : '📍 دليل الصيدليات' },
+        ],
       },
       {
         type: 'link',
