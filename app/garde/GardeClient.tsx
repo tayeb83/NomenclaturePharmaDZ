@@ -216,7 +216,16 @@ export function GardeClient() {
           <label style={{ display: 'block', fontSize: 12, color: 'var(--slate-500)', marginBottom: 6, fontWeight: 600 }}>Wilaya</label>
           <select
             value={wilaya}
-            onChange={e => { setWilaya(e.target.value); setCommune(''); }}
+            onChange={e => {
+              const newWilaya = e.target.value
+              setWilaya(newWilaya)
+              // Une seule commune disponible (cas le plus courant) : on la
+              // sélectionne directement, sinon le <select> commune reste
+              // désynchronisé de l'état tant que l'utilisateur ne le
+              // touche pas lui-même — et fetchGarde() n'est jamais rappelé.
+              const matches = coverage.filter(c => c.wilaya_code === newWilaya)
+              setCommune(matches.length === 1 ? matches[0].commune_code : '')
+            }}
             disabled={coverageLoading || wilayas.length === 0}
             style={{ background: 'var(--slate-50)', border: '1px solid var(--slate-200)', color: 'var(--navy)', borderRadius: 8, padding: '8px 12px', fontSize: 14, minWidth: 180 }}
           >
@@ -233,6 +242,7 @@ export function GardeClient() {
             disabled={communes.length === 0}
             style={{ background: 'var(--slate-50)', border: '1px solid var(--slate-200)', color: 'var(--navy)', borderRadius: 8, padding: '8px 12px', fontSize: 14, minWidth: 180 }}
           >
+            <option value="">Choisir une commune…</option>
             {communes.map(c => <option key={c.commune_code} value={c.commune_code}>{c.commune_name_fr}</option>)}
           </select>
         </div>
