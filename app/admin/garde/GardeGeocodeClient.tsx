@@ -19,6 +19,16 @@ type PharmacyRow = {
 
 type SearchResult = { label: string; lat: number; lng: number }
 
+type WilayaStats = {
+  wilaya_code: string
+  wilaya_name_fr: string | null
+  total_pharmacies: number
+  geocoded_count: number
+  last_imported_at: string | null
+  period_from: string | null
+  period_to: string | null
+}
+
 // Centre approximatif de l'Algérie — point de départ tant qu'aucune
 // recherche/clic n'a encore positionné le repère.
 const DEFAULT_CENTER: [number, number] = [28.0, 2.5]
@@ -54,6 +64,25 @@ export function GardeGeocodeClient() {
   const [saving, setSaving] = useState(false)
   const [pasteInput, setPasteInput] = useState('')
   const [pasteError, setPasteError] = useState('')
+
+  const [stats, setStats] = useState<WilayaStats[]>([])
+  const [statsLoading, setStatsLoading] = useState(true)
+
+  const loadStats = useCallback(async () => {
+    setStatsLoading(true)
+    try {
+      const res = await fetch('/api/admin/garde/stats')
+      if (!res.ok) throw new Error()
+      const json = await res.json()
+      setStats(json.data || [])
+    } catch {
+      setStats([])
+    } finally {
+      setStatsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { loadStats() }, [loadStats])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -129,6 +158,7 @@ export function GardeGeocodeClient() {
       }
       setRows(prev => prev.filter(r => r.id !== selected.id))
       setSelected(null)
+      loadStats()
     } catch (err: any) {
       alert(err.message || "Échec de l'enregistrement.")
     } finally {
@@ -149,7 +179,64 @@ export function GardeGeocodeClient() {
         </Link>
       </header>
 
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: 24, display: 'grid', gridTemplateColumns: '360px 1fr', gap: 20 }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 24px 0' }}>
+        {/* Wilayas présentes en base — répond à "qu'est-ce qui a bien été importé ?" */}
+        <div style={{ background: 'white', borderRadius: 12, border: '1px solid #e2e8f0', padding: 16, marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div style={{ fontWeight: 700, fontSize: 14, color: '#0f172a' }}>Wilayas en base</div>
+            <button
+              onClick={loadStats}
+              style={{ background: 'none', border: '1px solid #e2e8f0', color: '#64748b', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer' }}
+            >
+              ⟳ Actualiser
+            </button>
+          </div>
+
+          {statsLoading ? (
+            <div style={{ color: '#64748b', fontSize: 13 }}>Chargement…</div>
+          ) : stats.length === 0 ? (
+            <div style={{ color: '#64748b', fontSize: 13 }}>Aucune wilaya importée pour l&apos;instant.</div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                  <tr style={{ textAlign: 'left', color: '#64748b', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.04em' }}>
+                    <th style={{ padding: '4px 8px' }}>Wilaya</th>
+                    <th style={{ padding: '4px 8px' }}>Pharmacies</th>
+                    <th style={{ padding: '4px 8px' }}>Géocodées</th>
+                    <th style={{ padding: '4px 8px' }}>Période garde</th>
+                    <th style={{ padding: '4px 8px' }}>Dernier import</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stats.map(s => (
+                    <tr key={s.wilaya_code} style={{ borderTop: '1px solid #f1f5f9' }}>
+                      <td style={{ padding: '6px 8px', fontWeight: 600, color: '#0f172a' }}>
+                        {s.wilaya_name_fr || s.wilaya_code} <span style={{ color: '#94a3b8', fontWeight: 400 }}>({s.wilaya_code})</span>
+                      </td>
+                      <td style={{ padding: '6px 8px' }}>{s.total_pharmacies}</td>
+                      <td style={{ padding: '6px 8px' }}>
+                        {s.geocoded_count} / {s.total_pharmacies}
+                        {s.geocoded_count < s.total_pharmacies && (
+                          <span className="badge badge-amber" style={{ marginLeft: 8 }}>à finir</span>
+                        )}
+                      </td>
+                      <td style={{ padding: '6px 8px', color: '#64748b' }}>
+                        {s.period_from && s.period_to ? `${s.period_from} → ${s.period_to}` : '—'}
+                      </td>
+                      <td style={{ padding: '6px 8px', color: '#64748b' }}>
+                        {s.last_imported_at ? new Date(s.last_imported_at).toLocaleString('fr-FR') : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px 24px', display: 'grid', gridTemplateColumns: '360px 1fr', gap: 20 }}>
         {/* Colonne liste */}
         <div style={{ background: 'white', borderRadius: 12, border: '1px solid #e2e8f0', padding: 16, height: 'fit-content' }}>
           <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 6, fontWeight: 600 }}>Wilaya</label>
