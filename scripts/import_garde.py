@@ -22,10 +22,18 @@ from typing import Any, Dict, List
 import psycopg2
 
 
-def upsert_pharmacies(cur, pharmacies: List[Dict[str, Any]]) -> Dict[str, int]:
+def upsert_pharmacies(cur, pharmacies: List[Dict[str, Any]], meta: Dict[str, Any]) -> Dict[str, int]:
     external_id_to_pk: Dict[str, int] = {}
 
     for p in pharmacies:
+        # Les pipelines d'extraction ne sont pas tous alignes sur les memes
+        # cles pour la commune (ex: "commune" pour Saida vs "commune_name_fr"
+        # / "commune_code" pour Oran) : on essaie les variantes connues avant
+        # de retomber sur le commune du roster (meta), qui est toujours fiable
+        # puisqu un fichier garde_officines ne couvre qu une seule commune.
+        commune_name_fr = p.get("commune_name_fr") or p.get("commune") or meta["commune_name_fr"]
+        commune_code = p.get("commune_code") or meta["commune_code"]
+
         cur.execute(
             """
             INSERT INTO garde_pharmacies (
@@ -66,8 +74,8 @@ def upsert_pharmacies(cur, pharmacies: List[Dict[str, Any]]) -> Dict[str, int]:
                 "name_fr": p["name_fr"],
                 "name_ar": p.get("name_ar"),
                 "name_fr_confidence": p.get("name_fr_confidence"),
-                "commune_code": p.get("commune_code") or "",
-                "commune_name_fr": p["commune"],
+                "commune_code": commune_code,
+                "commune_name_fr": commune_name_fr,
                 "commune_name_ar": p.get("commune_ar"),
                 "address_fr": p.get("address_fr"),
                 "address_ar": p.get("address_ar"),
@@ -231,7 +239,7 @@ def main() -> int:
     try:
         with conn:
             with conn.cursor() as cur:
-                external_id_to_pk = upsert_pharmacies(cur, pharmacies)
+                external_id_to_pk = upsert_pharmacies(cur, pharmacies, meta)
                 roster_id = upsert_roster(cur, meta, payload)
                 inserted = upsert_duty_periods(
                     cur, duty_periods, roster_id, meta["wilaya_code"], meta["commune_code"], external_id_to_pk
