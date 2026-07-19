@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import type { GardeShift, GardeCoverageEntry, GardeRosterMeta } from '@/lib/db-types'
 
@@ -23,6 +24,10 @@ type GardeMonthResponse = {
 function currentMonthStr() {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Algiers', year: 'numeric', month: '2-digit' })
     .format(new Date()).replace('/', '-')
+}
+
+function isValidMonth(month: string): boolean {
+  return /^\d{4}-(0[1-9]|1[0-2])$/.test(month)
 }
 
 function shiftMonth(month: string, delta: number) {
@@ -85,23 +90,36 @@ function mapsHref(shift: GardeShift) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
 }
 
-export function GardeClient() {
+export function GardeClient({
+  initialWilaya = '',
+  initialCommune = '',
+  initialMode = 'now',
+  initialMonth = '',
+}: {
+  initialWilaya?: string
+  initialCommune?: string
+  initialMode?: Mode
+  initialMonth?: string
+} = {}) {
+  const router = useRouter()
   const [coverage, setCoverage] = useState<GardeCoverageEntry[]>([])
   const [coverageLoading, setCoverageLoading] = useState(true)
   const [coverageError, setCoverageError] = useState('')
-  const [wilaya, setWilaya] = useState('')
-  const [commune, setCommune] = useState('')
-  const [mode, setMode] = useState<Mode>('now')
+  const [wilaya, setWilaya] = useState(initialWilaya)
+  const [commune, setCommune] = useState(initialCommune)
+  const [mode, setMode] = useState<Mode>(initialMode)
   const [data, setData] = useState<GardeResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null)
-  const [monthStr, setMonthStr] = useState(currentMonthStr())
+  const [monthStr, setMonthStr] = useState(isValidMonth(initialMonth) ? initialMonth : currentMonthStr())
   const [monthData, setMonthData] = useState<GardeMonthResponse | null>(null)
   const [monthLoading, setMonthLoading] = useState(false)
   const [monthError, setMonthError] = useState('')
+  const [linkCopied, setLinkCopied] = useState(false)
 
-  // Couverture disponible
+  // Couverture disponible — si wilaya/commune viennent d'un lien partagé,
+  // on les garde (après vérification) plutôt que d'écraser par le 1er défaut.
   useEffect(() => {
     let cancelled = false
     setCoverageLoading(true)
@@ -111,7 +129,12 @@ export function GardeClient() {
         if (cancelled) return
         const rows: GardeCoverageEntry[] = json.data || []
         setCoverage(rows)
-        if (rows[0]) {
+        const wilayaRows = initialWilaya ? rows.filter(r => r.wilaya_code === initialWilaya) : []
+        if (wilayaRows.length > 0) {
+          setWilaya(initialWilaya)
+          const communeMatch = wilayaRows.some(r => r.commune_code === initialCommune)
+          setCommune(communeMatch ? initialCommune : wilayaRows[0].commune_code)
+        } else if (rows[0]) {
           setWilaya(rows[0].wilaya_code)
           setCommune(rows[0].commune_code)
         }
@@ -119,6 +142,24 @@ export function GardeClient() {
       .catch(() => { if (!cancelled) setCoverageError("Impossible de charger les zones couvertes.") })
       .finally(() => { if (!cancelled) setCoverageLoading(false) })
     return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Lien partageable : reflète toujours wilaya/commune/mode(/mois) dans l'URL,
+  // pour que "aujourd'hui"/"vendredi prochain" restent calculés à l'ouverture
+  // du lien, et que le mois choisi reste fixe.
+  useEffect(() => {
+    if (coverageLoading || !wilaya || !commune) return
+    const params = new URLSearchParams({ wilaya, commune, mode })
+    if (mode === 'month') params.set('month', monthStr)
+    router.replace(`/garde?${params.toString()}`, { scroll: false })
+  }, [wilaya, commune, mode, monthStr, coverageLoading, router])
+
+  const copyLink = useCallback(() => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 1800)
+    })
   }, [])
 
   // Géolocalisation (uniquement pour trier par distance / afficher un point sur la carte)
@@ -263,6 +304,22 @@ export function GardeClient() {
             </button>
           ))}
         </div>
+
+        {wilaya && commune && (
+          <button
+            onClick={copyLink}
+            title="Copier un lien stable vers cette vue (wilaya, commune, période)"
+            style={{
+              background: linkCopied ? 'var(--green, #16a34a)' : '#fff',
+              border: `1px solid ${linkCopied ? 'var(--green, #16a34a)' : 'var(--slate-200)'}`,
+              color: linkCopied ? '#fff' : 'var(--slate-700)',
+              borderRadius: 999, padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              marginLeft: 'auto',
+            }}
+          >
+            {linkCopied ? '✓ Lien copié' : '🔗 Copier le lien'}
+          </button>
+        )}
       </div>
 
       {coverageError && <div className="alert-banner error">{coverageError}</div>}
