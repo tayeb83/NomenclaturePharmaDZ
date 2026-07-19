@@ -20,8 +20,14 @@ function formatDistance(km: number | null) {
   return `${km.toFixed(1).replace('.', ',')} km`
 }
 
+function displayName(p: GardePharmacy) {
+  return p.name_fr || p.name_ar || 'Pharmacie'
+}
+
 function mapsHref(p: GardePharmacy) {
-  const query = (p.lat != null && p.lng != null) ? `${p.lat},${p.lng}` : [p.name_fr, p.address_fr].filter(Boolean).join(', ')
+  const query = (p.lat != null && p.lng != null)
+    ? `${p.lat},${p.lng}`
+    : [p.name_fr || p.name_ar, p.address_fr || p.address_ar].filter(Boolean).join(', ')
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
 }
 
@@ -100,7 +106,7 @@ export function PharmaciesClient() {
       if (a.distanceKm != null && b.distanceKm != null) return a.distanceKm - b.distanceKm
       if (a.distanceKm != null) return -1
       if (b.distanceKm != null) return 1
-      return a.p.name_fr.localeCompare(b.p.name_fr)
+      return displayName(a.p).localeCompare(displayName(b.p))
     })
     return rows
   }, [pharmacies, userPos])
@@ -167,10 +173,10 @@ export function PharmaciesClient() {
                 background: '#fff', border: '1px solid var(--slate-200)', borderRadius: 10, padding: '16px 18px',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
               }}>
-                <div style={{ fontWeight: 700, fontSize: 15.5, color: 'var(--navy)' }}>{p.name_fr}</div>
-                {p.name_ar && <div dir="rtl" lang="ar" style={{ color: 'var(--slate-500)', fontSize: 14, marginTop: 2 }}>{p.name_ar}</div>}
+                <div style={{ fontWeight: 700, fontSize: 15.5, color: 'var(--navy)' }}>{displayName(p)}</div>
+                {p.name_fr && p.name_ar && <div dir="rtl" lang="ar" style={{ color: 'var(--slate-500)', fontSize: 14, marginTop: 2 }}>{p.name_ar}</div>}
                 <div style={{ fontSize: 13, color: 'var(--slate-600)', marginTop: 6 }}>
-                  {p.address_fr}{distanceKm != null && ` · ${formatDistance(distanceKm)}`}
+                  {p.address_fr || p.address_ar}{distanceKm != null && ` · ${formatDistance(distanceKm)}`}
                   {!commune && p.commune_name_fr && ` — ${p.commune_name_fr}`}
                 </div>
                 <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>

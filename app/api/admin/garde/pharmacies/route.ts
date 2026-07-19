@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const rows = await query(`
-      SELECT ph.id, ph.wilaya_code, ph.commune_name_fr, ph.name_fr, ph.address_fr,
+      SELECT ph.id, ph.wilaya_code, ph.commune_name_fr, ph.name_fr, ph.name_ar, ph.address_fr, ph.address_ar,
              ph.phone_e164, ph.lat, ph.lng, ph.geocode_status,
              w.wilaya_name_fr
       FROM garde_pharmacies ph
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
         ORDER BY imported_at DESC LIMIT 1
       ) w ON true
       WHERE ${conditions.join(' AND ')}
-      ORDER BY ph.wilaya_code, ph.commune_name_fr, ph.name_fr
+      ORDER BY ph.wilaya_code, ph.commune_name_fr, COALESCE(ph.name_fr, ph.name_ar)
     `, params)
 
     return NextResponse.json({ data: rows })

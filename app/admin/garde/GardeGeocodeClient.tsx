@@ -11,8 +11,10 @@ type PharmacyRow = {
   wilaya_code: string
   wilaya_name_fr: string | null
   commune_name_fr: string
-  name_fr: string
+  name_fr: string | null
+  name_ar: string | null
   address_fr: string | null
+  address_ar: string | null
   phone_e164: string | null
   geocode_status: string
 }
@@ -269,9 +271,9 @@ export function GardeGeocodeClient() {
                   cursor: 'pointer',
                 }}
               >
-                <div style={{ fontWeight: 700, fontSize: 13, color: '#0f172a' }}>{row.name_fr}</div>
+                <div style={{ fontWeight: 700, fontSize: 13, color: '#0f172a' }}>{row.name_fr || row.name_ar || 'Pharmacie'}</div>
                 <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
-                  {row.address_fr || row.commune_name_fr} · {row.wilaya_name_fr || row.wilaya_code}
+                  {row.address_fr || row.address_ar || row.commune_name_fr} · {row.wilaya_name_fr || row.wilaya_code}
                 </div>
               </button>
             ))}
@@ -287,9 +289,9 @@ export function GardeGeocodeClient() {
           ) : (
             <>
               <div style={{ marginBottom: 12 }}>
-                <div style={{ fontWeight: 700, fontSize: 16, color: '#0f172a' }}>{selected.name_fr}</div>
+                <div style={{ fontWeight: 700, fontSize: 16, color: '#0f172a' }}>{selected.name_fr || selected.name_ar || 'Pharmacie'}</div>
                 <div style={{ fontSize: 13, color: '#64748b' }}>
-                  {selected.address_fr} — {selected.commune_name_fr}, {selected.wilaya_name_fr || selected.wilaya_code}
+                  {selected.address_fr || selected.address_ar} — {selected.commune_name_fr}, {selected.wilaya_name_fr || selected.wilaya_code}
                   {selected.phone_e164 && ` · ${selected.phone_e164}`}
                 </div>
               </div>
