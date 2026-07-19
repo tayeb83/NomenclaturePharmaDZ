@@ -2,6 +2,12 @@ import { NextResponse } from 'next/server'
 import { query } from '@/lib/db'
 import type { GardeCoverageEntry } from '@/lib/db-types'
 
+// GET() sans paramètre `request` : sans cette directive, Next.js évalue la
+// route une seule fois au build et sert la réponse statique jusqu'au
+// prochain déploiement — les wilayas importées après coup n'apparaissent
+// alors jamais dans le sélecteur, malgré le Cache-Control ci-dessous.
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const rows = await query<GardeCoverageEntry>(`
