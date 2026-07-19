@@ -14,7 +14,9 @@ export async function GET() {
     `)
 
     return NextResponse.json({ data: rows }, {
-      headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' },
+      // Court : la liste des wilayas couvertes évolue au fil des imports,
+      // contrairement à la nomenclature qui ne change qu'une fois par mois.
+      headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' },
     })
   } catch (err: any) {
     console.error('Garde coverage API error:', err)
