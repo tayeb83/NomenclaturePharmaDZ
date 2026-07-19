@@ -83,10 +83,14 @@ function formatDistance(km: number | null) {
   return `${km.toFixed(1).replace('.', ',')} km`
 }
 
+function displayName(shift: GardeShift) {
+  return shift.name_fr || shift.name_ar || 'Pharmacie'
+}
+
 function mapsHref(shift: GardeShift) {
   const query = (shift.lat != null && shift.lng != null)
     ? `${shift.lat},${shift.lng}`
-    : [shift.name_fr, shift.address_fr].filter(Boolean).join(', ')
+    : [shift.name_fr || shift.name_ar, shift.address_fr || shift.address_ar].filter(Boolean).join(', ')
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
 }
 
@@ -362,7 +366,10 @@ export function GardeClient({
                 boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
-                  <div style={{ fontWeight: 700, fontSize: 15.5, color: 'var(--navy)' }}>{shift.name_fr}</div>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 15.5, color: 'var(--navy)' }}>{displayName(shift)}</div>
+                    {shift.name_fr && shift.name_ar && <div dir="rtl" lang="ar" style={{ color: 'var(--slate-500)', fontSize: 13.5, marginTop: 2 }}>{shift.name_ar}</div>}
+                  </div>
                   {shift.active_now ? (
                     <span className="badge badge-green">De garde maintenant</span>
                   ) : (
@@ -370,7 +377,7 @@ export function GardeClient({
                   )}
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--slate-600)', marginTop: 4 }}>
-                  {shift.address_fr}{distanceKm != null && ` · ${formatDistance(distanceKm)}`}
+                  {shift.address_fr || shift.address_ar}{distanceKm != null && ` · ${formatDistance(distanceKm)}`}
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--slate-500)', marginTop: 6 }}>
                   {formatTimeRange(shift.starts_at, shift.ends_at)}
@@ -465,12 +472,12 @@ export function GardeClient({
                               </span>
                             </td>
                             <td style={{ padding: '10px 14px' }}>
-                              <div style={{ fontWeight: 600, color: 'var(--navy)' }}>{shift.name_fr}</div>
-                              {shift.name_ar && <div dir="rtl" lang="ar" style={{ color: 'var(--slate-500)', fontSize: 13 }}>{shift.name_ar}</div>}
+                              <div style={{ fontWeight: 600, color: 'var(--navy)' }}>{displayName(shift)}</div>
+                              {shift.name_fr && shift.name_ar && <div dir="rtl" lang="ar" style={{ color: 'var(--slate-500)', fontSize: 13 }}>{shift.name_ar}</div>}
                             </td>
                             <td style={{ padding: '10px 14px', maxWidth: 260 }}>
-                              <div>{shift.address_fr}</div>
-                              {shift.address_ar && <div dir="rtl" lang="ar" style={{ color: 'var(--slate-500)', fontSize: 13 }}>{shift.address_ar}</div>}
+                              <div>{shift.address_fr || shift.address_ar}</div>
+                              {shift.address_fr && shift.address_ar && <div dir="rtl" lang="ar" style={{ color: 'var(--slate-500)', fontSize: 13 }}>{shift.address_ar}</div>}
                             </td>
                             <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
                               {shift.phone_e164 ? (

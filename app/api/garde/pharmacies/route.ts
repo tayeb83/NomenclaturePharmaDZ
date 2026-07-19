@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
              address_fr, address_ar, phone_e164, lat, lng, geocode_status
       FROM garde_pharmacies
       WHERE ${conditions.join(' AND ')}
-      ORDER BY commune_name_fr ASC, name_fr ASC
+      ORDER BY commune_name_fr ASC, COALESCE(name_fr, name_ar) ASC
     `, params)
 
     return NextResponse.json({ data: rows }, {

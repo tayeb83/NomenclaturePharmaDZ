@@ -54,7 +54,7 @@ export default function GardeMap({ userPos, pins }: Props) {
           radius={6}
           pathOptions={{ color: '#059669', fillColor: '#059669', fillOpacity: 1, weight: 2 }}
         >
-          <Popup>{p.name_fr}</Popup>
+          <Popup>{p.name_fr || p.name_ar}</Popup>
         </CircleMarker>
       ))}
       <FitBounds userPos={userPos} pins={pins} />

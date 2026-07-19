@@ -135,7 +135,7 @@ export type CriticalMedicament = {
 export type GardePharmacy = {
   pharmacy_id: string
   type: string
-  name_fr: string
+  name_fr: string | null
   name_ar: string | null
   name_fr_confidence: string | null
   address_fr: string | null

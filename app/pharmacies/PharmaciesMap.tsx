@@ -3,7 +3,7 @@
 import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 
-type Pin = { pharmacy_id: string; lat: number | null; lng: number | null; name_fr: string }
+type Pin = { pharmacy_id: string; lat: number | null; lng: number | null; name_fr: string | null; name_ar: string | null }
 
 type Props = {
   userPos: { lat: number; lng: number } | null
@@ -56,7 +56,7 @@ export default function PharmaciesMap({ userPos, pins }: Props) {
           radius={6}
           pathOptions={{ color: '#059669', fillColor: '#059669', fillOpacity: 1, weight: 2 }}
         >
-          <Popup>{p.name_fr}</Popup>
+          <Popup>{p.name_fr || p.name_ar}</Popup>
         </CircleMarker>
       ))}
       <FitBounds userPos={userPos} pins={pins} />
