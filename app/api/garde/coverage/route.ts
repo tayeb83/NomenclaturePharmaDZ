@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { query } from '@/lib/db'
-import type { GardeCoverageEntry } from '@/lib/db-types'
+import { getGardeCoverage } from '@/lib/garde'
 
 // GET() sans paramètre `request` : sans cette directive, Next.js évalue la
 // route une seule fois au build et sert la réponse statique jusqu'au
@@ -10,15 +9,7 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const rows = await query<GardeCoverageEntry>(`
-      SELECT DISTINCT ON (wilaya_code, commune_code)
-        wilaya_code, wilaya_name_fr, wilaya_name_ar,
-        commune_code, commune_name_fr, commune_name_ar,
-        period_from, period_to, review_status
-      FROM garde_rosters
-      ORDER BY wilaya_code, commune_code, imported_at DESC
-    `)
-
+    const rows = await getGardeCoverage()
     return NextResponse.json({ data: rows }, {
       // Court : la liste des wilayas couvertes évolue au fil des imports,
       // contrairement à la nomenclature qui ne change qu'une fois par mois.
