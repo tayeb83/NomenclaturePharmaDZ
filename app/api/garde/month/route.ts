@@ -4,7 +4,10 @@ import type { GardeShift, GardeRosterMeta } from '@/lib/db-types'
 
 const SHIFT_FIELDS = `
   dp.id, dp.shift, dp.duty_date, dp.weekday, dp.starts_at, dp.ends_at, dp.source, dp.source_ref,
-  ph.external_id AS pharmacy_id, ph.type, ph.name_fr, ph.name_ar, ph.name_fr_confidence,
+  ph.external_id AS pharmacy_id, ph.type,
+  COALESCE(ph.name_fr, ph.name_ar) AS name_fr,
+  CASE WHEN ph.name_fr IS NULL THEN NULL ELSE ph.name_ar END AS name_ar,
+  ph.name_fr_confidence,
   ph.address_fr, ph.address_ar, ph.phone_e164, ph.lat, ph.lng
 `
 

@@ -30,7 +30,10 @@ export async function GET(request: NextRequest) {
 
   try {
     const rows = await query<GardePharmacy & { geocode_status: string }>(`
-      SELECT external_id AS pharmacy_id, wilaya_code, type, name_fr, name_ar, name_fr_confidence,
+      SELECT external_id AS pharmacy_id, wilaya_code, type,
+             COALESCE(name_fr, name_ar) AS name_fr,
+             CASE WHEN name_fr IS NULL THEN NULL ELSE name_ar END AS name_ar,
+             name_fr_confidence,
              commune_code, commune_name_fr, commune_name_ar,
              address_fr, address_ar, phone_e164, lat, lng, geocode_status
       FROM garde_pharmacies
