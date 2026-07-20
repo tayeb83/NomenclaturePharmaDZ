@@ -7,7 +7,7 @@ import { PWAManager } from '@/components/pwa/PWAManager'
 import { PageVisitTracker } from '@/components/analytics/PageVisitTracker'
 import { getStats } from '@/lib/queries'
 import { isAdminSessionValid } from '@/lib/admin-auth'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { getDir, isLang } from '@/lib/i18n'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
@@ -77,7 +77,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const session = cookieStore.get('admin_session')?.value
   const isAdmin = isAdminSessionValid(session)
   const cookieLang = cookieStore.get('lang')?.value
-  const initialLang = isLang(cookieLang) ? cookieLang : 'fr'
+
+  // Les routes /ar/* ont une URL dédiée et doivent rester en arabe pour les
+  // robots quel que soit le cookie de langue du visiteur — sinon Google
+  // verrait un <html lang> incohérent avec le contenu qu'il vient d'indexer.
+  const headerStore = await headers()
+  const pathname = headerStore.get('x-pathname') || ''
+  const initialLang = pathname.startsWith('/ar/') || pathname === '/ar'
+    ? 'ar'
+    : (isLang(cookieLang) ? cookieLang : 'fr')
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -129,7 +137,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         )}
       </head>
       <body suppressHydrationWarning>
-        <LanguageProvider>
+        <LanguageProvider initialLang={initialLang}>
           <Nav currentVersion={currentVersion} isAdmin={isAdmin} />
           <main className="main-content">
             {children}

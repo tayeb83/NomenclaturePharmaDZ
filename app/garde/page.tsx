@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
-import { queryOne } from '@/lib/db'
+import { permanentRedirect } from 'next/navigation'
+import { getGardeRosterMeta, slugify } from '@/lib/garde'
 import type { GardeRosterMeta } from '@/lib/db-types'
 import { GardeClient } from './GardeClient'
 
@@ -10,16 +11,8 @@ type GardeSearchParams = { wilaya?: string; commune?: string; mode?: string; mon
 const VALID_MODES = new Set(['now', 'tonight', 'friday', 'month'])
 
 async function getRosterMeta(wilaya: string, commune: string): Promise<GardeRosterMeta | null> {
-  if (!wilaya || !commune) return null
   try {
-    return await queryOne<GardeRosterMeta>(`
-      SELECT wilaya_code, wilaya_name_fr, commune_code, commune_name_fr,
-             period_from, period_to, review_status, issuer_fr, source_page
-      FROM garde_rosters
-      WHERE wilaya_code = $1 AND commune_code = $2
-      ORDER BY imported_at DESC
-      LIMIT 1
-    `, [wilaya, commune])
+    return await getGardeRosterMeta(wilaya, commune)
   } catch {
     return null
   }
@@ -100,6 +93,20 @@ export default async function GardePage({
   const initialCommune = params.commune || ''
   const initialMode = VALID_MODES.has(params.mode || '') ? (params.mode as 'now' | 'tonight' | 'friday' | 'month') : 'now'
   const initialMonth = params.month || ''
+
+  // /garde?wilaya=&commune= est l'ancienne URL à paramètres — dès qu'on
+  // reconnaît une commune couverte, on redirige (308, équivalent SEO d'un
+  // 301) vers la page propre correspondante afin de consolider l'indexation
+  // sur une seule URL par commune et de préserver les liens déjà partagés.
+  const meta = await getRosterMeta(initialWilaya, initialCommune)
+  if (meta) {
+    const cleanPath = `/pharmacie-de-garde/${slugify(meta.wilaya_name_fr)}/${slugify(meta.commune_name_fr)}`
+    const qs = new URLSearchParams()
+    if (initialMode !== 'now') qs.set('mode', initialMode)
+    if (initialMode === 'month' && initialMonth) qs.set('month', initialMonth)
+    const query = qs.toString()
+    permanentRedirect(`${cleanPath}${query ? `?${query}` : ''}`)
+  }
 
   return (
     <div className="container" style={{ maxWidth: 900, margin: '0 auto', padding: '40px 16px 80px' }}>

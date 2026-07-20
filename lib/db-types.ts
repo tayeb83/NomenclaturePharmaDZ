@@ -172,6 +172,7 @@ export type GardeRosterMeta = {
   review_status: string
   issuer_fr: string | null
   source_page: string | null
+  imported_at?: string
 }
 
 export type GardeCoverageEntry = {

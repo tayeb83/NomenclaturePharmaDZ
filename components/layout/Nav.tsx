@@ -61,7 +61,8 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
         id: 'pharmacies',
         label: fr ? '🏥 Pharmacies' : '🏥 الصيدليات',
         links: [
-          { href: '/garde',       label: fr ? '🏥 Pharmacies de garde' : '🏥 صيدليات الحراسة' },
+          { href: '/pharmacie-de-garde', label: fr ? '🏥 Pharmacies de garde par commune' : '🏥 صيدليات الحراسة حسب البلدية' },
+          { href: '/garde',       label: fr ? '📍 Pharmacie de garde près de moi' : '📍 أقرب صيدلية حراسة' },
           { href: '/pharmacies',  label: fr ? '📍 Annuaire des pharmacies' : '📍 دليل الصيدليات' },
         ],
       },

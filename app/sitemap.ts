@@ -7,6 +7,7 @@ import {
   getAllRetraitAnnees,
   getAllNouveauteAnneeMois,
 } from '@/lib/queries'
+import { getGardeCoverage, slugify } from '@/lib/garde'
 import { ARTICLES } from '@/lib/articles'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
@@ -62,7 +63,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${APP_URL}/garde`,
       lastModified: new Date(),
       changeFrequency: 'daily',
-      priority: 0.8,
+      priority: 0.6,
+    },
+    {
+      url: `${APP_URL}/pharmacie-de-garde`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    {
+      url: `${APP_URL}/ar/pharmacie-de-garde`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.85,
     },
     {
       url: `${APP_URL}/pharmacies`,
@@ -189,6 +202,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // ignore
   }
 
+  // ─── Pages pharmacies de garde par commune (FR + AR) ──────────
+  let gardePages: MetadataRoute.Sitemap = []
+  try {
+    const coverage = await getGardeCoverage()
+    gardePages = coverage.flatMap(c => {
+      const wilayaSlug = slugify(c.wilaya_name_fr)
+      const communeSlug = slugify(c.commune_name_fr)
+      return [
+        {
+          url: `${APP_URL}/pharmacie-de-garde/${wilayaSlug}/${communeSlug}`,
+          lastModified: new Date(),
+          changeFrequency: 'daily' as const,
+          priority: 0.85,
+        },
+        {
+          url: `${APP_URL}/ar/pharmacie-de-garde/${wilayaSlug}/${communeSlug}`,
+          lastModified: new Date(),
+          changeFrequency: 'daily' as const,
+          priority: 0.8,
+        },
+      ]
+    })
+  } catch {
+    // Si la DB est inaccessible, on ignore les pages de garde
+  }
+
   // ─── Pages articles ────────────────────────────────────────────
   const articlePages: MetadataRoute.Sitemap = [
     {
@@ -215,5 +254,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...retraitAnneePages,
     ...nouveautePages,
     ...substitutionPages,
+    ...gardePages,
   ]
 }

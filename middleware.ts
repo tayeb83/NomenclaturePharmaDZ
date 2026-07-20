@@ -15,11 +15,18 @@ export function middleware(request: NextRequest) {
       body: payload,
       keepalive: true,
     }).catch(() => {})
+
+    return NextResponse.next()
   }
 
-  return NextResponse.next()
+  // Transmet le chemin au layout racine (via next/headers) pour forcer
+  // lang="ar"/dir="rtl" sur les routes /ar/* indépendamment du cookie de
+  // langue — nécessaire pour que ces pages restent indexables séparément.
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-pathname', pathname)
+  return NextResponse.next({ request: { headers: requestHeaders } })
 }
 
 export const config = {
-  matcher: ['/api/:path*'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 }
