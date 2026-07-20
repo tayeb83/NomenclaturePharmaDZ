@@ -7,6 +7,7 @@
 import { query, queryOne } from '@/lib/db'
 import type { GardeShift, GardeRosterMeta, GardeCoverageEntry } from '@/lib/db-types'
 import { slugify } from '@/lib/slug'
+import { ALGERIA_WILAYAS } from '@/lib/wilayas'
 
 export { slugify }
 
@@ -35,24 +36,50 @@ export async function getGardeCoverage(): Promise<GardeCoverageEntry[]> {
   `)
 }
 
-export type GardeWilayaGroup = {
-  wilaya_code: string
-  wilaya_name_fr: string
-  wilaya_name_ar: string | null
+export type WilayaHubEntry = {
+  code: string
+  name_fr: string
+  name_ar: string
+  slug: string
+  covered: boolean
   communes: GardeCoverageEntry[]
 }
 
-export function groupByWilaya(coverage: GardeCoverageEntry[]): GardeWilayaGroup[] {
-  const groups = new Map<string, GardeWilayaGroup>()
+/**
+ * Croise les 58 wilayas officielles avec la couverture réelle
+ * (garde_rosters), par nom normalisé — les wilaya_code de la DB viennent
+ * de l'extraction DSP au cas par cas et ne suivent pas forcément le même
+ * référentiel que le code officiel utilisé pour l'URL, donc on ne s'y fie
+ * pas pour ce rapprochement.
+ */
+export function buildWilayaHub(coverage: GardeCoverageEntry[]): WilayaHubEntry[] {
+  const bySlug = new Map<string, GardeCoverageEntry[]>()
   for (const entry of coverage) {
-    let group = groups.get(entry.wilaya_code)
-    if (!group) {
-      group = { wilaya_code: entry.wilaya_code, wilaya_name_fr: entry.wilaya_name_fr, wilaya_name_ar: entry.wilaya_name_ar, communes: [] }
-      groups.set(entry.wilaya_code, group)
-    }
-    group.communes.push(entry)
+    const s = slugify(entry.wilaya_name_fr)
+    const list = bySlug.get(s)
+    if (list) list.push(entry)
+    else bySlug.set(s, [entry])
   }
-  return [...groups.values()].sort((a, b) => a.wilaya_name_fr.localeCompare(b.wilaya_name_fr, 'fr'))
+
+  const knownSlugs = new Set(ALGERIA_WILAYAS.map(w => slugify(w.name_fr)))
+
+  const hub: WilayaHubEntry[] = ALGERIA_WILAYAS.map(w => {
+    const slug = slugify(w.name_fr)
+    const communes = bySlug.get(slug) || []
+    return { code: w.code, name_fr: w.name_fr, name_ar: w.name_ar, slug, covered: communes.length > 0, communes }
+  })
+
+  // Filet de sécurité : si une wilaya couverte en DB ne correspond à aucune
+  // entrée du référentiel statique (coquille, nom différent...), on
+  // l'ajoute quand même plutôt que de perdre silencieusement des communes
+  // déjà importées.
+  for (const [slug, communes] of bySlug) {
+    if (knownSlugs.has(slug)) continue
+    const first = communes[0]
+    hub.push({ code: first.wilaya_code, name_fr: first.wilaya_name_fr, name_ar: first.wilaya_name_ar || '', slug, covered: true, communes })
+  }
+
+  return hub
 }
 
 /** Résout un couple de slugs d'URL (wilaya, commune) vers l'entrée de couverture correspondante. */
