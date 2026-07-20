@@ -176,9 +176,14 @@ export function GardeGeocodeClient() {
         position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 2px 20px rgba(0,0,0,0.3)',
       }}>
         <div style={{ fontWeight: 800, fontSize: 15 }}>💊 Géocodage — Pharmacies de garde</div>
-        <Link href="/admin" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
-          ← Admin
-        </Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <Link href="/admin/garde/export" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
+            🖨️ Export imprimable
+          </Link>
+          <Link href="/admin" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
+            ← Admin
+          </Link>
+        </div>
       </header>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 24px 0' }}>
