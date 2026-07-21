@@ -99,8 +99,6 @@ export default async function GardeCommunePageAr({
     mode === 'month' ? getGardeMonth(wilayaCode, communeCode, month) : Promise.resolve(null),
   ])
 
-  const activeCount = initialData.day_schedule.filter(s => s.active_now).length
-
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
@@ -147,22 +145,11 @@ export default async function GardeCommunePageAr({
         <span style={{ color: 'var(--navy)', fontWeight: 600 }}>{communeAr}</span>
       </nav>
 
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 10, color: 'var(--navy)' }}>
-          🏥 صيدلية الحراسة اليوم في {communeAr}
-        </h1>
-        <p style={{ color: 'var(--slate-500)', fontSize: 16, maxWidth: 640, lineHeight: 1.6 }}>
-          {activeCount > 0
-            ? `${activeCount} صيدلية مناوبة حاليًا في ${communeAr}، ولاية ${wilayaAr}.`
-            : `برنامج صيدليات الحراسة في ${communeAr}، ولاية ${wilayaAr}.`}
-          {' '}العناوين وأرقام الهاتف وأوقات المناوبة — مصدر رسمي (مديرية الصحة والسكان).
-        </p>
-        <p style={{ fontSize: 13 }}>
-          <a href={`/pharmacie-de-garde/${wilayaSlug}/${communeSlug}`} style={{ color: 'var(--blue)' }}>
-            En français — version française
-          </a>
-        </p>
-      </div>
+      <p style={{ fontSize: 13, marginBottom: 8 }}>
+        <a href={`/pharmacie-de-garde/${wilayaSlug}/${communeSlug}`} style={{ color: 'var(--blue)' }}>
+          En français — version française
+        </a>
+      </p>
 
       <GardeCommuneClient
         lang="ar"
@@ -172,6 +159,7 @@ export default async function GardeCommunePageAr({
         wilayaCode={wilayaCode}
         communeCode={communeCode}
         communeName={communeAr}
+        wilayaName={wilayaAr}
         initialCoverage={coverage}
         initialData={initialData}
         initialMode={mode}
