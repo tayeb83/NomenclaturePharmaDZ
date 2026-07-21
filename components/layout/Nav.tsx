@@ -57,7 +57,7 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
         type: 'link',
         href: '/outils',
         label: fr ? 'Outils' : 'الأدوات',
-        match: ['/outils', '/comparateur', '/veille', '/medicaments-critiques'],
+        match: ['/outils', '/comparateur', '/veille', '/medicaments-critiques', '/classes-therapeutiques'],
       },
       {
         type: 'dropdown',

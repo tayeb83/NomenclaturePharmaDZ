@@ -4,6 +4,7 @@ import {
   getAllEnregistrements,
   getCriticalSample,
   getCriticalCount,
+  getAtcRootsWithCounts,
 } from '@/lib/queries'
 import { OutilsClient } from './OutilsClient'
 import type { Metadata } from 'next'
@@ -13,7 +14,7 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.verc
 export const metadata: Metadata = {
   title: 'Outils & analyses',
   description:
-    'Espace outils DwaDZ : comparateur du marché pharmaceutique algérien, veille réglementaire des nouveaux enregistrements et liste des médicaments critiques.',
+    'Espace outils DwaDZ : comparateur du marché pharmaceutique algérien, veille réglementaire des nouveaux enregistrements, liste des médicaments critiques et classes thérapeutiques ATC.',
   alternates: { canonical: `${APP_URL}/outils` },
 }
 export const dynamic = 'force-dynamic'
@@ -22,10 +23,11 @@ export default async function OutilsPage() {
   const [market, annees] = await Promise.all([getMarketComparatorData(), getAvailableAnnees(1)])
   const annee = annees[0] ?? new Date().getFullYear()
 
-  const [veilleSample, criticalSample, criticalCount] = await Promise.all([
+  const [veilleSample, criticalSample, criticalCount, atcRoots] = await Promise.all([
     getAllEnregistrements(annee, 3),
     getCriticalSample(4),
     getCriticalCount(),
+    getAtcRootsWithCounts(),
   ])
 
   return (
@@ -47,6 +49,11 @@ export default async function OutilsPage() {
         classe_therapeutique: r.classe_therapeutique,
         marque: r.marque,
       }))}
+      atcRoots={[...atcRoots]
+        .sort((a, b) => (b.dci_count ?? 0) - (a.dci_count ?? 0))
+        .slice(0, 4)
+        .map(r => ({ code: r.code, label_fr: r.label_fr, dci_count: r.dci_count ?? 0 }))}
+      atcTotal={atcRoots.length}
     />
   )
 }

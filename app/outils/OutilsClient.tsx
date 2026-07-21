@@ -4,6 +4,12 @@ import Link from 'next/link'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 
 type VeilleRow = { nom_marque: string; dci: string; labo: string | null; date_init: string | null }
+type AtcRoot = { code: string; label_fr: string | null; dci_count: number }
+
+const ATC_ICONS: Record<string, string> = {
+  A: '🍽️', B: '🩸', C: '❤️', D: '🧴', G: '⚕️', H: '🧬', J: '🦠',
+  L: '🎗️', M: '🦴', N: '🧠', P: '🪳', R: '🫁', S: '👁️', V: '📦',
+}
 type CriticalRow = {
   dci_critique: string
   forme_critique: string | null
@@ -52,6 +58,8 @@ export function OutilsClient({
   veilleSample,
   criticalCount,
   criticalSample,
+  atcRoots,
+  atcTotal,
 }: {
   localImporte: { local: number; importe: number; inconnu: number }
   topLabos: { labo: string; nb: number }[]
@@ -59,6 +67,8 @@ export function OutilsClient({
   veilleSample: VeilleRow[]
   criticalCount: number
   criticalSample: CriticalRow[]
+  atcRoots: AtcRoot[]
+  atcTotal: number
 }) {
   const { lang } = useLanguage()
   const t = (fr: string, ar: string) => lang === 'ar' ? ar : fr
@@ -211,6 +221,50 @@ export function OutilsClient({
               </div>
               <Link href="/medicaments-critiques" style={ctaStyle}>
                 {t('Ouvrir la liste complète →', 'افتح القائمة الكاملة ←')}
+              </Link>
+            </div>
+
+            {/* ─── Classes thérapeutiques (ATC) ───────────── */}
+            <div style={cardStyle}>
+              <div style={{ fontSize: 30, marginBottom: 10 }}>🧬</div>
+              <div style={{ fontWeight: 800, fontSize: 17, color: '#0f172a' }}>
+                {t('Classes thérapeutiques (ATC)', 'الفئات العلاجية (ATC)')}
+              </div>
+              <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>
+                {t(
+                  'Naviguez dans la nomenclature par classification ATC de l\'OMS, du système anatomique jusqu\'à la substance active.',
+                  'تصفح التسمية حسب تصنيف ATC لمنظمة الصحة العالمية، من الجهاز التشريحي إلى المادة الفعالة.'
+                )}
+              </div>
+              <div style={previewStyle}>
+                <div style={previewLabelStyle}>
+                  {atcTotal > 0
+                    ? t(`Aperçu — ${atcTotal} groupes anatomiques`, `لمحة — ${atcTotal} مجموعات تشريحية`)
+                    : t('Aperçu', 'لمحة')}
+                </div>
+                {atcRoots.map(r => (
+                  <div key={r.code} style={{ marginBottom: 7 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, fontWeight: 600, color: '#334155', marginBottom: 3 }}>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingInlineEnd: 8 }}>
+                        {ATC_ICONS[r.code] || '💊'} {r.code} — {r.label_fr || r.code}
+                      </span>
+                      <span style={{ color: '#0369a1', flexShrink: 0 }}>
+                        {r.dci_count} DCI
+                      </span>
+                    </div>
+                    <div style={{ height: 4, background: '#e2e8f0', borderRadius: 4, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', background: '#0f766e', width: `${Math.min(100, (r.dci_count / (atcRoots[0]?.dci_count || 1)) * 100)}%` }} />
+                    </div>
+                  </div>
+                ))}
+                {atcRoots.length === 0 && (
+                  <div style={{ fontSize: 12.5, color: '#64748b' }}>
+                    {t('Aucune donnée disponible.', 'لا توجد بيانات متاحة.')}
+                  </div>
+                )}
+              </div>
+              <Link href="/classes-therapeutiques" style={ctaStyle}>
+                {t('Explorer les classes →', 'استكشف الفئات ←')}
               </Link>
             </div>
           </div>
