@@ -289,6 +289,61 @@ Une fois configuré, `POST /api/publish` (`type: "retrait"` ou `"nouveaute"`) en
 
 ---
 
+## Recherche tolérante et phonétique (fautes de frappe, arabe/darija, synonymes)
+
+La recherche (`/api/search`, page `/recherche`, accueil) applique un repli intelligent quand la recherche stricte ne renvoie rien :
+
+1. **Synonymie** (`search_synonyms`) : noms commerciaux étrangers, appellations populaires et graphies arabes → terme officiel de la nomenclature. Ex : `doliprane`, `دوليبران` → `PARACETAMOL`.
+2. **Recherche floue trigram + phonétique** (`pg_trgm` + repli phonétique dans `lib/search-normalize.ts` / `lib/queries.ts`) : `amoxiciline` → AMOXICILLINE, `parasetamol` → PARACETAMOL, translittération arabe → latin, arabizi (`3`, `7`, `9`…).
+
+Activation de la synonymie (facultative — le flou trigram fonctionne sans) :
+```bash
+psql "$DATABASE_URL" -f sql/11_search_synonyms.sql
+```
+Pour enrichir la synonymie, insérer dans `search_synonyms` (`term`, `term_norm` = forme latine normalisée, `target` = terme à rechercher). L'UI signale à l'utilisateur quand les résultats proviennent du repli (« résultats approchés » / substance résolue via synonyme).
+
+⚠️ `foldPhonetic()` (lib/search-normalize.ts) et `phoneticFoldSql()` (lib/queries.ts) doivent rester strictement équivalents : toute nouvelle règle doit être ajoutée des deux côtés.
+
+---
+
+## Navigation par classe thérapeutique (ATC)
+
+Pages `/classes-therapeutiques` (les 14 groupes anatomiques) et `/classes-therapeutiques/[code]` (drill-down niveau 1 → 5, avec fil d'Ariane, sous-classes et DCI de la nomenclature mappées). Les codes ATC des fiches médicaments sont cliquables vers ces pages.
+
+Prérequis : la classification ATC et le mapping DCI doivent être chargés (tables `atc_codes` + `dci_atc_mapping`, migration `sql/04_atc_codes.sql`, import via `scripts/import_atc.py` / `scripts/restore_atc_dump.py`). Sans données, les pages affichent un message explicite.
+
+---
+
+## Crowdsourcing pharmacies de garde
+
+```bash
+psql "$DATABASE_URL" -f sql/12_garde_crowdsourcing.sql
+```
+
+Sur chaque pharmacie des pages `/pharmacie-de-garde/[wilaya]/[commune]` (FR + AR) :
+- **✔ Ouverte, je confirme** — confirmation en un clic (`POST /api/garde/report`, type `confirme_ouverte`)
+- **⚠ Signaler une erreur** — formulaire (horaire, adresse, téléphone, fermée…)
+- **🏪 C'est ma pharmacie** — revendication de fiche par le pharmacien (`POST /api/garde/claim` : nom, téléphone, WhatsApp, email). Après vérification manuelle, il devient contributeur de sa fiche (et prospect naturel de la fiche premium).
+
+Modération : `/admin/garde/signalements` (liste + changement de statut). Anti-abus : rate-limit par hash d'IP salé (pas d'IP en clair).
+
+---
+
+## Espace Pro (monétisation B2B) — page `/pro`
+
+```bash
+psql "$DATABASE_URL" -f sql/13_pro_leads.sql
+```
+
+Trois offres présentées avec capture de leads (`POST /api/pro/lead`, consultation admin via `GET /api/admin/pro/leads`) :
+1. **Veille réglementaire Premium** (labos/importateurs) — alertes ciblées par classe ATC, retraits, AMM non renouvelées, exports. À partir de 8 000 DZD/mois.
+2. **API Nomenclature structurée** (éditeurs logiciels d'officine, startups santé, assurances) — données nettoyées, versionnées, enrichies ATC + synonymie. À partir de 20 000 DZD/mois.
+3. **Fiche Pharmacie Premium** — badge vérifié, WhatsApp cliquable, mise en avant locale dans les pages de garde. À partir de 500 DZD/mois.
+
+Suivi commercial : statut du lead (`nouveau` → `contacte` → `converti`).
+
+---
+
 ## Prix officiel / remboursement CNAS — état de l'investigation
 
 Aucune donnée de prix ni de remboursement n'est disponible dans ce projet à ce jour. Deux pistes officielles distinctes ont été identifiées, ni l'une ni l'autre encore intégrée :

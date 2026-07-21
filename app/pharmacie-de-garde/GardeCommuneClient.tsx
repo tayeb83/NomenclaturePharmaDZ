@@ -7,6 +7,7 @@ import type { GardeShift, GardeCoverageEntry } from '@/lib/db-types'
 import type { GardeNowResult, GardeMonthResult } from '@/lib/garde'
 import { slugify } from '@/lib/slug'
 import type { Lang } from '@/lib/i18n'
+import { GardeFeedback } from '@/components/garde/GardeFeedback'
 
 const GardeMap = dynamic(() => import('../garde/GardeMap'), { ssr: false })
 
@@ -475,6 +476,13 @@ export function GardeCommuneClient({
                     {t.route}
                   </a>
                 </div>
+                <GardeFeedback
+                  lang={lang}
+                  wilayaCode={wilayaCode}
+                  communeCode={communeCode}
+                  pharmacyExternalId={shift.pharmacy_id ?? null}
+                  pharmacyName={displayName(shift, lang)}
+                />
               </div>
             ))}
           </div>

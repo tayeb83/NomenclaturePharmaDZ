@@ -45,6 +45,7 @@ export function Footer() {
               <li><Link href="/recherche">{t('Médicaments', 'الأدوية')}</Link></li>
               <li><Link href="/alertes">{t('Alertes', 'التنبيهات')}</Link></li>
               <li><Link href="/substitution">{t('Substitution générique', 'الاستبدال الجنيس')}</Link></li>
+              <li><Link href="/classes-therapeutiques">{t('Classes thérapeutiques (ATC)', 'الفئات العلاجية (ATC)')}</Link></li>
               <li><Link href="/articles">{t('Articles & Dossiers', 'مقالات ودراسات')}</Link></li>
             </ul>
           </div>
@@ -53,6 +54,7 @@ export function Footer() {
             <h4>{t('Ressources', 'الموارد')}</h4>
             <ul className="footer-links">
               <li><Link href="/pharmacies">{t('Annuaire des pharmacies', 'دليل الصيدليات')}</Link></li>
+              <li><Link href="/pro">{t('Espace Pro', 'الفضاء المهني')}</Link></li>
               <li><Link href="/contact">{t('Contact', 'اتصل بنا')}</Link></li>
               <li><Link href="/a-propos">{t('À propos', 'حول المنصة')}</Link></li>
               <li><Link href="/help">{t('Aide & guide', 'المساعدة والدليل')}</Link></li>

@@ -1,4 +1,4 @@
-import { searchMedicaments } from '@/lib/queries'
+import { searchMedicamentsTolerant, type TolerantSearchResponse } from '@/lib/queries'
 import type { SearchResult } from '@/lib/db-types'
 import { SearchClient } from './SearchClient'
 import type { Metadata } from 'next'
@@ -60,10 +60,12 @@ type SearchFilters = {
   advanced?: AdvancedSearchCondition[]
 }
 
-async function searchDrugs(query: string, scope: string, filters: SearchFilters): Promise<SearchResult[]> {
+async function searchDrugs(query: string, scope: string, filters: SearchFilters): Promise<TolerantSearchResponse> {
   const hasAdvanced = (filters.advanced || []).some((condition) => condition.value?.trim())
-  if (!query.trim() && !filters.labo?.trim() && !filters.substance?.trim() && !hasAdvanced) return []
-  return searchMedicaments(query, scope, 60, filters)
+  if (!query.trim() && !filters.labo?.trim() && !filters.substance?.trim() && !hasAdvanced) {
+    return { results: [], fuzzy: false, matchedTerm: null, synonymTerm: null }
+  }
+  return searchMedicamentsTolerant(query, scope, 60, filters)
 }
 
 function parseAdvanced(advancedRaw: string | undefined): AdvancedSearchCondition[] {
@@ -97,9 +99,12 @@ export default async function RecherchePage({
   }
 
   let results: SearchResult[] = []
+  let fuzzyInfo: { fuzzy: boolean; matchedTerm: string | null; synonymTerm: string | null } = { fuzzy: false, matchedTerm: null, synonymTerm: null }
   let searchError = false
   try {
-    results = await searchDrugs(query, scope, filters)
+    const response = await searchDrugs(query, scope, filters)
+    results = response.results
+    fuzzyInfo = { fuzzy: response.fuzzy, matchedTerm: response.matchedTerm, synonymTerm: response.synonymTerm }
   } catch {
     searchError = true
   }
@@ -123,6 +128,7 @@ export default async function RecherchePage({
             initialQuery={query}
             initialScope={scope}
             initialResults={results}
+            initialFuzzyInfo={fuzzyInfo}
             initialLabo={filters.labo || ''}
             initialSubstance={filters.substance || ''}
             initialActiveOnly={Boolean(filters.activeOnly)}
