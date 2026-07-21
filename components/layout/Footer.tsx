@@ -44,6 +44,7 @@ export function Footer() {
               <li><Link href="/pharmacie-de-garde">{t('Pharmacies de garde', 'صيدليات المناوبة')}</Link></li>
               <li><Link href="/recherche">{t('Médicaments', 'الأدوية')}</Link></li>
               <li><Link href="/alertes">{t('Alertes', 'التنبيهات')}</Link></li>
+              <li><Link href="/outils">{t('Outils & analyses', 'الأدوات والتحليلات')}</Link></li>
               <li><Link href="/substitution">{t('Substitution générique', 'الاستبدال الجنيس')}</Link></li>
               <li><Link href="/classes-therapeutiques">{t('Classes thérapeutiques (ATC)', 'الفئات العلاجية (ATC)')}</Link></li>
               <li><Link href="/articles">{t('Articles & Dossiers', 'مقالات ودراسات')}</Link></li>

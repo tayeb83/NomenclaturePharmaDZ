@@ -6,17 +6,55 @@ import { useLanguage } from '@/components/i18n/LanguageProvider'
 import { PrintButton } from '@/components/ui/PrintButton'
 import { GlossarySection } from '@/components/ui/GlossarySection'
 
+function pageHref(annee: number | null, page: number) {
+  const params = new URLSearchParams()
+  if (annee) params.set('annee', String(annee))
+  if (page > 1) params.set('page', String(page))
+  const qs = params.toString()
+  return `/alertes${qs ? `?${qs}` : ''}#retraits`
+}
+
+/** Numéros de pages à afficher : 1 … autour de la page courante … dernière */
+function pageNumbers(page: number, totalPages: number): (number | '…')[] {
+  if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1)
+  const around = [page - 1, page, page + 1].filter(p => p > 1 && p < totalPages)
+  const out: (number | '…')[] = [1]
+  if (around[0] > 2) out.push('…')
+  out.push(...around)
+  if (around[around.length - 1] < totalPages - 1) out.push('…')
+  out.push(totalPages)
+  return out
+}
+
 export function AlertesClient({
   retraits,
   nonRenouveles,
   motifStats,
+  annee,
+  annees,
+  page,
+  totalPages,
+  total,
 }: {
   retraits: any[]
   nonRenouveles: any[]
   motifStats: [string, number][]
+  annee: number | null
+  annees: number[]
+  page: number
+  totalPages: number
+  total: number
 }) {
   const { lang } = useLanguage()
   const t = (fr: string, ar: string) => lang === 'ar' ? ar : fr
+
+  const chipStyle = (active: boolean): React.CSSProperties => ({
+    padding: '6px 14px', borderRadius: 20, fontSize: 12.5, fontWeight: 700,
+    textDecoration: 'none', border: '1.5px solid',
+    background: active ? '#991b1b' : 'white',
+    color: active ? 'white' : '#475569',
+    borderColor: active ? '#991b1b' : '#e2e8f0',
+  })
 
   return (
     <>
@@ -49,13 +87,64 @@ export function AlertesClient({
 
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 32 }}>
             <div>
-              <div id="retraits" className="section-title">
-                🚫 {t(`Médicaments retirés (${retraits.length} affichés)`, `الأدوية المسحوبة (${retraits.length} معروض)`)}
+              <div id="retraits" className="section-title" style={{ scrollMarginTop: 90 }}>
+                🚫 {annee
+                  ? t(`Médicaments retirés en ${annee} (${total})`, `الأدوية المسحوبة في ${annee} (${total})`)
+                  : t(`Médicaments retirés (${total})`, `الأدوية المسحوبة (${total})`)}
               </div>
-              <div className="section-sub">{t('Dernier retrait en date', 'آخر انسحاب')}</div>
+              <div className="section-sub">
+                {t('Liste complète, du retrait le plus récent au plus ancien', 'القائمة الكاملة، من الأحدث إلى الأقدم')}
+              </div>
+
+              {/* Filtre par année de retrait */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '12px 0 16px' }}>
+                <Link href={pageHref(null, 1)} style={chipStyle(annee === null)}>
+                  {t('Toutes les années', 'كل السنوات')}
+                </Link>
+                {annees.map(a => (
+                  <Link key={a} href={pageHref(a, 1)} style={chipStyle(annee === a)}>
+                    {a}
+                  </Link>
+                ))}
+              </div>
+
+              {retraits.length === 0 && (
+                <div className="empty-state" style={{ padding: '24px 0' }}>
+                  {t('Aucun retrait trouvé pour ce filtre.', 'لا توجد سحوبات لهذا الفلتر.')}
+                </div>
+              )}
               {retraits.map(d => (
                 <DrugCard key={d.id} drug={{ ...d, source: 'retrait', similarity_score: 1, annee: null } as any} type="retrait" />
               ))}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="pagination">
+                  <Link
+                    href={pageHref(annee, Math.max(1, page - 1))}
+                    className="page-btn"
+                    style={page <= 1 ? { pointerEvents: 'none', opacity: 0.4 } : undefined}
+                    aria-disabled={page <= 1}
+                  >
+                    ← {t('Précédent', 'السابق')}
+                  </Link>
+                  {pageNumbers(page, totalPages).map((p, i) => p === '…' ? (
+                    <span key={`e${i}`} className="page-btn" style={{ pointerEvents: 'none', border: 'none', background: 'transparent' }}>…</span>
+                  ) : (
+                    <Link key={p} href={pageHref(annee, p)} className={`page-btn${p === page ? ' active' : ''}`}>
+                      {p}
+                    </Link>
+                  ))}
+                  <Link
+                    href={pageHref(annee, Math.min(totalPages, page + 1))}
+                    className="page-btn"
+                    style={page >= totalPages ? { pointerEvents: 'none', opacity: 0.4 } : undefined}
+                    aria-disabled={page >= totalPages}
+                  >
+                    {t('Suivant', 'التالي')} →
+                  </Link>
+                </div>
+              )}
 
               <div style={{ marginTop: 36 }}>
                 <div id="non-renouveles" className="section-title">
