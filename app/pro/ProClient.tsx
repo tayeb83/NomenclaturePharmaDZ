@@ -91,6 +91,134 @@ const OFFERS: Array<{
   },
 ]
 
+/* ─── Exemples / aperçus par offre (données fictives de démonstration) ─── */
+
+const exampleBox: React.CSSProperties = {
+  background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: 10,
+  padding: '12px 14px', marginBottom: 14,
+}
+const exampleLabel: React.CSSProperties = {
+  fontSize: 10.5, fontWeight: 800, letterSpacing: '.05em', textTransform: 'uppercase',
+  color: '#94a3b8', marginBottom: 8,
+}
+const exTh: React.CSSProperties = {
+  textAlign: 'start', fontSize: 10, fontWeight: 800, textTransform: 'uppercase',
+  letterSpacing: '.04em', color: '#94a3b8', padding: '3px 6px',
+}
+const exTd: React.CSSProperties = {
+  fontSize: 12, color: '#334155', padding: '5px 6px', borderTop: '1px solid #e2e8f0',
+}
+
+function OfferExample({ id, lang }: { id: Offer; lang: 'fr' | 'ar' }) {
+  const t = (fr: string, ar: string) => lang === 'ar' ? ar : fr
+
+  if (id === 'veille') {
+    const rows = [
+      { type: '🆕', typeFr: 'Enregistrement', typeAr: 'تسجيل جديد', prod: 'CLAMOXYL 1 g cp dispersible', detail: t('Concurrent — classe J01CA (pénicillines)', 'منافس — الفئة J01CA (بنسلينات)') },
+      { type: '🚫', typeFr: 'Retrait', typeAr: 'سحب', prod: 'XYZOL 20 mg gélule', detail: t('Retrait de lot — décision MIPH du 12/05', 'سحب حصة — قرار MIPH بتاريخ 12/05') },
+      { type: '⚠️', typeFr: 'AMM non renouvelée', typeAr: 'AMM غير مجددة', prod: 'DOLPRIX 500 mg cp', detail: t('Expiration sans renouvellement', 'انتهاء دون تجديد') },
+    ]
+    return (
+      <div style={exampleBox}>
+        <div style={exampleLabel}>
+          📩 {t('Exemple d\'alerte hebdomadaire — données de démonstration', 'مثال عن تنبيه أسبوعي — بيانات توضيحية')}
+        </div>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr>
+              <th style={exTh}>{t('Événement', 'الحدث')}</th>
+              <th style={exTh}>{t('Produit', 'المنتج')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={i}>
+                <td style={{ ...exTd, whiteSpace: 'nowrap' }}>{r.type} {t(r.typeFr, r.typeAr)}</td>
+                <td style={exTd}>
+                  <div style={{ fontWeight: 700 }}>{r.prod}</div>
+                  <div style={{ color: '#64748b', fontSize: 11.5 }}>{r.detail}</div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 8 }}>
+          {t('+ export Excel mensuel et tableau de bord filtré sur vos classes ATC.', '+ تصدير Excel شهري ولوحة متابعة مفلترة حسب فئاتكم العلاجية.')}
+        </div>
+      </div>
+    )
+  }
+
+  if (id === 'api') {
+    return (
+      <div style={exampleBox}>
+        <div style={exampleLabel}>
+          🔌 {t('Exemple de réponse API — jeu de données restreint', 'مثال عن استجابة API — بيانات محدودة')}
+        </div>
+        <pre dir="ltr" style={{
+          background: '#0f172a', color: '#e2e8f0', borderRadius: 8, padding: '10px 12px',
+          fontSize: 11, lineHeight: 1.55, overflowX: 'auto', margin: 0, textAlign: 'left',
+        }}>
+{`GET /api/v1/medicaments?dci=amoxicilline
+
+{
+  "version": "nomenclature-2026-06",
+  "total": 42,
+  "resultats": [{
+    "n_enreg": "23/20B 123/090",
+    "nom_marque": "AMODEX 500 mg",
+    "dci": "amoxicilline",
+    "forme": "gélule",
+    "atc": "J01CA04",
+    "labo": "SAIDAL",
+    "pays": "Algérie",
+    "statut": "commercialisé",
+    "synonymes": ["amoxiciline", "أموكسيسيلين"]
+  }]
+}`}
+        </pre>
+        <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 8 }}>
+          {t('Données fictives illustratives. Accès complet : nomenclature versionnée + webhooks nouveautés/retraits.', 'بيانات توضيحية. الوصول الكامل: تسمية مؤرشفة بالإصدارات + إشعارات فورية للجديد والمسحوب.')}
+        </div>
+      </div>
+    )
+  }
+
+  // fiche_pharmacie
+  return (
+    <div style={exampleBox}>
+      <div style={exampleLabel}>
+        🏪 {t('Exemple de fiche premium — données de démonstration', 'مثال عن صفحة مميزة — بيانات توضيحية')}
+      </div>
+      <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: 10, padding: '12px 14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span style={{ fontWeight: 800, fontSize: 14, color: '#0f172a' }}>{t('Pharmacie El Amel', 'صيدلية الأمل')}</span>
+          <span style={{ background: '#dcfce7', color: '#15803d', fontSize: 10.5, fontWeight: 800, borderRadius: 12, padding: '2px 8px' }}>
+            ✅ {t('Vérifiée', 'موثّقة')}
+          </span>
+          <span style={{ background: '#fef3c7', color: '#b45309', fontSize: 10.5, fontWeight: 800, borderRadius: 12, padding: '2px 8px' }}>
+            🌙 {t('De garde ce soir', 'مناوبة الليلة')}
+          </span>
+        </div>
+        <div style={{ fontSize: 12, color: '#64748b', marginTop: 6 }}>
+          📍 {t('12 rue Didouche Mourad, Alger-Centre', '12 شارع ديدوش مراد، الجزائر الوسطى')} · 🕘 {t('Ouvert 8h–20h', 'مفتوحة 8سا–20سا')}
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+          <span style={{ background: '#0284c7', color: 'white', fontSize: 11.5, fontWeight: 700, borderRadius: 6, padding: '5px 12px' }}>
+            📞 021 XX XX XX
+          </span>
+          <span style={{ background: '#16a34a', color: 'white', fontSize: 11.5, fontWeight: 700, borderRadius: 6, padding: '5px 12px' }}>
+            💬 WhatsApp
+          </span>
+        </div>
+        <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 10 }}>
+          👁 {t('142 consultations de votre fiche ce mois-ci', '142 زيارة لصفحتك هذا الشهر')}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const T = {
   fr: {
     headerTitle: '💼 Espace Pro',
@@ -113,6 +241,8 @@ const T = {
     sending: 'Envoi…',
     thanks: '✓ Demande transmise, merci ! Nous vous recontactons rapidement.',
     failed: 'Échec de l\'envoi, réessayez ou écrivez-nous via la page Contact.',
+    seeExample: '👁 Voir un exemple',
+    hideExample: 'Masquer l\'exemple',
   },
   ar: {
     headerTitle: '💼 الفضاء المهني',
@@ -135,6 +265,8 @@ const T = {
     sending: 'جارٍ الإرسال…',
     thanks: '✓ تم إرسال الطلب، شكرًا! سنتواصل معك قريبًا.',
     failed: 'فشل الإرسال، حاول مجددًا أو راسلنا عبر صفحة الاتصال.',
+    seeExample: '👁 شاهد مثالاً',
+    hideExample: 'إخفاء المثال',
   },
 }
 
@@ -148,6 +280,7 @@ export function ProClient() {
   const t = T[lang]
 
   const [offer, setOffer] = useState<Offer>('veille')
+  const [exampleOpen, setExampleOpen] = useState<Offer | null>(null)
   const [organisation, setOrganisation] = useState('')
   const [nom, setNom] = useState('')
   const [email, setEmail] = useState('')
@@ -225,12 +358,24 @@ export function ProClient() {
                     <li key={b} style={{ fontSize: 13, color: '#334155', lineHeight: 1.5 }}>{b}</li>
                   ))}
                 </ul>
-                <button onClick={() => selectOffer(o.id)} style={{
-                  background: '#0284c7', color: 'white', border: 'none', borderRadius: 8,
-                  padding: '10px 16px', fontSize: 13.5, fontWeight: 700, cursor: 'pointer',
-                }}>
-                  {o.cta[lang]}
-                </button>
+                {exampleOpen === o.id && <OfferExample id={o.id} lang={lang} />}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={() => setExampleOpen(p => p === o.id ? null : o.id)}
+                    style={{
+                      background: 'white', color: '#0284c7', border: '1.5px solid #bae6fd', borderRadius: 8,
+                      padding: '10px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {exampleOpen === o.id ? t.hideExample : t.seeExample}
+                  </button>
+                  <button onClick={() => selectOffer(o.id)} style={{
+                    background: '#0284c7', color: 'white', border: 'none', borderRadius: 8,
+                    padding: '10px 16px', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', flex: 1,
+                  }}>
+                    {o.cta[lang]}
+                  </button>
+                </div>
               </div>
             ))}
           </div>

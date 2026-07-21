@@ -1146,6 +1146,33 @@ export async function getRetraits(limit = 100): Promise<Retrait[]> {
   `, [limit])
 }
 
+/** Retraits paginés, avec filtre optionnel sur l'année de retrait */
+export async function getRetraitsPaged(annee: number | null, limit: number, offset: number): Promise<Retrait[]> {
+  if (annee) {
+    return query<Retrait>(`
+      SELECT * FROM retraits
+      WHERE EXTRACT(YEAR FROM date_retrait) = $1
+      ORDER BY date_retrait DESC NULLS LAST, id DESC
+      LIMIT $2 OFFSET $3
+    `, [annee, limit, offset])
+  }
+  return query<Retrait>(`
+    SELECT * FROM retraits
+    ORDER BY date_retrait DESC NULLS LAST, id DESC
+    LIMIT $1 OFFSET $2
+  `, [limit, offset])
+}
+
+export async function getRetraitsCount(annee: number | null): Promise<number> {
+  const row = annee
+    ? await queryOne<{ n: string }>(`
+        SELECT COUNT(*)::TEXT AS n FROM retraits
+        WHERE EXTRACT(YEAR FROM date_retrait) = $1
+      `, [annee])
+    : await queryOne<{ n: string }>(`SELECT COUNT(*)::TEXT AS n FROM retraits`)
+  return row ? parseInt(row.n) : 0
+}
+
 export async function getLastRetraits(limit = 3): Promise<Retrait[]> {
   return query<Retrait>(`
     SELECT * FROM retraits
@@ -1508,6 +1535,26 @@ export async function getCriticalMapping(search = ''): Promise<CriticalMappingRo
       dci_critique ASC,
       score_global DESC NULLS LAST
   `, [q, `%${q}%`])
+}
+
+/** Petit échantillon de la liste critique (aperçu espace Outils) */
+export async function getCriticalSample(limit = 4): Promise<CriticalMappingRow[]> {
+  if (!await hasTable('critical_mapping')) return []
+  return query<CriticalMappingRow>(`
+    SELECT * FROM critical_mapping
+    WHERE dci_critique IS NOT NULL
+    ORDER BY classe_therapeutique ASC NULLS LAST, n_critique ASC NULLS LAST, score_global DESC NULLS LAST
+    LIMIT $1
+  `, [limit])
+}
+
+export async function getCriticalCount(): Promise<number> {
+  if (!await hasTable('critical_mapping')) return 0
+  const row = await queryOne<{ n: string }>(`
+    SELECT COUNT(DISTINCT COALESCE(n_critique::TEXT, dci_critique || COALESCE(forme_critique, '') || COALESCE(dosage_critique, '')))::TEXT AS n
+    FROM critical_mapping
+  `)
+  return row ? parseInt(row.n) : 0
 }
 
 // ─── SEO : PAGES CIBLÉES ──────────────────────────────────────
