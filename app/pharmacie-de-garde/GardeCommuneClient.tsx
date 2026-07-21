@@ -16,6 +16,23 @@ const LABELS = {
   fr: {
     wilaya: 'Wilaya', commune: 'Commune',
     modes: { now: 'Maintenant', tonight: 'Cette nuit', friday: 'Vendredi', month: 'Vue du mois' } as Record<Mode, string>,
+    pageTitle: (mode: Mode, commune: string, monthLabel: string) => {
+      if (mode === 'tonight') return `Pharmacie de garde à ${commune} cette nuit`
+      if (mode === 'friday') return `Pharmacie de garde à ${commune} vendredi`
+      if (mode === 'month') return `Planning des pharmacies de garde à ${commune} — ${monthLabel}`
+      return `Pharmacie de garde à ${commune} aujourd'hui`
+    },
+    pageDescription: (mode: Mode, count: number, commune: string, wilaya: string, monthLabel: string) => {
+      if (mode === 'month') {
+        return count > 0
+          ? `${count} garde${count > 1 ? 's' : ''} référencée${count > 1 ? 's' : ''} pour ${monthLabel} à ${commune}, wilaya de ${wilaya}. Adresses, téléphones et horaires — source officielle DSP.`
+          : `Planning des pharmacies de garde à ${commune}, wilaya de ${wilaya}, pour ${monthLabel}. Adresses, téléphones et horaires — source officielle DSP.`
+      }
+      const periodLabel = mode === 'tonight' ? 'cette nuit' : mode === 'friday' ? 'vendredi' : 'actuellement'
+      return count > 0
+        ? `${count} pharmacie${count > 1 ? 's' : ''} de garde ${periodLabel} à ${commune}, wilaya de ${wilaya}. Adresses, téléphones et horaires — source officielle DSP.`
+        : `Planning des pharmacies de garde à ${commune}, wilaya de ${wilaya}. Adresses, téléphones et horaires — source officielle DSP.`
+    },
     copy: '🔗 Copier le lien', copied: '✓ Lien copié',
     loading: '⏳ Chargement…',
     sourceLine: (issuer: string, from: string, to: string) => `Source : ${issuer} · période ${from} → ${to}`,
@@ -33,6 +50,23 @@ const LABELS = {
   ar: {
     wilaya: 'الولاية', commune: 'البلدية',
     modes: { now: 'الآن', tonight: 'هذه الليلة', friday: 'الجمعة القادمة', month: 'عرض الشهر' } as Record<Mode, string>,
+    pageTitle: (mode: Mode, commune: string, monthLabel: string) => {
+      if (mode === 'tonight') return `صيدلية الحراسة في ${commune} هذه الليلة`
+      if (mode === 'friday') return `صيدلية الحراسة في ${commune} يوم الجمعة`
+      if (mode === 'month') return `برنامج صيدليات الحراسة في ${commune} — ${monthLabel}`
+      return `صيدلية الحراسة اليوم في ${commune}`
+    },
+    pageDescription: (mode: Mode, count: number, commune: string, wilaya: string, monthLabel: string) => {
+      if (mode === 'month') {
+        return count > 0
+          ? `${count} مناوبة مسجلة لشهر ${monthLabel} في ${commune}، ولاية ${wilaya}. العناوين وأرقام الهاتف وأوقات المناوبة — مصدر رسمي (DSP).`
+          : `برنامج صيدليات الحراسة في ${commune}، ولاية ${wilaya}، لشهر ${monthLabel}. مصدر رسمي (DSP).`
+      }
+      const periodLabel = mode === 'tonight' ? 'هذه الليلة' : mode === 'friday' ? 'يوم الجمعة' : 'حاليًا'
+      return count > 0
+        ? `${count} صيدلية مناوبة ${periodLabel} في ${commune}، ولاية ${wilaya}. العناوين وأرقام الهاتف وأوقات المناوبة — مصدر رسمي (DSP).`
+        : `برنامج صيدليات الحراسة في ${commune}، ولاية ${wilaya}. العناوين وأرقام الهاتف وأوقات المناوبة — مصدر رسمي (DSP).`
+    },
     copy: '🔗 نسخ الرابط', copied: '✓ تم النسخ',
     loading: '⏳ جارٍ التحميل…',
     sourceLine: (issuer: string, from: string, to: string) => `المصدر: ${issuer} · الفترة ${from} → ${to}`,
@@ -132,6 +166,7 @@ export function GardeCommuneClient({
   wilayaCode,
   communeCode,
   communeName,
+  wilayaName,
   initialCoverage,
   initialData,
   initialMode = 'now',
@@ -145,6 +180,7 @@ export function GardeCommuneClient({
   wilayaCode: string
   communeCode: string
   communeName: string
+  wilayaName: string
   initialCoverage: GardeCoverageEntry[]
   initialData: GardeNowResult
   initialMode?: Mode
@@ -282,8 +318,30 @@ export function GardeCommuneClient({
 
   const updatedDate = formatUpdatedDate(data?.coverage?.imported_at, lang)
 
+  const monthLabel = formatMonthLabel(monthStr, lang)
+  const activeNowCount = useMemo(() => (data?.day_schedule || []).filter(s => s.active_now).length, [data])
+  const scheduleCount = data?.day_schedule?.length ?? 0
+  const displayCount = mode === 'now' ? activeNowCount : scheduleCount
+  const pageTitle = t.pageTitle(mode, communeName, monthLabel)
+  const pageDescription = t.pageDescription(
+    mode,
+    mode === 'month' ? (monthData?.data.length ?? 0) : displayCount,
+    communeName,
+    wilayaName,
+    monthLabel
+  )
+
   return (
     <div dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 10, color: 'var(--navy)' }}>
+          🏥 {pageTitle}
+        </h1>
+        <p style={{ color: 'var(--slate-500)', fontSize: 16, maxWidth: 640, lineHeight: 1.6 }}>
+          {pageDescription}
+        </p>
+      </div>
+
       <div style={{
         background: '#fff', border: '1px solid var(--slate-200)', borderRadius: 12,
         padding: '20px 24px', marginBottom: 20, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end',
