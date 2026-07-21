@@ -78,10 +78,19 @@ function effectiveAdvanced(base: AdvancedSearchCondition[], algerieOnly: boolean
   return [...base, { field: 'statut', operator: 'equals', value: 'F', bool: 'AND' as const }]
 }
 
+type FuzzyInfo = {
+  fuzzy: boolean
+  matchedTerm: string | null
+  synonymTerm: string | null
+}
+
+const NO_FUZZY: FuzzyInfo = { fuzzy: false, matchedTerm: null, synonymTerm: null }
+
 export function SearchClient({
   initialQuery,
   initialScope,
   initialResults,
+  initialFuzzyInfo,
   initialLabo,
   initialSubstance,
   initialActiveOnly,
@@ -92,6 +101,7 @@ export function SearchClient({
   initialQuery: string
   initialScope: string
   initialResults: SearchResult[]
+  initialFuzzyInfo?: FuzzyInfo
   initialLabo: string
   initialSubstance: string
   initialActiveOnly: boolean
@@ -129,6 +139,7 @@ export function SearchClient({
   const [algerieOnly, setAlgerieOnly] = useState(initialAlgerieOnly)
   const [advanced, setAdvanced] = useState<AdvancedSearchCondition[]>(initialAdvanced.length ? initialAdvanced : [{ field: 'dci', operator: 'contains', value: '', bool: 'AND' }])
   const [results, setResults] = useState<SearchResult[]>(initialResults)
+  const [fuzzyInfo, setFuzzyInfo] = useState<FuzzyInfo>(initialFuzzyInfo ?? NO_FUZZY)
   const [loading, setLoading] = useState(false)
   const [selectedPays, setSelectedPays] = useState('')
   const [selectedLaboFacet, setSelectedLaboFacet] = useState('')
@@ -160,15 +171,17 @@ export function SearchClient({
   }, [router, startTransition, basePath])
 
   const search = useCallback(async (q: string, s: string, l: string, sub: string, active: boolean, adv: AdvancedSearchCondition[]) => {
-    if (!q.trim() && !l.trim() && !sub.trim() && !hasAdvancedFilters(adv)) { setResults([]); return }
+    if (!q.trim() && !l.trim() && !sub.trim() && !hasAdvancedFilters(adv)) { setResults([]); setFuzzyInfo(NO_FUZZY); return }
     setLoading(true)
     try {
       const params = buildSearchParams(q, s, l, sub, active, adv, false)
       const res = await fetch(`/api/search?${params.toString()}`)
       const data = await res.json()
       setResults(data.results || [])
+      setFuzzyInfo(data.fuzzy ? { fuzzy: true, matchedTerm: data.matchedTerm ?? null, synonymTerm: data.synonymTerm ?? null } : NO_FUZZY)
     } catch {
       setResults([])
+      setFuzzyInfo(NO_FUZZY)
     } finally { setLoading(false) }
   }, [])
 
@@ -445,6 +458,20 @@ export function SearchClient({
       {loading && (
         <div className="loading-spinner">
           <div className="spinner" /> {lang === 'ar' ? 'جاري البحث...' : 'Recherche en cours...'}
+        </div>
+      )}
+
+      {!loading && fuzzyInfo.fuzzy && results.length > 0 && (
+        <div style={{ background: '#fffbeb', border: '1.5px solid #fde68a', borderRadius: 10, padding: '12px 16px', marginBottom: 14, color: '#92400e', fontSize: 13.5 }}>
+          {fuzzyInfo.matchedTerm ? (
+            lang === 'ar'
+              ? <>💡 لم يتم العثور على &laquo;{query}&raquo; في التسمية — نعرض نتائج المادة الفعالة <strong>{fuzzyInfo.matchedTerm}</strong>{fuzzyInfo.synonymTerm ? <> (الاسم الشائع: {fuzzyInfo.synonymTerm})</> : null}.</>
+              : <>💡 &laquo;{query}&raquo; n&apos;est pas dans la nomenclature — résultats pour la substance <strong>{fuzzyInfo.matchedTerm}</strong>{fuzzyInfo.synonymTerm ? <> (nom courant : {fuzzyInfo.synonymTerm})</> : null}.</>
+          ) : (
+            lang === 'ar'
+              ? <>💡 لا توجد نتيجة مطابقة تمامًا لـ &laquo;{query}&raquo; — نعرض أقرب النتائج (تصحيح إملائي/صوتي).</>
+              : <>💡 Aucun résultat exact pour &laquo;&nbsp;{query}&nbsp;&raquo; — voici les résultats les plus proches (correction orthographique/phonétique).</>
+          )}
         </div>
       )}
 

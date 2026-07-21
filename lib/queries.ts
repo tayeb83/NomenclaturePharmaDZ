@@ -5,6 +5,7 @@
 
 import { query, queryOne } from './db'
 import type { Enregistrement, Retrait, NonRenouvele, SearchResult, Stats, MedicamentDetail, AtcCode, CriticalMedicament } from './db'
+import { buildQueryKeys } from './search-normalize'
 
 const schemaFeatureCache = new Map<string, boolean>()
 
@@ -547,6 +548,208 @@ export async function searchMedicaments(
     if ((error as { code?: string }).code !== '57014') throw error
     return await query<SearchResult>(fallbackSearchSql, [trimmedQuery, searchPattern, labo, laboPattern, substance, substancePattern, limit, ...advancedClause.params])
   }
+}
+
+// ─── RECHERCHE TOLÉRANTE (fautes de frappe, arabe, synonymes) ─
+
+/** Forme latine normalisée côté SQL : minuscules, sans accents ni séparateurs.
+ *  Équivalent de normalizeLatin() dans lib/search-normalize.ts. */
+function latinNormSql(columnExpr: string): string {
+  return `LOWER(REGEXP_REPLACE(UNACCENT(COALESCE(${columnExpr}, '')), '[^a-zA-Z0-9]+', '', 'g'))`
+}
+
+/** Clé phonétique côté SQL — DOIT rester équivalente à foldPhonetic()
+ *  dans lib/search-normalize.ts (mêmes substitutions, même ordre). */
+function phoneticFoldSql(columnExpr: string): string {
+  const steps: [string, string][] = [
+    ['ph', 'f'],
+    ['sh', 'ch'],
+    ['ou', 'u'],
+    ['w', 'u'],
+    ['y', 'i'],
+    ['q', 'k'],
+    ['c(?=[ei])', 's'],
+    ['c', 'k'],
+    ['x', 'ks'],
+    ['p', 'b'],
+    ['(.)\\1+', '\\1'],
+    ['e$', ''],
+  ]
+  let sql = latinNormSql(columnExpr)
+  for (const [pattern, replacement] of steps) {
+    sql = `REGEXP_REPLACE(${sql}, '${pattern}', '${replacement}', 'g')`
+  }
+  return sql
+}
+
+export type TolerantSearchInfo = {
+  /** true si les résultats proviennent du repli flou (et non de la recherche stricte) */
+  fuzzy: boolean
+  /** Terme officiel utilisé après expansion de synonyme (ex: PARACETAMOL) */
+  matchedTerm: string | null
+  /** Synonyme reconnu dans la requête (ex: doliprane, دوليبران) */
+  synonymTerm: string | null
+}
+
+export type TolerantSearchResponse = TolerantSearchInfo & { results: SearchResult[] }
+
+/** Cherche un synonyme (nom commercial, appellation populaire, graphie arabe)
+ *  correspondant à la requête. Retourne le terme officiel à rechercher. */
+async function findSynonymTarget(raw: string, normalized: string): Promise<{ term: string; target: string } | null> {
+  if (!await hasTable('search_synonyms')) return null
+  try {
+    return await queryOne<{ term: string; target: string }>(`
+      SELECT term, target
+      FROM search_synonyms
+      WHERE LOWER(term) = LOWER($1)
+         OR ($2 <> '' AND term_norm = $2)
+         OR similarity(LOWER(term), LOWER($1)) > 0.45
+         OR ($2 <> '' AND term_norm <> '' AND similarity(term_norm, $2) > 0.45)
+      ORDER BY GREATEST(
+        similarity(LOWER(term), LOWER($1)),
+        CASE WHEN $2 = '' OR term_norm = '' THEN 0 ELSE similarity(term_norm, $2) END
+      ) DESC
+      LIMIT 1
+    `, [raw, normalized])
+  } catch {
+    return null
+  }
+}
+
+/** Recherche floue par trigram sur DCI + nom de marque, avec repli phonétique
+ *  (dolipran → DOLIPRANE, amoxiciline → AMOXICILLINE, دوليبران → doliprane…). */
+async function searchFuzzyByName(
+  normalized: string,
+  phonetic: string,
+  scope: string,
+  limit: number
+): Promise<SearchResult[]> {
+  const scopeConditions: Record<string, string> = {
+    enregistrement: `AND source = 'enregistrement'`,
+    retrait:        `AND source = 'retrait'`,
+    non_renouvele:  `AND source = 'non_renouvele'`,
+    all:            '',
+  }
+  const scopeFilter = scopeConditions[scope] ?? ''
+
+  const simExpr = (dciCol: string, marqueCol: string) => `GREATEST(
+    similarity(${latinNormSql(marqueCol)}, $1),
+    similarity(${latinNormSql(dciCol)}, $1),
+    similarity(${phoneticFoldSql(marqueCol)}, $2),
+    similarity(${phoneticFoldSql(dciCol)}, $2)
+  )`
+
+  try {
+    return await query<SearchResult>(`
+      SELECT * FROM (
+        SELECT
+          'enregistrement' AS source,
+          e.id, e.n_enreg, e.dci, e.nom_marque, e.forme, e.dosage, e.labo, e.pays,
+          e.type_prod, e.statut, e.annee,
+          NULL::DATE AS date_retrait,
+          NULL::TEXT AS motif_retrait,
+          e.date_final,
+          NULL::TEXT AS code_atc,
+          FALSE AS is_critical,
+          NULL::TEXT AS critical_class_therapeutique,
+          ${simExpr('e.dci', 'e.nom_marque')} AS sim
+        FROM enregistrements e
+
+        UNION ALL
+
+        SELECT
+          'retrait' AS source,
+          r.id, r.n_enreg, r.dci, r.nom_marque, r.forme, r.dosage, r.labo, r.pays,
+          r.type_prod, r.statut, NULL::SMALLINT AS annee,
+          r.date_retrait, r.motif_retrait,
+          NULL::DATE AS date_final,
+          NULL::TEXT AS code_atc,
+          FALSE AS is_critical,
+          NULL::TEXT AS critical_class_therapeutique,
+          ${simExpr('r.dci', 'r.nom_marque')} AS sim
+        FROM retraits r
+
+        UNION ALL
+
+        SELECT
+          'non_renouvele' AS source,
+          n.id, n.n_enreg, n.dci, n.nom_marque, n.forme, n.dosage, n.labo, n.pays,
+          n.type_prod, n.statut, NULL::SMALLINT AS annee,
+          NULL::DATE AS date_retrait,
+          NULL::TEXT AS motif_retrait,
+          n.date_final,
+          NULL::TEXT AS code_atc,
+          FALSE AS is_critical,
+          NULL::TEXT AS critical_class_therapeutique,
+          ${simExpr('n.dci', 'n.nom_marque')} AS sim
+        FROM non_renouveles n
+      ) AS combined
+      WHERE sim >= 0.34 ${scopeFilter}
+      ORDER BY
+        sim DESC,
+        CASE source WHEN 'enregistrement' THEN 1 WHEN 'retrait' THEN 2 ELSE 3 END,
+        nom_marque
+      LIMIT $3
+    `, [normalized, phonetic, limit])
+  } catch {
+    // pg_trgm absente ou timeout : la recherche stricte reste le comportement de référence
+    return []
+  }
+}
+
+/**
+ * Recherche tolérante : recherche stricte d'abord, puis si aucun résultat
+ * (requête texte simple), expansion de synonymes (doliprane/دوليبران →
+ * PARACETAMOL) puis recherche floue trigram + phonétique.
+ */
+export async function searchMedicamentsTolerant(
+  q: string,
+  scope: string = 'all',
+  limit: number = 40,
+  filters?: {
+    labo?: string
+    substance?: string
+    activeOnly?: boolean
+    advanced?: AdvancedSearchCondition[]
+  }
+): Promise<TolerantSearchResponse> {
+  const strict = await searchMedicaments(q, scope, limit, filters)
+  const info: TolerantSearchInfo = { fuzzy: false, matchedTerm: null, synonymTerm: null }
+  if (strict.length > 0) return { ...info, results: strict }
+
+  // Le repli flou ne s'applique qu'aux recherches texte simples :
+  // les filtres labo/substance/avancés gardent une sémantique stricte.
+  const trimmedQuery = q.trim()
+  const hasOtherFilters = Boolean(
+    filters?.labo?.trim() ||
+    filters?.substance?.trim() ||
+    filters?.advanced?.some((condition) => condition.value?.trim())
+  )
+  if (!trimmedQuery || trimmedQuery.length < 3 || hasOtherFilters) {
+    return { ...info, results: strict }
+  }
+
+  const keys = buildQueryKeys(trimmedQuery)
+  const effectiveScope = filters?.activeOnly ? 'enregistrement' : scope
+
+  // 1. Synonymie : nom commercial étranger / appellation populaire / arabe → DCI
+  const synonym = await findSynonymTarget(keys.raw, keys.normalized)
+  if (synonym) {
+    const viaSynonym = await searchMedicaments(synonym.target, scope, limit, { activeOnly: filters?.activeOnly })
+    if (viaSynonym.length > 0) {
+      return { fuzzy: true, matchedTerm: synonym.target, synonymTerm: synonym.term, results: viaSynonym }
+    }
+  }
+
+  // 2. Trigram + phonétique sur DCI / nom de marque
+  if (keys.normalized.length >= 3) {
+    const fuzzy = await searchFuzzyByName(keys.normalized, keys.phonetic, effectiveScope, limit)
+    if (fuzzy.length > 0) {
+      return { fuzzy: true, matchedTerm: null, synonymTerm: null, results: fuzzy }
+    }
+  }
+
+  return { ...info, results: strict }
 }
 
 // ─── ANALYTICS CLICS RECHERCHE ───────────────────────────────
@@ -1613,6 +1816,131 @@ export async function getAtcByDci(dci: string): Promise<{ code_atc: string; atc_
     `, [dci])
   } catch {
     return null
+  }
+}
+
+// ─── NAVIGATION PAR CLASSE THÉRAPEUTIQUE (ATC) ───────────────
+
+export type AtcNavNode = {
+  code: string
+  parent_code: string | null
+  niveau: number
+  label_fr: string | null
+  label_en: string | null
+  /** Nombre de DCI de la nomenclature mappées sous ce code (descendants inclus) */
+  dci_count: number
+}
+
+export type AtcDciEntry = {
+  dci: string
+  code_atc: string
+  atc_label_fr: string | null
+  atc_label_en: string | null
+  nb_produits: number
+}
+
+async function hasAtcTables(): Promise<boolean> {
+  const [codes, mapping] = await Promise.all([hasTable('atc_codes'), hasTable('dci_atc_mapping')])
+  return codes && mapping
+}
+
+/** Les 14 groupes anatomiques (niveau 1), avec le nombre de DCI mappées */
+export async function getAtcRootsWithCounts(): Promise<AtcNavNode[]> {
+  if (!await hasAtcTables()) return []
+  try {
+    return await query<AtcNavNode>(`
+      SELECT
+        a.code, a.parent_code, a.niveau, a.label_fr, a.label_en,
+        (SELECT COUNT(DISTINCT m.dci) FROM dci_atc_mapping m WHERE m.code_atc LIKE a.code || '%')::INT AS dci_count
+      FROM atc_codes a
+      WHERE a.niveau = 1
+      ORDER BY a.code
+    `)
+  } catch {
+    return []
+  }
+}
+
+export async function getAtcNode(code: string): Promise<AtcCode | null> {
+  if (!await hasAtcTables()) return null
+  try {
+    return await queryOne<AtcCode>(`
+      SELECT code, parent_code, niveau, label_fr, label_en
+      FROM atc_codes
+      WHERE code = UPPER(TRIM($1))
+    `, [code])
+  } catch {
+    return null
+  }
+}
+
+/** Sous-classes directes d'un code ATC, avec le nombre de DCI mappées sous chacune */
+export async function getAtcChildrenWithCounts(code: string): Promise<AtcNavNode[]> {
+  if (!await hasAtcTables()) return []
+  try {
+    return await query<AtcNavNode>(`
+      SELECT
+        a.code, a.parent_code, a.niveau, a.label_fr, a.label_en,
+        (SELECT COUNT(DISTINCT m.dci) FROM dci_atc_mapping m WHERE m.code_atc LIKE a.code || '%')::INT AS dci_count
+      FROM atc_codes a
+      WHERE a.parent_code = UPPER(TRIM($1))
+      ORDER BY a.code
+    `, [code])
+  } catch {
+    return []
+  }
+}
+
+/** Ancêtres d'un code ATC (niveau 1 → parent direct), pour le fil d'Ariane */
+export async function getAtcAncestors(code: string): Promise<AtcCode[]> {
+  if (!await hasAtcTables()) return []
+  try {
+    const rows = await query<AtcCode>(`
+      WITH RECURSIVE atc_up AS (
+        SELECT p.code, p.parent_code, p.niveau, p.label_en, p.label_fr
+        FROM atc_codes c
+        JOIN atc_codes p ON p.code = c.parent_code
+        WHERE c.code = UPPER(TRIM($1))
+
+        UNION ALL
+
+        SELECT p.code, p.parent_code, p.niveau, p.label_en, p.label_fr
+        FROM atc_codes p
+        JOIN atc_up c ON p.code = c.parent_code
+      )
+      SELECT * FROM atc_up
+      ORDER BY niveau ASC
+    `, [code])
+    return rows
+  } catch {
+    return []
+  }
+}
+
+/** DCI de la nomenclature mappées sous un préfixe ATC, avec le nombre de spécialités enregistrées */
+export async function getDcisByAtcPrefix(code: string, limit = 300): Promise<AtcDciEntry[]> {
+  if (!await hasAtcTables()) return []
+  try {
+    return await query<AtcDciEntry>(`
+      SELECT
+        m.dci,
+        m.code_atc,
+        a.label_fr AS atc_label_fr,
+        a.label_en AS atc_label_en,
+        COALESCE(e.nb, 0)::INT AS nb_produits
+      FROM dci_atc_mapping m
+      JOIN atc_codes a ON a.code = m.code_atc
+      LEFT JOIN (
+        SELECT UPPER(TRIM(dci)) AS dci_norm, COUNT(*) AS nb
+        FROM enregistrements
+        GROUP BY UPPER(TRIM(dci))
+      ) e ON e.dci_norm = m.dci
+      WHERE m.code_atc LIKE UPPER(TRIM($1)) || '%'
+      ORDER BY m.code_atc, m.dci
+      LIMIT $2
+    `, [code, limit])
+  } catch {
+    return []
   }
 }
 

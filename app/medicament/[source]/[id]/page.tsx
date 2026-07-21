@@ -356,10 +356,11 @@ export default async function MedicamentDetailPage(
                     {idx > 0 && (
                       <span style={{ color: '#64748b', fontSize: 16, margin: '0 6px' }}>›</span>
                     )}
-                    <div style={{
+                    <Link href={`/classes-therapeutiques/${level.code}`} style={{
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'flex-start',
+                      textDecoration: 'none',
                     }}>
                       <span style={{
                         fontFamily: 'var(--font-mono)',
@@ -383,7 +384,7 @@ export default async function MedicamentDetailPage(
                       }}>
                         {level.label_fr || level.label_en || ''}
                       </span>
-                    </div>
+                    </Link>
                   </div>
                 ))}
               </div>
