@@ -11,19 +11,20 @@ type NavLink = {
   type: 'link'
   href: string
   label: string
-  locked?: boolean
+  /** Additional path prefixes that should also mark this link as active. */
+  match?: string[]
 }
 type NavDropdown = {
   type: 'dropdown'
   id: string
   label: string
-  links: { href: string; label: string; locked?: boolean }[]
+  links: { href: string; label: string }[]
 }
 type NavItem = NavLink | NavDropdown
 
-/** Locked features redirect to /contact with a source hint */
-function lockedHref(feature: string) {
-  return `/contact?s=${encodeURIComponent(feature)}`
+function isActiveHref(pathname: string, href: string, match?: string[]) {
+  if (pathname === href) return true
+  return (match || []).some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`))
 }
 
 export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | null; isAdmin?: boolean }) {
@@ -37,48 +38,14 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
     return [
       {
         type: 'link',
-        href: '/',
-        label: fr ? 'Accueil' : 'الرئيسية',
-      },
-      {
-        type: 'dropdown',
-        id: 'nomenclature',
-        label: fr ? 'Nomenclature' : 'القائمة',
-        links: [
-          { href: '/medicaments',          label: fr ? '💊 Tous les médicaments' : '💊 كل الأدوية' },
-          { href: '/medicaments-critiques', label: fr ? '🚨 Médicaments critiques' : '🚨 الأدوية الحرجة' },
-          { href: '/retraits',             label: fr ? '🚫 Médicaments retirés' : '🚫 المسحوبة' },
-          { href: '/diff',                 label: fr ? '🆕 Mises à jour' : '🆕 التحديثات' },
-        ],
+        href: '/pharmacie-de-garde',
+        label: fr ? 'Pharmacies de garde' : 'صيدليات المناوبة',
+        match: ['/pharmacie-de-garde', '/garde', '/ar/pharmacie-de-garde'],
       },
       {
         type: 'link',
         href: '/recherche',
-        label: fr ? 'Rechercher' : 'بحث',
-      },
-      {
-        type: 'dropdown',
-        id: 'pharmacies',
-        label: fr ? '🏥 Pharmacies' : '🏥 الصيدليات',
-        links: [
-          { href: '/pharmacie-de-garde', label: fr ? '🏥 Pharmacies de garde par commune' : '🏥 صيدليات الحراسة حسب البلدية' },
-          { href: '/garde',       label: fr ? '📍 Pharmacie de garde près de moi' : '📍 أقرب صيدلية حراسة' },
-          { href: '/pharmacies',  label: fr ? '📍 Annuaire des pharmacies' : '📍 دليل الصيدليات' },
-        ],
-      },
-      {
-        type: 'link',
-        href: '/substitution',
-        label: fr ? 'Substitution' : 'الاستبدال',
-      },
-      {
-        type: 'dropdown',
-        id: 'stats',
-        label: fr ? 'Statistiques' : 'إحصائيات',
-        links: [
-          { href: '/comparateur', label: fr ? 'Comparer des médicaments' : 'مقارنة الأدوية' },
-          { href: '/laboratoires', label: fr ? 'Par laboratoire' : 'حسب المخبر' },
-        ],
+        label: fr ? 'Médicaments' : 'الأدوية',
       },
       {
         type: 'link',
@@ -86,15 +53,26 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
         label: fr ? 'Alertes' : 'التنبيهات',
       },
       {
-        type: 'link',
-        href: '/help',
-        label: fr ? 'Aide' : 'مساعدة',
+        type: 'dropdown',
+        id: 'plus',
+        label: fr ? 'Plus' : 'المزيد',
+        links: [
+          { href: '/substitution', label: fr ? '♻️ Substitution générique' : '♻️ الاستبدال الجنيس' },
+          { href: '/pharmacies', label: fr ? '📍 Annuaire des pharmacies' : '📍 دليل الصيدليات' },
+          { href: '/diff', label: fr ? '🆕 Nouveaux médicaments' : '🆕 أدوية جديدة' },
+          { href: '/retraits', label: fr ? '🚫 Médicaments retirés' : '🚫 أدوية مسحوبة' },
+          { href: '/comparateur', label: fr ? '⚖️ Comparateur de médicaments' : '⚖️ مقارنة الأدوية' },
+          { href: '/articles', label: fr ? '📰 Articles' : '📰 مقالات' },
+          { href: '/laboratoires', label: fr ? '📊 Statistiques' : '📊 إحصائيات' },
+          { href: '/a-propos', label: fr ? 'ℹ️ À propos' : 'ℹ️ حول المنصة' },
+          { href: '/contact', label: fr ? '✉️ Contact' : '✉️ اتصل بنا' },
+          { href: '/help', label: fr ? '❓ Aide' : '❓ مساعدة' },
+          { href: '/medicaments', label: fr ? '💊 Tous les médicaments' : '💊 كل الأدوية' },
+          { href: '/medicaments-critiques', label: fr ? '🚨 Médicaments critiques' : '🚨 الأدوية الحرجة' },
+          { href: '/veille', label: fr ? '📡 Veille réglementaire' : '📡 المراقبة التنظيمية' },
+          ...(isAdmin ? [{ href: '/admin', label: fr ? '🛠 Admin' : '🛠 الإدارة' }] : []),
+        ],
       },
-      ...(isAdmin ? [{
-        type: 'link' as const,
-        href: '/admin',
-        label: fr ? '🛠 Admin' : '🛠 الإدارة',
-      }] : []),
     ]
   }, [isAdmin, lang])
 
@@ -125,14 +103,14 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
         <ul className={`site-nav-tabs${open ? ' open' : ''}`} role="tablist">
           {navItems.map(item => {
             if (item.type === 'link') {
-              const isActive = !item.locked && pathname === item.href
+              const isActive = isActiveHref(pathname, item.href, item.match)
               return (
                 <li key={item.href} className="site-nav-item">
                   <Link
                     href={item.href}
-                    className={`site-nav-link${isActive ? ' active' : ''}${item.locked ? ' locked' : ''}`}
+                    className={`site-nav-link${isActive ? ' active' : ''}`}
                     onClick={close}
-                    title={item.locked ? 'Fonctionnalité disponible sur abonnement — contactez-nous' : undefined}
+                    aria-current={isActive ? 'page' : undefined}
                   >
                     {item.label}
                   </Link>
@@ -140,7 +118,7 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
               )
             }
 
-            const isGroupActive = item.links.some(l => !l.locked && pathname === l.href)
+            const isGroupActive = item.links.some(l => isActiveHref(pathname, l.href))
             const isOpen = openDropdown === item.id
 
             return (
@@ -154,18 +132,20 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
                   {item.label} <span className="site-nav-caret">▾</span>
                 </button>
                 <div className="site-nav-dropdown-menu">
-                  {item.links.map(l => (
-                    <Link
-                      key={l.href}
-                      href={l.href}
-                      className={`site-nav-dropdown-item${pathname === l.href ? ' active' : ''}${l.locked ? ' locked' : ''}`}
-                      onClick={close}
-                      title={l.locked ? 'Fonctionnalité disponible sur abonnement — contactez-nous' : undefined}
-                    >
-                      {l.locked && <span style={{ marginRight: 4, fontSize: 11 }}>🔒</span>}
-                      {l.label}
-                    </Link>
-                  ))}
+                  {item.links.map(l => {
+                    const isActive = isActiveHref(pathname, l.href)
+                    return (
+                      <Link
+                        key={l.href}
+                        href={l.href}
+                        className={`site-nav-dropdown-item${isActive ? ' active' : ''}`}
+                        onClick={close}
+                        aria-current={isActive ? 'page' : undefined}
+                      >
+                        {l.label}
+                      </Link>
+                    )
+                  })}
                 </div>
               </li>
             )
@@ -175,9 +155,6 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
         {/* Right side */}
         <div className="site-nav-right">
           <LanguageSwitcher />
-          <Link href="/contact" className="site-nav-contact-btn" onClick={close}>
-            {lang === 'ar' ? 'اتصل بنا' : 'Contact'}
-          </Link>
         </div>
       </div>
     </nav>

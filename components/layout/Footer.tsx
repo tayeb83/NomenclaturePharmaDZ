@@ -41,11 +41,10 @@ export function Footer() {
           <div className="footer-col">
             <h4>{t('Navigation', 'التنقل')}</h4>
             <ul className="footer-links">
-              <li><Link href="/">{t('Accueil', 'الرئيسية')}</Link></li>
-              <li><Link href="/recherche">{t('Recherche', 'البحث')}</Link></li>
-              <li><Link href="/alertes">{t('Alertes & Retraits', 'التنبيهات والسحب')}</Link></li>
+              <li><Link href="/pharmacie-de-garde">{t('Pharmacies de garde', 'صيدليات المناوبة')}</Link></li>
+              <li><Link href="/recherche">{t('Médicaments', 'الأدوية')}</Link></li>
+              <li><Link href="/alertes">{t('Alertes', 'التنبيهات')}</Link></li>
               <li><Link href="/substitution">{t('Substitution générique', 'الاستبدال الجنيس')}</Link></li>
-              <li><Link href="/veille">{t('Veille réglementaire', 'المراقبة التنظيمية')}</Link></li>
               <li><Link href="/articles">{t('Articles & Dossiers', 'مقالات ودراسات')}</Link></li>
             </ul>
           </div>
@@ -53,7 +52,7 @@ export function Footer() {
           <div className="footer-col">
             <h4>{t('Ressources', 'الموارد')}</h4>
             <ul className="footer-links">
-              <li><Link href="/medicaments">{t('Tous les médicaments', 'كل الأدوية')}</Link></li>
+              <li><Link href="/pharmacies">{t('Annuaire des pharmacies', 'دليل الصيدليات')}</Link></li>
               <li><Link href="/contact">{t('Contact', 'اتصل بنا')}</Link></li>
               <li><Link href="/a-propos">{t('À propos', 'حول المنصة')}</Link></li>
               <li><Link href="/help">{t('Aide & guide', 'المساعدة والدليل')}</Link></li>
@@ -69,14 +68,6 @@ export function Footer() {
               <li><a href="https://www.facebook.com/profile.php?id=61584995326062" target="_blank" rel="noopener">📘 Facebook</a></li>
             </ul>
           </div>
-        </div>
-
-        {/* Mobile quick-links bar */}
-        <div className="footer-mobile-quicklinks">
-          <Link href="/recherche">🔍 {t('Recherche', 'البحث')}</Link>
-          <Link href="/alertes">🚨 {t('Alertes', 'التنبيهات')}</Link>
-          <Link href="/substitution">♻️ {t('Substitution', 'الاستبدال')}</Link>
-          <Link href="/a-propos">ℹ️ {t('À propos', 'حول')}</Link>
         </div>
 
         <div className="footer-bottom">
