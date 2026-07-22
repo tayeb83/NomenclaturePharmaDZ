@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { addSubscriber, confirmSubscriber, unsubscribeByToken, getSubscriberByEmail } from '@/lib/queries'
 import { addBrevoContact, sendConfirmationEmail } from '@/lib/social'
+import { getClientIp, rateLimit } from '@/lib/rate-limit'
 import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
   try {
+    // Anti-spam : limite l'envoi d'emails de confirmation (5 / heure / IP)
+    const retryAfter = rateLimit(`newsletter:${getClientIp(request)}`, 5, 60 * 60 * 1000)
+    if (retryAfter !== null) {
+      return NextResponse.json(
+        { error: 'Trop de tentatives. Réessayez plus tard.' },
+        { status: 429, headers: { 'Retry-After': String(retryAfter) } }
+      )
+    }
+
     const { email, nom } = await request.json()
     if (!email || !email.includes('@')) {
       return NextResponse.json({ error: 'Email invalide' }, { status: 400 })

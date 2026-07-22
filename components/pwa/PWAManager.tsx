@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useLanguage } from '@/components/i18n/LanguageProvider'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>
@@ -13,6 +14,8 @@ interface BeforeInstallPromptEvent extends Event {
  * 2. Affiche une bannière d'installation de l'app sur mobile
  */
 export function PWAManager() {
+  const { lang } = useLanguage()
+  const t = (fr: string, ar: string) => (lang === 'ar' ? ar : fr)
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [showBanner, setShowBanner] = useState(false)
   const [dismissed, setDismissed] = useState(false)
@@ -89,10 +92,10 @@ export function PWAManager() {
       <div style={{ fontSize: 32, flexShrink: 0 }}>💊</div>
       <div style={{ flex: 1 }}>
         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 3 }}>
-          Installer DwaDZ
+          {t('Installer DwaDZ', 'تثبيت DwaDZ')}
         </div>
         <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 12 }}>
-          Accès rapide depuis votre écran d&apos;accueil, fonctionne hors-ligne.
+          {t('Accès rapide depuis votre écran d’accueil, fonctionne hors-ligne.', 'وصول سريع من الشاشة الرئيسية، يعمل دون اتصال.')}
         </div>
       </div>
       <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
@@ -110,7 +113,7 @@ export function PWAManager() {
             whiteSpace: 'nowrap',
           }}
         >
-          Installer
+          {t('Installer', 'تثبيت')}
         </button>
         <button
           onClick={handleDismiss}

@@ -7,10 +7,15 @@ node_modules/
 .next/
 out/
 
-# env
+# env — ne JAMAIS committer de secrets (voir env.local.example)
 .env
 .env.local
 .env.*.local
+env.local
+
+# IDE / OS
+.idea/
+.DS_Store
 
 # typescript
 *.tsbuildinfo

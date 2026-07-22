@@ -22,9 +22,23 @@ function arPathFor(pathname: string): string | null {
 }
 
 function frPathFor(pathname: string): string | null {
-  if (pathname === '/ar/pharmacie-de-garde') return '/pharmacie-de-garde'
-  if (pathname.startsWith('/ar/pharmacie-de-garde/')) return pathname.slice('/ar'.length)
+  // Toute route /ar/* est le miroir d'une route FR : /ar/xxx → /xxx.
+  if (pathname === '/ar') return '/'
+  if (pathname.startsWith('/ar/')) return pathname.slice('/ar'.length) || '/'
   return null
+}
+
+// Persiste le choix EXPLICITE de l'utilisateur : cookie (pour le SSR du
+// layout) + localStorage (repli côté client). Écrit immédiatement dans
+// setLang — et non dans un useEffect — pour que la langue survive à la
+// navigation qui suit le clic (sinon on « reste sur l'ancienne langue »).
+function persistLang(lang: Lang) {
+  try {
+    window.localStorage.setItem('lang', lang)
+  } catch {
+    // localStorage indisponible (navigation privée) : le cookie suffit
+  }
+  document.cookie = `lang=${lang}; path=/; max-age=31536000; samesite=lax`
 }
 
 export function LanguageProvider({ children, initialLang = 'fr' }: { children: React.ReactNode; initialLang?: Lang }) {
@@ -45,24 +59,25 @@ export function LanguageProvider({ children, initialLang = 'fr' }: { children: R
   useEffect(() => {
     document.documentElement.lang = lang
     document.documentElement.dir = getDir(lang)
-    if (!routeLang) {
-      window.localStorage.setItem('lang', lang)
-      document.cookie = `lang=${lang}; path=/; max-age=31536000; samesite=lax`
-    }
-  }, [lang, routeLang])
+  }, [lang])
 
   const setLang = useCallback((l: Lang) => {
-    const suffix = typeof window !== 'undefined' ? window.location.search : ''
+    if (l === lang && !((l === 'fr' && routeLang) || (l === 'ar' && arPathFor(pathname)))) return
+
+    // Choix explicite de l'utilisateur : persisté tout de suite pour que
+    // toutes les pages suivantes (SSR comme client) restent dans sa langue.
+    persistLang(l)
+    // Mise à jour immédiate de l'UI (nav, contenu client) — le switch doit
+    // répondre instantanément, même si une navigation suit.
+    setLangState(l)
+
+    // Si la page a un rendu serveur dédié dans la langue cible, on y navigue.
     const target = l === 'ar' ? arPathFor(pathname) : frPathFor(pathname)
     if (target) {
-      // La page cible a son propre rendu serveur pour cette langue : on y navigue.
+      const suffix = typeof window !== 'undefined' ? window.location.search : ''
       router.push(`${target}${suffix}`)
-      return
     }
-    // Pas de route dédiée pour cette page : le toggle est purement côté client.
-    if (routeLang) return
-    setLangState(l)
-  }, [pathname, routeLang, router])
+  }, [lang, pathname, routeLang, router])
 
   const value = useMemo(() => ({ lang, setLang }), [lang, setLang])
 

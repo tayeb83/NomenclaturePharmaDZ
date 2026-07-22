@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
+
 type HelpItem = {
   href: string
   titleFr: string
@@ -23,6 +25,53 @@ type HelpSection = {
 }
 
 const sections: HelpSection[] = [
+  {
+    id: 'garde',
+    titleFr: '0) Pharmacies de garde',
+    titleAr: '0) صيدليات المناوبة',
+    introFr:
+      'Trouvez la pharmacie ouverte près de chez vous, la nuit, le vendredi et les jours fériés — par wilaya et par commune.',
+    introAr:
+      'اعثر على الصيدلية المفتوحة بالقرب منك، ليلاً ويوم الجمعة وأيام العطل — حسب الولاية والبلدية.',
+    items: [
+      {
+        href: '/pharmacie-de-garde',
+        titleFr: 'Pharmacies de garde par wilaya',
+        titleAr: 'صيدليات المناوبة حسب الولاية',
+        summaryFr: 'Plannings de garde officiels, wilaya par wilaya, commune par commune.',
+        summaryAr: 'برامج المناوبة الرسمية، ولاية بولاية وبلدية ببلدية.',
+        detailsFr: [
+          'Comment chercher : choisissez votre wilaya, puis votre commune — la liste des pharmacies de garde du jour s’affiche avec adresse, téléphone et itinéraire Google Maps.',
+          'Les vues « Maintenant », « Cette nuit », « Vendredi » et « Vue du mois » permettent d’anticiper une garde à venir.',
+          'Si vous autorisez la géolocalisation, les pharmacies sont triées de la plus proche à la plus éloignée et affichées sur une carte.',
+          'Chaque fiche peut être confirmée ou corrigée par la communauté (« Ouverte, je confirme », « Signaler une erreur ») — les pharmaciens peuvent revendiquer leur fiche.',
+          'Le bouton « Copier le lien » crée un lien stable à partager (WhatsApp, Facebook…) vers la vue affichée.',
+        ],
+        detailsAr: [
+          'كيفية البحث: اختر ولايتك ثم بلديتك — تظهر قائمة صيدليات المناوبة لليوم مع العنوان والهاتف والاتجاهات عبر خرائط Google.',
+          'تتيح العروض «الآن»، «هذه الليلة»، «الجمعة» و«عرض الشهر» الاستعداد لمناوبة قادمة.',
+          'إذا سمحت بتحديد الموقع، تُرتَّب الصيدليات من الأقرب إلى الأبعد وتُعرض على الخريطة.',
+          'يمكن للمجتمع تأكيد كل بطاقة أو تصحيحها («مفتوحة، أؤكد»، «الإبلاغ عن خطأ») — ويمكن للصيادلة المطالبة ببطاقاتهم.',
+          'زر «نسخ الرابط» ينشئ رابطاً ثابتاً للمشاركة (واتساب، فيسبوك…) نحو العرض الظاهر.',
+        ],
+      },
+      {
+        href: '/pharmacies',
+        titleFr: 'Annuaire des pharmacies',
+        titleAr: 'دليل الصيدليات',
+        summaryFr: 'Toutes les pharmacies référencées, même hors garde.',
+        summaryAr: 'كل الصيدليات المسجلة، حتى خارج المناوبة.',
+        detailsFr: [
+          'Liste les pharmacies recensées au fil des plannings de garde officiels, avec téléphone et itinéraire.',
+          'Filtrable par wilaya et commune ; triée par distance si la géolocalisation est autorisée.',
+        ],
+        detailsAr: [
+          'يعرض الصيدليات المسجلة عبر برامج المناوبة الرسمية، مع الهاتف والاتجاهات.',
+          'قابل للتصفية حسب الولاية والبلدية؛ ومرتب حسب المسافة إذا سُمح بتحديد الموقع.',
+        ],
+      },
+    ],
+  },
   {
     id: 'consultation',
     titleFr: '1) Consultation de la nomenclature',
@@ -128,14 +177,16 @@ const sections: HelpSection[] = [
         summaryFr: 'Moteur de recherche central (DCI, marque, labo, forme, dosage).',
         summaryAr: 'محرك البحث الرئيسي (الاسم العلمي، التجاري، المخبر، الشكل، الجرعة).',
         detailsFr: [
-          'Recherche transversale dans plusieurs sources (enregistrements, retraits, statuts).',
-          'Permet d’obtenir vite une réponse opérationnelle en cas de demande patient.',
-          'Propose un accès direct aux fiches pour vérification détaillée.',
+          'Comment chercher : tapez le nom commercial (ex. « DOLIPRANE »), la DCI (ex. « PARACETAMOL »), un laboratoire ou une forme — les résultats s’affichent au fur et à mesure.',
+          'La recherche tolère les fautes de frappe (« amoxiciline » → AMOXICILLINE), l’arabe (« دوليبران » → PARACETAMOL) et l’arabizi (3, 7, 9…).',
+          'Recherche transversale dans plusieurs sources (enregistrements, retraits, statuts) — un badge signale les produits retirés ou critiques.',
+          'Propose un accès direct aux fiches pour vérification détaillée (dosage, labo, pays, classe ATC, génériques équivalents).',
         ],
         detailsAr: [
-          'بحث موحد عبر عدة مصادر (التسجيلات، السحوبات، الحالات).',
-          'يوفر إجابة عملية سريعة عند استقبال طلب المريض.',
-          'يتيح الوصول المباشر لبطاقات الدواء للتحقق التفصيلي.',
+          'كيفية البحث: اكتب الاسم التجاري (مثل «DOLIPRANE»)، أو الاسم العلمي (مثل «PARACETAMOL»)، أو المخبر أو الشكل — تظهر النتائج تدريجياً.',
+          'يتسامح البحث مع أخطاء الكتابة («amoxiciline» ← AMOXICILLINE)، ويفهم العربية («دوليبران» ← PARACETAMOL) والأرقام العربيزي (3، 7، 9…).',
+          'بحث موحد عبر عدة مصادر (التسجيلات، السحوبات، الحالات) — شارة تنبه إلى المنتجات المسحوبة أو الحرجة.',
+          'يتيح الوصول المباشر لبطاقات الدواء للتحقق التفصيلي (الجرعة، المخبر، البلد، تصنيف ATC، الأدوية الجنيسة المكافئة).',
         ],
       },
       {
@@ -283,14 +334,14 @@ export default function HelpPage() {
           <h1 className="mb-3">{t('Centre d\'aide DwaDZ', 'مركز المساعدة DwaDZ')}</h1>
           <p className="text-muted mb-2">
             {t(
-              'Ce guide explique chaque page et chaque fonctionnalité de la plateforme, avec un langage opérationnel pour les pharmaciens et équipes de santé.',
-              'هذا الدليل يشرح كل صفحة وكل ميزة في المنصة بلغة عملية موجهة للصيادلة وفرق الرعاية الصحية.'
+              'DwaDZ est un moteur de recherche indépendant sur les médicaments enregistrés en Algérie (données officielles MIPH) et sur les pharmacies de garde par wilaya et commune. Recherchez un médicament par nom commercial, DCI ou laboratoire, vérifiez les retraits, trouvez un générique équivalent, et localisez la pharmacie de garde la plus proche.',
+              'DwaDZ هو محرك بحث مستقل عن الأدوية المسجلة في الجزائر (بيانات MIPH الرسمية) وعن صيدليات المناوبة حسب الولاية والبلدية. ابحث عن دواء بالاسم التجاري أو الاسم العلمي أو المخبر، وتحقق من السحوبات، واعثر على جنيس مكافئ، وحدّد أقرب صيدلية مناوبة.'
             )}
           </p>
           <p className="text-muted mb-0">
             {t(
-              'Conseil : commencez par la recherche globale, puis utilisez la substitution et le comparateur pour confirmer votre décision.',
-              'نصيحة: ابدأ بالبحث الشامل، ثم استخدم الاستبدال والمقارنة لتأكيد القرار.'
+              'Ce guide explique chaque page et chaque fonctionnalité de la plateforme. Conseil : commencez par la recherche globale, puis utilisez la substitution et le comparateur pour confirmer votre décision.',
+              'هذا الدليل يشرح كل صفحة وكل ميزة في المنصة. نصيحة: ابدأ بالبحث الشامل، ثم استخدم الاستبدال والمقارنة لتأكيد القرار.'
             )}
           </p>
         </header>
@@ -339,6 +390,45 @@ export default function HelpPage() {
             </div>
           </section>
         ))}
+
+        <section id="application" className="card border-primary-subtle bg-primary-subtle mb-4">
+          <div className="card-body">
+            <h2 className="h5 mb-2">{t('📲 Installer l\'application DwaDZ', '📲 تثبيت تطبيق DwaDZ')}</h2>
+            <p className="mb-2">
+              {t(
+                'DwaDZ est une application web (PWA) : elle s\'installe directement depuis le site, sans passer par un store, et fonctionne même hors-ligne.',
+                'DwaDZ تطبيق ويب (PWA): يُثبَّت مباشرة من الموقع دون المرور بمتجر التطبيقات، ويعمل حتى دون اتصال بالإنترنت.'
+              )}
+            </p>
+            <ul className="mb-2">
+              <li>
+                <strong>Android (Chrome)</strong> —{' '}
+                {t(
+                  'ouvrez le site, appuyez sur la bannière « Installer DwaDZ » ou sur le menu ⋮ puis « Ajouter à l\'écran d\'accueil ».',
+                  'افتح الموقع، اضغط على شريط «تثبيت DwaDZ» أو على القائمة ⋮ ثم «إضافة إلى الشاشة الرئيسية».'
+                )}
+              </li>
+              <li>
+                <strong>iPhone / iPad (Safari)</strong> —{' '}
+                {t(
+                  'appuyez sur le bouton Partager puis « Sur l\'écran d\'accueil ».',
+                  'اضغط على زر المشاركة ثم «إضافة إلى الشاشة الرئيسية».'
+                )}
+              </li>
+              <li>
+                <strong>{t('Ordinateur (Chrome/Edge)', 'الحاسوب (Chrome/Edge)')}</strong> —{' '}
+                {t(
+                  'cliquez sur l\'icône d\'installation dans la barre d\'adresse.',
+                  'انقر على أيقونة التثبيت في شريط العنوان.'
+                )}
+              </li>
+            </ul>
+            <p className="mb-0">
+              {t('Lien de l\'application :', 'رابط التطبيق:')}{' '}
+              <a href={APP_URL} target="_blank" rel="noopener noreferrer">{APP_URL.replace(/^https?:\/\//, '')}</a>
+            </p>
+          </div>
+        </section>
 
         <section className="card border-warning-subtle bg-warning-subtle">
           <div className="card-body">

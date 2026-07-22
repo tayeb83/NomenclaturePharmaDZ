@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { useLanguage } from '@/components/i18n/LanguageProvider'
+import type { Lang } from '@/lib/i18n'
 
 type Medicament = {
   id: number
@@ -35,12 +37,13 @@ type ApiMeta = {
   availableRemovedYears?: number[]
   availableAnnees?: number[]
 }
-const TYPE_LABELS: Record<string, string> = {
-  GE: 'Générique', 'Gé': 'Générique', I: 'Innovateur', RE: 'Référence', BIO: 'Biologique',
+const TYPE_LABELS: Record<Lang, Record<string, string>> = {
+  fr: { GE: 'Générique', 'Gé': 'Générique', I: 'Innovateur', RE: 'Référence', BIO: 'Biologique' },
+  ar: { GE: 'جنيس', 'Gé': 'جنيس', I: 'مبتكر', RE: 'مرجعي', BIO: 'بيولوجي' },
 }
 
 
-function TypeBadge({ type }: { type: string | null }) {
+function TypeBadge({ type, lang }: { type: string | null; lang: Lang }) {
   if (!type) return null
   const colors: Record<string, string> = {
     GE: '#dcfce7', 'Gé': '#dcfce7',
@@ -67,12 +70,14 @@ function TypeBadge({ type }: { type: string | null }) {
       color: textColors[type] || '#475569',
       border: `1px solid ${borderColors[type] || '#e2e8f0'}`,
     }}>
-      {TYPE_LABELS[type] || type}
+      {TYPE_LABELS[lang][type] || type}
     </span>
   )
 }
 
 export function MedicamentsClient() {
+  const { lang } = useLanguage()
+  const t = (fr: string, ar: string) => (lang === 'ar' ? ar : fr)
   const [page, setPage] = useState(1)
   const [data, setData] = useState<Medicament[]>([])
   const [pagination, setPagination] = useState<Pagination | null>(null)
@@ -102,11 +107,11 @@ export function MedicamentsClient() {
       setPagination(json.pagination)
       setMeta(json.meta || {})
     } catch {
-      setError('Impossible de charger les médicaments. Veuillez réessayer.')
+      setError(lang === 'ar' ? 'تعذّر تحميل الأدوية. يرجى إعادة المحاولة.' : 'Impossible de charger les médicaments. Veuillez réessayer.')
     } finally {
       setLoading(false)
     }
-  }, [mode, filterType, filterStatut, filterAnnee, removedYear])
+  }, [mode, filterType, filterStatut, filterAnnee, removedYear, lang])
 
   useEffect(() => {
     setPage(1)
@@ -137,7 +142,7 @@ export function MedicamentsClient() {
       }}>
 
         <div>
-          <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 6, fontWeight: 600 }}>Vue</label>
+          <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 6, fontWeight: 600 }}>{t('Vue', 'العرض')}</label>
           <select
             value={mode}
             onChange={e => setMode(e.target.value as 'all' | 'new' | 'removed')}
@@ -146,15 +151,15 @@ export function MedicamentsClient() {
               color: '#1e293b', borderRadius: 8, padding: '8px 12px', fontSize: 14,
             }}
           >
-            <option value="all">Tous les médicaments</option>
-            <option value="new">Nouveaux médicaments (version en cours)</option>
-            <option value="removed">Médicaments retirés par année</option>
+            <option value="all">{t('Tous les médicaments', 'كل الأدوية')}</option>
+            <option value="new">{t('Nouveaux médicaments (version en cours)', 'الأدوية الجديدة (الإصدار الحالي)')}</option>
+            <option value="removed">{t('Médicaments retirés par année', 'الأدوية المسحوبة حسب السنة')}</option>
           </select>
         </div>
 
         {mode !== 'removed' && (
         <div>
-          <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 6, fontWeight: 600 }}>Type</label>
+          <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 6, fontWeight: 600 }}>{t('Type', 'النوع')}</label>
           <select
             value={filterType}
             onChange={e => setFilterType(e.target.value)}
@@ -163,18 +168,18 @@ export function MedicamentsClient() {
               color: '#1e293b', borderRadius: 8, padding: '8px 12px', fontSize: 14,
             }}
           >
-            <option value="">Tous les types</option>
-            <option value="GE">Générique</option>
-            <option value="I">Innovateur</option>
-            <option value="RE">Référence</option>
-            <option value="BIO">Biologique</option>
+            <option value="">{t('Tous les types', 'كل الأنواع')}</option>
+            <option value="GE">{t('Générique', 'جنيس')}</option>
+            <option value="I">{t('Innovateur', 'مبتكر')}</option>
+            <option value="RE">{t('Référence', 'مرجعي')}</option>
+            <option value="BIO">{t('Biologique', 'بيولوجي')}</option>
           </select>
         </div>
         )}
 
         {mode !== 'removed' && (
         <div>
-          <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 6, fontWeight: 600 }}>Statut</label>
+          <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 6, fontWeight: 600 }}>{t('Statut', 'الحالة')}</label>
           <select
             value={filterStatut}
             onChange={e => setFilterStatut(e.target.value)}
@@ -183,16 +188,16 @@ export function MedicamentsClient() {
               color: '#1e293b', borderRadius: 8, padding: '8px 12px', fontSize: 14,
             }}
           >
-            <option value="">Tous</option>
-            <option value="F">Fabriqué en Algérie</option>
-            <option value="I">Importé</option>
+            <option value="">{t('Tous', 'الكل')}</option>
+            <option value="F">{t('Fabriqué en Algérie', 'مصنوع في الجزائر')}</option>
+            <option value="I">{t('Importé', 'مستورد')}</option>
           </select>
         </div>
         )}
 
         {mode !== 'removed' && (
         <div>
-          <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 6, fontWeight: 600 }}>Année</label>
+          <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 6, fontWeight: 600 }}>{t('Année', 'السنة')}</label>
           <select
             value={filterAnnee}
             onChange={e => setFilterAnnee(e.target.value)}
@@ -201,7 +206,7 @@ export function MedicamentsClient() {
               color: '#1e293b', borderRadius: 8, padding: '8px 12px', fontSize: 14,
             }}
           >
-            <option value="">Toutes les années</option>
+            <option value="">{t('Toutes les années', 'كل السنوات')}</option>
             {(meta.availableAnnees || []).map(y => (
               <option key={y} value={String(y)}>{y}</option>
             ))}
@@ -211,7 +216,7 @@ export function MedicamentsClient() {
 
         {mode === 'removed' && (
           <div>
-            <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 6, fontWeight: 600 }}>Année de retrait</label>
+            <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 6, fontWeight: 600 }}>{t('Année de retrait', 'سنة السحب')}</label>
             <select
               value={removedYear}
               onChange={e => setRemovedYear(e.target.value)}
@@ -220,7 +225,7 @@ export function MedicamentsClient() {
                 color: '#1e293b', borderRadius: 8, padding: '8px 12px', fontSize: 14,
               }}
             >
-              <option value="">Toutes les années</option>
+              <option value="">{t('Toutes les années', 'كل السنوات')}</option>
               {(meta.availableRemovedYears || []).map(y => (
                 <option key={y} value={String(y)}>{y}</option>
               ))}
@@ -236,7 +241,7 @@ export function MedicamentsClient() {
             cursor: 'pointer', fontWeight: 600,
           }}
         >
-          Filtrer
+          {t('Filtrer', 'تصفية')}
         </button>
 
         {(mode !== 'all' || filterType || filterStatut || filterAnnee || removedYear) && (
@@ -248,7 +253,7 @@ export function MedicamentsClient() {
               fontSize: 13, cursor: 'pointer',
             }}
           >
-            Réinitialiser
+            {t('Réinitialiser', 'إعادة تعيين')}
           </button>
         )}
       </div>
@@ -256,8 +261,13 @@ export function MedicamentsClient() {
       {/* Compteur */}
       {pagination && (
         <div style={{ marginBottom: 16, color: '#64748b', fontSize: 14 }}>
-          {pagination.total.toLocaleString('fr-DZ')} {mode === 'removed' ? 'médicaments retirés' : mode === 'new' ? 'nouveaux médicaments' : 'médicaments enregistrés'}
-          {' — '}page {pagination.page} / {pagination.totalPages}
+          {pagination.total.toLocaleString(lang === 'ar' ? 'ar-DZ' : 'fr-DZ')}{' '}
+          {mode === 'removed'
+            ? t('médicaments retirés', 'دواء مسحوب')
+            : mode === 'new'
+              ? t('nouveaux médicaments', 'دواء جديد')
+              : t('médicaments enregistrés', 'دواء مسجل')}
+          {' — '}{t('page', 'الصفحة')} {pagination.page} / {pagination.totalPages}
         </div>
       )}
 
@@ -270,7 +280,7 @@ export function MedicamentsClient() {
 
       {loading && (
         <div style={{ textAlign: 'center', padding: '48px 0', color: '#475569', fontSize: 15 }}>
-          ⏳ Chargement…
+          {t('⏳ Chargement…', '⏳ جارٍ التحميل…')}
         </div>
       )}
 
@@ -312,20 +322,20 @@ export function MedicamentsClient() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', flexShrink: 0 }}>
-                  {mode !== 'removed' && <TypeBadge type={med.type_prod} />}
+                  {mode !== 'removed' && <TypeBadge type={med.type_prod} lang={lang} />}
                   {mode === 'new' && (
                     <span style={{ fontSize: 11, color: '#166534', background: '#dcfce7', border: '1px solid #86efac', padding: '2px 8px', borderRadius: 6, fontWeight: 700 }}>
-                      Nouveau
+                      {t('Nouveau', 'جديد')}
                     </span>
                   )}
                   {mode === 'removed' && (
                     <span style={{ fontSize: 11, color: '#991b1b', background: '#fee2e2', border: '1px solid #fecaca', padding: '2px 8px', borderRadius: 6, fontWeight: 700 }}>
-                      Retiré
+                      {t('Retiré', 'مسحوب')}
                     </span>
                   )}
                   {mode !== 'removed' && med.statut === 'F' && (
                     <span style={{ fontSize: 11, color: '#0369a1', background: '#e0f2fe', border: '1px solid #bae6fd', padding: '2px 8px', borderRadius: 6, fontWeight: 600 }}>
-                      🇩🇿 Local
+                      {t('🇩🇿 Local', '🇩🇿 محلي')}
                     </span>
                   )}
                 </div>
@@ -333,7 +343,7 @@ export function MedicamentsClient() {
               {med.labo && (
                 <div style={{ marginTop: 6, fontSize: 12, color: '#475569' }}>
                   {med.labo}{med.pays && ` · ${med.pays}`}
-                  {mode === 'removed' ? (med.retrait_annee ? ` · Retiré en ${med.retrait_annee}` : '') : (med.annee ? ` · ${med.annee}` : '')}
+                  {mode === 'removed' ? (med.retrait_annee ? ` · ${t('Retiré en', 'سُحب في')} ${med.retrait_annee}` : '') : (med.annee ? ` · ${med.annee}` : '')}
                 </div>
               )}
             </Link>
@@ -353,7 +363,7 @@ export function MedicamentsClient() {
               borderRadius: 8, padding: '8px 14px', fontSize: 13, cursor: pagination.hasPrev ? 'pointer' : 'default',
             }}
           >
-            « Premier
+            {t('« Premier', '« الأولى')}
           </button>
           <button
             onClick={() => { setPage(p => p - 1); window.scrollTo(0, 0) }}
@@ -364,7 +374,7 @@ export function MedicamentsClient() {
               borderRadius: 8, padding: '8px 14px', fontSize: 13, cursor: pagination.hasPrev ? 'pointer' : 'default',
             }}
           >
-            ‹ Précédent
+            {t('‹ Précédent', '‹ السابقة')}
           </button>
 
           {/* Pages numérotées */}
@@ -397,7 +407,7 @@ export function MedicamentsClient() {
               borderRadius: 8, padding: '8px 14px', fontSize: 13, cursor: pagination.hasNext ? 'pointer' : 'default',
             }}
           >
-            Suivant ›
+            {t('Suivant ›', 'التالية ›')}
           </button>
           <button
             onClick={() => { setPage(pagination.totalPages); window.scrollTo(0, 0) }}
@@ -408,7 +418,7 @@ export function MedicamentsClient() {
               borderRadius: 8, padding: '8px 14px', fontSize: 13, cursor: pagination.hasNext ? 'pointer' : 'default',
             }}
           >
-            Dernier »
+            {t('Dernier »', 'الأخيرة »')}
           </button>
         </div>
       )}
