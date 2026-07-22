@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import type { GardeShift, GardeCoverageEntry, GardeRosterMeta } from '@/lib/db-types'
+import { useLanguage } from '@/components/i18n/LanguageProvider'
+import type { Lang } from '@/lib/i18n'
 
 const GardeMap = dynamic(() => import('./GardeMap'), { ssr: false })
 
@@ -36,17 +38,19 @@ function shiftMonth(month: string, delta: number) {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
 }
 
-function formatMonthLabel(month: string) {
+function formatMonthLabel(month: string, lang: Lang = 'fr') {
   const [y, m] = month.split('-').map(Number)
   const d = new Date(Date.UTC(y, m - 1, 1))
-  return new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(d)
+  return new Intl.DateTimeFormat(lang === 'ar' ? 'ar-DZ' : 'fr-FR', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(d)
 }
 
-function formatDateShort(iso: string) {
+function formatDateShort(iso: string, lang: Lang = 'fr') {
   const d = new Date(iso + 'T00:00:00Z')
+  const locale = lang === 'ar' ? 'ar-DZ' : 'fr-FR'
   return {
-    dnum: new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit', timeZone: 'UTC' }).format(d),
-    dow: new Intl.DateTimeFormat('fr-FR', { weekday: 'long', timeZone: 'UTC' }).format(d),
+    dnum: new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit', timeZone: 'UTC' }).format(d),
+    dow: new Intl.DateTimeFormat(locale, { weekday: 'long', timeZone: 'UTC' }).format(d),
+    isFriday: new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'UTC' }).format(d) === 'Fri',
   }
 }
 
@@ -83,7 +87,8 @@ function formatDistance(km: number | null) {
   return `${km.toFixed(1).replace('.', ',')} km`
 }
 
-function displayName(shift: GardeShift) {
+function displayName(shift: GardeShift, lang: Lang = 'fr') {
+  if (lang === 'ar') return shift.name_ar || shift.name_fr || 'صيدلية'
   return shift.name_fr || shift.name_ar || 'Pharmacie'
 }
 
@@ -106,6 +111,8 @@ export function GardeClient({
   initialMonth?: string
 } = {}) {
   const router = useRouter()
+  const { lang } = useLanguage()
+  const t = (fr: string, ar: string) => (lang === 'ar' ? ar : fr)
   const [coverage, setCoverage] = useState<GardeCoverageEntry[]>([])
   const [coverageLoading, setCoverageLoading] = useState(true)
   const [coverageError, setCoverageError] = useState('')
@@ -143,7 +150,7 @@ export function GardeClient({
           setCommune(rows[0].commune_code)
         }
       })
-      .catch(() => { if (!cancelled) setCoverageError("Impossible de charger les zones couvertes.") })
+      .catch(() => { if (!cancelled) setCoverageError(lang === 'ar' ? 'تعذّر تحميل المناطق المغطاة.' : 'Impossible de charger les zones couvertes.') })
       .finally(() => { if (!cancelled) setCoverageLoading(false) })
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -204,11 +211,11 @@ export function GardeClient({
       const json = await res.json()
       setData(json)
     } catch {
-      setError('Impossible de charger les pharmacies de garde.')
+      setError(lang === 'ar' ? 'تعذّر تحميل صيدليات المناوبة.' : 'Impossible de charger les pharmacies de garde.')
     } finally {
       setLoading(false)
     }
-  }, [wilaya, commune, mode])
+  }, [wilaya, commune, mode, lang])
 
   useEffect(() => { fetchGarde() }, [fetchGarde])
 
@@ -222,11 +229,11 @@ export function GardeClient({
       const json = await res.json()
       setMonthData(json)
     } catch {
-      setMonthError('Impossible de charger le planning du mois.')
+      setMonthError(lang === 'ar' ? 'تعذّر تحميل برنامج الشهر.' : 'Impossible de charger le planning du mois.')
     } finally {
       setMonthLoading(false)
     }
-  }, [wilaya, commune, mode, monthStr])
+  }, [wilaya, commune, mode, monthStr, lang])
 
   useEffect(() => { fetchGardeMonth() }, [fetchGardeMonth])
 
@@ -247,7 +254,8 @@ export function GardeClient({
     return rows
   }, [data, userPos])
 
-  const communeName = communes.find(c => c.commune_code === commune)?.commune_name_fr || ''
+  const communeEntry = communes.find(c => c.commune_code === commune)
+  const communeName = (lang === 'ar' ? (communeEntry as any)?.commune_name_ar : undefined) || communeEntry?.commune_name_fr || ''
 
   return (
     <div>
@@ -258,7 +266,7 @@ export function GardeClient({
         boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
       }}>
         <div>
-          <label style={{ display: 'block', fontSize: 12, color: 'var(--slate-500)', marginBottom: 6, fontWeight: 600 }}>Wilaya</label>
+          <label style={{ display: 'block', fontSize: 12, color: 'var(--slate-500)', marginBottom: 6, fontWeight: 600 }}>{t('Wilaya', 'الولاية')}</label>
           <select
             value={wilaya}
             onChange={e => {
@@ -274,26 +282,31 @@ export function GardeClient({
             disabled={coverageLoading || wilayas.length === 0}
             style={{ background: 'var(--slate-50)', border: '1px solid var(--slate-200)', color: 'var(--navy)', borderRadius: 8, padding: '8px 12px', fontSize: 14, minWidth: 180 }}
           >
-            {wilayas.length === 0 && <option value="">Aucune wilaya couverte</option>}
+            {wilayas.length === 0 && <option value="">{t('Aucune wilaya couverte', 'لا توجد ولاية مغطاة')}</option>}
             {wilayas.map(w => <option key={w.wilaya_code} value={w.wilaya_code}>{w.wilaya_name_fr}</option>)}
           </select>
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: 12, color: 'var(--slate-500)', marginBottom: 6, fontWeight: 600 }}>Commune</label>
+          <label style={{ display: 'block', fontSize: 12, color: 'var(--slate-500)', marginBottom: 6, fontWeight: 600 }}>{t('Commune', 'البلدية')}</label>
           <select
             value={commune}
             onChange={e => setCommune(e.target.value)}
             disabled={communes.length === 0}
             style={{ background: 'var(--slate-50)', border: '1px solid var(--slate-200)', color: 'var(--navy)', borderRadius: 8, padding: '8px 12px', fontSize: 14, minWidth: 180 }}
           >
-            <option value="">Choisir une commune…</option>
+            <option value="">{t('Choisir une commune…', 'اختر بلدية…')}</option>
             {communes.map(c => <option key={c.commune_code} value={c.commune_code}>{c.commune_name_fr}</option>)}
           </select>
         </div>
 
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {([['now', 'Maintenant'], ['tonight', 'Cette nuit'], ['friday', 'Vendredi'], ['month', 'Vue du mois']] as [Mode, string][]).map(([m, label]) => (
+          {([
+            ['now', t('Maintenant', 'الآن')],
+            ['tonight', t('Cette nuit', 'هذه الليلة')],
+            ['friday', t('Vendredi', 'الجمعة')],
+            ['month', t('Vue du mois', 'عرض الشهر')],
+          ] as [Mode, string][]).map(([m, label]) => (
             <button
               key={m}
               onClick={() => setMode(m)}
@@ -312,7 +325,7 @@ export function GardeClient({
         {wilaya && commune && (
           <button
             onClick={copyLink}
-            title="Copier un lien stable vers cette vue (wilaya, commune, période)"
+            title={t('Copier un lien stable vers cette vue (wilaya, commune, période)', 'انسخ رابطاً ثابتاً لهذا العرض (الولاية، البلدية، الفترة)')}
             style={{
               background: linkCopied ? 'var(--green, #16a34a)' : '#fff',
               border: `1px solid ${linkCopied ? 'var(--green, #16a34a)' : 'var(--slate-200)'}`,
@@ -321,7 +334,7 @@ export function GardeClient({
               marginLeft: 'auto',
             }}
           >
-            {linkCopied ? '✓ Lien copié' : '🔗 Copier le lien'}
+            {linkCopied ? t('✓ Lien copié', '✓ تم نسخ الرابط') : t('🔗 Copier le lien', '🔗 نسخ الرابط')}
           </button>
         )}
       </div>
@@ -330,14 +343,14 @@ export function GardeClient({
 
       {!coverageLoading && wilayas.length === 0 && !coverageError && (
         <div className="alert-banner info">
-          Aucune wilaya n&apos;est encore couverte pour le moment — revenez bientôt.
+          {t('Aucune wilaya n’est encore couverte pour le moment — revenez bientôt.', 'لا توجد أي ولاية مغطاة حالياً — عودوا قريباً.')}
         </div>
       )}
 
       {mode !== 'month' && error && <div className="alert-banner error">{error}</div>}
 
       {mode !== 'month' && loading && (
-        <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--slate-600)', fontSize: 15 }}>⏳ Chargement…</div>
+        <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--slate-600)', fontSize: 15 }}>{t('⏳ Chargement…', '⏳ جارٍ التحميل…')}</div>
       )}
 
       {mode !== 'month' && !loading && !error && data && (
@@ -351,12 +364,12 @@ export function GardeClient({
 
           {data.coverage && (
             <div style={{ fontSize: 13, color: 'var(--slate-500)', marginBottom: 14 }}>
-              Source : {data.coverage.issuer_fr || 'DSP'} · période {data.coverage.period_from} → {data.coverage.period_to}
+              {t('Source', 'المصدر')} : {data.coverage.issuer_fr || 'DSP'} · {t('période', 'الفترة')} {data.coverage.period_from} → {data.coverage.period_to}
             </div>
           )}
 
           {sortedSchedule.length === 0 && (
-            <div className="alert-banner info">Aucune garde trouvée pour cette date à {communeName}.</div>
+            <div className="alert-banner info">{lang === 'ar' ? `لم يُعثر على أي مناوبة في هذا التاريخ في ${communeName}.` : `Aucune garde trouvée pour cette date à ${communeName}.`}</div>
           )}
 
           <div style={{ display: 'grid', gap: 10 }}>
@@ -367,17 +380,21 @@ export function GardeClient({
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: 15.5, color: 'var(--navy)' }}>{displayName(shift)}</div>
-                    {shift.name_fr && shift.name_ar && <div dir="rtl" lang="ar" style={{ color: 'var(--slate-500)', fontSize: 13.5, marginTop: 2 }}>{shift.name_ar}</div>}
+                    <div style={{ fontWeight: 700, fontSize: 15.5, color: 'var(--navy)' }}>{displayName(shift, lang)}</div>
+                    {shift.name_fr && shift.name_ar && (
+                      lang === 'ar'
+                        ? <div style={{ color: 'var(--slate-500)', fontSize: 13.5, marginTop: 2 }}>{shift.name_fr}</div>
+                        : <div dir="rtl" lang="ar" style={{ color: 'var(--slate-500)', fontSize: 13.5, marginTop: 2 }}>{shift.name_ar}</div>
+                    )}
                   </div>
                   {shift.active_now ? (
-                    <span className="badge badge-green">De garde maintenant</span>
+                    <span className="badge badge-green">{t('De garde maintenant', 'مناوبة الآن')}</span>
                   ) : (
-                    <span className="badge badge-gray">{shift.shift === 'nuit' ? 'Nuit' : 'Jour'}</span>
+                    <span className="badge badge-gray">{shift.shift === 'nuit' ? t('Nuit', 'ليل') : t('Jour', 'نهار')}</span>
                   )}
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--slate-600)', marginTop: 4 }}>
-                  {shift.address_fr || shift.address_ar}{distanceKm != null && ` · ${formatDistance(distanceKm)}`}
+                  {(lang === 'ar' ? shift.address_ar || shift.address_fr : shift.address_fr || shift.address_ar)}{distanceKm != null && ` · ${formatDistance(distanceKm)}`}
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--slate-500)', marginTop: 6 }}>
                   {formatTimeRange(shift.starts_at, shift.ends_at)}
@@ -388,16 +405,16 @@ export function GardeClient({
                       background: 'var(--blue)', color: '#fff', borderRadius: 8, padding: '8px 14px',
                       fontSize: 13, fontWeight: 700, textDecoration: 'none',
                     }}>
-                      📞 Appeler
+                      {t('📞 Appeler', '📞 اتصال')}
                     </a>
                   ) : (
-                    <span style={{ color: 'var(--slate-400)', fontSize: 13, padding: '8px 14px' }}>📞 Indisponible</span>
+                    <span style={{ color: 'var(--slate-400)', fontSize: 13, padding: '8px 14px' }}>{t('📞 Indisponible', '📞 غير متوفر')}</span>
                   )}
                   <a href={mapsHref(shift)} target="_blank" rel="noopener noreferrer" style={{
                     background: '#fff', border: '1px solid var(--slate-200)', color: 'var(--slate-700)',
                     borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, textDecoration: 'none',
                   }}>
-                    ↗ Itinéraire
+                    {t('↗ Itinéraire', '↗ الاتجاهات')}
                   </a>
                 </div>
               </div>
@@ -413,35 +430,35 @@ export function GardeClient({
               onClick={() => setMonthStr(m => shiftMonth(m, -1))}
               style={{ background: '#fff', border: '1px solid var(--slate-200)', borderRadius: 8, padding: '6px 12px', fontSize: 14, cursor: 'pointer' }}
             >
-              ← Mois précédent
+              {t('← Mois précédent', '→ الشهر السابق')}
             </button>
             <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--navy)', textTransform: 'capitalize', minWidth: 160, textAlign: 'center' }}>
-              {formatMonthLabel(monthStr)}
+              {formatMonthLabel(monthStr, lang)}
             </div>
             <button
               onClick={() => setMonthStr(m => shiftMonth(m, 1))}
               style={{ background: '#fff', border: '1px solid var(--slate-200)', borderRadius: 8, padding: '6px 12px', fontSize: 14, cursor: 'pointer' }}
             >
-              Mois suivant →
+              {t('Mois suivant →', 'الشهر التالي ←')}
             </button>
           </div>
 
           {monthError && <div className="alert-banner error">{monthError}</div>}
 
           {monthLoading && (
-            <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--slate-600)', fontSize: 15 }}>⏳ Chargement…</div>
+            <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--slate-600)', fontSize: 15 }}>{t('⏳ Chargement…', '⏳ جارٍ التحميل…')}</div>
           )}
 
           {!monthLoading && !monthError && monthData && (
             <>
               {monthData.coverage && (
                 <div style={{ fontSize: 13, color: 'var(--slate-500)', marginBottom: 14 }}>
-                  Source : {monthData.coverage.issuer_fr || 'DSP'} · {monthData.data.length} garde(s) référencée(s) pour {communeName}
+                  {t('Source', 'المصدر')} : {monthData.coverage.issuer_fr || 'DSP'} · {monthData.data.length} {lang === 'ar' ? `مناوبة مسجلة في ${communeName}` : `garde(s) référencée(s) pour ${communeName}`}
                 </div>
               )}
 
               {monthData.data.length === 0 && (
-                <div className="alert-banner info">Aucune garde référencée pour {formatMonthLabel(monthStr)} à {communeName}.</div>
+                <div className="alert-banner info">{lang === 'ar' ? `لا توجد مناوبات مسجلة لشهر ${formatMonthLabel(monthStr, lang)} في ${communeName}.` : `Aucune garde référencée pour ${formatMonthLabel(monthStr)} à ${communeName}.`}</div>
               )}
 
               {monthData.data.length > 0 && (
@@ -449,8 +466,14 @@ export function GardeClient({
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
                     <thead>
                       <tr style={{ background: 'var(--slate-50)' }}>
-                        {['Date', 'Horaire', 'Pharmacie', 'Adresse', 'Téléphone'].map(h => (
-                          <th key={h} style={{ textAlign: 'left', padding: '10px 14px', fontSize: 11, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--slate-500)', borderBottom: '1px solid var(--slate-200)' }}>
+                        {[
+                          t('Date', 'التاريخ'),
+                          t('Horaire', 'التوقيت'),
+                          t('Pharmacie', 'الصيدلية'),
+                          t('Adresse', 'العنوان'),
+                          t('Téléphone', 'الهاتف'),
+                        ].map(h => (
+                          <th key={h} style={{ textAlign: lang === 'ar' ? 'right' : 'left', padding: '10px 14px', fontSize: 11, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--slate-500)', borderBottom: '1px solid var(--slate-200)' }}>
                             {h}
                           </th>
                         ))}
@@ -458,8 +481,7 @@ export function GardeClient({
                     </thead>
                     <tbody>
                       {monthData.data.map(shift => {
-                        const { dnum, dow } = formatDateShort(shift.duty_date)
-                        const isFriday = dow.toLowerCase().startsWith('vendredi')
+                        const { dnum, dow, isFriday } = formatDateShort(shift.duty_date, lang)
                         return (
                           <tr key={shift.id} style={{ background: isFriday ? '#fefbf2' : undefined, borderBottom: '1px solid var(--slate-200)' }}>
                             <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
@@ -468,16 +490,24 @@ export function GardeClient({
                             </td>
                             <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
                               <span className={shift.shift === 'nuit' ? 'badge badge-blue' : 'badge badge-amber'}>
-                                {shift.shift === 'nuit' ? '☾ 19h → 08h' : '☀ 08h → 19h'}
+                                {shift.shift === 'nuit' ? t('☾ 19h → 08h', '☾ 19:00 ← 08:00') : t('☀ 08h → 19h', '☀ 08:00 ← 19:00')}
                               </span>
                             </td>
                             <td style={{ padding: '10px 14px' }}>
-                              <div style={{ fontWeight: 600, color: 'var(--navy)' }}>{displayName(shift)}</div>
-                              {shift.name_fr && shift.name_ar && <div dir="rtl" lang="ar" style={{ color: 'var(--slate-500)', fontSize: 13 }}>{shift.name_ar}</div>}
+                              <div style={{ fontWeight: 600, color: 'var(--navy)' }}>{displayName(shift, lang)}</div>
+                              {shift.name_fr && shift.name_ar && (
+                                lang === 'ar'
+                                  ? <div style={{ color: 'var(--slate-500)', fontSize: 13 }}>{shift.name_fr}</div>
+                                  : <div dir="rtl" lang="ar" style={{ color: 'var(--slate-500)', fontSize: 13 }}>{shift.name_ar}</div>
+                              )}
                             </td>
                             <td style={{ padding: '10px 14px', maxWidth: 260 }}>
-                              <div>{shift.address_fr || shift.address_ar}</div>
-                              {shift.address_fr && shift.address_ar && <div dir="rtl" lang="ar" style={{ color: 'var(--slate-500)', fontSize: 13 }}>{shift.address_ar}</div>}
+                              <div>{lang === 'ar' ? shift.address_ar || shift.address_fr : shift.address_fr || shift.address_ar}</div>
+                              {shift.address_fr && shift.address_ar && (
+                                lang === 'ar'
+                                  ? <div style={{ color: 'var(--slate-500)', fontSize: 13 }}>{shift.address_fr}</div>
+                                  : <div dir="rtl" lang="ar" style={{ color: 'var(--slate-500)', fontSize: 13 }}>{shift.address_ar}</div>
+                              )}
                             </td>
                             <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
                               {shift.phone_e164 ? (
@@ -485,7 +515,7 @@ export function GardeClient({
                                   {shift.phone_e164}
                                 </a>
                               ) : (
-                                <span style={{ color: 'var(--slate-400)', fontStyle: 'italic' }}>non publié</span>
+                                <span style={{ color: 'var(--slate-400)', fontStyle: 'italic' }}>{t('non publié', 'غير منشور')}</span>
                               )}
                             </td>
                           </tr>

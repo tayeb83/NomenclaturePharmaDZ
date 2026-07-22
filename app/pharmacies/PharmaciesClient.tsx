@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import type { GardePharmacy, GardeCoverageEntry } from '@/lib/db-types'
+import { useLanguage } from '@/components/i18n/LanguageProvider'
+import type { Lang } from '@/lib/i18n'
 
 const PharmaciesMap = dynamic(() => import('./PharmaciesMap'), { ssr: false })
 
@@ -20,7 +22,8 @@ function formatDistance(km: number | null) {
   return `${km.toFixed(1).replace('.', ',')} km`
 }
 
-function displayName(p: GardePharmacy) {
+function displayName(p: GardePharmacy, lang: Lang = 'fr') {
+  if (lang === 'ar') return p.name_ar || p.name_fr || 'صيدلية'
   return p.name_fr || p.name_ar || 'Pharmacie'
 }
 
@@ -32,6 +35,8 @@ function mapsHref(p: GardePharmacy) {
 }
 
 export function PharmaciesClient() {
+  const { lang } = useLanguage()
+  const t = (fr: string, ar: string) => (lang === 'ar' ? ar : fr)
   const [coverage, setCoverage] = useState<GardeCoverageEntry[]>([])
   const [coverageLoading, setCoverageLoading] = useState(true)
   const [wilaya, setWilaya] = useState('')
@@ -89,11 +94,11 @@ export function PharmaciesClient() {
       const json = await res.json()
       setPharmacies(json.data || [])
     } catch {
-      setError('Impossible de charger la liste des pharmacies.')
+      setError(lang === 'ar' ? 'تعذّر تحميل قائمة الصيدليات.' : 'Impossible de charger la liste des pharmacies.')
     } finally {
       setLoading(false)
     }
-  }, [wilaya, commune])
+  }, [wilaya, commune, lang])
 
   useEffect(() => { fetchPharmacies() }, [fetchPharmacies])
 
@@ -106,10 +111,10 @@ export function PharmaciesClient() {
       if (a.distanceKm != null && b.distanceKm != null) return a.distanceKm - b.distanceKm
       if (a.distanceKm != null) return -1
       if (b.distanceKm != null) return 1
-      return displayName(a.p).localeCompare(displayName(b.p))
+      return displayName(a.p, lang).localeCompare(displayName(b.p, lang))
     })
     return rows
-  }, [pharmacies, userPos])
+  }, [pharmacies, userPos, lang])
 
   return (
     <div>
@@ -119,46 +124,50 @@ export function PharmaciesClient() {
         boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
       }}>
         <div>
-          <label style={{ display: 'block', fontSize: 12, color: 'var(--slate-500)', marginBottom: 6, fontWeight: 600 }}>Wilaya</label>
+          <label style={{ display: 'block', fontSize: 12, color: 'var(--slate-500)', marginBottom: 6, fontWeight: 600 }}>{t('Wilaya', 'الولاية')}</label>
           <select
             value={wilaya}
             onChange={e => { setWilaya(e.target.value); setCommune(''); }}
             disabled={coverageLoading || wilayas.length === 0}
             style={{ background: 'var(--slate-50)', border: '1px solid var(--slate-200)', color: 'var(--navy)', borderRadius: 8, padding: '8px 12px', fontSize: 14, minWidth: 180 }}
           >
-            {wilayas.length === 0 && <option value="">Aucune wilaya couverte</option>}
+            {wilayas.length === 0 && <option value="">{t('Aucune wilaya couverte', 'لا توجد ولاية مغطاة')}</option>}
             {wilayas.map(w => <option key={w.wilaya_code} value={w.wilaya_code}>{w.wilaya_name_fr}</option>)}
           </select>
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: 12, color: 'var(--slate-500)', marginBottom: 6, fontWeight: 600 }}>Commune (optionnel)</label>
+          <label style={{ display: 'block', fontSize: 12, color: 'var(--slate-500)', marginBottom: 6, fontWeight: 600 }}>{t('Commune (optionnel)', 'البلدية (اختياري)')}</label>
           <select
             value={commune}
             onChange={e => setCommune(e.target.value)}
             disabled={communes.length === 0}
             style={{ background: 'var(--slate-50)', border: '1px solid var(--slate-200)', color: 'var(--navy)', borderRadius: 8, padding: '8px 12px', fontSize: 14, minWidth: 180 }}
           >
-            <option value="">Toute la wilaya</option>
+            <option value="">{t('Toute la wilaya', 'كل الولاية')}</option>
             {communes.map(c => <option key={c.commune_code} value={c.commune_code}>{c.commune_name_fr}</option>)}
           </select>
         </div>
       </div>
 
       {!coverageLoading && wilayas.length === 0 && (
-        <div className="alert-banner info">Aucune wilaya n&apos;est encore couverte pour le moment — revenez bientôt.</div>
+        <div className="alert-banner info">{t('Aucune wilaya n’est encore couverte pour le moment — revenez bientôt.', 'لا توجد أي ولاية مغطاة حالياً — عودوا قريباً.')}</div>
       )}
 
       {error && <div className="alert-banner error">{error}</div>}
 
       {loading && (
-        <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--slate-600)', fontSize: 15 }}>⏳ Chargement…</div>
+        <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--slate-600)', fontSize: 15 }}>{t('⏳ Chargement…', '⏳ جارٍ التحميل…')}</div>
       )}
 
       {!loading && !error && pharmacies.length > 0 && (
         <>
           <div style={{ fontSize: 13, color: 'var(--slate-500)', marginBottom: 14 }}>
-            {pharmacies.length} pharmacie(s) référencée(s) — recensées au fil des plannings de garde officiels, liste non exhaustive.
+            {pharmacies.length}{' '}
+            {t(
+              'pharmacie(s) référencée(s) — recensées au fil des plannings de garde officiels, liste non exhaustive.',
+              'صيدلية مسجلة — تم جمعها من برامج المناوبة الرسمية، القائمة غير شاملة.'
+            )}
           </div>
 
           {(userPos || sorted.some(r => r.p.lat != null)) && (
@@ -173,10 +182,14 @@ export function PharmaciesClient() {
                 background: '#fff', border: '1px solid var(--slate-200)', borderRadius: 10, padding: '16px 18px',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
               }}>
-                <div style={{ fontWeight: 700, fontSize: 15.5, color: 'var(--navy)' }}>{displayName(p)}</div>
-                {p.name_fr && p.name_ar && <div dir="rtl" lang="ar" style={{ color: 'var(--slate-500)', fontSize: 14, marginTop: 2 }}>{p.name_ar}</div>}
+                <div style={{ fontWeight: 700, fontSize: 15.5, color: 'var(--navy)' }}>{displayName(p, lang)}</div>
+                {p.name_fr && p.name_ar && (
+                  lang === 'ar'
+                    ? <div style={{ color: 'var(--slate-500)', fontSize: 14, marginTop: 2 }}>{p.name_fr}</div>
+                    : <div dir="rtl" lang="ar" style={{ color: 'var(--slate-500)', fontSize: 14, marginTop: 2 }}>{p.name_ar}</div>
+                )}
                 <div style={{ fontSize: 13, color: 'var(--slate-600)', marginTop: 6 }}>
-                  {p.address_fr || p.address_ar}{distanceKm != null && ` · ${formatDistance(distanceKm)}`}
+                  {(lang === 'ar' ? p.address_ar || p.address_fr : p.address_fr || p.address_ar)}{distanceKm != null && ` · ${formatDistance(distanceKm)}`}
                   {!commune && p.commune_name_fr && ` — ${p.commune_name_fr}`}
                 </div>
                 <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
@@ -185,16 +198,16 @@ export function PharmaciesClient() {
                       background: 'var(--blue)', color: '#fff', borderRadius: 8, padding: '8px 14px',
                       fontSize: 13, fontWeight: 700, textDecoration: 'none',
                     }}>
-                      📞 Appeler
+                      {t('📞 Appeler', '📞 اتصال')}
                     </a>
                   ) : (
-                    <span style={{ color: 'var(--slate-400)', fontSize: 13, padding: '8px 14px' }}>📞 Indisponible</span>
+                    <span style={{ color: 'var(--slate-400)', fontSize: 13, padding: '8px 14px' }}>{t('📞 Indisponible', '📞 غير متوفر')}</span>
                   )}
                   <a href={mapsHref(p)} target="_blank" rel="noopener noreferrer" style={{
                     background: '#fff', border: '1px solid var(--slate-200)', color: 'var(--slate-700)',
                     borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, textDecoration: 'none',
                   }}>
-                    ↗ Itinéraire
+                    {t('↗ Itinéraire', '↗ الاتجاهات')}
                   </a>
                 </div>
               </div>
@@ -204,7 +217,7 @@ export function PharmaciesClient() {
       )}
 
       {!loading && !error && pharmacies.length === 0 && wilaya && (
-        <div className="alert-banner info">Aucune pharmacie référencée pour cette zone pour le moment.</div>
+        <div className="alert-banner info">{t('Aucune pharmacie référencée pour cette zone pour le moment.', 'لا توجد صيدليات مسجلة في هذه المنطقة حالياً.')}</div>
       )}
     </div>
   )

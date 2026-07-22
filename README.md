@@ -1,4 +1,68 @@
-# PharmaVeille DZ — Guide de déploiement (Recherche • Alertes • Substitution)
+# DwaDZ (PharmaVeille DZ) — Médicaments & pharmacies de garde en Algérie
+
+**DwaDZ… كلش على دوا البلاد** — moteur de recherche indépendant sur la
+Nomenclature Nationale des Produits Pharmaceutiques publiée par le Ministère
+de l'Industrie Pharmaceutique (MIPH), et annuaire des **pharmacies de garde**
+par wilaya et commune. Interface bilingue **français / arabe** (RTL).
+
+## Ce que fait le site
+
+### 🔍 Recherche de médicaments
+- **Recherche globale** (`/recherche`) : par nom commercial (DOLIPRANE), DCI
+  (PARACETAMOL), laboratoire, forme ou dosage. Tolère les fautes de frappe
+  (`amoxiciline` → AMOXICILLINE), l'arabe (`دوليبران` → PARACETAMOL) et
+  l'arabizi (3, 7, 9…).
+- **Catalogue complet** (`/medicaments`) : liste paginée et filtrable
+  (type, statut fabriqué/importé, année), nouveautés de version, retraits.
+- **Fiches détaillées** (`/medicament/...`) : DCI, forme, dosage, labo, pays,
+  statut réglementaire, classe ATC, badge 🚨 pour les médicaments critiques.
+- **Substitution générique** (`/substitution`), **comparateur**
+  (`/comparateur`), **classes thérapeutiques ATC**
+  (`/classes-therapeutiques`), **laboratoires** (`/laboratoires`).
+- **Alertes & retraits** (`/alertes`, `/retraits`), **veille réglementaire**
+  (`/veille`), **médicaments critiques** (`/medicaments-critiques`).
+
+### 🌙 Pharmacies de garde
+- `/pharmacie-de-garde` : plannings de garde officiels par **wilaya puis
+  commune**, avec vues « Maintenant », « Cette nuit », « Vendredi » et
+  « Vue du mois ».
+- Tri par distance et carte si l'utilisateur autorise la géolocalisation ;
+  téléphone cliquable et itinéraire Google Maps.
+- Version arabe indexable sur `/ar/pharmacie-de-garde`.
+- Crowdsourcing : confirmation d'ouverture, signalement d'erreur,
+  revendication de fiche par le pharmacien.
+- Annuaire général : `/pharmacies`.
+
+### 📲 Application web (PWA)
+Le site s'installe comme une application (bannière « Installer DwaDZ », ou
+« Ajouter à l'écran d'accueil ») et fonctionne hors-ligne. Guide
+d'installation et documentation complète des pages : **`/help`**
+(section « Installer l'application » : `/help#application`).
+
+## Sécurité & anti-scraping
+
+- **Secrets** : aucun secret dans le repo — copier `env.local.example` vers
+  `.env.local` (jamais committé). En production, définir les variables dans
+  Vercel. `ADMIN_PASSWORD` et `ADMIN_SESSION_SECRET` doivent être longs et
+  aléatoires (`openssl rand -hex 32`).
+- **Headers** (`vercel.json`) : HSTS, `X-Frame-Options: DENY`,
+  `X-Content-Type-Options`, `Permissions-Policy`, `Referrer-Policy` ;
+  CORS ouvert uniquement sur les endpoints de l'app mobile
+  (`/api/actualites`, `/api/push/register`).
+- **Anti-bots** (`middleware.ts`) : blocage par User-Agent des bots
+  d'entraînement IA (GPTBot, CCBot, ClaudeBot…), aspirateurs SEO
+  (Semrush, Ahrefs, MJ12…) et clients HTTP génériques (curl, wget,
+  python-requests, Scrapy…) ; `robots.txt` les interdit aussi et exclut
+  `/api/` de l'indexation. Les moteurs de recherche légitimes (Googlebot,
+  Bingbot) restent autorisés sur les pages.
+- **Rate limiting** : middleware edge (90 req/min sur les API, 300 pages/min
+  par IP+UA) + limites dédiées sur le login admin (5 tentatives / 15 min)
+  et la newsletter. Pour un rate limiting distribué plus strict, activer le
+  pare-feu Vercel (WAF) en complément.
+
+---
+
+# Guide de déploiement (Recherche • Alertes • Substitution)
 
 ## Architecture
 
@@ -50,11 +114,15 @@ python scripts/ingest_to_supabase.py \
 
 ## Étape 2 — Variables d'environnement
 
-Copie `.env.local.example` → `.env.local` et remplis :
+Copie `env.local.example` → `.env.local` et remplis :
 
 ```bash
-cp .env.local.example .env.local
+cp env.local.example .env.local
 ```
+
+⚠️ Ne jamais committer `.env.local` / `env.local` (ignorés par `.gitignore`).
+Si un secret a été committé par le passé, il doit être **révoqué et régénéré**
+(mot de passe DB Supabase, clé API, mot de passe d'application Gmail…).
 
 **Obligatoires :**
 - `NEXT_PUBLIC_SUPABASE_URL`
