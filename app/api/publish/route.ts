@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { query, queryOne } from '@/lib/db'
 import { formatRetrait, formatNouveaute, publishToAll, sendNewsletter } from '@/lib/social'
+import { publishGardeDailyToFacebook } from '@/lib/garde-social'
 import { sendPushToAll } from '@/lib/push'
 
 function secretsMatch(provided: string | null, expected: string | undefined): boolean {
@@ -17,11 +18,13 @@ function secretsMatch(provided: string | null, expected: string | undefined): bo
 
 /**
  * POST /api/publish
- * Body: { type: 'retrait'|'nouveaute'|'newsletter', id?: number, platforms: string[], secret: string }
+ * Body: { type: 'retrait'|'nouveaute'|'recap_hebdo'|'garde_daily', id?: number, ... }
  *
  * Exemples d'usage:
  * - Publier un retrait sur Facebook + Twitter + newsletter
  * - Envoyer le récap hebdomadaire newsletter
+ * - Déclencher manuellement la publication garde du jour
+ *   ({ type: 'garde_daily', wilaya?: '16', date?: 'YYYY-MM-DD', dryRun?: true })
  */
 export async function POST(request: NextRequest) {
   const secret = request.headers.get('x-api-secret')
@@ -80,6 +83,15 @@ export async function POST(request: NextRequest) {
       await publishToAll({ short: summary, facebook: summary }, 0, '', 'recap')
 
       return NextResponse.json({ success: true })
+    }
+
+    if (type === 'garde_daily') {
+      const result = await publishGardeDailyToFacebook({
+        date: typeof body.date === 'string' ? body.date : undefined,
+        wilaya: typeof body.wilaya === 'string' ? body.wilaya : undefined,
+        dryRun: !!body.dryRun,
+      })
+      return NextResponse.json({ success: true, ...result })
     }
 
     return NextResponse.json({ error: 'Type invalide' }, { status: 400 })

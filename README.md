@@ -213,6 +213,31 @@ Le fichier `vercel.json` configure l'envoi automatique **chaque lundi à 8h** :
 { "path": "/api/cron/weekly", "schedule": "0 7 * * 1" }
 ```
 
+### Pharmacies de garde — publication Facebook quotidienne
+
+Chaque jour à **8h (heure d'Alger)**, le cron `/api/cron/garde-daily`
+publie sur la Page Facebook, **pour chaque wilaya couverte en base**, une
+image générée automatiquement (liste des officines de garde du jour,
+rendu `next/og`) accompagnée de la liste détaillée en légende
+(commune, adresse, téléphone, vacation jour/nuit) et du lien vers
+`/pharmacie-de-garde`.
+
+- Configuration : mêmes variables `FACEBOOK_PAGE_ID` +
+  `FACEBOOK_PAGE_ACCESS_TOKEN` que les alertes (token de Page longue durée
+  avec `pages_manage_posts`).
+- Idempotent : chaque publication est journalisée dans `social_posts`
+  (`type='garde'`) ; relancer le cron le même jour ne crée pas de doublon.
+- Aperçu du visuel sans publier :
+  `GET /api/garde/social-image?wilaya=16&date=2026-07-22`
+- Test à blanc (aucune publication) :
+  `curl -H "Authorization: Bearer $CRON_SECRET" "https://ton-site.vercel.app/api/cron/garde-daily?dry=1"`
+- Déclenchement manuel ciblé :
+  `POST /api/publish` avec `{"type": "garde_daily", "wilaya": "16"}`
+  (header `x-api-secret`).
+
+> ⚠️ Vercel plan Hobby : 2 cron jobs max — `weekly` + `garde-daily`
+> atteignent cette limite.
+
 ---
 
 ## Étape 6 — Mise à jour des données

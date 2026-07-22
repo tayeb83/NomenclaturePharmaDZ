@@ -159,6 +159,10 @@ function getMotifEmoji(motif: string | null | undefined) {
 }
 
 // ─── PUBLICATION FACEBOOK ─────────────────────────────────────
+
+// Surchargeable pour les tests et les montées de version de l'API Graph.
+const FACEBOOK_GRAPH_BASE = process.env.FACEBOOK_GRAPH_API_BASE || 'https://graph.facebook.com/v18.0'
+
 export async function postToFacebook(message: string): Promise<{ success: boolean; postId?: string; error?: string }> {
   const token = process.env.FACEBOOK_PAGE_ACCESS_TOKEN
   const pageId = process.env.FACEBOOK_PAGE_ID
@@ -169,12 +173,45 @@ export async function postToFacebook(message: string): Promise<{ success: boolea
 
   try {
     const res = await axios.post(
-      `https://graph.facebook.com/v18.0/${pageId}/feed`,
+      `${FACEBOOK_GRAPH_BASE}/${pageId}/feed`,
       { message, access_token: token }
     )
     return { success: true, postId: res.data.id }
   } catch (err: any) {
     return { success: false, error: err.response?.data?.error?.message || err.message }
+  }
+}
+
+/**
+ * Publie une photo sur la Page Facebook (upload multipart direct — pas
+ * d'URL publique à faire récupérer par le crawler Meta, que notre
+ * middleware anti-bot bloque). La légende accompagne la photo.
+ */
+export async function postFacebookPhoto(image: Buffer, caption: string): Promise<{ success: boolean; postId?: string; error?: string }> {
+  const token = process.env.FACEBOOK_PAGE_ACCESS_TOKEN
+  const pageId = process.env.FACEBOOK_PAGE_ID
+
+  if (!token || !pageId) {
+    return { success: false, error: 'Facebook credentials manquants' }
+  }
+
+  try {
+    const form = new FormData()
+    form.append('source', new Blob([new Uint8Array(image)], { type: 'image/png' }), 'garde.png')
+    form.append('caption', caption)
+    form.append('access_token', token)
+
+    const res = await fetch(`${FACEBOOK_GRAPH_BASE}/${pageId}/photos`, {
+      method: 'POST',
+      body: form,
+    })
+    const data: any = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      return { success: false, error: data?.error?.message || `HTTP ${res.status}` }
+    }
+    return { success: true, postId: data.post_id || data.id }
+  } catch (err: any) {
+    return { success: false, error: err.message }
   }
 }
 
