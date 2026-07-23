@@ -64,7 +64,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
       `pharmacie de nuit ${commune}`,
       `garde pharmacie ${wilayaName}`,
       `pharmacie ouverte ${commune}`,
-      ...(location.commune_name_ar ? [`صيدلية الحراسة ${location.commune_name_ar}`] : []),
+      ...(location.commune_name_ar ? [`صيدلية المناوبة ${location.commune_name_ar}`] : []),
     ],
     alternates: {
       canonical: frUrl,

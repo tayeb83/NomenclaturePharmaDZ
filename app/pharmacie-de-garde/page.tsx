@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   keywords: [
     'pharmacie de garde algérie', 'pharmacie de garde par wilaya', 'pharmacie de garde oran',
     'pharmacie de garde sidi bel abbès', 'pharmacie de garde saida', 'pharmacie de nuit algérie',
-    'صيدلية الحراسة الجزائر', 'صيدلية مناوبة',
+    'صيدلية المناوبة الجزائر', 'صيدلية مناوبة',
   ],
   alternates: {
     canonical: `${APP_URL}/pharmacie-de-garde`,

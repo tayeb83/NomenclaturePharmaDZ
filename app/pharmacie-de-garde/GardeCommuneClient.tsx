@@ -52,21 +52,21 @@ const LABELS = {
     wilaya: 'الولاية', commune: 'البلدية',
     modes: { now: 'الآن', tonight: 'هذه الليلة', friday: 'الجمعة القادمة', month: 'عرض الشهر' } as Record<Mode, string>,
     pageTitle: (mode: Mode, commune: string, monthLabel: string) => {
-      if (mode === 'tonight') return `صيدلية الحراسة في ${commune} هذه الليلة`
-      if (mode === 'friday') return `صيدلية الحراسة في ${commune} يوم الجمعة`
-      if (mode === 'month') return `برنامج صيدليات الحراسة في ${commune} — ${monthLabel}`
-      return `صيدلية الحراسة اليوم في ${commune}`
+      if (mode === 'tonight') return `صيدلية المناوبة في ${commune} هذه الليلة`
+      if (mode === 'friday') return `صيدلية المناوبة في ${commune} يوم الجمعة`
+      if (mode === 'month') return `برنامج صيدليات المناوبة في ${commune} — ${monthLabel}`
+      return `صيدلية المناوبة اليوم في ${commune}`
     },
     pageDescription: (mode: Mode, count: number, commune: string, wilaya: string, monthLabel: string) => {
       if (mode === 'month') {
         return count > 0
           ? `${count} مناوبة مسجلة لشهر ${monthLabel} في ${commune}، ولاية ${wilaya}. العناوين وأرقام الهاتف وأوقات المناوبة — مصدر رسمي (DSP).`
-          : `برنامج صيدليات الحراسة في ${commune}، ولاية ${wilaya}، لشهر ${monthLabel}. مصدر رسمي (DSP).`
+          : `برنامج صيدليات المناوبة في ${commune}، ولاية ${wilaya}، لشهر ${monthLabel}. مصدر رسمي (DSP).`
       }
       const periodLabel = mode === 'tonight' ? 'هذه الليلة' : mode === 'friday' ? 'يوم الجمعة' : 'حاليًا'
       return count > 0
         ? `${count} صيدلية مناوبة ${periodLabel} في ${commune}، ولاية ${wilaya}. العناوين وأرقام الهاتف وأوقات المناوبة — مصدر رسمي (DSP).`
-        : `برنامج صيدليات الحراسة في ${commune}، ولاية ${wilaya}. العناوين وأرقام الهاتف وأوقات المناوبة — مصدر رسمي (DSP).`
+        : `برنامج صيدليات المناوبة في ${commune}، ولاية ${wilaya}. العناوين وأرقام الهاتف وأوقات المناوبة — مصدر رسمي (DSP).`
     },
     copy: '🔗 نسخ الرابط', copied: '✓ تم النسخ',
     loading: '⏳ جارٍ التحميل…',
@@ -244,7 +244,7 @@ export function GardeCommuneClient({
       if (!res.ok) throw new Error('Erreur serveur')
       setData(await res.json())
     } catch {
-      setError(lang === 'ar' ? 'تعذّر تحميل صيدليات الحراسة.' : 'Impossible de charger les pharmacies de garde.')
+      setError(lang === 'ar' ? 'تعذّر تحميل صيدليات المناوبة.' : 'Impossible de charger les pharmacies de garde.')
     } finally {
       setLoading(false)
     }
