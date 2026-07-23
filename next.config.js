@@ -14,13 +14,13 @@ const nextConfig = {
       // Augmenter la limite pour l'upload des fichiers Excel MIPH (peuvent dépasser 4 Mo)
       bodySizeLimit: '50mb',
     },
-    // Polices lues via fs par lib/garde-social.tsx (images de garde) —
+    // Polices + logo lus via fs par lib/garde-social.tsx (images de garde) —
     // à inclure explicitement dans le bundle des fonctions serverless
     // qui génèrent ces images.
     outputFileTracingIncludes: {
-      '/api/garde/social-image': ['./assets/fonts/**'],
-      '/api/cron/garde-daily': ['./assets/fonts/**'],
-      '/api/publish': ['./assets/fonts/**'],
+      '/api/garde/social-image': ['./assets/fonts/**', './assets/dwadz-logo.png'],
+      '/api/cron/garde-daily': ['./assets/fonts/**', './assets/dwadz-logo.png'],
+      '/api/publish': ['./assets/fonts/**', './assets/dwadz-logo.png'],
     },
   },
 }
