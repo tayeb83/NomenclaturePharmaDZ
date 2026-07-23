@@ -133,8 +133,12 @@ function shiftSuffix(shifts: string[]): string {
   return ''
 }
 
+// Domaine de repli si NEXT_PUBLIC_APP_URL n'est pas défini. En production
+// c'est la variable d'environnement qui prime (voir Vercel).
+const DEFAULT_APP_URL = 'https://dzair-pharma.net'
+
 export function formatGardeCaption(day: GardeWilayaDay): string {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.com'
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || DEFAULT_APP_URL).replace(/\/+$/, '')
   const lines: string[] = [
     `🟢 PHARMACIES DE GARDE — ${day.wilaya_name_fr.toUpperCase()}`,
     `📅 ${formatDateFr(day.date)}`,
@@ -161,9 +165,11 @@ export function formatGardeCaption(day: GardeWilayaDay): string {
   }
 
   const hashtagWilaya = day.wilaya_name_fr.replace(/[^A-Za-zÀ-ÿ0-9]/g, '')
+  // URL complète (avec https://) pour que Facebook la rende cliquable dans
+  // la légende — un lien sans protocole n'est pas toujours auto-lié.
   lines.push(
     'ℹ️ Horaires, carte et itinéraires :',
-    `🔗 ${appUrl.replace(/^https?:\/\//, '')}/pharmacie-de-garde#${slugify(day.wilaya_name_fr)}`,
+    `👉 ${appUrl}/pharmacie-de-garde#${slugify(day.wilaya_name_fr)}`,
     '',
     `#PharmacieDeGarde #${hashtagWilaya} #Algérie #DwaDZ`
   )
@@ -185,6 +191,24 @@ export function formatGardeCaption(day: GardeWilayaDay): string {
  */
 type LoadedFont = { name: string; data: Buffer; weight: 400 | 700; style: 'normal' }
 let fontsCache: LoadedFont[] | null | undefined
+
+// Logo DwaDZ embarqué dans l'en-tête de l'image, en data URI (satori ne
+// récupère pas d'URL distante — et notre crawler serait de toute façon
+// bloqué). Converti une fois depuis public/dwadz-logo.svg vers
+// assets/dwadz-logo.png. Chargé une fois par instance.
+let logoCache: string | null | undefined
+
+async function loadLogo(): Promise<string | null> {
+  if (logoCache !== undefined) return logoCache
+  try {
+    const png = await readFile(path.join(process.cwd(), 'assets', 'dwadz-logo.png'))
+    logoCache = `data:image/png;base64,${png.toString('base64')}`
+  } catch (err: any) {
+    console.error('[garde-social] Logo introuvable:', err?.message || err)
+    logoCache = null
+  }
+  return logoCache
+}
 
 async function loadFonts(): Promise<LoadedFont[] | null> {
   if (fontsCache !== undefined) return fontsCache
@@ -272,8 +296,8 @@ function truncate(s: string, max: number): string {
  */
 export async function buildGardeImageResponse(day: GardeWilayaDay): Promise<ImageResponse> {
   const { sections, remaining } = buildImageSections(day)
-  const appHost = (process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.com').replace(/^https?:\/\//, '')
-  const fonts = await loadFonts()
+  const appHost = (process.env.NEXT_PUBLIC_APP_URL || DEFAULT_APP_URL).replace(/^https?:\/\//, '').replace(/\/+$/, '')
+  const [fonts, logo] = await Promise.all([loadFonts(), loadLogo()])
   const arabicOk = !!fonts
 
   return new ImageResponse(
@@ -287,7 +311,12 @@ export async function buildGardeImageResponse(day: GardeWilayaDay): Promise<Imag
         {/* En-tête */}
         <div style={{ display: 'flex', flexDirection: 'column', marginBottom: 28 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', fontSize: 30, fontWeight: 700, color: '#7dd3fc' }}>DwaDZ</div>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              {logo && (
+                <img src={logo} width={58} height={58} style={{ marginRight: 16 }} alt="" />
+              )}
+              <div style={{ display: 'flex', fontSize: 34, fontWeight: 700, color: '#7dd3fc' }}>DwaDZ</div>
+            </div>
             <div style={{ display: 'flex', fontSize: 24, color: '#94a3b8' }}>{appHost}</div>
           </div>
           <div style={{ display: 'flex', fontSize: 52, fontWeight: 800, color: '#ffffff', marginTop: 14 }}>
