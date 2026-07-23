@@ -137,6 +137,20 @@ function shiftSuffix(shifts: string[]): string {
 // c'est la variable d'environnement qui prime (voir Vercel).
 const DEFAULT_APP_URL = 'https://dzair-pharma.net'
 
+/**
+ * Lien vers la page de garde la plus pertinente pour une wilaya :
+ * - une seule commune (ex. Saïda) → page directe /pharmacie-de-garde/<wilaya>/<commune>
+ * - plusieurs communes → hub ancré sur la wilaya (pas de page « wilaya seule »)
+ */
+export function gardeWilayaUrl(appUrl: string, day: GardeWilayaDay): string {
+  const base = `${appUrl}/pharmacie-de-garde`
+  const wilayaSlug = slugify(day.wilaya_name_fr)
+  if (day.communes.length === 1) {
+    return `${base}/${wilayaSlug}/${slugify(day.communes[0].commune_name_fr)}`
+  }
+  return `${base}#${wilayaSlug}`
+}
+
 export function formatGardeCaption(day: GardeWilayaDay): string {
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL || DEFAULT_APP_URL).replace(/\/+$/, '')
   const lines: string[] = [
@@ -169,7 +183,7 @@ export function formatGardeCaption(day: GardeWilayaDay): string {
   // la légende — un lien sans protocole n'est pas toujours auto-lié.
   lines.push(
     'ℹ️ Horaires, carte et itinéraires :',
-    `👉 ${appUrl}/pharmacie-de-garde#${slugify(day.wilaya_name_fr)}`,
+    `👉 ${gardeWilayaUrl(appUrl, day)}`,
     '',
     `#PharmacieDeGarde #${hashtagWilaya} #Algérie #DwaDZ`
   )
@@ -411,19 +425,35 @@ export type GardeDailyPublishResult = {
   results: GardeWilayaPublishResult[]
 }
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+// Espacement entre deux publications, pour ne pas déverser toutes les
+// wilayas dans le fil au même instant (et lisser la charge côté Graph API).
+// Réglable via GARDE_POST_DELAY_MS. Le budget total borne la durée totale
+// sous la limite d'exécution d'une fonction Vercel : au-delà, on continue à
+// publier mais sans attendre, pour que toutes les wilayas passent quand même
+// dans la même invocation plutôt que d'être coupées en cours de route.
+const DEFAULT_POST_DELAY_MS = 8000
+const DEFAULT_TIME_BUDGET_MS = 50000
+
 /**
  * Publie sur la Page Facebook, pour chaque wilaya ayant des officines de
  * garde à la date donnée, une photo générée + la liste en légende.
  * Idempotent : une légende strictement identique déjà publiée (même date,
  * même wilaya, mêmes données) n'est pas repostée — le cron peut donc être
- * relancé sans doublon.
+ * relancé sans doublon. Les publications sont espacées (voir delayMs).
  */
 export async function publishGardeDailyToFacebook(
-  opts: { date?: string; wilaya?: string; dryRun?: boolean } = {}
+  opts: { date?: string; wilaya?: string; dryRun?: boolean; delayMs?: number; budgetMs?: number } = {}
 ): Promise<GardeDailyPublishResult> {
   const date = opts.date || todayInAlgiers()
   const days = await getGardeDayByWilaya(date, opts.wilaya)
   const results: GardeWilayaPublishResult[] = []
+
+  const delayMs = opts.delayMs ?? (Number(process.env.GARDE_POST_DELAY_MS) || DEFAULT_POST_DELAY_MS)
+  const budgetMs = opts.budgetMs ?? (Number(process.env.GARDE_TIME_BUDGET_MS) || DEFAULT_TIME_BUDGET_MS)
+  const startedAt = Date.now()
+  let publishedThisRun = 0
 
   for (const day of days) {
     const caption = formatGardeCaption(day)
@@ -444,6 +474,12 @@ export async function publishGardeDailyToFacebook(
       continue
     }
 
+    // Espacer les publications réelles successives, tant qu'il reste du
+    // budget de temps (on ne retarde pas la première).
+    if (publishedThisRun > 0 && delayMs > 0 && Date.now() - startedAt + delayMs < budgetMs) {
+      await sleep(delayMs)
+    }
+
     // Photo d'abord ; si la génération ou l'upload échoue, on retombe sur
     // un post texte pour ne pas priver la wilaya de sa publication du jour.
     let post: { success: boolean; postId?: string; error?: string }
@@ -455,6 +491,7 @@ export async function publishGardeDailyToFacebook(
       console.error(`[garde-social] Image failed for wilaya ${day.wilaya_code}:`, err?.message || err)
       post = await postToFacebook(caption)
     }
+    publishedThisRun++
 
     const refId = Number(day.wilaya_code)
     await query(`

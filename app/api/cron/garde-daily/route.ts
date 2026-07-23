@@ -10,7 +10,12 @@ import { publishGardeDailyToFacebook } from '@/lib/garde-social'
 //     "…?wilaya=16&date=2026-07-22"                    (wilaya/date ciblées)
 
 export const dynamic = 'force-dynamic'
-export const maxDuration = 60
+// Les publications sont espacées (GARDE_POST_DELAY_MS) : on laisse la
+// fonction tourner aussi longtemps que le plan Vercel l'autorise. Sur
+// Hobby la valeur est plafonnée à 60 s côté plateforme (le budget de temps
+// interne, GARDE_TIME_BUDGET_MS ≈ 50 s, reste donc en deçà) ; sur Pro elle
+// peut aller jusqu'à 300 s.
+export const maxDuration = 300
 
 function isValidBearerToken(authorizationHeader: string | null, expectedToken: string | undefined): boolean {
   if (!authorizationHeader || !expectedToken) return false
