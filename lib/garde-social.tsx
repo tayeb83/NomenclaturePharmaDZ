@@ -137,6 +137,20 @@ function shiftSuffix(shifts: string[]): string {
 // c'est la variable d'environnement qui prime (voir Vercel).
 const DEFAULT_APP_URL = 'https://dzair-pharma.net'
 
+/**
+ * Lien vers la page de garde la plus pertinente pour une wilaya :
+ * - une seule commune (ex. Saïda) → page directe /pharmacie-de-garde/<wilaya>/<commune>
+ * - plusieurs communes → hub ancré sur la wilaya (pas de page « wilaya seule »)
+ */
+export function gardeWilayaUrl(appUrl: string, day: GardeWilayaDay): string {
+  const base = `${appUrl}/pharmacie-de-garde`
+  const wilayaSlug = slugify(day.wilaya_name_fr)
+  if (day.communes.length === 1) {
+    return `${base}/${wilayaSlug}/${slugify(day.communes[0].commune_name_fr)}`
+  }
+  return `${base}#${wilayaSlug}`
+}
+
 export function formatGardeCaption(day: GardeWilayaDay): string {
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL || DEFAULT_APP_URL).replace(/\/+$/, '')
   const lines: string[] = [
@@ -169,7 +183,7 @@ export function formatGardeCaption(day: GardeWilayaDay): string {
   // la légende — un lien sans protocole n'est pas toujours auto-lié.
   lines.push(
     'ℹ️ Horaires, carte et itinéraires :',
-    `👉 ${appUrl}/pharmacie-de-garde#${slugify(day.wilaya_name_fr)}`,
+    `👉 ${gardeWilayaUrl(appUrl, day)}`,
     '',
     `#PharmacieDeGarde #${hashtagWilaya} #Algérie #DwaDZ`
   )
