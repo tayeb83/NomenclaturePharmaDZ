@@ -225,18 +225,28 @@ rendu `next/og`) accompagnée de la liste détaillée en légende
 - Configuration : mêmes variables `FACEBOOK_PAGE_ID` +
   `FACEBOOK_PAGE_ACCESS_TOKEN` que les alertes (token de Page longue durée
   avec `pages_manage_posts`).
+- Le lien en légende pointe vers la page directe de la commune quand la
+  wilaya n'en a qu'une, sinon vers le hub ancré sur la wilaya.
 - Idempotent : chaque publication est journalisée dans `social_posts`
   (`type='garde'`) ; relancer le cron le même jour ne crée pas de doublon.
+- **Publications espacées** : par défaut 8 s entre chaque wilaya (réglable
+  via `GARDE_POST_DELAY_MS`) pour ne pas saturer le fil ni l'API Graph.
+  Un budget de temps interne (`GARDE_TIME_BUDGET_MS`, ~50 s) borne la durée
+  totale sous la limite d'exécution Vercel : au-delà, les wilayas restantes
+  sont publiées sans attente plutôt que coupées.
 - Aperçu du visuel sans publier :
   `GET /api/garde/social-image?wilaya=16&date=2026-07-22`
 - Test à blanc (aucune publication) :
-  `curl -H "Authorization: Bearer $CRON_SECRET" "https://ton-site.vercel.app/api/cron/garde-daily?dry=1"`
+  `curl -H "Authorization: Bearer $CRON_SECRET" "https://www.dzair-pharma.net/api/cron/garde-daily?dry=1"`
 - Déclenchement manuel ciblé :
   `POST /api/publish` avec `{"type": "garde_daily", "wilaya": "16"}`
   (header `x-api-secret`).
 
 > ⚠️ Vercel plan Hobby : 2 cron jobs max — `weekly` + `garde-daily`
-> atteignent cette limite.
+> atteignent cette limite. Le domaine apex (`dzair-pharma.net`) redirige
+> vers `www` : pour les tests `curl` manuels, viser `www.dzair-pharma.net`
+> ou ajouter `--location-trusted` (le cron interne Vercel n'est pas
+> concerné).
 
 ---
 
