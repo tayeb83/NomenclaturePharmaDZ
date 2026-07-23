@@ -222,19 +222,24 @@ rendu `next/og`) accompagnée de la liste détaillée en légende
 (commune, adresse, téléphone, vacation jour/nuit) et du lien vers
 `/pharmacie-de-garde`.
 
+- **Bilingue** : par défaut deux posts distincts par wilaya — un en
+  français (image LTR, lien `/pharmacie-de-garde`) et un en arabe
+  (« صيدليات المناوبة », image RTL, lien `/ar/pharmacie-de-garde`).
+  Réglable via `GARDE_PUBLISH_LOCALES` (`fr`, `ar`, `fr,ar`…).
 - Configuration : mêmes variables `FACEBOOK_PAGE_ID` +
   `FACEBOOK_PAGE_ACCESS_TOKEN` que les alertes (token de Page longue durée
   avec `pages_manage_posts`).
 - Le lien en légende pointe vers la page directe de la commune quand la
   wilaya n'en a qu'une, sinon vers le hub ancré sur la wilaya.
-- Idempotent : chaque publication est journalisée dans `social_posts`
-  (`type='garde'`) ; relancer le cron le même jour ne crée pas de doublon.
-- **Publications espacées** : par défaut 8 s entre chaque wilaya (réglable
+- Idempotent : chaque publication (par langue) est journalisée dans
+  `social_posts` (`type='garde'`) ; relancer le cron le même jour ne crée
+  pas de doublon.
+- **Publications espacées** : par défaut 8 s entre chaque post (réglable
   via `GARDE_POST_DELAY_MS`) pour ne pas saturer le fil ni l'API Graph.
   Un budget de temps interne (`GARDE_TIME_BUDGET_MS`, ~50 s) borne la durée
-  totale sous la limite d'exécution Vercel : au-delà, les wilayas restantes
-  sont publiées sans attente plutôt que coupées.
-- Aperçu du visuel sans publier :
+  totale sous la limite d'exécution Vercel : au-delà, les posts restants
+  sont publiés sans attente plutôt que coupés.
+- Aperçu du visuel sans publier (ajouter `&lang=ar` pour l'arabe) :
   `GET /api/garde/social-image?wilaya=16&date=2026-07-22`
 - Test à blanc (aucune publication) :
   `curl -H "Authorization: Bearer $CRON_SECRET" "https://www.dzair-pharma.net/api/cron/garde-daily?dry=1"`

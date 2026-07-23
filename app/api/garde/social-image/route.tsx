@@ -3,7 +3,8 @@ import { buildGardeImageResponse, getGardeDayByWilaya, todayInAlgiers } from '@/
 
 // Aperçu de l'image de garde publiée sur Facebook (mêmes données, même
 // rendu) — pratique pour vérifier le visuel avant/après publication :
-//   /api/garde/social-image?wilaya=16&date=2026-07-22
+//   /api/garde/social-image?wilaya=16&date=2026-07-22       (français)
+//   /api/garde/social-image?wilaya=16&lang=ar               (arabe, RTL)
 // Les données sont publiques (déjà exposées par /api/garde) ; la route est
 // couverte par le rate-limiting du middleware comme le reste de l'API.
 
@@ -13,6 +14,7 @@ export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams
   const wilaya = params.get('wilaya') || ''
   const date = params.get('date') || todayInAlgiers()
+  const locale = params.get('lang') === 'ar' ? 'ar' : 'fr'
 
   if (!wilaya || wilaya.length > 10) {
     return NextResponse.json({ error: 'Paramètre wilaya requis' }, { status: 400 })
@@ -26,7 +28,7 @@ export async function GET(request: NextRequest) {
     if (!days.length) {
       return NextResponse.json({ error: 'Aucune pharmacie de garde pour cette wilaya à cette date' }, { status: 404 })
     }
-    return await buildGardeImageResponse(days[0])
+    return await buildGardeImageResponse(days[0], locale)
   } catch (error) {
     console.error('[api/garde/social-image] Internal error:', error)
     return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 })
