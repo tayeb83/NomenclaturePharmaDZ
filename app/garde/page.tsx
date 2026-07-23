@@ -71,7 +71,7 @@ export async function generateMetadata({
     keywords: [
       'pharmacie de garde algérie', 'pharmacie de garde', 'pharmacie ouverte maintenant algérie',
       'pharmacie de nuit algérie', 'garde pharmacie wilaya', 'DSP pharmacie de garde',
-      'صيدلية الحراسة الجزائر',
+      'صيدلية المناوبة الجزائر',
     ],
     alternates: { canonical },
     openGraph: {

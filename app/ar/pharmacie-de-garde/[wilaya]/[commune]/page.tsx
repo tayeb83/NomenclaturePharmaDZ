@@ -44,7 +44,7 @@ export const revalidate = 300
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { wilaya: wilayaSlug, commune: communeSlug } = await params
   const location = await findGardeLocation(wilayaSlug, communeSlug)
-  if (!location) return { title: 'صيدلية الحراسة غير موجودة' }
+  if (!location) return { title: 'صيدلية المناوبة غير موجودة' }
 
   const communeAr = location.commune_name_ar || location.commune_name_fr
   const wilayaAr = location.wilaya_name_ar || location.wilaya_name_fr
@@ -52,14 +52,14 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const frUrl = `${APP_URL}/pharmacie-de-garde/${wilayaSlug}/${communeSlug}`
   const arUrl = `${APP_URL}/ar/pharmacie-de-garde/${wilayaSlug}/${communeSlug}`
 
-  const title = `صيدلية الحراسة اليوم في ${communeAr} (${today}) | DwaDZ`
-  const description = `قائمة محدّثة لصيدليات الحراسة في ${communeAr}، ولاية ${wilayaAr} — الأسماء، العناوين، أرقام الهاتف وأوقات المناوبة. مصدر رسمي (مديرية الصحة والسكان)، تحديث دوري.`
+  const title = `صيدلية المناوبة اليوم في ${communeAr} (${today}) | DwaDZ`
+  const description = `قائمة محدّثة لصيدليات المناوبة في ${communeAr}، ولاية ${wilayaAr} — الأسماء، العناوين، أرقام الهاتف وأوقات المناوبة. مصدر رسمي (مديرية الصحة والسكان)، تحديث دوري.`
 
   return {
     title,
     description,
     keywords: [
-      `صيدلية الحراسة ${communeAr}`,
+      `صيدلية المناوبة ${communeAr}`,
       `صيدلية مناوبة ${communeAr}`,
       `صيدلية الليل ${communeAr}`,
       `حراسة صيدلية ${wilayaAr}`,
@@ -102,7 +102,7 @@ export default async function GardeCommunePageAr({
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: `صيدليات الحراسة في ${communeAr}`,
+    name: `صيدليات المناوبة في ${communeAr}`,
     itemListElement: initialData.day_schedule.map((shift, i) => ({
       '@type': 'ListItem',
       position: i + 1,
@@ -127,7 +127,7 @@ export default async function GardeCommunePageAr({
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'الرئيسية', item: APP_URL },
-      { '@type': 'ListItem', position: 2, name: 'صيدليات الحراسة', item: `${APP_URL}/ar/pharmacie-de-garde` },
+      { '@type': 'ListItem', position: 2, name: 'صيدليات المناوبة', item: `${APP_URL}/ar/pharmacie-de-garde` },
       { '@type': 'ListItem', position: 3, name: wilayaAr, item: `${APP_URL}/ar/pharmacie-de-garde#${wilayaSlug}` },
       { '@type': 'ListItem', position: 4, name: communeAr, item: `${APP_URL}/ar/pharmacie-de-garde/${wilayaSlug}/${communeSlug}` },
     ],
@@ -140,7 +140,7 @@ export default async function GardeCommunePageAr({
 
       <nav aria-label="مسار التصفح" style={{ fontSize: 13, color: 'var(--slate-500)', marginBottom: 16 }}>
         <a href="/" style={{ color: 'var(--slate-500)' }}>الرئيسية</a> {' › '}
-        <a href="/ar/pharmacie-de-garde" style={{ color: 'var(--slate-500)' }}>صيدليات الحراسة</a> {' › '}
+        <a href="/ar/pharmacie-de-garde" style={{ color: 'var(--slate-500)' }}>صيدليات المناوبة</a> {' › '}
         <span>{wilayaAr}</span> {' › '}
         <span style={{ color: 'var(--navy)', fontWeight: 600 }}>{communeAr}</span>
       </nav>

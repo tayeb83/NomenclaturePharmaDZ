@@ -20,7 +20,7 @@ const LABELS = {
     available: 'البرنامج متوفر',
     soon: 'قريبًا',
     counter: (n: number, total: number) => `${n} / ${total} ولاية مغطاة`,
-    viewPharmacies: '← عرض صيدليات الحراسة',
+    viewPharmacies: '← عرض صيدليات المناوبة',
     communesLabel: (n: number) => `${n} بلدية متوفرة`,
     noResults: 'لا توجد ولاية مطابقة لبحثك.',
   },
