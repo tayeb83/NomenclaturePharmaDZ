@@ -50,7 +50,7 @@ export type SocialPost = {
 }
 
 function appUrl(): string {
-  return (process.env.NEXT_PUBLIC_APP_URL || 'https://dwadz.com').replace(/\/$/, '')
+  return (process.env.NEXT_PUBLIC_APP_URL || 'https://www.dzair-pharma.net').replace(/\/$/, '')
 }
 
 /** Fragment SQL : un enregistrement est « fabriqué en Algérie » si son pays de
