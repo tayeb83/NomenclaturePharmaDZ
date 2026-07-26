@@ -213,6 +213,41 @@ Le fichier `vercel.json` configure l'envoi automatique **chaque lundi à 8h** :
 { "path": "/api/cron/weekly", "schedule": "0 7 * * 1" }
 ```
 
+### Publications thématiques Facebook (rubriques nomenclature)
+
+Tous les 2-3 jours, un post thématique est publié sur la Page Facebook avec
+un **lien vers le site** (l'aperçu du lien ramène le trafic — pas d'image à
+générer). Quatre rubriques alimentées automatiquement depuis la base :
+
+- **💊 Classe thérapeutique** : « Les antidépresseurs / antidiabétiques…
+  disponibles en Algérie » (regroupement par code ATC niveau 3) → lien
+  `/classes-therapeutiques/{code}`.
+- **🇩🇿 Fabriqué en Algérie** : focus sur une classe où la production locale
+  est forte, avec les laboratoires concernés.
+- **⚠️ Retrait** : alerte sur le dernier retrait du marché (avec motif) →
+  lien `/retraits`.
+- **🆕 Nouveautés & chiffres** : nouveautés de la version en cours ou
+  instantané chiffré de la nomenclature.
+
+**Fonctionnement (« auto + validation ») :**
+
+1. Le cron `/api/cron/social-prepare` (chaque nuit) maintient ~5 brouillons
+   d'avance dans la table `social_content_queue`, avec des dates de
+   publication échelonnées (`SOCIAL_POST_INTERVAL_DAYS`, défaut 3 jours).
+2. L'admin relit / modifie / **approuve** les brouillons depuis
+   `/admin/social` (ou publie immédiatement).
+3. Le cron `/api/cron/social-publish` (chaque jour) publie le prochain post
+   **approuvé** dont l'échéance est arrivée. Un brouillon non validé n'est
+   **jamais** publié → contrôle éditorial garanti.
+
+La rotation évite de reproposer un sujet déjà couvert (clé `dedup_key`).
+Génération manuelle possible depuis l'admin (« Générer un brouillon »).
+
+```json
+{ "path": "/api/cron/social-prepare", "schedule": "0 3 * * *" }
+{ "path": "/api/cron/social-publish", "schedule": "0 8 * * *" }
+```
+
 ### Pharmacies de garde — publication Facebook quotidienne
 
 Chaque jour à **8h (heure d'Alger)**, le cron `/api/cron/garde-daily`

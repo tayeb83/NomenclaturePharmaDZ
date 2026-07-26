@@ -203,6 +203,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           <Link href="/admin/garde/export" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
             🖨️ Export imprimable
           </Link>
+          <Link href="/admin/social" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
+            📣 Publications Facebook
+          </Link>
           <Link href="/" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
             ← Site public
           </Link>
