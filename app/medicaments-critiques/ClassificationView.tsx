@@ -8,12 +8,13 @@ import type { CriticalWithMed } from '@/lib/queries'
 
 type Med = {
   med_id: number
-  med_source: 'enregistrement' | 'retrait' | null
+  med_source: 'enregistrement' | 'retrait'
   nom_marque: string
   n_enreg: string | null
   labo: string | null
   pays: string | null
-  match_quality: 'full' | 'dci_partial' | 'dci_only' | null
+  statut: string | null
+  source_version: string | null
   date_retrait: string | null
   motif_retrait: string | null
   med_forme: string | null
@@ -62,27 +63,22 @@ function groupRows(rows: CriticalWithMed[]): DciGroup[] {
     const combo = dosageMap.get(row.dosage)!
 
     if (row.med_id !== null) {
-      const med: Med = {
-        med_id: row.med_id,
-        med_source: row.med_source,
-        nom_marque: row.nom_marque!,
-        n_enreg: row.n_enreg,
-        labo: row.labo,
-        pays: row.pays,
-        match_quality: row.match_quality,
-        date_retrait: row.date_retrait,
-        motif_retrait: row.motif_retrait,
-        med_forme: row.med_forme,
-        med_dosage: row.med_dosage,
-      }
-      const key = `${row.med_id}:${row.med_source}`
-
-      if (row.match_quality === 'full') {
-        if (!combo.fullMeds.some(m => `${m.med_id}:${m.med_source}` === key))
-          combo.fullMeds.push(med)
-      } else if (row.match_quality === 'dci_partial') {
-        if (!combo.partialMeds.some(m => `${m.med_id}:${m.med_source}` === key))
-          combo.partialMeds.push(med)
+      const already = dosageGroup.meds.some(m => m.med_id === row.med_id)
+      if (!already) {
+        dosageGroup.meds.push({
+          med_id: row.med_id,
+          med_source: row.med_source!,
+          nom_marque: row.nom_marque!,
+          n_enreg: row.n_enreg,
+          labo: row.labo,
+          pays: row.pays,
+          statut: row.statut,
+          source_version: row.source_version,
+          date_retrait: row.date_retrait,
+          motif_retrait: row.motif_retrait,
+          med_forme: row.med_forme,
+          forme_approx: row.forme_approx,
+        })
       }
       // dci_only meds are omitted from table view for clarity
     }
@@ -222,42 +218,60 @@ export function ClassificationView({ rows }: { rows: CriticalWithMed[] }) {
                 </div>
               </button>
 
-              {/* Corps DCI */}
-              {isOpen && (
-                <div style={S.dciBody}>
-                  <table style={S.table}>
-                    <thead>
-                      <tr>
-                        <th style={S.thForme}>Forme</th>
-                        <th style={S.thDosage}>Dosage</th>
-                        <th style={S.thMeds}>Médicaments correspondants</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {g.combos.map((combo, i) => {
-                        const allMeds = [...combo.fullMeds, ...combo.partialMeds]
-                        const hasFullMatch = combo.fullMeds.length > 0
-                        return (
-                          <tr
-                            key={`${combo.forme}||${combo.dosage}`}
-                            style={{
-                              ...S.row,
-                              background: i % 2 === 0 ? 'white' : '#f8fafc',
-                            }}
-                          >
-                            <td style={S.tdForme}>
-                              <span style={S.formeBadge}>{combo.forme}</span>
-                            </td>
-                            <td style={S.tdDosage}>
-                              <span style={S.dosageValue}>{combo.dosage}</span>
-                            </td>
-                            <td style={S.tdMeds}>
-                              {allMeds.length === 0 ? (
-                                <span style={S.noMatch}>—</span>
-                              ) : (
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center' }}>
-                                  {combo.fullMeds.map(m => (
-                                    <MedChip key={`${m.med_id}-${m.med_source}`} med={m} />
+                      {/* ─── Dosages ───────────────────────── */}
+                      {isFormeOpen && (
+                        <div style={styles.formeBody}>
+                          {formeGroup.dosages.map(dosageGroup => (
+                            <div key={dosageGroup.dosage} style={styles.dosageRow}>
+                              <div style={styles.dosageHeader}>
+                                <span style={styles.dosageBadge}>DOSAGE</span>
+                                <span style={styles.dosageValue}>{dosageGroup.dosage}</span>
+                                {dosageGroup.meds.length === 0 && (
+                                  <span style={styles.noMatchBadge}>Aucun médicament correspondant</span>
+                                )}
+                              </div>
+                              {dosageGroup.meds.length > 0 && (
+                                <div style={styles.medsList}>
+                                  {dosageGroup.meds.map(med => (
+                                    <div key={med.med_id} style={styles.medCard}>
+                                      <div style={styles.medName}>{med.nom_marque}</div>
+                                      <div style={styles.medMeta}>
+                                        {med.n_enreg && <span>{med.n_enreg}</span>}
+                                        {med.labo && <span>🏭 {med.labo}</span>}
+                                        {med.pays && <span>🌍 {med.pays}</span>}
+                                        {med.forme_approx && med.med_forme && (
+                                          <span style={styles.approxBadge} title="Forme approchante">
+                                            ~ {med.med_forme}
+                                          </span>
+                                        )}
+                                        {med.statut && (
+                                          <span style={{
+                                            ...styles.statutBadge,
+                                            background: med.statut.toLowerCase().includes('actif') ? '#dcfce7' : '#fff7ed',
+                                            color: med.statut.toLowerCase().includes('actif') ? '#15803d' : '#9a3412',
+                                          }}>
+                                            {med.statut}
+                                          </span>
+                                        )}
+                                        <span style={{
+                                          ...styles.statutBadge,
+                                          background: med.med_source === 'retrait' ? '#fee2e2' : '#dbeafe',
+                                          color: med.med_source === 'retrait' ? '#991b1b' : '#1e40af',
+                                        }}>
+                                          {med.med_source === 'retrait' ? 'Retiré' : 'Actif'}
+                                        </span>
+                                        {med.med_source === 'retrait' && med.date_retrait && (
+                                          <span style={styles.withdrawMeta}>
+                                            📅 Retrait: {new Date(med.date_retrait).toLocaleDateString('fr-FR')}
+                                          </span>
+                                        )}
+                                        {med.med_source === 'retrait' && med.motif_retrait && (
+                                          <span style={styles.withdrawMeta} title={med.motif_retrait}>
+                                            📝 {med.motif_retrait}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
                                   ))}
                                   {combo.partialMeds.length > 0 && (
                                     <>
@@ -480,5 +494,9 @@ const S: Record<string, React.CSSProperties> = {
     borderRadius: 20,
     fontSize: 11.5,
     fontWeight: 700,
+  },
+  withdrawMeta: {
+    fontSize: 10.5,
+    color: '#7f1d1d',
   },
 }

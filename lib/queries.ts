@@ -1404,81 +1404,69 @@ export async function getCriticalWithMeds(search: string = ''): Promise<Critical
       cm.forme,
       cm.dosage,
       cm.classe_therapeutique,
-      med.id                    AS med_id,
-      med.source                AS med_source,
-      med.nom_marque,
-      med.n_enreg,
-      med.labo,
-      med.pays,
-      med.statut,
-      med.source_version,
-      med.date_retrait,
-      med.motif_retrait,
-      med.forme                 AS med_forme,
-      med.dosage                AS med_dosage,
-      med.match_quality,
+      m.med_id,
+      m.med_source,
+      m.nom_marque,
+      m.n_enreg,
+      m.labo,
+      m.pays,
+      m.statut,
+      m.source_version,
+      m.date_retrait,
+      m.motif_retrait,
+      m.med_forme,
       CASE
-        WHEN med.id IS NULL                      THEN false
-        WHEN med.match_quality = 'dci_only'      THEN false
-        WHEN med.match_quality = 'dci_partial'   THEN false
-        WHEN ${normalizedFormeSql('med.forme')} = ${normalizedFormeSql('cm.forme')} THEN false
+        WHEN m.med_id IS NULL THEN false
+        WHEN UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(m.med_forme, '')), '[^A-Z0-9]+', '', 'g')) = cm.forme_norm THEN false
         ELSE true
       END                       AS forme_approx
     FROM critical_medicaments cm
-    LEFT JOIN LATERAL (
+    LEFT JOIN (
       SELECT
-        m.id,
-        m.source,
-        m.dci,
-        m.forme,
-        m.dosage,
-        m.nom_marque,
-        m.n_enreg,
-        m.labo,
-        m.pays,
-        m.statut,
-        m.source_version,
-        m.date_retrait,
-        m.motif_retrait,
-        CASE
-          WHEN ${formeMatchCondition('cm.forme', 'm.forme')}
-            AND ${dosageMatchCondition('cm.dosage', 'm.dosage')}
-          THEN 'full'::TEXT
-          WHEN ${formeMatchCondition('cm.forme', 'm.forme')}
-            OR ${dosageMatchCondition('cm.dosage', 'm.dosage')}
-          THEN 'dci_partial'::TEXT
-          ELSE 'dci_only'::TEXT
-        END AS match_quality
-      FROM (
-        SELECT
-          e.id,
-          'enregistrement'::TEXT AS source,
-          e.dci, e.forme, e.dosage,
-          e.nom_marque, e.n_enreg, e.labo, e.pays,
-          e.statut, e.source_version,
-          NULL::DATE AS date_retrait,
-          NULL::TEXT AS motif_retrait
-        FROM enregistrements e
-        UNION ALL
-        SELECT
-          r.id,
-          'retrait'::TEXT AS source,
-          r.dci, r.forme, r.dosage,
-          r.nom_marque, r.n_enreg, r.labo, r.pays,
-          r.statut, NULL::TEXT AS source_version,
-          r.date_retrait, r.motif_retrait
-        FROM retraits r
-      ) m
-      WHERE ${dciMatchCondition('cm.dci', 'm.dci')}
-      ORDER BY
-        CASE
-          WHEN ${formeMatchCondition('cm.forme', 'm.forme')} AND ${dosageMatchCondition('cm.dosage', 'm.dosage')} THEN 1
-          WHEN ${formeMatchCondition('cm.forme', 'm.forme')} OR ${dosageMatchCondition('cm.dosage', 'm.dosage')} THEN 2
-          ELSE 3
-        END,
-        m.nom_marque ASC
-      LIMIT 30
-    ) med ON TRUE
+        e.id AS med_id,
+        'enregistrement'::TEXT AS med_source,
+        e.dci,
+        e.forme AS med_forme,
+        e.dosage,
+        e.nom_marque,
+        e.n_enreg,
+        e.labo,
+        e.pays,
+        e.statut,
+        e.source_version,
+        NULL::DATE AS date_retrait,
+        NULL::TEXT AS motif_retrait
+      FROM enregistrements e
+
+      UNION ALL
+
+      SELECT
+        r.id AS med_id,
+        'retrait'::TEXT AS med_source,
+        r.dci,
+        r.forme AS med_forme,
+        r.dosage,
+        r.nom_marque,
+        r.n_enreg,
+        r.labo,
+        r.pays,
+        r.statut,
+        NULL::TEXT AS source_version,
+        r.date_retrait,
+        r.motif_retrait
+      FROM retraits r
+    ) m ON (
+      UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(m.dci,    '')), '[^A-Z0-9]+', '', 'g')) = cm.dci_norm
+      AND UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(m.dosage,  '')), '[^A-Z0-9]+', '', 'g')) = cm.dosage_norm
+      AND (
+        UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(m.med_forme, '')), '[^A-Z0-9]+', '', 'g')) = cm.forme_norm
+        OR (
+          LENGTH(cm.forme_norm) >= 4
+          AND LEFT(UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(m.med_forme, '')), '[^A-Z0-9]+', '', 'g')), 4)
+              = LEFT(cm.forme_norm, 4)
+        )
+      )
+    )
     WHERE (
       $1 = ''
       OR CONCAT_WS(' ', cm.dci, cm.forme, cm.dosage, cm.classe_therapeutique) ILIKE $2
@@ -1487,9 +1475,8 @@ export async function getCriticalWithMeds(search: string = ''): Promise<Critical
       cm.dci ASC,
       cm.forme ASC,
       cm.dosage ASC,
-      CASE med.match_quality WHEN 'full' THEN 1 WHEN 'dci_partial' THEN 2 WHEN 'dci_only' THEN 3 ELSE 4 END,
-      med.source ASC,
-      med.nom_marque ASC
+      CASE m.med_source WHEN 'enregistrement' THEN 1 WHEN 'retrait' THEN 2 ELSE 3 END,
+      m.nom_marque ASC
   `, [q, `%${q}%`])
 }
 
