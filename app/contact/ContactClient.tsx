@@ -146,8 +146,8 @@ export function ContactClient() {
         <p style={{ margin: 0, color: '#92400e', fontSize: 13, lineHeight: 1.6 }}>
           <strong style={{ color: '#78350f' }}>{t('Important :', 'مهم:')} </strong>
           {t(
-            "PharmaVeille DZ est une plateforme indépendante qui diffuse les données officielles du MIPH. Pour toute question réglementaire officielle, contactez directement le",
-            'PharmaVeille DZ منصة مستقلة تنشر البيانات الرسمية للـ MIPH. لأي استفسار رسمي تنظيمي، تواصل مباشرة مع',
+            "DwaDZ est une plateforme indépendante qui diffuse les données officielles du MIPH. Pour toute question réglementaire officielle, contactez directement le",
+            'DwaDZ منصة مستقلة تنشر البيانات الرسمية للـ MIPH. لأي استفسار رسمي تنظيمي، تواصل مباشرة مع',
           )}{' '}
           <a href="https://www.industrie.gov.dz" target="_blank" rel="noopener noreferrer" style={{ color: '#60a5fa' }}>
             {t('Ministère de l\'Industrie Pharmaceutique', 'وزارة الصناعة الصيدلانية')}

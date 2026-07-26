@@ -15,7 +15,7 @@ export default function NewsletterPage({
     <>
       <div className="page-header">
         <div className="container">
-          <h1>📧 Newsletter PharmaVeille DZ</h1>
+          <h1>📧 Newsletter DwaDZ</h1>
           <p>Restez informé des retraits urgents et des nouveaux enregistrements</p>
         </div>
       </div>

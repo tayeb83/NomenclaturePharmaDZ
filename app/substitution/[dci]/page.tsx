@@ -21,7 +21,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: { params: { dci: string } }): Promise<Metadata> {
   const dci = decodeURIComponent(params.dci).toUpperCase()
   const canonical = `${APP_URL}/substitution/${params.dci}`
-  const title = `Substitution ${dci} — génériques enregistrés en Algérie | PharmaVeille DZ`
+  const title = `Substitution ${dci} — génériques enregistrés en Algérie | DwaDZ`
   const description = `Tous les génériques de ${dci} enregistrés dans la nomenclature officielle MIPH Algérie. Trouvez les équivalents disponibles.`
 
   return {
@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: { params: { dci: string } }):
       title,
       description,
       type: 'website',
-      siteName: 'PharmaVeille DZ',
+      siteName: 'DwaDZ',
       locale: 'fr_DZ',
       url: canonical,
     },

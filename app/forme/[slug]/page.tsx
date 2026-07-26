@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   if (!meds.length) return { title: 'Forme introuvable' }
 
   const canonical = `${APP_URL}/forme/${params.slug}`
-  const title = `${forme} — médicaments enregistrés en Algérie | PharmaVeille DZ`
+  const title = `${forme} — médicaments enregistrés en Algérie | DwaDZ`
   const description = `Tous les médicaments sous forme de ${forme} enregistrés dans la nomenclature officielle MIPH Algérie.`
 
   return {
@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       title,
       description,
       type: 'website',
-      siteName: 'PharmaVeille DZ',
+      siteName: 'DwaDZ',
       locale: 'fr_DZ',
       url: canonical,
     },

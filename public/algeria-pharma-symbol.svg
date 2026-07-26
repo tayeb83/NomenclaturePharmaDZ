@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" role="img" aria-label="Symbole pharmacie algérienne">
+  <rect width="220" height="220" fill="#fff"/>
+  <path d="M60 25a85 85 0 1 0 0 170a70 70 0 1 1 0-170Z" fill="#e3132d"/>
+  <g fill="none" stroke="#0b9b4c" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M105 70c14-10 32 2 25 14c-7 12-40 2-32 22c6 15 33 12 38-2" stroke-width="7"/>
+    <path d="M122 60v84" stroke-width="6"/>
+    <path d="M92 138h66" stroke-width="7"/>
+    <path d="M108 149c8 9 30 8 38-9" stroke-width="6"/>
+    <path d="M106 149c-8 8-20 12-30 3" stroke-width="6"/>
+  </g>
+</svg>

@@ -1,5 +1,6 @@
 'use client'
 import { useState, useMemo } from 'react'
+import Link from 'next/link'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 
 export function SubstitutionClient({ generiques }: { generiques: any[] }) {
@@ -32,6 +33,29 @@ export function SubstitutionClient({ generiques }: { generiques: any[] }) {
               '💡 Ces données sont issues de la nomenclature officielle MIPH. Vérifiez toujours que le générique est actuellement disponible sur le marché algérien.',
               '💡 هذه البيانات مستمدة من التسمية الرسمية للـ MIPH. تحقق دائمًا من توفر الدواء الجنيس حاليًا في السوق الجزائري.'
             )}
+          </div>
+
+          <div style={{
+            background: '#f8fafc', borderRadius: 14, padding: '16px 20px',
+            marginBottom: 20, display: 'flex', alignItems: 'center', gap: 14,
+            flexWrap: 'wrap', border: '1.5px solid #e2e8f0',
+          }}>
+            <span style={{ fontSize: 26 }}>📩</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ color: '#0f172a', fontWeight: 700, fontSize: 14, marginBottom: 2 }}>
+                {t('Une question ou une correction à signaler ?', 'سؤال أو تصحيح للإبلاغ عنه؟')}
+              </div>
+              <div style={{ color: '#64748b', fontSize: 12 }}>
+                {t('Contactez notre équipe pour toute demande liée à la substitution générique.', 'تواصل مع فريقنا لأي طلب متعلق بالاستبدال الجنيسي.')}
+              </div>
+            </div>
+            <Link href="/contact" style={{
+              background: '#059669', color: '#fff', padding: '8px 18px',
+              borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: 'none',
+              whiteSpace: 'nowrap',
+            }}>
+              {t('Contacter →', 'تواصل →')}
+            </Link>
           </div>
 
           <div className="search-bar" style={{ marginBottom: 20 }}>

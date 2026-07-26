@@ -24,18 +24,24 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   if (!meds.length) return { title: 'DCI introuvable' }
 
   const canonical = `${APP_URL}/dci/${params.slug}`
-  const title = `${dci} — médicaments enregistrés en Algérie | PharmaVeille DZ`
-  const description = `Tous les médicaments contenant ${dci} enregistrés dans la nomenclature officielle MIPH Algérie. ${meds.length}+ références actives.`
+  const dciUpper = dci.toUpperCase()
+  const title = `${dciUpper} en Algérie — prix, génériques et disponibilité | DwaDZ`
+  const description = `${dciUpper} en Algérie : ${meds.length}+ médicaments enregistrés dans la nomenclature officielle MIPH. Génériques disponibles, laboratoires, formes et dosages. Données officielles mises à jour.`
 
   return {
     title,
     description,
+    keywords: [
+      `${dci} algérie`, `${dci} prix algérie`, `${dci} disponible algérie`,
+      `${dci} générique algérie`, `médicament ${dci} algérie`, `${dci} dz`,
+      `${dci} nomenclature algérie`, `${dci} MIPH`,
+    ],
     alternates: { canonical },
     openGraph: {
       title,
       description,
       type: 'website',
-      siteName: 'PharmaVeille DZ',
+      siteName: 'DwaDZ',
       locale: 'fr_DZ',
       url: canonical,
     },
@@ -59,10 +65,20 @@ export default async function DciPage({ params }: { params: { slug: string } }) 
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Drug',
-    name: dci,
-    activeIngredient: dci,
-    description: `${dci} — ${meds.length} médicaments enregistrés en Algérie. Nomenclature pharmaceutique MIPH.`,
+    name: dci.toUpperCase(),
+    nonproprietaryName: dci.toUpperCase(),
+    activeIngredient: dci.toUpperCase(),
+    description: `${dci.toUpperCase()} — ${meds.length} médicaments enregistrés en Algérie dans la nomenclature officielle MIPH. Génériques, formes et dosages disponibles.`,
     url: `${APP_URL}/dci/${params.slug}`,
+    availableIn: {
+      '@type': 'Country',
+      name: 'Algeria',
+      identifier: 'DZ',
+    },
+    brand: meds.slice(0, 5).map(m => ({
+      '@type': 'Brand',
+      name: m.nom_marque,
+    })),
   }
 
   return (

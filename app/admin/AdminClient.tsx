@@ -28,6 +28,14 @@ type CriticalUploadResult = {
   error?: string
 }
 
+type CriticalMappingUploadResult = {
+  success: boolean
+  imported: number
+  totalRows: number
+  skippedRows: number
+  error?: string
+}
+
 
 
 type AnalyticsRow = {
@@ -102,7 +110,7 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>💊</div>
           <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 800, color: '#0f172a', margin: 0 }}>
-            PharmaVeille DZ
+            DwaDZ
           </h1>
           <p style={{ color: '#64748b', fontSize: 13, marginTop: 6 }}>Administration — Accès restreint</p>
         </div>
@@ -180,7 +188,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           }}>💊</div>
           <div>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 800 }}>
-              PharmaVeille DZ
+              DwaDZ
             </div>
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>
               ADMINISTRATION
@@ -189,6 +197,15 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <Link href="/admin/garde" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
+            🏥 Géocodage garde
+          </Link>
+          <Link href="/admin/garde/export" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
+            🖨️ Export imprimable
+          </Link>
+          <Link href="/admin/social" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
+            📣 Publications Facebook
+          </Link>
           <Link href="/" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
             ← Site public
           </Link>
@@ -265,6 +282,11 @@ function UploadTab() {
   const [criticalResult, setCriticalResult] = useState<CriticalUploadResult | null>(null)
   const [criticalSourceLabel, setCriticalSourceLabel] = useState('Ministère de la Santé Algérie')
   const [criticalPublishedAt, setCriticalPublishedAt] = useState(new Date().toISOString().slice(0, 10))
+  const mappingFileInputRef = useRef<HTMLInputElement>(null)
+  const [mappingFile, setMappingFile] = useState<File | null>(null)
+  const [mappingLoading, setMappingLoading] = useState(false)
+  const [mappingError, setMappingError] = useState('')
+  const [mappingResult, setMappingResult] = useState<CriticalMappingUploadResult | null>(null)
 
   function handleFileChange(f: File | null) {
     if (!f) return
@@ -351,6 +373,38 @@ function UploadTab() {
       setCriticalError('Erreur réseau — impossible d’envoyer le fichier')
     } finally {
       setCriticalLoading(false)
+    }
+  }
+
+  async function handleMappingUpload(e: React.FormEvent) {
+    e.preventDefault()
+    if (!mappingFile) return
+
+    setMappingLoading(true)
+    setMappingError('')
+    setMappingResult(null)
+
+    try {
+      const fd = new FormData()
+      fd.append('file', mappingFile)
+
+      const res = await fetch('/api/admin/upload-critical-mapping', {
+        method: 'POST',
+        body: fd,
+      })
+      const data = await res.json()
+
+      if (res.ok) {
+        setMappingResult(data)
+        setMappingFile(null)
+        if (mappingFileInputRef.current) mappingFileInputRef.current.value = ''
+      } else {
+        setMappingError(data.error || 'Erreur lors de l’import du mapping')
+      }
+    } catch {
+      setMappingError('Erreur réseau — impossible d’envoyer le fichier')
+    } finally {
+      setMappingLoading(false)
     }
   }
 
@@ -543,6 +597,60 @@ function UploadTab() {
               }}
             >
               {criticalLoading ? 'Import critique en cours…' : 'Importer la liste critique'}
+            </button>
+          </form>
+        </div>
+
+        <div style={{ background: 'white', borderRadius: 14, padding: 24, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', marginTop: 16 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', marginTop: 0, marginBottom: 12 }}>
+            🔗 Importer le fichier de correspondances critiques (pré-calculé)
+          </h3>
+          <p style={{ color: '#64748b', fontSize: 12.5, marginTop: 0, marginBottom: 16 }}>
+            Import direct du fichier avec colonnes de correspondance (n° critique, statut match, score global, marque, etc.). La table sera remplacée à chaque import.
+          </p>
+
+          <form onSubmit={handleMappingUpload}>
+            <div style={{ marginBottom: 12 }}>
+              <input
+                ref={mappingFileInputRef}
+                type="file"
+                accept=".tsv,.csv,.xlsx,.xls"
+                onChange={e => setMappingFile(e.target.files?.[0] ?? null)}
+                style={{ width: '100%' }}
+              />
+              {mappingFile && (
+                <div style={{ marginTop: 6, fontSize: 12, color: '#065f46' }}>
+                  ✅ {mappingFile.name} ({(mappingFile.size / 1024).toFixed(1)} Ko)
+                </div>
+              )}
+            </div>
+
+            {mappingError && (
+              <div style={{ marginBottom: 10, background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', borderRadius: 8, padding: '8px 10px', fontSize: 12 }}>
+                ⚠️ {mappingError}
+              </div>
+            )}
+            {mappingResult && (
+              <div style={{ marginBottom: 10, background: '#ecfeff', border: '1px solid #a5f3fc', color: '#0e7490', borderRadius: 8, padding: '8px 10px', fontSize: 12 }}>
+                ✅ {mappingResult.imported} ligne(s) importée(s) sur {mappingResult.totalRows} ({mappingResult.skippedRows} ignorée(s)).
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={!mappingFile || mappingLoading}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                borderRadius: 8,
+                border: 'none',
+                background: !mappingFile || mappingLoading ? '#94a3b8' : '#4f46e5',
+                color: 'white',
+                fontWeight: 700,
+                cursor: !mappingFile || mappingLoading ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {mappingLoading ? 'Import mapping en cours…' : 'Importer le mapping pré-calculé'}
             </button>
           </form>
         </div>

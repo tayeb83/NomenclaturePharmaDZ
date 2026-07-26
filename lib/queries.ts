@@ -5,6 +5,7 @@
 
 import { query, queryOne } from './db'
 import type { Enregistrement, Retrait, NonRenouvele, SearchResult, Stats, MedicamentDetail, AtcCode, CriticalMedicament } from './db'
+import { buildQueryKeys } from './search-normalize'
 
 const schemaFeatureCache = new Map<string, boolean>()
 
@@ -24,6 +25,25 @@ async function hasTable(tableName: string): Promise<boolean> {
   const exists = row?.exists ?? false
   schemaFeatureCache.set(cacheKey, exists)
   return exists
+}
+
+let criticalMappingIndexEnsured = false
+
+/** critical_mapping (sql/07_critical_mapping.sql) n'a pas d'index sur la clé de jointure
+ *  utilisée par la recherche (source_base, n_enregistrement) — seuls dci_critique,
+ *  classe_therapeutique, statut_match, source_base et n_critique sont indexés. On crée
+ *  cet index une fois par process (idempotent, no-op si déjà présent). */
+async function ensureCriticalMappingIndex(): Promise<void> {
+  if (criticalMappingIndexEnsured) return
+  criticalMappingIndexEnsured = true
+  try {
+    await query(`
+      CREATE INDEX IF NOT EXISTS idx_critical_mapping_lookup
+      ON critical_mapping (source_base, n_enregistrement)
+    `)
+  } catch {
+    // Pas bloquant : au pire la jointure reste un scan sur une petite table.
+  }
 }
 
 async function hasColumn(tableName: string, columnName: string): Promise<boolean> {
@@ -47,6 +67,152 @@ async function hasColumn(tableName: string, columnName: string): Promise<boolean
 
 function normalizedSql(columnExpr: string): string {
   return `UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(${columnExpr}, '')), '[^A-Z0-9]+', '', 'g'))`
+}
+
+/** DCI normalization with French↔INN pharmaceutical name variant substitutions */
+function normalizedDciSql(columnExpr: string): string {
+  const base = `UPPER(UNACCENT(COALESCE(${columnExpr}, '')))`
+  // Known French pharmaceutical spellings → INN standard form
+  const variants: [string, string][] = [
+    ['\\mBARYUM\\M',   'BARIUM'],    // Baryum (French) = Barium (INN)
+    ['\\mKALIUM\\M',   'POTASSIUM'], // Kalium = Potassium
+    ['\\mNATRIUM\\M',  'SODIUM'],    // Natrium = Sodium
+    ['\\mFERREUX\\M',  'FER'],       // Ferreux = Fer
+    ['\\mFERRIQUE\\M', 'FER'],       // Ferrique = Fer
+  ]
+  let sql = base
+  for (const [pattern, replacement] of variants) {
+    sql = `REGEXP_REPLACE(${sql}, '${pattern}', '${replacement}', 'g')`
+  }
+  return `REGEXP_REPLACE(${sql}, '[^A-Z0-9]+', '', 'g')`
+}
+
+function normalizedFormeSql(columnExpr: string): string {
+  const base = `UPPER(UNACCENT(COALESCE(${columnExpr}, '')))`
+  // Each entry: [pattern, replacement] — applied as whole-word substitutions before stripping non-alphanum.
+  // Long pharmaceutical form names → canonical short codes, so both "SOLUTION INJECTABLE" and "SOL.INJ." normalize identically.
+  const replacements: [string, string][] = [
+    ['\\mSOLUTIONS?\\M',        'SOL'],
+    ['\\mBUVABLE\\M',           'BUV'],
+    ['\\mCOMPRIMES?\\M',        'COMP'],
+    ['\\mGELULES?\\M',          'GLES'],
+    ['\\mCAPSULES?\\M',         'CAPS'],
+    ['\\mINJECTABLE\\M',        'INJ'],
+    ['\\mINJECTION\\M',         'INJ'],
+    ['\\mSUSPENSION\\M',        'SUSP'],
+    ['\\mSIROPS?\\M',           'SIR'],
+    ['\\mSACHETS?\\M',          'SACH'],
+    ['\\mAMPOULES?\\M',         'AMP'],
+    ['\\mSUPPOSITOIRES?\\M',    'SUPP'],
+    ['\\mPOMMADES?\\M',         'POMM'],
+    ['\\mCOLLYRES?\\M',         'COLL'],
+    ['\\mLYOPHILISATS?\\M',     'LYOPH'],
+    ['\\mPOUDRES?\\M',          'POUDR'],
+    ['\\mPERFUSION\\M',         'PERF'],
+    ['\\mAEROSOLS?\\M',         'AERO'],
+    ['\\mGRANULES?\\M',         'GRAN'],
+    ['\\mOVULES?\\M',           'OVUL'],
+    ['\\mCREMES?\\M',           'CRM'],
+    ['\\mEMULSION\\M',          'EMUL'],
+    ['\\mSUBLINGUAL\\M',        'SUBL'],
+    ['\\mGOUTTES?\\M',          'GOUTT'],
+    ['\\mPATCH(ES)?\\M',        'PATCH'],
+    ['\\mTRANSDERMIQUE\\M',     'TRANSD'],
+    ['\\mINTRAVEINEU[XSE]?\\M', 'IV'],
+    ['\\mINTRAMUSCULAIRE\\M',   'IM'],
+    // Remove French coordinating words used in dual-route form names (e.g. "BUV. OU RECT." → "BUV.RECT.")
+    ['\\mOU\\M',                 ''],
+    ['\\mET\\M',                 ''],
+  ]
+  // Build nested REGEXP_REPLACE chain from innermost to outermost
+  let sql = base
+  for (const [pattern, replacement] of replacements) {
+    sql = `REGEXP_REPLACE(${sql}, '${pattern}', '${replacement}', 'g')`
+  }
+  // Final pass: strip all non-alphanumeric characters
+  return `REGEXP_REPLACE(${sql}, '[^A-Z0-9]+', '', 'g')`
+}
+
+function dciMatchCondition(criticalDciExpr: string, medDciExpr: string): string {
+  const criticalNorm = normalizedDciSql(criticalDciExpr)
+  const medNorm = normalizedDciSql(medDciExpr)
+  return `(
+    ${medNorm} = ${criticalNorm}
+    OR (LENGTH(${medNorm}) >= 4 AND POSITION(${medNorm} IN ${criticalNorm}) > 0)
+    OR (LENGTH(${criticalNorm}) >= 4 AND POSITION(${criticalNorm} IN ${medNorm}) > 0)
+  )`
+}
+
+function formeMatchCondition(criticalFormeExpr: string, medFormeExpr: string): string {
+  const criticalFormeNorm = normalizedFormeSql(criticalFormeExpr)
+  const medFormeNorm = normalizedFormeSql(medFormeExpr)
+  return `(
+    ${medFormeNorm} = ${criticalFormeNorm}
+    OR (
+      LEAST(LENGTH(${medFormeNorm}), LENGTH(${criticalFormeNorm})) >= 3
+      AND (
+        POSITION(${medFormeNorm} IN ${criticalFormeNorm}) > 0
+        OR POSITION(${criticalFormeNorm} IN ${medFormeNorm}) > 0
+      )
+    )
+  )`
+}
+
+function normalizedDosageSql(columnExpr: string): string {
+  const base = `UPPER(UNACCENT(COALESCE(${columnExpr}, '')))`
+  return `REGEXP_REPLACE(
+    REGEXP_REPLACE(
+      ${base},
+      ',',
+      '.',
+      'g'
+    ),
+    '[^A-Z0-9./]+',
+    '',
+    'g'
+  )`
+}
+
+function dosageCoreSql(columnExpr: string): string {
+  const dosageNorm = normalizedDosageSql(columnExpr)
+  return `REGEXP_REPLACE(
+    REGEXP_REPLACE(
+      ${dosageNorm},
+      '/[0-9.]+(ML|L)$',
+      '',
+      'g'
+    ),
+    '/[0-9.]+(ML|L)(/|$)',
+    '/',
+    'g'
+  )`
+}
+
+function dosageMatchCondition(criticalDosageExpr: string, medDosageExpr: string): string {
+  const criticalNorm = normalizedDosageSql(criticalDosageExpr)
+  const medNorm = normalizedDosageSql(medDosageExpr)
+  const criticalCore = dosageCoreSql(criticalDosageExpr)
+  const medCore = dosageCoreSql(medDosageExpr)
+
+  return `(
+    ${medNorm} = ${criticalNorm}
+    OR (
+      LEAST(LENGTH(${medNorm}), LENGTH(${criticalNorm})) >= 4
+      AND (
+        POSITION(${medNorm} IN ${criticalNorm}) > 0
+        OR POSITION(${criticalNorm} IN ${medNorm}) > 0
+      )
+    )
+    OR (
+      ${medCore} <> ''
+      AND ${criticalCore} <> ''
+      AND (
+        ${medCore} = ${criticalCore}
+        OR POSITION(${medCore} IN ${criticalCore}) > 0
+        OR POSITION(${criticalCore} IN ${medCore}) > 0
+      )
+    )
+  )`
 }
 
 export type SearchClickEventInput = {
@@ -171,48 +337,72 @@ export async function searchMedicaments(
 
   const advancedClause = buildAdvancedSearchClause(advanced, 8)
   const hasAtcMapping = await hasTable('dci_atc_mapping')
-  const hasCriticalTable = await hasTable('critical_medicaments')
+  // critical_mapping est pré-calculée hors ligne et indexable (jointure d'égalité sur
+  // n_enregistrement). On l'utilise en priorité pour éviter le LATERAL JOIN regex/UNACCENT
+  // contre critical_medicaments, dont le coût O(lignes × critiques) provoque le
+  // "canceling statement due to statement timeout" observé sur /api/search. On ne retombe
+  // sur le calcul à la volée (lent) que si critical_mapping n'existe pas encore.
+  const hasCriticalMapping = await hasTable('critical_mapping')
+  const hasCriticalTable = !hasCriticalMapping && await hasTable('critical_medicaments')
+  if (hasCriticalMapping) await ensureCriticalMappingIndex()
+  const hasCriticalEnrichment = hasCriticalMapping || hasCriticalTable
   const codeAtcEnr = hasAtcMapping ? 'atc_e.code_atc' : 'NULL::TEXT'
   const codeAtcRet = hasAtcMapping ? 'atc_r.code_atc' : 'NULL::TEXT'
   const codeAtcNon = hasAtcMapping ? 'atc_n.code_atc' : 'NULL::TEXT'
-  const criticalClassEnr = hasCriticalTable ? 'crit_e.classe_therapeutique' : 'NULL::TEXT'
-  const criticalClassRet = hasCriticalTable ? 'crit_r.classe_therapeutique' : 'NULL::TEXT'
-  const criticalClassNon = hasCriticalTable ? 'crit_n.classe_therapeutique' : 'NULL::TEXT'
+  const criticalClassEnr = hasCriticalEnrichment ? 'crit_e.classe_therapeutique' : 'NULL::TEXT'
+  const criticalClassRet = hasCriticalEnrichment ? 'crit_r.classe_therapeutique' : 'NULL::TEXT'
+  const criticalClassNon = hasCriticalEnrichment ? 'crit_n.classe_therapeutique' : 'NULL::TEXT'
   const atcJoinEnr = hasAtcMapping ? 'LEFT JOIN dci_atc_mapping atc_e ON atc_e.dci = e.dci' : ''
   const atcJoinRet = hasAtcMapping ? 'LEFT JOIN dci_atc_mapping atc_r ON atc_r.dci = r.dci' : ''
   const atcJoinNon = hasAtcMapping ? 'LEFT JOIN dci_atc_mapping atc_n ON atc_n.dci = n.dci' : ''
-  const criticalJoinEnr = hasCriticalTable
+
+  const criticalMappingJoin = (sourceBase: 'ACTIVE' | 'RETRAIT' | 'NON_RENOUVELE', alias: string, nEnregExpr: string) => `
+      LEFT JOIN LATERAL (
+        SELECT cm.classe_therapeutique
+        FROM critical_mapping cm
+        WHERE cm.source_base = '${sourceBase}' AND cm.n_enregistrement = ${nEnregExpr}
+        ORDER BY (cm.statut_match = 'OUI') DESC, cm.score_global DESC NULLS LAST
+        LIMIT 1
+      ) ${alias} ON TRUE`
+
+  const criticalJoinEnr = hasCriticalMapping
+    ? criticalMappingJoin('ACTIVE', 'crit_e', 'e.n_enreg')
+    : hasCriticalTable
     ? `LEFT JOIN LATERAL (
         SELECT c.classe_therapeutique
         FROM critical_medicaments c
-        WHERE c.dci_norm = ${normalizedSql('e.dci')}
-          AND c.forme_norm = ${normalizedSql('e.forme')}
-          AND c.dosage_norm = ${normalizedSql('e.dosage')}
+        WHERE ${dciMatchCondition('c.dci', 'e.dci')}
+          AND ${formeMatchCondition('c.forme', 'e.forme')}
+          AND ${dosageMatchCondition('c.dosage', 'e.dosage')}
         LIMIT 1
       ) crit_e ON TRUE`
     : ''
-  const criticalJoinRet = hasCriticalTable
+  const criticalJoinRet = hasCriticalMapping
+    ? criticalMappingJoin('RETRAIT', 'crit_r', 'r.n_enreg')
+    : hasCriticalTable
     ? `LEFT JOIN LATERAL (
         SELECT c.classe_therapeutique
         FROM critical_medicaments c
-        WHERE c.dci_norm = ${normalizedSql('r.dci')}
-          AND c.forme_norm = ${normalizedSql('r.forme')}
-          AND c.dosage_norm = ${normalizedSql('r.dosage')}
+        WHERE ${dciMatchCondition('c.dci', 'r.dci')}
+          AND ${formeMatchCondition('c.forme', 'r.forme')}
+          AND ${dosageMatchCondition('c.dosage', 'r.dosage')}
         LIMIT 1
       ) crit_r ON TRUE`
     : ''
-  const criticalJoinNon = hasCriticalTable
+  const criticalJoinNon = hasCriticalMapping
+    ? criticalMappingJoin('NON_RENOUVELE', 'crit_n', 'n.n_enreg')
+    : hasCriticalTable
     ? `LEFT JOIN LATERAL (
         SELECT c.classe_therapeutique
         FROM critical_medicaments c
-        WHERE c.dci_norm = ${normalizedSql('n.dci')}
-          AND c.forme_norm = ${normalizedSql('n.forme')}
-          AND c.dosage_norm = ${normalizedSql('n.dosage')}
+        WHERE ${dciMatchCondition('c.dci', 'n.dci')}
+          AND ${formeMatchCondition('c.forme', 'n.forme')}
+          AND ${dosageMatchCondition('c.dosage', 'n.dosage')}
         LIMIT 1
       ) crit_n ON TRUE`
     : ''
 
-  const results = await query<SearchResult>(`
+  const fullSearchSql = `
     SELECT * FROM (
       SELECT
         'enregistrement' AS source,
@@ -229,10 +419,10 @@ export async function searchMedicaments(
       ${criticalJoinEnr}
       WHERE (
         $1 = ''
-        OR CONCAT_WS(' ', e.n_enreg, e.dci, e.nom_marque, e.forme, e.dosage, e.labo, e.pays, e.type_prod, e.statut, e.annee::TEXT, ${codeAtcEnr}) ILIKE $2
+        OR UNACCENT(CONCAT_WS(' ', e.n_enreg, e.dci, e.nom_marque, e.forme, e.dosage, e.labo, e.pays, e.type_prod, e.statut, e.annee::TEXT, ${codeAtcEnr})) ILIKE UNACCENT($2)
       )
-      AND ($3 = '' OR e.labo ILIKE $4)
-      AND ($5 = '' OR e.dci ILIKE $6)
+      AND ($3 = '' OR UNACCENT(COALESCE(e.labo, '')) ILIKE UNACCENT($4))
+      AND ($5 = '' OR UNACCENT(COALESCE(e.dci, '')) ILIKE UNACCENT($6))
 
       UNION ALL
 
@@ -250,10 +440,10 @@ export async function searchMedicaments(
       ${criticalJoinRet}
       WHERE (
         $1 = ''
-        OR CONCAT_WS(' ', r.n_enreg, r.dci, r.nom_marque, r.forme, r.dosage, r.labo, r.pays, r.type_prod, r.statut, r.motif_retrait, ${codeAtcRet}) ILIKE $2
+        OR UNACCENT(CONCAT_WS(' ', r.n_enreg, r.dci, r.nom_marque, r.forme, r.dosage, r.labo, r.pays, r.type_prod, r.statut, r.motif_retrait, ${codeAtcRet})) ILIKE UNACCENT($2)
       )
-      AND ($3 = '' OR r.labo ILIKE $4)
-      AND ($5 = '' OR r.dci ILIKE $6)
+      AND ($3 = '' OR UNACCENT(COALESCE(r.labo, '')) ILIKE UNACCENT($4))
+      AND ($5 = '' OR UNACCENT(COALESCE(r.dci, '')) ILIKE UNACCENT($6))
 
       UNION ALL
 
@@ -272,10 +462,10 @@ export async function searchMedicaments(
       ${criticalJoinNon}
       WHERE (
         $1 = ''
-        OR CONCAT_WS(' ', n.n_enreg, n.dci, n.nom_marque, n.forme, n.dosage, n.labo, n.pays, n.type_prod, n.statut, n.date_final::TEXT, ${codeAtcNon}) ILIKE $2
+        OR UNACCENT(CONCAT_WS(' ', n.n_enreg, n.dci, n.nom_marque, n.forme, n.dosage, n.labo, n.pays, n.type_prod, n.statut, n.date_final::TEXT, ${codeAtcNon})) ILIKE UNACCENT($2)
       )
-      AND ($3 = '' OR n.labo ILIKE $4)
-      AND ($5 = '' OR n.dci ILIKE $6)
+      AND ($3 = '' OR UNACCENT(COALESCE(n.labo, '')) ILIKE UNACCENT($4))
+      AND ($5 = '' OR UNACCENT(COALESCE(n.dci, '')) ILIKE UNACCENT($6))
     ) AS combined
     ${scopeFilter ? `${scopeFilter} ${advancedClause.sql ? 'AND' : ''}` : `${advancedClause.sql ? 'WHERE' : ''}`}
     ${advancedClause.sql}
@@ -283,9 +473,283 @@ export async function searchMedicaments(
       CASE source WHEN 'enregistrement' THEN 1 WHEN 'retrait' THEN 2 ELSE 3 END,
       nom_marque
     LIMIT $7
-  `, [trimmedQuery, searchPattern, labo, laboPattern, substance, substancePattern, limit, ...advancedClause.params])
+  `
 
-  return results
+  const fallbackSearchSql = `
+    SELECT * FROM (
+      SELECT
+        'enregistrement' AS source,
+        e.id, e.n_enreg, e.dci, e.nom_marque, e.forme, e.dosage, e.labo, e.pays,
+        e.type_prod, e.statut, e.annee,
+        NULL::DATE AS date_retrait,
+        NULL::TEXT AS motif_retrait,
+        e.date_final,
+        NULL::TEXT AS code_atc,
+        FALSE AS is_critical,
+        NULL::TEXT AS critical_class_therapeutique
+      FROM enregistrements e
+      WHERE (
+        $1 = ''
+        OR UNACCENT(CONCAT_WS(' ', e.n_enreg, e.dci, e.nom_marque, e.forme, e.dosage, e.labo, e.pays, e.type_prod, e.statut, e.annee::TEXT)) ILIKE UNACCENT($2)
+      )
+      AND ($3 = '' OR UNACCENT(COALESCE(e.labo, '')) ILIKE UNACCENT($4))
+      AND ($5 = '' OR UNACCENT(COALESCE(e.dci, '')) ILIKE UNACCENT($6))
+
+      UNION ALL
+
+      SELECT
+        'retrait' AS source,
+        r.id, r.n_enreg, r.dci, r.nom_marque, r.forme, r.dosage, r.labo, r.pays,
+        r.type_prod, r.statut, NULL::SMALLINT AS annee,
+        r.date_retrait, r.motif_retrait,
+        NULL::DATE AS date_final,
+        NULL::TEXT AS code_atc,
+        FALSE AS is_critical,
+        NULL::TEXT AS critical_class_therapeutique
+      FROM retraits r
+      WHERE (
+        $1 = ''
+        OR UNACCENT(CONCAT_WS(' ', r.n_enreg, r.dci, r.nom_marque, r.forme, r.dosage, r.labo, r.pays, r.type_prod, r.statut, r.motif_retrait)) ILIKE UNACCENT($2)
+      )
+      AND ($3 = '' OR UNACCENT(COALESCE(r.labo, '')) ILIKE UNACCENT($4))
+      AND ($5 = '' OR UNACCENT(COALESCE(r.dci, '')) ILIKE UNACCENT($6))
+
+      UNION ALL
+
+      SELECT
+        'non_renouvele' AS source,
+        n.id, n.n_enreg, n.dci, n.nom_marque, n.forme, n.dosage, n.labo, n.pays,
+        n.type_prod, n.statut, NULL::SMALLINT AS annee,
+        NULL::DATE AS date_retrait,
+        NULL::TEXT AS motif_retrait,
+        n.date_final,
+        NULL::TEXT AS code_atc,
+        FALSE AS is_critical,
+        NULL::TEXT AS critical_class_therapeutique
+      FROM non_renouveles n
+      WHERE (
+        $1 = ''
+        OR UNACCENT(CONCAT_WS(' ', n.n_enreg, n.dci, n.nom_marque, n.forme, n.dosage, n.labo, n.pays, n.type_prod, n.statut, n.date_final::TEXT)) ILIKE UNACCENT($2)
+      )
+      AND ($3 = '' OR UNACCENT(COALESCE(n.labo, '')) ILIKE UNACCENT($4))
+      AND ($5 = '' OR UNACCENT(COALESCE(n.dci, '')) ILIKE UNACCENT($6))
+    ) AS combined
+    ${scopeFilter ? `${scopeFilter} ${advancedClause.sql ? 'AND' : ''}` : `${advancedClause.sql ? 'WHERE' : ''}`}
+    ${advancedClause.sql}
+    ORDER BY
+      CASE source WHEN 'enregistrement' THEN 1 WHEN 'retrait' THEN 2 ELSE 3 END,
+      nom_marque
+    LIMIT $7
+  `
+
+  try {
+    return await query<SearchResult>(fullSearchSql, [trimmedQuery, searchPattern, labo, laboPattern, substance, substancePattern, limit, ...advancedClause.params])
+  } catch (error) {
+    if ((error as { code?: string }).code !== '57014') throw error
+    return await query<SearchResult>(fallbackSearchSql, [trimmedQuery, searchPattern, labo, laboPattern, substance, substancePattern, limit, ...advancedClause.params])
+  }
+}
+
+// ─── RECHERCHE TOLÉRANTE (fautes de frappe, arabe, synonymes) ─
+
+/** Forme latine normalisée côté SQL : minuscules, sans accents ni séparateurs.
+ *  Équivalent de normalizeLatin() dans lib/search-normalize.ts. */
+function latinNormSql(columnExpr: string): string {
+  return `LOWER(REGEXP_REPLACE(UNACCENT(COALESCE(${columnExpr}, '')), '[^a-zA-Z0-9]+', '', 'g'))`
+}
+
+/** Clé phonétique côté SQL — DOIT rester équivalente à foldPhonetic()
+ *  dans lib/search-normalize.ts (mêmes substitutions, même ordre). */
+function phoneticFoldSql(columnExpr: string): string {
+  const steps: [string, string][] = [
+    ['ph', 'f'],
+    ['sh', 'ch'],
+    ['ou', 'u'],
+    ['w', 'u'],
+    ['y', 'i'],
+    ['q', 'k'],
+    ['c(?=[ei])', 's'],
+    ['c', 'k'],
+    ['x', 'ks'],
+    ['p', 'b'],
+    ['(.)\\1+', '\\1'],
+    ['e$', ''],
+  ]
+  let sql = latinNormSql(columnExpr)
+  for (const [pattern, replacement] of steps) {
+    sql = `REGEXP_REPLACE(${sql}, '${pattern}', '${replacement}', 'g')`
+  }
+  return sql
+}
+
+export type TolerantSearchInfo = {
+  /** true si les résultats proviennent du repli flou (et non de la recherche stricte) */
+  fuzzy: boolean
+  /** Terme officiel utilisé après expansion de synonyme (ex: PARACETAMOL) */
+  matchedTerm: string | null
+  /** Synonyme reconnu dans la requête (ex: doliprane, دوليبران) */
+  synonymTerm: string | null
+}
+
+export type TolerantSearchResponse = TolerantSearchInfo & { results: SearchResult[] }
+
+/** Cherche un synonyme (nom commercial, appellation populaire, graphie arabe)
+ *  correspondant à la requête. Retourne le terme officiel à rechercher. */
+async function findSynonymTarget(raw: string, normalized: string): Promise<{ term: string; target: string } | null> {
+  if (!await hasTable('search_synonyms')) return null
+  try {
+    return await queryOne<{ term: string; target: string }>(`
+      SELECT term, target
+      FROM search_synonyms
+      WHERE LOWER(term) = LOWER($1)
+         OR ($2 <> '' AND term_norm = $2)
+         OR similarity(LOWER(term), LOWER($1)) > 0.45
+         OR ($2 <> '' AND term_norm <> '' AND similarity(term_norm, $2) > 0.45)
+      ORDER BY GREATEST(
+        similarity(LOWER(term), LOWER($1)),
+        CASE WHEN $2 = '' OR term_norm = '' THEN 0 ELSE similarity(term_norm, $2) END
+      ) DESC
+      LIMIT 1
+    `, [raw, normalized])
+  } catch {
+    return null
+  }
+}
+
+/** Recherche floue par trigram sur DCI + nom de marque, avec repli phonétique
+ *  (dolipran → DOLIPRANE, amoxiciline → AMOXICILLINE, دوليبران → doliprane…). */
+async function searchFuzzyByName(
+  normalized: string,
+  phonetic: string,
+  scope: string,
+  limit: number
+): Promise<SearchResult[]> {
+  const scopeConditions: Record<string, string> = {
+    enregistrement: `AND source = 'enregistrement'`,
+    retrait:        `AND source = 'retrait'`,
+    non_renouvele:  `AND source = 'non_renouvele'`,
+    all:            '',
+  }
+  const scopeFilter = scopeConditions[scope] ?? ''
+
+  const simExpr = (dciCol: string, marqueCol: string) => `GREATEST(
+    similarity(${latinNormSql(marqueCol)}, $1),
+    similarity(${latinNormSql(dciCol)}, $1),
+    similarity(${phoneticFoldSql(marqueCol)}, $2),
+    similarity(${phoneticFoldSql(dciCol)}, $2)
+  )`
+
+  try {
+    return await query<SearchResult>(`
+      SELECT * FROM (
+        SELECT
+          'enregistrement' AS source,
+          e.id, e.n_enreg, e.dci, e.nom_marque, e.forme, e.dosage, e.labo, e.pays,
+          e.type_prod, e.statut, e.annee,
+          NULL::DATE AS date_retrait,
+          NULL::TEXT AS motif_retrait,
+          e.date_final,
+          NULL::TEXT AS code_atc,
+          FALSE AS is_critical,
+          NULL::TEXT AS critical_class_therapeutique,
+          ${simExpr('e.dci', 'e.nom_marque')} AS sim
+        FROM enregistrements e
+
+        UNION ALL
+
+        SELECT
+          'retrait' AS source,
+          r.id, r.n_enreg, r.dci, r.nom_marque, r.forme, r.dosage, r.labo, r.pays,
+          r.type_prod, r.statut, NULL::SMALLINT AS annee,
+          r.date_retrait, r.motif_retrait,
+          NULL::DATE AS date_final,
+          NULL::TEXT AS code_atc,
+          FALSE AS is_critical,
+          NULL::TEXT AS critical_class_therapeutique,
+          ${simExpr('r.dci', 'r.nom_marque')} AS sim
+        FROM retraits r
+
+        UNION ALL
+
+        SELECT
+          'non_renouvele' AS source,
+          n.id, n.n_enreg, n.dci, n.nom_marque, n.forme, n.dosage, n.labo, n.pays,
+          n.type_prod, n.statut, NULL::SMALLINT AS annee,
+          NULL::DATE AS date_retrait,
+          NULL::TEXT AS motif_retrait,
+          n.date_final,
+          NULL::TEXT AS code_atc,
+          FALSE AS is_critical,
+          NULL::TEXT AS critical_class_therapeutique,
+          ${simExpr('n.dci', 'n.nom_marque')} AS sim
+        FROM non_renouveles n
+      ) AS combined
+      WHERE sim >= 0.34 ${scopeFilter}
+      ORDER BY
+        sim DESC,
+        CASE source WHEN 'enregistrement' THEN 1 WHEN 'retrait' THEN 2 ELSE 3 END,
+        nom_marque
+      LIMIT $3
+    `, [normalized, phonetic, limit])
+  } catch {
+    // pg_trgm absente ou timeout : la recherche stricte reste le comportement de référence
+    return []
+  }
+}
+
+/**
+ * Recherche tolérante : recherche stricte d'abord, puis si aucun résultat
+ * (requête texte simple), expansion de synonymes (doliprane/دوليبران →
+ * PARACETAMOL) puis recherche floue trigram + phonétique.
+ */
+export async function searchMedicamentsTolerant(
+  q: string,
+  scope: string = 'all',
+  limit: number = 40,
+  filters?: {
+    labo?: string
+    substance?: string
+    activeOnly?: boolean
+    advanced?: AdvancedSearchCondition[]
+  }
+): Promise<TolerantSearchResponse> {
+  const strict = await searchMedicaments(q, scope, limit, filters)
+  const info: TolerantSearchInfo = { fuzzy: false, matchedTerm: null, synonymTerm: null }
+  if (strict.length > 0) return { ...info, results: strict }
+
+  // Le repli flou ne s'applique qu'aux recherches texte simples :
+  // les filtres labo/substance/avancés gardent une sémantique stricte.
+  const trimmedQuery = q.trim()
+  const hasOtherFilters = Boolean(
+    filters?.labo?.trim() ||
+    filters?.substance?.trim() ||
+    filters?.advanced?.some((condition) => condition.value?.trim())
+  )
+  if (!trimmedQuery || trimmedQuery.length < 3 || hasOtherFilters) {
+    return { ...info, results: strict }
+  }
+
+  const keys = buildQueryKeys(trimmedQuery)
+  const effectiveScope = filters?.activeOnly ? 'enregistrement' : scope
+
+  // 1. Synonymie : nom commercial étranger / appellation populaire / arabe → DCI
+  const synonym = await findSynonymTarget(keys.raw, keys.normalized)
+  if (synonym) {
+    const viaSynonym = await searchMedicaments(synonym.target, scope, limit, { activeOnly: filters?.activeOnly })
+    if (viaSynonym.length > 0) {
+      return { fuzzy: true, matchedTerm: synonym.target, synonymTerm: synonym.term, results: viaSynonym }
+    }
+  }
+
+  // 2. Trigram + phonétique sur DCI / nom de marque
+  if (keys.normalized.length >= 3) {
+    const fuzzy = await searchFuzzyByName(keys.normalized, keys.phonetic, effectiveScope, limit)
+    if (fuzzy.length > 0) {
+      return { fuzzy: true, matchedTerm: null, synonymTerm: null, results: fuzzy }
+    }
+  }
+
+  return { ...info, results: strict }
 }
 
 // ─── ANALYTICS CLICS RECHERCHE ───────────────────────────────
@@ -471,6 +935,8 @@ const ADVANCED_NUMBER_FIELDS: Record<string, string> = {
   dosage_num: `NULLIF(REPLACE((regexp_match(COALESCE(combined.dosage, ''), '([0-9]+(?:[\\.,][0-9]+)?)'))[1], ',', '.'), '')::numeric`,
 }
 
+const NO_VALUE_OPERATORS = new Set(['is_empty', 'is_not_empty'])
+
 function buildAdvancedSearchClause(conditions: AdvancedSearchCondition[], startIndex: number) {
   const sqlParts: string[] = []
   const params: Array<string | number> = []
@@ -479,7 +945,7 @@ function buildAdvancedSearchClause(conditions: AdvancedSearchCondition[], startI
   for (let i = 0; i < conditions.length; i += 1) {
     const condition = conditions[i]
     const value = condition.value?.trim()
-    if (!value) continue
+    if (!value && !NO_VALUE_OPERATORS.has(condition.operator)) continue
 
     const boolJoin = condition.bool === 'OR' ? 'OR' : 'AND'
     const prefix = sqlParts.length > 0 ? ` ${boolJoin} ` : ''
@@ -487,16 +953,29 @@ function buildAdvancedSearchClause(conditions: AdvancedSearchCondition[], startI
     if (condition.field in ADVANCED_STRING_FIELDS) {
       const fieldSql = ADVANCED_STRING_FIELDS[condition.field]
       if (condition.operator === 'equals') {
-        sqlParts.push(`${prefix}COALESCE(${fieldSql}, '') ILIKE $${paramIndex}`)
-        params.push(value)
+        sqlParts.push(`${prefix}UNACCENT(COALESCE(${fieldSql}, '')) ILIKE UNACCENT($${paramIndex})`)
+        params.push(value!)
         paramIndex += 1
       } else if (condition.operator === 'starts_with') {
-        sqlParts.push(`${prefix}COALESCE(${fieldSql}, '') ILIKE $${paramIndex}`)
-        params.push(`${value}%`)
+        sqlParts.push(`${prefix}UNACCENT(COALESCE(${fieldSql}, '')) ILIKE UNACCENT($${paramIndex})`)
+        params.push(`${value!}%`)
         paramIndex += 1
+      } else if (condition.operator === 'ends_with') {
+        sqlParts.push(`${prefix}UNACCENT(COALESCE(${fieldSql}, '')) ILIKE UNACCENT($${paramIndex})`)
+        params.push(`%${value!}`)
+        paramIndex += 1
+      } else if (condition.operator === 'not_contains') {
+        sqlParts.push(`${prefix}UNACCENT(COALESCE(${fieldSql}, '')) NOT ILIKE UNACCENT($${paramIndex})`)
+        params.push(`%${value!}%`)
+        paramIndex += 1
+      } else if (condition.operator === 'is_empty') {
+        sqlParts.push(`${prefix}(${fieldSql} IS NULL OR ${fieldSql} = '')`)
+      } else if (condition.operator === 'is_not_empty') {
+        sqlParts.push(`${prefix}(${fieldSql} IS NOT NULL AND ${fieldSql} <> '')`)
       } else {
-        sqlParts.push(`${prefix}COALESCE(${fieldSql}, '') ILIKE $${paramIndex}`)
-        params.push(`%${value}%`)
+        // contains (default)
+        sqlParts.push(`${prefix}UNACCENT(COALESCE(${fieldSql}, '')) ILIKE UNACCENT($${paramIndex})`)
+        params.push(`%${value!}%`)
         paramIndex += 1
       }
       continue
@@ -667,6 +1146,33 @@ export async function getRetraits(limit = 100): Promise<Retrait[]> {
   `, [limit])
 }
 
+/** Retraits paginés, avec filtre optionnel sur l'année de retrait */
+export async function getRetraitsPaged(annee: number | null, limit: number, offset: number): Promise<Retrait[]> {
+  if (annee) {
+    return query<Retrait>(`
+      SELECT * FROM retraits
+      WHERE EXTRACT(YEAR FROM date_retrait) = $1
+      ORDER BY date_retrait DESC NULLS LAST, id DESC
+      LIMIT $2 OFFSET $3
+    `, [annee, limit, offset])
+  }
+  return query<Retrait>(`
+    SELECT * FROM retraits
+    ORDER BY date_retrait DESC NULLS LAST, id DESC
+    LIMIT $1 OFFSET $2
+  `, [limit, offset])
+}
+
+export async function getRetraitsCount(annee: number | null): Promise<number> {
+  const row = annee
+    ? await queryOne<{ n: string }>(`
+        SELECT COUNT(*)::TEXT AS n FROM retraits
+        WHERE EXTRACT(YEAR FROM date_retrait) = $1
+      `, [annee])
+    : await queryOne<{ n: string }>(`SELECT COUNT(*)::TEXT AS n FROM retraits`)
+  return row ? parseInt(row.n) : 0
+}
+
 export async function getLastRetraits(limit = 3): Promise<Retrait[]> {
   return query<Retrait>(`
     SELECT * FROM retraits
@@ -757,15 +1263,9 @@ export async function getMedicamentById(
     const row = await queryOne<{ classe_therapeutique: string | null }>(`
       SELECT classe_therapeutique
       FROM critical_medicaments
-      WHERE dci_norm = ${normalizedSql('$1')}
+      WHERE ${dciMatchCondition('dci', '$1')}
         AND dosage_norm = ${normalizedSql('$3')}
-        AND (
-          forme_norm = ${normalizedSql('$2')}
-          OR (
-            LENGTH(forme_norm) >= 4
-            AND LEFT(${normalizedSql('$2')}, 4) = LEFT(forme_norm, 4)
-          )
-        )
+        AND ${formeMatchCondition('forme', '$2')}
       LIMIT 1
     `, [dci, forme, dosage])
     return { isCritical: Boolean(row), classe: row?.classe_therapeutique ?? null }
@@ -885,15 +1385,21 @@ export type CriticalWithMed = {
   date_retrait: string | null
   motif_retrait: string | null
   med_forme: string | null
+  med_dosage: string | null
   forme_approx: boolean
+  /** 'full' = DCI + forme + dosage matched; 'dci_partial' = DCI + (forme OR dosage) matched; 'dci_only' = DCI only; null = no match */
+  match_quality: 'full' | 'dci_partial' | 'dci_only' | null
 }
 
 export async function getCriticalWithMeds(search: string = ''): Promise<CriticalWithMed[]> {
   if (!await hasTable('critical_medicaments')) return []
   const q = search.trim()
+
+  // LATERAL subquery: match on DCI first (broad), then classify as 'full' or 'dci_only'.
+  // This surfaces DCI-only matches so the UI can flag "same DCI, different form/dosage".
   return query<CriticalWithMed>(`
     SELECT
-      cm.id          AS critical_id,
+      cm.id                     AS critical_id,
       cm.dci,
       cm.forme,
       cm.dosage,
@@ -913,7 +1419,7 @@ export async function getCriticalWithMeds(search: string = ''): Promise<Critical
         WHEN m.med_id IS NULL THEN false
         WHEN UPPER(REGEXP_REPLACE(UNACCENT(COALESCE(m.med_forme, '')), '[^A-Z0-9]+', '', 'g')) = cm.forme_norm THEN false
         ELSE true
-      END            AS forme_approx
+      END                       AS forme_approx
     FROM critical_medicaments cm
     LEFT JOIN (
       SELECT
@@ -972,6 +1478,70 @@ export async function getCriticalWithMeds(search: string = ''): Promise<Critical
       CASE m.med_source WHEN 'enregistrement' THEN 1 WHEN 'retrait' THEN 2 ELSE 3 END,
       m.nom_marque ASC
   `, [q, `%${q}%`])
+}
+
+// ─── MAPPING PRÉ-CALCULÉ (critical_mapping) ──────────────────
+
+export type CriticalMappingRow = {
+  id: number
+  n_critique: number | null
+  classe_therapeutique: string | null
+  dci_critique: string
+  forme_critique: string | null
+  dosage_critique: string | null
+  statut_match: 'OUI' | 'A_REVOIR' | null
+  score_global: number | null
+  score_dci: number | null
+  score_forme: number | null
+  score_dosage: number | null
+  source_base: 'ACTIVE' | 'RETRAIT' | 'NON_RENOUVELE' | null
+  n_base: number | null
+  code_base: string | null
+  n_enregistrement: string | null
+  dci_base: string | null
+  marque: string | null
+  forme_base: string | null
+  dosage_base: string | null
+  conditionnement: string | null
+}
+
+export async function getCriticalMapping(search = ''): Promise<CriticalMappingRow[]> {
+  if (!await hasTable('critical_mapping')) return []
+  const q = search.trim()
+  return query<CriticalMappingRow>(`
+    SELECT *
+    FROM critical_mapping
+    WHERE (
+      $1 = ''
+      OR CONCAT_WS(' ', dci_critique, forme_critique, dosage_critique,
+                        classe_therapeutique, marque, dci_base) ILIKE $2
+    )
+    ORDER BY
+      classe_therapeutique ASC NULLS LAST,
+      n_critique ASC NULLS LAST,
+      dci_critique ASC,
+      score_global DESC NULLS LAST
+  `, [q, `%${q}%`])
+}
+
+/** Petit échantillon de la liste critique (aperçu espace Outils) */
+export async function getCriticalSample(limit = 4): Promise<CriticalMappingRow[]> {
+  if (!await hasTable('critical_mapping')) return []
+  return query<CriticalMappingRow>(`
+    SELECT * FROM critical_mapping
+    WHERE dci_critique IS NOT NULL
+    ORDER BY classe_therapeutique ASC NULLS LAST, n_critique ASC NULLS LAST, score_global DESC NULLS LAST
+    LIMIT $1
+  `, [limit])
+}
+
+export async function getCriticalCount(): Promise<number> {
+  if (!await hasTable('critical_mapping')) return 0
+  const row = await queryOne<{ n: string }>(`
+    SELECT COUNT(DISTINCT COALESCE(n_critique::TEXT, dci_critique || COALESCE(forme_critique, '') || COALESCE(dosage_critique, '')))::TEXT AS n
+    FROM critical_mapping
+  `)
+  return row ? parseInt(row.n) : 0
 }
 
 // ─── SEO : PAGES CIBLÉES ──────────────────────────────────────
@@ -1280,6 +1850,131 @@ export async function getAtcByDci(dci: string): Promise<{ code_atc: string; atc_
     `, [dci])
   } catch {
     return null
+  }
+}
+
+// ─── NAVIGATION PAR CLASSE THÉRAPEUTIQUE (ATC) ───────────────
+
+export type AtcNavNode = {
+  code: string
+  parent_code: string | null
+  niveau: number
+  label_fr: string | null
+  label_en: string | null
+  /** Nombre de DCI de la nomenclature mappées sous ce code (descendants inclus) */
+  dci_count: number
+}
+
+export type AtcDciEntry = {
+  dci: string
+  code_atc: string
+  atc_label_fr: string | null
+  atc_label_en: string | null
+  nb_produits: number
+}
+
+async function hasAtcTables(): Promise<boolean> {
+  const [codes, mapping] = await Promise.all([hasTable('atc_codes'), hasTable('dci_atc_mapping')])
+  return codes && mapping
+}
+
+/** Les 14 groupes anatomiques (niveau 1), avec le nombre de DCI mappées */
+export async function getAtcRootsWithCounts(): Promise<AtcNavNode[]> {
+  if (!await hasAtcTables()) return []
+  try {
+    return await query<AtcNavNode>(`
+      SELECT
+        a.code, a.parent_code, a.niveau, a.label_fr, a.label_en,
+        (SELECT COUNT(DISTINCT m.dci) FROM dci_atc_mapping m WHERE m.code_atc LIKE a.code || '%')::INT AS dci_count
+      FROM atc_codes a
+      WHERE a.niveau = 1
+      ORDER BY a.code
+    `)
+  } catch {
+    return []
+  }
+}
+
+export async function getAtcNode(code: string): Promise<AtcCode | null> {
+  if (!await hasAtcTables()) return null
+  try {
+    return await queryOne<AtcCode>(`
+      SELECT code, parent_code, niveau, label_fr, label_en
+      FROM atc_codes
+      WHERE code = UPPER(TRIM($1))
+    `, [code])
+  } catch {
+    return null
+  }
+}
+
+/** Sous-classes directes d'un code ATC, avec le nombre de DCI mappées sous chacune */
+export async function getAtcChildrenWithCounts(code: string): Promise<AtcNavNode[]> {
+  if (!await hasAtcTables()) return []
+  try {
+    return await query<AtcNavNode>(`
+      SELECT
+        a.code, a.parent_code, a.niveau, a.label_fr, a.label_en,
+        (SELECT COUNT(DISTINCT m.dci) FROM dci_atc_mapping m WHERE m.code_atc LIKE a.code || '%')::INT AS dci_count
+      FROM atc_codes a
+      WHERE a.parent_code = UPPER(TRIM($1))
+      ORDER BY a.code
+    `, [code])
+  } catch {
+    return []
+  }
+}
+
+/** Ancêtres d'un code ATC (niveau 1 → parent direct), pour le fil d'Ariane */
+export async function getAtcAncestors(code: string): Promise<AtcCode[]> {
+  if (!await hasAtcTables()) return []
+  try {
+    const rows = await query<AtcCode>(`
+      WITH RECURSIVE atc_up AS (
+        SELECT p.code, p.parent_code, p.niveau, p.label_en, p.label_fr
+        FROM atc_codes c
+        JOIN atc_codes p ON p.code = c.parent_code
+        WHERE c.code = UPPER(TRIM($1))
+
+        UNION ALL
+
+        SELECT p.code, p.parent_code, p.niveau, p.label_en, p.label_fr
+        FROM atc_codes p
+        JOIN atc_up c ON p.code = c.parent_code
+      )
+      SELECT * FROM atc_up
+      ORDER BY niveau ASC
+    `, [code])
+    return rows
+  } catch {
+    return []
+  }
+}
+
+/** DCI de la nomenclature mappées sous un préfixe ATC, avec le nombre de spécialités enregistrées */
+export async function getDcisByAtcPrefix(code: string, limit = 300): Promise<AtcDciEntry[]> {
+  if (!await hasAtcTables()) return []
+  try {
+    return await query<AtcDciEntry>(`
+      SELECT
+        m.dci,
+        m.code_atc,
+        a.label_fr AS atc_label_fr,
+        a.label_en AS atc_label_en,
+        COALESCE(e.nb, 0)::INT AS nb_produits
+      FROM dci_atc_mapping m
+      JOIN atc_codes a ON a.code = m.code_atc
+      LEFT JOIN (
+        SELECT UPPER(TRIM(dci)) AS dci_norm, COUNT(*) AS nb
+        FROM enregistrements
+        GROUP BY UPPER(TRIM(dci))
+      ) e ON e.dci_norm = m.dci
+      WHERE m.code_atc LIKE UPPER(TRIM($1)) || '%'
+      ORDER BY m.code_atc, m.dci
+      LIMIT $2
+    `, [code, limit])
+  } catch {
+    return []
   }
 }
 

@@ -160,7 +160,7 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    const [countRow, rows] = await Promise.all([
+    const [countRow, rows, anneesRows] = await Promise.all([
       queryOne<{ total: string }>(`SELECT COUNT(*) AS total FROM enregistrements ${whereClause}`, params),
       query<Enregistrement>(
         `SELECT id, n_enreg, dci, nom_marque, forme, dosage, labo, pays, type_prod, statut, annee, date_init, date_final
@@ -170,10 +170,17 @@ export async function GET(request: NextRequest) {
          LIMIT $${idx++} OFFSET $${idx++}`,
         [...params, limit, offset]
       ),
+      // "annee" est une valeur unique par version importée (pas un champ par médicament) :
+      // le sélecteur doit proposer les valeurs réellement présentes, pas une liste figée
+      // (sinon le filtre ne retourne jamais rien pour les années qui n'existent pas en base).
+      query<{ annee: number | null }>(`
+        SELECT DISTINCT annee FROM enregistrements WHERE annee IS NOT NULL ORDER BY annee DESC
+      `),
     ])
 
     const total = parseInt(countRow?.total || '0', 10)
     const totalPages = Math.ceil(total / limit)
+    const availableAnnees = anneesRows.map(r => r.annee).filter((a): a is number => a !== null)
 
     return NextResponse.json({
       data: rows,
@@ -186,6 +193,7 @@ export async function GET(request: NextRequest) {
         hasPrev: page > 1,
       },
       filters: { mode, type_prod: type_prod || null, statut: statut || null, pays: pays || null, annee: annee || null },
+      meta: { availableAnnees },
     }, {
       headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' }
     })

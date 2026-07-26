@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import type { LaboSummary } from '@/lib/queries'
 import { getCountryFlag } from '@/lib/countryFlag'
+import { useLanguage } from '@/components/i18n/LanguageProvider'
 
 interface Props {
   labos: LaboSummary[]
@@ -64,6 +65,8 @@ function LaboCard({ labo }: { labo: LaboSummary }) {
 }
 
 export function LaboratoiresClient({ labos }: Props) {
+  const { lang } = useLanguage()
+  const t = (fr: string, ar: string) => (lang === 'ar' ? ar : fr)
   const [search, setSearch] = useState('')
   const [openCountries, setOpenCountries] = useState<Set<string>>(new Set())
 
@@ -109,17 +112,17 @@ export function LaboratoiresClient({ labos }: Props) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
           <span style={{ fontSize: 32 }}>🏭</span>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0f172a', margin: 0 }}>
-            Laboratoires pharmaceutiques
+            {t('Laboratoires pharmaceutiques', 'المخابر الصيدلانية')}
           </h1>
         </div>
         <p style={{ color: '#64748b', fontSize: 15, margin: '0 0 20px' }}>
-          {labos.length} laboratoires référencés dans la nomenclature officielle MIPH — Algérie
+          {labos.length} {t('laboratoires référencés dans la nomenclature officielle MIPH — Algérie', 'مخبراً مسجلاً في التسمية الرسمية MIPH — الجزائر')}
         </p>
 
         {/* Search */}
         <input
           type="search"
-          placeholder="Rechercher un laboratoire..."
+          placeholder={t('Rechercher un laboratoire...', 'ابحث عن مخبر...')}
           value={search}
           onChange={e => setSearch(e.target.value)}
           style={{
@@ -145,10 +148,10 @@ export function LaboratoiresClient({ labos }: Props) {
         <span style={{ fontSize: 28 }}>📩</span>
         <div style={{ flex: 1 }}>
           <div style={{ color: '#0f172a', fontWeight: 700, fontSize: 15, marginBottom: 3 }}>
-            Une mise à jour à proposer ?
+            {t('Une mise à jour à proposer ?', 'لديكم تحديث تقترحونه؟')}
           </div>
           <div style={{ color: '#64748b', fontSize: 13 }}>
-            Pour toute correction ou demande liée aux laboratoires, contactez directement notre équipe.
+            {t('Pour toute correction ou demande liée aux laboratoires, contactez directement notre équipe.', 'لأي تصحيح أو طلب متعلق بالمخابر، تواصلوا مباشرة مع فريقنا.')}
           </div>
         </div>
         <Link href="/contact" style={{
@@ -156,7 +159,7 @@ export function LaboratoiresClient({ labos }: Props) {
           borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: 'none',
           whiteSpace: 'nowrap',
         }}>
-          Contacter →
+          {t('Contacter →', 'اتصلوا بنا ←')}
         </Link>
       </div>
 
@@ -166,10 +169,10 @@ export function LaboratoiresClient({ labos }: Props) {
         gap: 14, marginBottom: 32,
       }}>
         {[
-          { label: 'Laboratoires', value: labos.length, icon: '🏭' },
-          { label: 'Pays représentés', value: groupedByCountry.size, icon: '🌍' },
-          { label: 'Produits enregistrés', value: labos.reduce((s, l) => s + l.total_enregistres, 0).toLocaleString('fr-DZ'), icon: '💊' },
-          { label: 'Retraits cumulés', value: labos.reduce((s, l) => s + l.total_retraits, 0).toLocaleString('fr-DZ'), icon: '🚨' },
+          { label: t('Laboratoires', 'المخابر'), value: labos.length, icon: '🏭' },
+          { label: t('Pays représentés', 'البلدان الممثلة'), value: groupedByCountry.size, icon: '🌍' },
+          { label: t('Produits enregistrés', 'المنتجات المسجلة'), value: labos.reduce((s, l) => s + l.total_enregistres, 0).toLocaleString('fr-DZ'), icon: '💊' },
+          { label: t('Retraits cumulés', 'إجمالي السحوبات'), value: labos.reduce((s, l) => s + l.total_retraits, 0).toLocaleString('fr-DZ'), icon: '🚨' },
         ].map(stat => (
           <div key={stat.label} style={{
             background: '#f8fafc', borderRadius: 12, padding: '16px 20px',
@@ -186,12 +189,12 @@ export function LaboratoiresClient({ labos }: Props) {
       {isSearching ? (
         filtered.length === 0 ? (
           <p style={{ color: '#475569', textAlign: 'center', padding: '40px 0' }}>
-            Aucun laboratoire trouvé pour &quot;{search}&quot;
+            {t('Aucun laboratoire trouvé pour', 'لم يُعثر على أي مخبر لـ')} &quot;{search}&quot;
           </p>
         ) : (
           <>
             <p style={{ color: '#64748b', fontSize: 13, marginBottom: 14 }}>
-              {filtered.length} résultat{filtered.length > 1 ? 's' : ''} pour &quot;{search}&quot;
+              {filtered.length} {lang === 'ar' ? 'نتيجة لـ' : `résultat${filtered.length > 1 ? 's' : ''} pour`} &quot;{search}&quot;
             </p>
             <div style={{
               display: 'grid',
@@ -235,7 +238,7 @@ export function LaboratoiresClient({ labos }: Props) {
                     fontSize: 12, fontWeight: 700,
                     padding: '3px 10px', borderRadius: 20,
                   }}>
-                    {countryLabos.length} labo{countryLabos.length > 1 ? 's' : ''}
+                    {countryLabos.length} {lang === 'ar' ? 'مخبر' : `labo${countryLabos.length > 1 ? 's' : ''}`}
                   </span>
                   <span style={{ color: '#475569', fontSize: 14, marginLeft: 4 }}>
                     {isOpen ? '▲' : '▼'}

@@ -83,7 +83,7 @@ export const ARTICLES: Article[] = [
     content: [
       {
         type: 'intro',
-        text: 'Le paysage législatif de la pharmacie en Algérie connaît une accélération sans précédent. Si la Loi n°18-11 relative à la santé constitue le socle, les décrets d’application attendus pour 2026 viennent préciser les contours de votre exercice quotidien. Entre nouvelles règles d’installation, présence effective et réorganisation de la garde, voici l’analyse de PharmaVeille DZ pour anticiper ces mutations.',
+        text: 'Le paysage législatif de la pharmacie en Algérie connaît une accélération sans précédent. Si la Loi n°18-11 relative à la santé constitue le socle, les décrets d’application attendus pour 2026 viennent préciser les contours de votre exercice quotidien. Entre nouvelles règles d’installation, présence effective et réorganisation de la garde, voici l’analyse de DwaDZ pour anticiper ces mutations.',
       },
       {
         type: 'h2',
@@ -419,7 +419,7 @@ export const ARTICLES: Article[] = [
     content: [
       {
         type: 'intro',
-        text: 'يشهد المشهد التشريعي للصيدلة في الجزائر تسارعاً غير مسبوق. وبينما يشكل القانون رقم 18-11 المتعلق بالصحة القاعدة الأساسية، تأتي النصوص التطبيقية المنتظرة لعام 2026 لتحديد معالم ممارستكم اليومية. من شروط الاعتماد الجديدة إلى تنظيم المناوبة، إليكم تحليل منصة PharmaVeille DZ لاستباق هذه التحولات.',
+        text: 'يشهد المشهد التشريعي للصيدلة في الجزائر تسارعاً غير مسبوق. وبينما يشكل القانون رقم 18-11 المتعلق بالصحة القاعدة الأساسية، تأتي النصوص التطبيقية المنتظرة لعام 2026 لتحديد معالم ممارستكم اليومية. من شروط الاعتماد الجديدة إلى تنظيم المناوبة، إليكم تحليل منصة DwaDZ لاستباق هذه التحولات.',
       },
       {
         type: 'h2',
@@ -565,7 +565,7 @@ export const ARTICLES: Article[] = [
       {
         type: 'callout',
         variant: 'info',
-        text: 'نصائح تقنية لـ PharmaVeille DZ: SEO : تأكد من إضافة علامات lang="ar" في كود HTML الخاص بالصفحات العربية. الخطوط : استخدم خطوطاً عربية واضحة مثل Cairo أو Amiri لتسهيل القراءة على الهاتف. الربط : ضع زر "النسخة العربية" في أعلى المقال الفرنسي والعكس، لزيادة التفاعل.',
+        text: 'نصائح تقنية لـ DwaDZ: SEO : تأكد من إضافة علامات lang="ar" في كود HTML الخاص بالصفحات العربية. الخطوط : استخدم خطوطاً عربية واضحة مثل Cairo أو Amiri لتسهيل القراءة على الهاتف. الربط : ضع زر "النسخة العربية" في أعلى المقال الفرنسي والعكس، لزيادة التفاعل.',
       },
     ],
   },

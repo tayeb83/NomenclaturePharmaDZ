@@ -8,6 +8,7 @@ import { cookies } from 'next/headers'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
 import { PrintButton } from '@/components/ui/PrintButton'
 import { GlossarySection } from '@/components/ui/GlossarySection'
+import { BackButton } from '@/components/ui/BackButton'
 
 const TYPE_LABELS: Record<string, { fr: string; ar: string }> = {
   GE: { fr: 'Générique', ar: 'جنيس' }, 'Gé': { fr: 'Générique', ar: 'جنيس' }, RE: { fr: 'Référence étrangère', ar: 'مرجعي أجنبي' },
@@ -15,6 +16,20 @@ const TYPE_LABELS: Record<string, { fr: string; ar: string }> = {
 }
 const STATUT_LABELS: Record<string, { fr: string; ar: string }> = {
   F: { fr: '🇩🇿 Fabriqué en Algérie', ar: '🇩🇿 مصنع في الجزائر' }, I: { fr: '📦 Importé', ar: '📦 مستورد' },
+}
+
+// Requête volontairement précise (nom de marque + DCI + dosage + forme +
+// laboratoire, jamais juste la DCI) pour que les premiers résultats
+// d'images Google soient bien la boîte de CE médicament vendu en Algérie,
+// et pas un générique homonyme d'un autre marché.
+function googleBoxSearchHref(med: { nom_marque: string; dci: string; dosage: string | null; forme: string | null; labo: string | null }) {
+  const parts = [med.nom_marque]
+  if (med.dci && med.dci !== med.nom_marque) parts.push(med.dci)
+  if (med.dosage) parts.push(med.dosage)
+  if (med.forme) parts.push(med.forme)
+  if (med.labo) parts.push(med.labo)
+  parts.push('boîte médicament Algérie')
+  return `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(parts.filter(Boolean).join(' '))}`
 }
 
 function motifColor(m: string | null) {
@@ -48,7 +63,7 @@ export async function generateMetadata(
   if (!med) return { title: 'Médicament introuvable' }
   const dosageSuffix = med.dosage ? ` ${med.dosage}` : ''
   const dciSuffix = med.dci ? ` (${med.dci})` : ''
-  const title = `${med.nom_marque}${dosageSuffix} — Fiche technique et substitution | PharmaVeille DZ`
+  const title = `${med.nom_marque}${dosageSuffix} — Fiche technique et substitution | DwaDZ`
   const description = `${med.nom_marque}${dosageSuffix}${dciSuffix}${med.forme ? ` — ${med.forme}` : ''}${med.labo ? ` — ${med.labo}` : ''}. Médicament disponible en Algérie, substituts génériques et nomenclature MIPH officielle.`
   const canonical = `${APP_URL}/medicament/${params.source}/${params.id}`
   return {
@@ -59,7 +74,7 @@ export async function generateMetadata(
       title,
       description,
       type: 'article',
-      siteName: 'PharmaVeille DZ',
+      siteName: 'DwaDZ',
       locale: 'fr_DZ',
       url: canonical,
     },
@@ -121,9 +136,12 @@ export default async function MedicamentDetailPage(
       {/* ─── Header ─────────────────────────────────────────── */}
       <div className="page-header" style={{ background: headerBg }}>
         <div className="container">
-          <Link href="/recherche" className="detail-back-link">
-            {pickLang(lang, { fr: '← Retour à la recherche', ar: '→ العودة إلى البحث' })}
-          </Link>
+          <BackButton
+            label={pickLang(lang, { fr: '← Retour', ar: '→ رجوع' })}
+            fallbackHref="/recherche"
+            className="detail-back-link"
+            style={{}}
+          />
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap', marginTop: 12 }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '.06em', marginBottom: 4 }}>
@@ -338,10 +356,11 @@ export default async function MedicamentDetailPage(
                     {idx > 0 && (
                       <span style={{ color: '#64748b', fontSize: 16, margin: '0 6px' }}>›</span>
                     )}
-                    <div style={{
+                    <Link href={`/classes-therapeutiques/${level.code}`} style={{
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'flex-start',
+                      textDecoration: 'none',
                     }}>
                       <span style={{
                         fontFamily: 'var(--font-mono)',
@@ -365,7 +384,7 @@ export default async function MedicamentDetailPage(
                       }}>
                         {level.label_fr || level.label_en || ''}
                       </span>
-                    </div>
+                    </Link>
                   </div>
                 ))}
               </div>
@@ -417,13 +436,10 @@ export default async function MedicamentDetailPage(
 
           {/* ─── Actions ─────────────────────────────────────── */}
           <div style={{ marginTop: 40, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-            <Link href="/recherche" style={{
-              padding: '10px 20px', background: '#f1f5f9', color: '#334155',
-              borderRadius: 8, fontWeight: 600, fontSize: 13, textDecoration: 'none',
-              border: '1.5px solid #e2e8f0', transition: 'all .15s',
-            }}>
-              {pickLang(lang, { fr: '← Retour à la recherche', ar: '→ العودة إلى البحث' })}
-            </Link>
+            <BackButton
+              label={pickLang(lang, { fr: '← Retour', ar: '→ رجوع' })}
+              fallbackHref="/recherche"
+            />
             <Link href={`/recherche?q=${encodeURIComponent(med.dci)}`} style={{
               padding: '10px 20px', background: '#0284c7', color: 'white',
               borderRadius: 8, fontWeight: 600, fontSize: 13, textDecoration: 'none',
@@ -431,6 +447,18 @@ export default async function MedicamentDetailPage(
             }}>
               🔍 Tous les médicaments avec cette DCI
             </Link>
+            <a
+              href={googleBoxSearchHref(med)}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                padding: '10px 20px', background: 'white', color: '#0f172a',
+                border: '1.5px solid #e2e8f0', borderRadius: 8, fontWeight: 600, fontSize: 13,
+                textDecoration: 'none', transition: 'all .15s',
+              }}
+            >
+              {pickLang(lang, { fr: '🔎 Voir la boîte (Google)', ar: '🔎 صورة العلبة (Google)' })}
+            </a>
             <PrintButton
               label={pickLang(lang, { fr: 'Imprimer / PDF', ar: 'طباعة / PDF' })}
             />

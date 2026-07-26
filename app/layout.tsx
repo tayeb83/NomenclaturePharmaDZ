@@ -7,14 +7,14 @@ import { PWAManager } from '@/components/pwa/PWAManager'
 import { PageVisitTracker } from '@/components/analytics/PageVisitTracker'
 import { getStats } from '@/lib/queries'
 import { isAdminSessionValid } from '@/lib/admin-auth'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { getDir, isLang } from '@/lib/i18n'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
 
 export const metadata: Metadata = {
-  title: { default: 'PharmaVeille DZ — Médicaments en Algérie', template: '%s | PharmaVeille DZ' },
-  description: 'Trouvez n\'importe quel médicament en Algérie — nomenclature pharmaceutique officielle MIPH, alertes retraits, génériques, nouveaux enregistrements. البحث عن الأدوية في الجزائر.',
+  title: { default: 'DwaDZ — Médicaments en Algérie', template: '%s | DwaDZ' },
+  description: 'Moteur de recherche indépendant sur la Nomenclature Nationale des Produits Pharmaceutiques (MIPH). DwaDZ n\'est pas le site officiel — il offre une interface fluide et avancée sur les données publiées par le Ministère de l\'Industrie Pharmaceutique. البحث عن الأدوية في الجزائر.',
   keywords: [
     // Français
     'médicament algérie', 'pharmacie algérie', 'nomenclature pharmaceutique algérienne',
@@ -36,20 +36,20 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'PharmaVeille DZ',
+    title: 'DwaDZ',
   },
   openGraph: {
-    title: 'PharmaVeille DZ — Médicaments en Algérie',
-    description: 'Trouvez n\'importe quel médicament en Algérie — nomenclature MIPH officielle, alertes et génériques.',
+    title: 'DwaDZ — Médicaments en Algérie',
+    description: 'Moteur de recherche indépendant sur la nomenclature pharmaceutique algérienne (données MIPH) — recherche avancée, alertes retraits, génériques.',
     url: APP_URL,
-    siteName: 'PharmaVeille DZ',
+    siteName: 'DwaDZ',
     locale: 'fr_DZ',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'PharmaVeille DZ — Médicaments en Algérie',
-    description: 'Nomenclature pharmaceutique algérienne officielle MIPH — recherche, alertes, génériques.',
+    title: 'DwaDZ — Médicaments en Algérie',
+    description: 'Moteur de recherche indépendant sur la nomenclature pharmaceutique algérienne (données source MIPH) — recherche avancée, alertes, génériques.',
     site: '@pharmaveilledz',
   },
   verification: {
@@ -77,15 +77,23 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const session = cookieStore.get('admin_session')?.value
   const isAdmin = isAdminSessionValid(session)
   const cookieLang = cookieStore.get('lang')?.value
-  const initialLang = isLang(cookieLang) ? cookieLang : 'fr'
+
+  // Les routes /ar/* ont une URL dédiée et doivent rester en arabe pour les
+  // robots quel que soit le cookie de langue du visiteur — sinon Google
+  // verrait un <html lang> incohérent avec le contenu qu'il vient d'indexer.
+  const headerStore = await headers()
+  const pathname = headerStore.get('x-pathname') || ''
+  const initialLang = pathname.startsWith('/ar/') || pathname === '/ar'
+    ? 'ar'
+    : (isLang(cookieLang) ? cookieLang : 'fr')
 
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'PharmaVeille DZ',
-    alternateName: 'فارما فيل DZ',
+    name: 'DwaDZ',
+    alternateName: ['DwaDZ… كلش على دوا البلاد', 'Pharma DZ', 'Pharmacie Algérie', 'Médicaments Algérie'],
     url: APP_URL,
-    description: 'Nomenclature pharmaceutique algérienne officielle — recherche, alertes retraits, génériques. التسمية الصيدلانية الجزائرية الرسمية.',
+    description: 'Moteur de recherche indépendant sur la Nomenclature Nationale des Produits Pharmaceutiques publiée par le MIPH. Recherche avancée, alertes retraits, génériques.',
     inLanguage: ['fr', 'ar'],
     potentialAction: {
       '@type': 'SearchAction',
@@ -97,7 +105,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     },
     publisher: {
       '@type': 'Organization',
-      name: 'PharmaVeille DZ',
+      name: 'DwaDZ',
       url: APP_URL,
     },
   }
@@ -129,7 +137,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         )}
       </head>
       <body suppressHydrationWarning>
-        <LanguageProvider>
+        <LanguageProvider initialLang={initialLang}>
           <Nav currentVersion={currentVersion} isAdmin={isAdmin} />
           <main className="main-content">
             {children}

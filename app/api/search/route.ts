@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { searchMedicaments } from '@/lib/queries'
+import { searchMedicamentsTolerant } from '@/lib/queries'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -25,12 +25,15 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const results = await searchMedicaments(q, scope, limit, { labo, substance, activeOnly, advanced })
+    const { results, fuzzy, matchedTerm, synonymTerm } = await searchMedicamentsTolerant(q, scope, limit, { labo, substance, activeOnly, advanced })
     return NextResponse.json({
       results,
       count: results.length,
       query: q,
       scope,
+      fuzzy,
+      matchedTerm,
+      synonymTerm,
       filters: { labo, substance, activeOnly, advanced },
     }, {
       headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' }

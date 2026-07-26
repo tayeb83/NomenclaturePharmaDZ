@@ -1,5 +1,5 @@
 /**
- * PharmaVeille DZ — Client PostgreSQL direct (sans Supabase)
+ * DwaDZ — Client PostgreSQL direct (sans Supabase)
  * Fonctionne en local et sur n'importe quel hébergeur PostgreSQL
  * (Railway, Render, Neon, ElephantSQL, Heroku, etc.)
  */
@@ -56,9 +56,13 @@ function createPool() {
         return pgTypes.getTypeParser(oid, format)
       },
     },
-    max: 10,
+    // Réduit à 5 pour les environnements serverless (évite d'épuiser les connexions DB)
+    max: 5,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 5000,
+    // Augmenté pour absorber les pics de latence réseau (DB distante)
+    connectionTimeoutMillis: 15000,
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 10000,
   })
 }
 
@@ -68,7 +72,8 @@ export function getPool(): Pool {
   if (pool) return pool
 
   pool = createPool()
-  if (process.env.NODE_ENV !== 'production') globalForPg._pgPool = pool
+  // Toujours cacher dans globalThis pour éviter les recréations sur hot-reload (dev) et cold-starts (prod)
+  globalForPg._pgPool = pool
   return pool
 }
 

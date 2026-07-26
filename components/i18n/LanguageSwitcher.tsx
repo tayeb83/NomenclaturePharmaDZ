@@ -36,7 +36,7 @@ export function LanguageSwitcher() {
           cursor: 'pointer',
         }}
       >
-        AR
+        العربية
       </button>
     </div>
   )

@@ -3,10 +3,7 @@
 import Link from 'next/link'
 import { DrugCard } from '@/components/drug/DrugCard'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
-import { SearchClient } from './recherche/SearchClient'
 import { AdHorizontal } from '@/components/ads/AdBanner'
-import type { SearchResult } from '@/lib/db-types'
-import { useState } from 'react'
 import { getFeaturedArticles } from '@/lib/articles'
 
 // Remplacez ces IDs par vos vrais slots AdSense (disponibles dans Google AdSense > Annonces > Par bloc)
@@ -28,71 +25,47 @@ type Stats = {
   last_version: string | null
 }
 
-type AdvancedSearchCondition = {
-  field: string
-  operator: string
-  value: string
-  bool?: 'AND' | 'OR'
-}
-
 export function HomeClient({
   stats,
   nouveautes,
   retraits,
   lastVersionDate,
-  initialQuery,
-  initialScope,
-  initialResults,
-  initialLabo,
-  initialSubstance,
-  initialActiveOnly,
-  initialAdvanced,
-  initialAlgerieOnly,
 }: {
   stats: Stats | null
   nouveautes: any[]
   retraits: any[]
   lastVersionDate: string | null
-  initialQuery: string
-  initialScope: string
-  initialResults: SearchResult[]
-  initialLabo: string
-  initialSubstance: string
-  initialActiveOnly: boolean
-  initialAdvanced: AdvancedSearchCondition[]
-  initialAlgerieOnly: boolean
 }) {
   const { lang } = useLanguage()
   const t = (fr: string, ar: string) => lang === 'ar' ? ar : fr
   const formattedDate = formatDate(lastVersionDate)
-  const [showSearch, setShowSearch] = useState(initialQuery.trim().length > 0)
 
   const featuredArticles = getFeaturedArticles(lang, 3)
 
-  const quickLinks = [
-    {
-      href: '/diff',
-      icon: '🔄',
-      title: t('Diff versions', 'الفروقات'),
-      sub: t('Ajoutés & supprimés', 'مضاف ومحذوف'),
-    },
+  const services = [
     {
       href: '/substitution',
       icon: '♻️',
-      title: t('Substitution', 'الاستبدال'),
-      sub: t('Trouver un générique', 'البحث عن بديل جنيس'),
+      title: t('Trouver un générique', 'البحث عن بديل جنيس'),
+      text: t('Trouvez une alternative générique à un médicament.', 'اعثر على بديل جنيس لدواء ما.'),
     },
     {
       href: '/alertes',
       icon: '🚨',
-      title: t('Alertes !', 'التنبيهات !'),
-      sub: t('Retraits & non renouvelés', 'الانسحابات وغير المجددة'),
+      title: t('Consulter les alertes', 'الاطلاع على التنبيهات'),
+      text: t('Retraits et AMM non renouvelées.', 'الأدوية المسحوبة وغير المجددة.'),
     },
     {
-      href: '/veille',
-      icon: '📡',
-      title: t('Veille', 'المراقبة'),
-      sub: t('Nouveaux enregistrements', 'التسجيلات الجديدة'),
+      href: '/pharmacies',
+      icon: '📍',
+      title: t('Annuaire des pharmacies', 'دليل الصيدليات'),
+      text: t('Toutes les pharmacies par wilaya et commune.', 'كل الصيدليات حسب الولاية والبلدية.'),
+    },
+    {
+      href: '/diff',
+      icon: '🆕',
+      title: t('Nouveaux médicaments', 'أدوية جديدة'),
+      text: t('Les derniers médicaments enregistrés.', 'آخر الأدوية المسجلة.'),
     },
   ]
 
@@ -101,125 +74,91 @@ export function HomeClient({
       <section className="hero">
         <div className="container hero-content">
           <h1>
-            {t('La nomenclature pharmaceutique', 'التسمية الصيدلانية')}<br />
-            <span>{t('algérienne', 'الجزائرية')}</span> {t('en un clic', 'بنقرة واحدة')}
+            {t('Trouvez un médicament ou une pharmacie de garde en Algérie', 'ابحث عن دواء أو صيدلية مناوبة في الجزائر')}
           </h1>
           <p>
             {t(
-              `Recherchez parmi ${stats?.total_enregistrements?.toLocaleString('fr') || '—'} médicaments, consultez les alertes officielles et trouvez des alternatives de substitution.`,
-              `ابحث بين ${stats?.total_enregistrements?.toLocaleString('fr') || '—'} دواء، اطّلع على التنبيهات الرسمية وابحث عن بدائل الاستبدال.`
+              'Accédez rapidement aux pharmacies ouvertes et aux informations sur les médicaments disponibles en Algérie.',
+              'اعثر بسرعة على الصيدليات المناوبة ومعلومات الأدوية المتوفرة في الجزائر.',
             )}
           </p>
         </div>
       </section>
 
-      <div style={{ background: '#f0f9ff', borderBottom: '1px solid #bae6fd', padding: '9px 0' }}>
-        <div className="container" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: '#0369a1' }}>
-          <span style={{ fontSize: 15 }}>📋</span>
+      {/* SEO anchor — visually minimal, preserved for search engine indexing */}
+      <div aria-hidden="true" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', opacity: 0, pointerEvents: 'none' }}>
+        <h2>{t('Pharma DZ : votre guide médicaments en Algérie', 'Pharma DZ: دليلك لأدوية الجزائر')}</h2>
+        <p>
           {lang === 'ar' ? (
-            <span>بيانات مستمدة من <strong>التسمية الرسمية للـ MIPH</strong> — يتم تحديثها تلقائيًا مع كل إصدار جديد.</span>
+            <>إذا كنت تبحث عن <strong>Pharma DZ</strong> أو <strong>صيدلية الجزائر</strong> أو <strong>أدوية الجزائر</strong>، يوفر لك DwaDZ البحث السريع في التسمية الرسمية مع صفحات مخصصة لـ <Link href="/recherche">الأدوية</Link> و<Link href="/alertes">التنبيهات</Link> و<Link href="/substitution">البدائل الجنيسة</Link>.</>
           ) : (
-            <span>Données issues de la <strong>nomenclature officielle du MIPH</strong> — automatiquement mise à jour à chaque nouvelle version publiée.</span>
+            <>Si vous cherchez <strong>Pharma DZ</strong>, <strong>pharmacie Algérie</strong> ou <strong>médicaments Algérie</strong>, DwaDZ centralise la nomenclature officielle avec des pages dédiées à la <Link href="/recherche">recherche de médicaments</Link>, aux <Link href="/alertes">alertes</Link> et à la <Link href="/substitution">substitution générique</Link>.</>
           )}
-        </div>
+        </p>
       </div>
 
-      {/* Bannière pub — entre le hero et les stats */}
-      <div className="container" style={{ paddingTop: 8 }}>
-        <AdHorizontal slot={AD_SLOT_HOME_TOP} />
+      {/* Deux actions principales : pharmacie de garde + recherche de médicament */}
+      <div className="container">
+        <div className="home-actions">
+          <div className="home-action-card primary">
+            <div className="home-action-icon">🏥</div>
+            <div className="home-action-title">{t('Pharmacie de garde', 'صيدليات المناوبة')}</div>
+            <p className="home-action-text">
+              {t(
+                'Trouvez une pharmacie ouverte maintenant, cette nuit ou vendredi.',
+                'اعثر على صيدلية مناوبة الآن أو هذه الليلة أو يوم الجمعة.',
+              )}
+            </p>
+            <div className="home-action-buttons">
+              <Link href="/garde" className="home-action-btn solid">
+                📍 {t('Autour de moi', 'بالقرب مني')}
+              </Link>
+              <Link href="/pharmacie-de-garde" className="home-action-btn outline">
+                🏘️ {t('Choisir une commune', 'اختيار البلدية')}
+              </Link>
+            </div>
+          </div>
+
+          <div className="home-action-card secondary">
+            <div className="home-action-icon">🔍</div>
+            <div className="home-action-title">{t('Rechercher un médicament', 'البحث عن دواء')}</div>
+            <p className="home-action-text">
+              {t(
+                'Recherchez par nom commercial, substance active ou laboratoire.',
+                'ابحث بالاسم التجاري أو المادة الفعالة أو المخبر.',
+              )}
+            </p>
+            <div className="home-action-buttons">
+              <Link href="/recherche" className="home-action-btn solid">
+                🔍 {t('Rechercher', 'ابحث')}
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="container">
-        <div className="stats-grid">
-          <Link href="/medicaments" className="stat-card blue stat-card-link">
-            <div className="stat-icon">✅</div>
-            <div className="stat-value">{stats?.total_enregistrements?.toLocaleString('fr') || '—'}</div>
-            <div className="stat-label">{t('Enregistrements actifs', 'التسجيلات النشطة')}</div>
-            <div className="stat-sub">
-              {t('Version', 'الإصدار')} {stats?.last_version || '—'}
-              {formattedDate && (
-                <> · {t('MàJ', 'تحديث')} <strong style={{ color: '#0284c7' }}>{formattedDate}</strong></>
-              )}
-            </div>
-            <div className="stat-cta">{t('Voir les médicaments →', 'عرض الأدوية →')}</div>
-          </Link>
-          <Link href="/diff" className="stat-card green stat-card-link">
-            <div className="stat-icon">🆕</div>
-            <div className="stat-value">{stats?.total_nouveautes != null ? stats.total_nouveautes.toLocaleString('fr') : '—'}</div>
-            <div className="stat-label">{t('Nouveautés', 'جديد')}</div>
-            <div className="stat-sub">{t('vs version précédente', 'مقارنة بالإصدار السابق')}</div>
-            <div className="stat-cta">{t('Voir les nouveautés →', 'عرض الجديد →')}</div>
-          </Link>
-          <Link href="/alertes#retraits" className="stat-card red stat-card-link">
-            <div className="stat-icon">🚫</div>
-            <div className="stat-value">{stats?.total_retraits?.toLocaleString('fr') || '—'}</div>
-            <div className="stat-label">{t('Médicaments retirés', 'أدوية مسحوبة')}</div>
-            <div className="stat-sub">{t('Source MIPH', 'المصدر: MIPH')}</div>
-            <div className="stat-cta">{t('Voir les retraits →', 'عرض المسحوبات →')}</div>
-          </Link>
-          <Link href="/alertes#non-renouveles" className="stat-card amber stat-card-link">
-            <div className="stat-icon">⚠️</div>
-            <div className="stat-value">{stats?.total_non_renouveles?.toLocaleString('fr') || '—'}</div>
-            <div className="stat-label">{t('AMM non renouvelées', 'AMM غير مجددة')}</div>
-            <div className="stat-sub">{t('Source MIPH', 'المصدر: MIPH')}</div>
-            <div className="stat-cta">{t('Voir les non renouvelées →', 'عرض غير المجددة →')}</div>
-          </Link>
-        </div>
+        <AdHorizontal slot={AD_SLOT_HOME_TOP} />
       </div>
 
-      {/* Section recherche intégrée */}
       <div className="page-body" style={{ paddingTop: 0 }}>
         <div className="container">
 
-          {/* Toggle pour afficher/masquer la recherche */}
-          {!showSearch ? (
-            <div style={{ textAlign: 'center', marginBottom: 28 }}>
-              <button
-                onClick={() => setShowSearch(true)}
-                style={{
-                  background: 'linear-gradient(135deg, #0284c7, #0369a1)',
-                  color: 'white', border: 'none', borderRadius: 12,
-                  padding: '14px 32px', fontSize: 15, fontWeight: 700,
-                  cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 10,
-                  boxShadow: '0 4px 14px rgba(2,132,199,0.3)',
-                }}
-              >
-                🔍 {t('Rechercher un médicament', 'ابحث عن دواء')}
-              </button>
+          {/* Services utiles */}
+          <section style={{ marginBottom: 36 }}>
+            <div className="section-title">⚡ {t('Services utiles', 'خدمات مفيدة')}</div>
+            <div className="home-services-grid">
+              {services.map(s => (
+                <Link key={s.href} href={s.href} className="home-service-card">
+                  <div className="home-service-icon">{s.icon}</div>
+                  <div className="home-service-title">{s.title}</div>
+                  <div className="home-service-text">{s.text}</div>
+                </Link>
+              ))}
             </div>
-          ) : (
-            <div style={{
-              background: 'white', borderRadius: 14, border: '1px solid #e2e8f0',
-              padding: '20px 24px', marginBottom: 28,
-              boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' }}>
-                  🔍 {t('Recherche', 'البحث')}
-                </h2>
-                <button
-                  onClick={() => setShowSearch(false)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569', fontSize: 18 }}
-                  title={t('Masquer la recherche', 'إخفاء البحث')}
-                >
-                  ✕
-                </button>
-              </div>
-              <SearchClient
-                initialQuery={initialQuery}
-                initialScope={initialScope}
-                initialResults={initialResults}
-                initialLabo={initialLabo}
-                initialSubstance={initialSubstance}
-                initialActiveOnly={initialActiveOnly}
-                initialAdvanced={initialAdvanced}
-                initialAlgerieOnly={initialAlgerieOnly}
-                basePath="/"
-              />
-            </div>
-          )}
+          </section>
 
-          {/* Nouveautés + Retraits + Accès rapide */}
+          {/* Nouveautés + Retraits */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
             <div>
               <div className="section-title">
@@ -241,7 +180,7 @@ export function HomeClient({
                 href="/diff"
                 style={{ display: 'block', textAlign: 'center', padding: '12px', background: '#f0fdf4', borderRadius: 8, color: '#16a34a', fontWeight: 700, textDecoration: 'none', marginTop: 8 }}
               >
-                {t('Voir le diff complet →', '← عرض الفروقات الكاملة')}
+                {t('Voir tout →', '← عرض الكل')}
               </Link>
             </div>
 
@@ -257,34 +196,17 @@ export function HomeClient({
                 href="/alertes"
                 style={{ display: 'block', textAlign: 'center', padding: '12px', background: '#fef2f2', borderRadius: 8, color: '#dc2626', fontWeight: 700, textDecoration: 'none', marginTop: 8 }}
               >
-                {t('Voir toutes les alertes →', '← عرض كل التنبيهات')}
+                {t('Voir tout →', '← عرض الكل')}
               </Link>
-
-              <div style={{ marginTop: 28 }}>
-                <div className="section-title">⚡ {t('Accès rapide', 'وصول سريع')}</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
-                  {quickLinks.map(f => (
-                    <Link
-                      key={f.href}
-                      href={f.href}
-                      style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 10, padding: '14px 16px', textDecoration: 'none', display: 'block' }}
-                    >
-                      <div style={{ fontSize: 22, marginBottom: 6 }}>{f.icon}</div>
-                      <div style={{ fontWeight: 700, fontSize: 13, color: '#0f172a' }}>{f.title}</div>
-                      <div style={{ fontSize: 11.5, color: '#64748b', marginTop: 2 }}>{f.sub}</div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
 
-          <section style={{ marginTop: 36, marginBottom: 8 }}>
-            <div className="section-title">📰 {t('Articles SEO & dossiers', 'مقالات ودراسات محسّنة للسيو')}</div>
+          <section style={{ marginTop: 36 }}>
+            <div className="section-title">📰 {t('Articles & dossiers', 'مقالات ودراسات')}</div>
             <div className="section-sub">
               {t(
-                'Des contenus FR/AR pour capter les requêtes réglementaires et renvoyer vers les pages clés du site.',
-                'محتوى فرنسي/عربي لالتقاط الكلمات المفتاحية التنظيمية وربط الزائر بالصفحات الأساسية.'
+                'Guides pratiques et actualités pharmaceutiques en Algérie.',
+                'أدلة عملية وأخبار صيدلانية في الجزائر.'
               )}
             </div>
             <div className="home-articles-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 14, marginTop: 14 }}>
@@ -327,6 +249,42 @@ export function HomeClient({
           </section>
 
           <AdHorizontal slot={AD_SLOT_HOME_MIDDLE} />
+
+          {/* Les données DwaDZ — statistiques secondaires */}
+          <section style={{ marginTop: 36 }}>
+            <div className="home-data-section">
+              <div className="section-title" style={{ marginBottom: 0 }}>{t('Les données DwaDZ', 'بيانات DwaDZ')}</div>
+              <div className="home-data-grid">
+                <Link href="/medicaments" className="home-data-item" style={{ textDecoration: 'none' }}>
+                  <div className="home-data-value">{stats?.total_enregistrements?.toLocaleString('fr') || '—'}</div>
+                  <div className="home-data-label">{t('Enregistrements actifs', 'التسجيلات النشطة')}</div>
+                </Link>
+                <Link href="/diff" className="home-data-item" style={{ textDecoration: 'none' }}>
+                  <div className="home-data-value">{stats?.total_nouveautes != null ? stats.total_nouveautes.toLocaleString('fr') : '—'}</div>
+                  <div className="home-data-label">{t('Nouveautés', 'جديد')}</div>
+                </Link>
+                <Link href="/retraits" className="home-data-item" style={{ textDecoration: 'none' }}>
+                  <div className="home-data-value">{stats?.total_retraits?.toLocaleString('fr') || '—'}</div>
+                  <div className="home-data-label">{t('Médicaments retirés', 'أدوية مسحوبة')}</div>
+                </Link>
+              </div>
+
+              <div className="home-trust">
+                <div className="home-trust-title">{t('Des données utiles et actualisées', 'بيانات مفيدة ومحدّثة')}</div>
+                <p className="home-trust-text">
+                  {t(
+                    'Les informations sont collectées à partir de sources pharmaceutiques et institutionnelles algériennes.',
+                    'يتم جمع المعلومات من مصادر صيدلانية ومؤسساتية جزائرية.',
+                  )}
+                </p>
+                {formattedDate && (
+                  <div className="home-trust-updated">
+                    {t('Dernière mise à jour', 'آخر تحديث')} ({stats?.last_version || '—'}) : <strong>{formattedDate}</strong>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
         </div>
       </div>
 

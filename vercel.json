@@ -4,11 +4,23 @@
     {
       "path": "/api/cron/weekly",
       "schedule": "0 7 * * 1"
+    },
+    {
+      "path": "/api/cron/garde-daily",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/social-prepare",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/social-publish",
+      "schedule": "0 8 * * *"
     }
   ],
   "headers": [
     {
-      "source": "/api/(.*)",
+      "source": "/api/:path((?:actualites|push/register)(?:/.*)?)",
       "headers": [
         { "key": "Access-Control-Allow-Origin", "value": "*" },
         { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
@@ -16,11 +28,20 @@
       ]
     },
     {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+      ]
+    },
+    {
       "source": "/(.*)",
       "headers": [
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), payment=(), usb=(), geolocation=(self)" },
+        { "key": "X-DNS-Prefetch-Control", "value": "on" }
       ]
     }
   ]

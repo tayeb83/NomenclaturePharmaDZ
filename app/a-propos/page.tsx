@@ -10,11 +10,11 @@ export default function AboutPage() {
     <div className="page-body">
       <div className="container py-5">
         <section className="mb-4">
-          <h1 className="mb-3">{t('À propos de PharmaVeille DZ', 'حول PharmaVeille DZ')}</h1>
+          <h1 className="mb-3">{t('À propos de DwaDZ', 'حول DwaDZ')}</h1>
           <p className="text-muted mb-0">
             {t(
-              "PharmaVeille DZ est une plateforme d'aide à la consultation de la nomenclature pharmaceutique algérienne. Elle centralise les recherches par DCI ou nom de marque, les retraits et les nouveautés publiées officiellement.",
-              'PharmaVeille DZ منصة لمساعدة المهنيين على الاطلاع على التسمية الصيدلانية الجزائرية. تجمع البحث بالاسم العلمي أو التجاري، الانسحابات والمستجدات المنشورة رسميًا.'
+              "DwaDZ est une plateforme d'aide à la consultation de la nomenclature pharmaceutique algérienne. Elle centralise les recherches par DCI ou nom de marque, les retraits et les nouveautés publiées officiellement.",
+              'DwaDZ منصة لمساعدة المهنيين على الاطلاع على التسمية الصيدلانية الجزائرية. تجمع البحث بالاسم العلمي أو التجاري، الانسحابات والمستجدات المنشورة رسميًا.'
             )}
           </p>
         </section>
@@ -75,8 +75,8 @@ export default function AboutPage() {
                 <h2 className="h5 card-title">{t('Limites et responsabilité', 'الحدود والمسؤولية')}</h2>
                 <p className="card-text mb-0">
                   {t(
-                    "PharmaVeille DZ est un outil d'aide à la décision et ne remplace pas les textes réglementaires, notices officielles, ni l'avis clinique du professionnel de santé.",
-                    'PharmaVeille DZ أداة مساعدة في اتخاذ القرار ولا تُغني عن النصوص التنظيمية، النشرات الرسمية، ولا الرأي السريري للمهني الصحي.'
+                    "DwaDZ est un outil d'aide à la décision et ne remplace pas les textes réglementaires, notices officielles, ni l'avis clinique du professionnel de santé.",
+                    'DwaDZ أداة مساعدة في اتخاذ القرار ولا تُغني عن النصوص التنظيمية، النشرات الرسمية، ولا الرأي السريري للمهني الصحي.'
                   )}
                 </p>
               </div>
