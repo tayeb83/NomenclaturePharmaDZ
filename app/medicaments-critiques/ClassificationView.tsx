@@ -145,7 +145,7 @@ function MedChip({ med }: { med: Med }) {
 
 export function ClassificationView({ rows }: { rows: CriticalWithMed[] }) {
   const groups = useMemo(() => groupRows(rows), [rows])
-  const [openDcis, setOpenDcis] = useState<Set<string>>(new Set())
+  const [openDcis, setOpenDcis] = useState(() => new Set<string>())
   const [onlyWithMatches, setOnlyWithMatches] = useState(false)
 
   const filteredGroups = useMemo(
