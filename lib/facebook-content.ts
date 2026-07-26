@@ -53,6 +53,25 @@ function appUrl(): string {
   return (process.env.NEXT_PUBLIC_APP_URL || 'https://www.dzair-pharma.net').replace(/\/$/, '')
 }
 
+/**
+ * Reconstruit un lien absolu à partir du domaine courant (appUrl), quel que
+ * soit le domaine — éventuellement obsolète — stocké en base. On ne conserve
+ * que le chemin (+query) du lien enregistré. Rend le système robuste à tout
+ * changement de domaine, y compris pour les brouillons déjà en file (ex. ceux
+ * générés avec un ancien domaine).
+ */
+export function normalizeLien(lien: string | null | undefined): string | null {
+  if (!lien) return null
+  const base = appUrl()
+  try {
+    const u = new URL(lien)
+    return `${base}${u.pathname}${u.search}`
+  } catch {
+    const path = lien.startsWith('/') ? lien : `/${lien}`
+    return `${base}${path}`
+  }
+}
+
 /** Fragment SQL : un enregistrement est « fabriqué en Algérie » si son pays de
  *  fabrication contient « algerie » (insensible aux accents/casse). */
 const IS_ALGERIA_SQL = `LOWER(unaccent(COALESCE(e.pays, ''))) LIKE '%algerie%'`
@@ -464,7 +483,8 @@ export async function markError(id: number, error: string): Promise<void> {
 
 /** Compose le message final Facebook (corps + lien). */
 export function composeMessage(post: Pick<SocialPost, 'corps' | 'lien'>): string {
-  return post.lien ? `${post.corps}\n${post.lien}` : post.corps
+  const lien = normalizeLien(post.lien)
+  return lien ? `${post.corps}\n${lien}` : post.corps
 }
 
 // ─── Utilitaires de formatage ────────────────────────────────────────────────

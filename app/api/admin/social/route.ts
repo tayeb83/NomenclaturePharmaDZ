@@ -6,6 +6,7 @@ import {
   generateForRubrique,
   enqueueCandidate,
   lastScheduledDate,
+  normalizeLien,
   RUBRIQUE_ROTATION,
   type Rubrique,
 } from '@/lib/facebook-content'
@@ -21,7 +22,10 @@ export async function GET(request: NextRequest) {
   }
   try {
     const posts = await listPosts()
-    return NextResponse.json({ posts, intervalDays: INTERVAL_DAYS })
+    // Recalcule les liens sur le domaine courant (corrige aussi les brouillons
+    // stockés avec un ancien domaine, sans avoir à les régénérer).
+    const normalized = posts.map((p) => ({ ...p, lien: normalizeLien(p.lien) }))
+    return NextResponse.json({ posts: normalized, intervalDays: INTERVAL_DAYS })
   } catch (err: any) {
     console.error('[api/admin/social] GET error:', err)
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
