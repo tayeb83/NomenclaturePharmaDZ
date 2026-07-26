@@ -8,6 +8,14 @@
     {
       "path": "/api/cron/garde-daily",
       "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/social-prepare",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/social-publish",
+      "schedule": "0 8 * * *"
     }
   ],
   "headers": [
