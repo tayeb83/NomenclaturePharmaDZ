@@ -481,7 +481,7 @@ export async function markError(id: number, error: string): Promise<void> {
   )
 }
 
-/** Compose le message final Facebook (corps + lien). */
+/** Compose le message final Facebook (corps + lien recalculé sur le domaine courant). */
 export function composeMessage(post: Pick<SocialPost, 'corps' | 'lien'>): string {
   const lien = normalizeLien(post.lien)
   return lien ? `${post.corps}\n${lien}` : post.corps
