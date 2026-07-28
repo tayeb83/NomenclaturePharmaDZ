@@ -2,7 +2,7 @@ import { getRetraitsPaged, getRetraitsCount, getAllRetraitAnnees, getNonRenouvel
 import { AlertesClient } from './AlertesClient'
 import type { Metadata } from 'next'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 const PAGE_SIZE = 30
 
 export const metadata: Metadata = {

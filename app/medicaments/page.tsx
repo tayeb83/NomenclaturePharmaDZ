@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { MedicamentsClient } from './MedicamentsClient'
 import { AdHorizontal } from '@/components/ads/AdBanner'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
 export const metadata: Metadata = {
   title: 'Tous les médicaments en Algérie',

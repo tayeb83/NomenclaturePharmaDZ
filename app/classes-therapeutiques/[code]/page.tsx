@@ -5,7 +5,7 @@ import { cookies } from 'next/headers'
 import { getAtcNode, getAtcAncestors, getAtcChildrenWithCounts, getDcisByAtcPrefix } from '@/lib/queries'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
 export const revalidate = 86400 // 24h
 

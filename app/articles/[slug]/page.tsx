@@ -5,7 +5,7 @@ import { cookies } from 'next/headers'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
 import { ARTICLES, getArticleBySlug, getRelatedArticles, type ArticleSection } from '@/lib/articles'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
 export const dynamic = 'force-dynamic'
 

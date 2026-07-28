@@ -9,7 +9,7 @@ import {
 } from '@/lib/queries'
 import { LaboClient } from './LaboClient'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
 interface Props {
   params: { slug: string }

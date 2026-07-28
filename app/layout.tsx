@@ -10,7 +10,7 @@ import { isAdminSessionValid } from '@/lib/admin-auth'
 import { cookies, headers } from 'next/headers'
 import { getDir, isLang } from '@/lib/i18n'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
 export const metadata: Metadata = {
   title: { default: 'DwaDZ — Médicaments en Algérie', template: '%s | DwaDZ' },

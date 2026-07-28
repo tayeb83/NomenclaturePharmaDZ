@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 const CONTACT_EMAIL = 'admin@nomenclature-pharma.org'
 
 export const metadata: Metadata = {

@@ -68,7 +68,7 @@ export async function sendNewsletterViaGmail(
     return { success: true, sent: 0, failed: 0 }
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.com'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
   const senderName = process.env.BREVO_SENDER_NAME || 'DwaDZ'
   const from = process.env.GMAIL_USER!
 
@@ -358,7 +358,7 @@ export async function sendConfirmationEmail(
   nom: string | null | undefined,
   confirmToken: string
 ): Promise<{ success: boolean; error?: string }> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.com'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
   const confirmUrl = `${appUrl}/api/newsletter?action=confirm&token=${confirmToken}`
   const prenom = nom || 'Pharmacien(ne)'
   const subject = '✅ Confirmez votre abonnement — DwaDZ'

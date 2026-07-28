@@ -50,7 +50,7 @@ function Field({ label, value }: { label: string; value: string | null | undefin
   )
 }
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
 export async function generateMetadata(
   { params }: { params: { source: string; id: string } }

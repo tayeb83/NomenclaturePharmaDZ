@@ -6,7 +6,7 @@ import { getMedicamentsDciSubstitution, getAllDciList } from '@/lib/queries'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
 import { getCountryFlag } from '@/lib/countryFlag'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
 // Génère les paths statiques pour les 500 DCI les plus fréquentes
 export async function generateStaticParams() {

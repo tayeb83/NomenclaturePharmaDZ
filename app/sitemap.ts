@@ -10,7 +10,7 @@ import {
 import { getGardeCoverage, slugify } from '@/lib/garde'
 import { ARTICLES } from '@/lib/articles'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
 // Revalidate sitemap every 24h
 export const revalidate = 86400

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://nomenclature-pharma.org'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
 export const metadata: Metadata = {
   title: 'Documentation API — DwaDZ',

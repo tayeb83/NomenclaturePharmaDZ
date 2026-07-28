@@ -3,7 +3,7 @@ import type { SearchResult } from '@/lib/db-types'
 import { SearchClient } from './SearchClient'
 import type { Metadata } from 'next'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
 export async function generateMetadata({
   searchParams,
