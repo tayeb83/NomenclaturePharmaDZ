@@ -4,7 +4,7 @@ import { getGardeRosterMeta, slugify } from '@/lib/garde'
 import type { GardeRosterMeta } from '@/lib/db-types'
 import { GardeClient } from './GardeClient'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
 type GardeSearchParams = { wilaya?: string; commune?: string; mode?: string; month?: string }
 

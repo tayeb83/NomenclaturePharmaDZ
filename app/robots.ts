@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
 // Bots d'entraînement IA et aspirateurs de données : interdits sur tout le
 // site (le middleware les bloque aussi par User-Agent — robots.txt sert de

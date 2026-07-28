@@ -6,7 +6,16 @@ import { NextResponse, type NextRequest } from 'next/server'
 // recherche légitimes (Googlebot, Bingbot…) ne sont PAS bloqués pour
 // préserver le référencement.
 // ————————————————————————————————————————————————————————————————
-const BLOCKED_BOTS = /GPTBot|ChatGPT-User|OAI-SearchBot|CCBot|ClaudeBot|Claude-Web|anthropic-ai|Google-Extended|Applebot-Extended|Meta-ExternalAgent|Meta-ExternalFetcher|Bytespider|PerplexityBot|YouBot|cohere-ai|Diffbot|omgili|Amazonbot|PetalBot|SemrushBot|AhrefsBot|MJ12bot|DotBot|BLEXBot|DataForSeoBot|serpstatbot|ZoominfoBot|MegaIndex|SeekportBot|ImagesiftBot|HTTrack|WebCopier|Offline Explorer|Scrapy|PhantomJS|python-requests|python-urllib|python-httpx|aiohttp|Go-http-client|Java\/|libwww-perl|wget|curl\//i
+const BLOCKED_BOTS = /GPTBot|ChatGPT-User|OAI-SearchBot|CCBot|ClaudeBot|Claude-Web|anthropic-ai|Google-Extended|Applebot-Extended|Meta-ExternalAgent|Bytespider|PerplexityBot|YouBot|cohere-ai|Diffbot|omgili|Amazonbot|PetalBot|SemrushBot|AhrefsBot|MJ12bot|DotBot|BLEXBot|DataForSeoBot|serpstatbot|ZoominfoBot|MegaIndex|SeekportBot|ImagesiftBot|HTTrack|WebCopier|Offline Explorer|Scrapy|PhantomJS|python-requests|python-urllib|python-httpx|aiohttp|Go-http-client|Java\/|libwww-perl|wget|curl\//i
+
+// ————————————————————————————————————————————————————————————————
+// Crawlers d'aperçu des réseaux sociaux : autorisés sur les PAGES
+// publiques (pas sur les API). Sans eux, un lien partagé sur Facebook,
+// WhatsApp, LinkedIn ou X s'affiche « nu » — sans image, titre ni
+// description — ce qui effondre le taux de clic. À ne pas confondre
+// avec Meta-ExternalAgent (entraînement IA), qui reste bloqué.
+// ————————————————————————————————————————————————————————————————
+const SOCIAL_PREVIEW_BOTS = /facebookexternalhit|Meta-ExternalFetcher|Facebot|WhatsApp|Twitterbot|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|redditbot|SkypeUriPreview|vkShare/i
 
 // Chemins exemptés des contrôles anti-bot : appels internes (analytics
 // fire-and-forget émis par ce middleware, cron Vercel, publication
@@ -49,9 +58,11 @@ export function middleware(request: NextRequest) {
   const isApi = pathname.startsWith('/api/')
   const isInternal = INTERNAL_PATHS.some((p) => pathname.startsWith(p))
 
-  if (!isInternal) {
-    const ua = request.headers.get('user-agent') || ''
+  const ua = request.headers.get('user-agent') || ''
+  // Aperçu social : uniquement sur les pages publiques, jamais sur les API.
+  const isSocialPreview = !isApi && SOCIAL_PREVIEW_BOTS.test(ua)
 
+  if (!isInternal && !isSocialPreview) {
     if (BLOCKED_BOTS.test(ua)) {
       return new NextResponse('Accès refusé', { status: 403 })
     }

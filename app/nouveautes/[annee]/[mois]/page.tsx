@@ -5,7 +5,7 @@ import { cookies } from 'next/headers'
 import { getNouveautesByAnneeMois, getAllNouveauteAnneeMois } from '@/lib/queries'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
 const MOIS_FR = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']

@@ -10,7 +10,7 @@ import {
 } from '@/lib/garde'
 import { GardeCommuneClient } from '@/app/pharmacie-de-garde/GardeCommuneClient'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://pharmaveille-dz.vercel.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 const VALID_MODES = new Set(['now', 'tonight', 'friday', 'month'])
 
 type Params = { wilaya: string; commune: string }
