@@ -15,6 +15,11 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_
 // Revalidate sitemap every 24h
 export const revalidate = 86400
 
+// Le sitemap agrège l'intégralité du catalogue : on lui laisse un budget
+// d'exécution supérieur aux 10 s par défaut, sous peine d'expiration (Google
+// reçoit alors une erreur et n'indexe rien).
+export const maxDuration = 60
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
     {
@@ -121,130 +126,99 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ]
 
-  // ─── Pages médicaments individuelles ──────────────────────────
-  let medicamentPages: MetadataRoute.Sitemap = []
-  try {
-    const ids = await getAllMedicamentIds()
-    medicamentPages = ids.map(({ source, id, updated_at }) => ({
-      url: `${APP_URL}/medicament/${source}/${id}`,
-      lastModified: updated_at ? new Date(updated_at) : new Date(),
-      changeFrequency: source === 'enregistrement' ? 'monthly' : 'yearly',
-      priority: source === 'enregistrement' ? 0.6 : 0.4,
-    }))
-  } catch {
-    // Si la DB est inaccessible, on retourne uniquement les pages statiques
-  }
+  // ─── Chargement parallèle de toutes les sources ───────────────
+  // Ces requêtes étaient auparavant enchaînées séquentiellement : sur un
+  // catalogue de plusieurs milliers de références, la somme des allers-retours
+  // dépassait le budget d'exécution et le sitemap expirait — Google recevait
+  // une erreur et ne découvrait aucune page. Un seul lot parallèle, chaque
+  // source dégradant indépendamment si la DB est injoignable.
+  const [
+    medicamentIds,
+    laboSlugs,
+    dciList,
+    formeList,
+    retraitAnnees,
+    nouveautePeriodes,
+    substitutionDcis,
+    gardeCoverage,
+  ] = await Promise.all([
+    getAllMedicamentIds().catch(() => []),
+    getAllLaboSlugs().catch(() => []),
+    getAllDciList(2000).catch(() => []),
+    getAllFormeList(200).catch(() => []),
+    getAllRetraitAnnees().catch(() => []),
+    getAllNouveauteAnneeMois().catch(() => []),
+    getAllDciList(500).catch(() => []),
+    getGardeCoverage().catch(() => []),
+  ])
 
-  // ─── Pages laboratoires ────────────────────────────────────────
-  let laboPages: MetadataRoute.Sitemap = []
-  try {
-    const slugs = await getAllLaboSlugs()
-    laboPages = slugs.map(({ slug }) => ({
-      url: `${APP_URL}/laboratoire/${slug}`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly' as const,
-      priority: 0.7,
-    }))
-  } catch {
-    // Si la DB est inaccessible, on ignore les pages labo
-  }
+  const medicamentPages: MetadataRoute.Sitemap = medicamentIds.map(({ source, id, updated_at }) => ({
+    url: `${APP_URL}/medicament/${source}/${id}`,
+    lastModified: updated_at ? new Date(updated_at) : new Date(),
+    changeFrequency: source === 'enregistrement' ? 'monthly' : 'yearly',
+    priority: source === 'enregistrement' ? 0.6 : 0.4,
+  }))
 
-  // ─── Pages DCI ─────────────────────────────────────────────────
-  let dciPages: MetadataRoute.Sitemap = []
-  try {
-    const list = await getAllDciList(2000)
-    dciPages = list.map(({ dci }) => ({
-      url: `${APP_URL}/dci/${encodeURIComponent(dci.toLowerCase())}`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly' as const,
-      priority: 0.8,
-    }))
-  } catch {
-    // ignore
-  }
+  const laboPages: MetadataRoute.Sitemap = laboSlugs.map(({ slug }) => ({
+    url: `${APP_URL}/laboratoire/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.7,
+  }))
 
-  // ─── Pages formes pharmaceutiques ─────────────────────────────
-  let formePages: MetadataRoute.Sitemap = []
-  try {
-    const list = await getAllFormeList(200)
-    formePages = list.map(({ forme }) => ({
-      url: `${APP_URL}/forme/${encodeURIComponent(forme.toLowerCase())}`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly' as const,
-      priority: 0.7,
-    }))
-  } catch {
-    // ignore
-  }
+  const dciPages: MetadataRoute.Sitemap = dciList.map(({ dci }) => ({
+    url: `${APP_URL}/dci/${encodeURIComponent(dci.toLowerCase())}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.8,
+  }))
 
-  // ─── Pages retraits par année ──────────────────────────────────
-  let retraitAnneePages: MetadataRoute.Sitemap = []
-  try {
-    const annees = await getAllRetraitAnnees()
-    retraitAnneePages = annees.map(annee => ({
-      url: `${APP_URL}/retraits/${annee}`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly' as const,
-      priority: 0.75,
-    }))
-  } catch {
-    // ignore
-  }
+  const formePages: MetadataRoute.Sitemap = formeList.map(({ forme }) => ({
+    url: `${APP_URL}/forme/${encodeURIComponent(forme.toLowerCase())}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.7,
+  }))
 
-  // ─── Pages nouveautés par mois ────────────────────────────────
-  let nouveautePages: MetadataRoute.Sitemap = []
-  try {
-    const periodes = await getAllNouveauteAnneeMois()
-    nouveautePages = periodes.map(({ annee, mois }) => ({
-      url: `${APP_URL}/nouveautes/${annee}/${String(mois).padStart(2, '0')}`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly' as const,
-      priority: 0.75,
-    }))
-  } catch {
-    // ignore
-  }
+  const retraitAnneePages: MetadataRoute.Sitemap = retraitAnnees.map(annee => ({
+    url: `${APP_URL}/retraits/${annee}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.75,
+  }))
 
-  // ─── Pages substitution par DCI ───────────────────────────────
-  let substitutionPages: MetadataRoute.Sitemap = []
-  try {
-    // On réutilise la liste DCI pour les pages substitution
-    const list = await getAllDciList(500)
-    substitutionPages = list.map(({ dci }) => ({
-      url: `${APP_URL}/substitution/${encodeURIComponent(dci.toLowerCase())}`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly' as const,
-      priority: 0.8,
-    }))
-  } catch {
-    // ignore
-  }
+  const nouveautePages: MetadataRoute.Sitemap = nouveautePeriodes.map(({ annee, mois }) => ({
+    url: `${APP_URL}/nouveautes/${annee}/${String(mois).padStart(2, '0')}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.75,
+  }))
 
-  // ─── Pages pharmacies de garde par commune (FR + AR) ──────────
-  let gardePages: MetadataRoute.Sitemap = []
-  try {
-    const coverage = await getGardeCoverage()
-    gardePages = coverage.flatMap(c => {
-      const wilayaSlug = slugify(c.wilaya_name_fr)
-      const communeSlug = slugify(c.commune_name_fr)
-      return [
-        {
-          url: `${APP_URL}/pharmacie-de-garde/${wilayaSlug}/${communeSlug}`,
-          lastModified: new Date(),
-          changeFrequency: 'daily' as const,
-          priority: 0.85,
-        },
-        {
-          url: `${APP_URL}/ar/pharmacie-de-garde/${wilayaSlug}/${communeSlug}`,
-          lastModified: new Date(),
-          changeFrequency: 'daily' as const,
-          priority: 0.8,
-        },
-      ]
-    })
-  } catch {
-    // Si la DB est inaccessible, on ignore les pages de garde
-  }
+  const substitutionPages: MetadataRoute.Sitemap = substitutionDcis.map(({ dci }) => ({
+    url: `${APP_URL}/substitution/${encodeURIComponent(dci.toLowerCase())}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.8,
+  }))
+
+  const gardePages: MetadataRoute.Sitemap = gardeCoverage.flatMap(c => {
+    const wilayaSlug = slugify(c.wilaya_name_fr)
+    const communeSlug = slugify(c.commune_name_fr)
+    return [
+      {
+        url: `${APP_URL}/pharmacie-de-garde/${wilayaSlug}/${communeSlug}`,
+        lastModified: new Date(),
+        changeFrequency: 'daily' as const,
+        priority: 0.85,
+      },
+      {
+        url: `${APP_URL}/ar/pharmacie-de-garde/${wilayaSlug}/${communeSlug}`,
+        lastModified: new Date(),
+        changeFrequency: 'daily' as const,
+        priority: 0.8,
+      },
+    ]
+  })
 
   // ─── Pages articles ────────────────────────────────────────────
   const articlePages: MetadataRoute.Sitemap = [
