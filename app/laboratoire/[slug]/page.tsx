@@ -8,6 +8,7 @@ import {
   laboToSlug,
 } from '@/lib/queries'
 import { LaboClient } from './LaboClient'
+import { AdInContent } from '@/components/ads/AdBanner'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
@@ -78,6 +79,7 @@ export default async function LaboPage({ params }: Props) {
         portfolioDci={portfolioDci}
         products={products}
       />
+      <AdInContent />
     </>
   )
 }

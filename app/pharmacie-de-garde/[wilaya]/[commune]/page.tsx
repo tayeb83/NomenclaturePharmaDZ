@@ -9,6 +9,7 @@ import {
   isValidGardeMonth,
 } from '@/lib/garde'
 import { GardeCommuneClient } from '../../GardeCommuneClient'
+import { AdInContent } from '@/components/ads/AdBanner'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 const VALID_MODES = new Set(['now', 'tonight', 'friday', 'month'])
@@ -166,6 +167,7 @@ export default async function GardeCommunePage({
         initialMonth={month}
         initialMonthData={initialMonthData}
       />
+      <AdInContent />
     </div>
   )
 }

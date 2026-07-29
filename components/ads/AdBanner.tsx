@@ -8,8 +8,21 @@ declare global {
   }
 }
 
+/**
+ * Emplacement par défaut. Permet d'ajouter une publicité sur n'importe quelle
+ * page sans avoir à créer un bloc AdSense dédié : on retombe sur l'emplacement
+ * « contenu » générique, puis sur l'emplacement historique.
+ * (Les variables NEXT_PUBLIC_* doivent être référencées statiquement pour être
+ * injectées au build — d'où l'écriture explicite ci-dessous.)
+ */
+const DEFAULT_SLOT =
+  process.env.NEXT_PUBLIC_ADSENSE_SLOT_CONTENT ||
+  process.env.NEXT_PUBLIC_ADSENSE_SLOT_MEDICAMENTS ||
+  ''
+
 type AdBannerProps = {
-  slot: string
+  /** Identifiant du bloc AdSense. Par défaut : l'emplacement « contenu ». */
+  slot?: string
   format?: 'auto' | 'rectangle' | 'horizontal' | 'vertical'
   responsive?: boolean
   style?: React.CSSProperties
@@ -29,22 +42,33 @@ type AdBannerProps = {
  */
 export function AdBanner({ slot, format = 'auto', responsive = true, style }: AdBannerProps) {
   const adRef = useRef<HTMLModElement>(null)
+  const pushedRef = useRef(false)
   const clientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID
+  const adSlot = slot || DEFAULT_SLOT
 
   useEffect(() => {
-    if (!clientId) return
+    if (!clientId || !adSlot) return
+    // Une seule demande de remplissage par <ins>. Sans ce garde-fou, un
+    // remontage (StrictMode) ou un re-rendu pousse plusieurs fois pour le même
+    // emplacement et AdSense rejette le lot entier — « All ins elements
+    // already have ads in them » — ce qui fait disparaître les pubs de toute
+    // la page dès qu'il y en a plusieurs.
+    if (pushedRef.current) return
+    if (adRef.current?.getAttribute('data-adsbygoogle-status')) return
+
     try {
       if (typeof window !== 'undefined') {
         window.adsbygoogle = window.adsbygoogle || []
         window.adsbygoogle.push({})
+        pushedRef.current = true
       }
     } catch {
       // AdSense non chargé
     }
-  }, [clientId])
+  }, [clientId, adSlot])
 
-  // Si pas de client ID configuré → afficher un placeholder en dev
-  if (!clientId) {
+  // Sans client ID ou sans emplacement configuré → placeholder en dev
+  if (!clientId || !adSlot) {
     if (process.env.NODE_ENV === 'development') {
       return (
         <div style={{
@@ -71,7 +95,7 @@ export function AdBanner({ slot, format = 'auto', responsive = true, style }: Ad
       className="adsbygoogle"
       style={{ display: 'block', ...(style || {}) }}
       data-ad-client={clientId}
-      data-ad-slot={slot}
+      data-ad-slot={adSlot}
       data-ad-format={format}
       data-full-width-responsive={responsive ? 'true' : 'false'}
     />
@@ -81,7 +105,7 @@ export function AdBanner({ slot, format = 'auto', responsive = true, style }: Ad
 /**
  * Bannière publicitaire horizontale — à placer entre les sections de contenu.
  */
-export function AdHorizontal({ slot }: { slot: string }) {
+export function AdHorizontal({ slot }: { slot?: string }) {
   return (
     <div style={{ margin: '24px 0', overflow: 'hidden' }}>
       <AdBanner slot={slot} format="horizontal" responsive style={{ minHeight: 90 }} />
@@ -92,10 +116,26 @@ export function AdHorizontal({ slot }: { slot: string }) {
 /**
  * Pub rectangle — à placer dans une sidebar ou colonne.
  */
-export function AdRectangle({ slot }: { slot: string }) {
+export function AdRectangle({ slot }: { slot?: string }) {
   return (
     <div style={{ margin: '16px 0' }}>
       <AdBanner slot={slot} format="rectangle" style={{ minHeight: 250, minWidth: 300 }} />
+    </div>
+  )
+}
+
+/**
+ * Publicité intégrée au contenu, prête à l'emploi et sans configuration :
+ * elle utilise l'emplacement « contenu » par défaut. C'est le composant à
+ * poser dans les pages de contenu (fiches, listes, articles).
+ *
+ * Elle ne rend rien si AdSense n'est pas configuré, et se centre dans la
+ * largeur du contenu pour rester lisible sur mobile.
+ */
+export function AdInContent({ slot, style }: { slot?: string; style?: React.CSSProperties }) {
+  return (
+    <div style={{ margin: '28px auto', maxWidth: 960, overflow: 'hidden', ...style }}>
+      <AdBanner slot={slot} format="auto" responsive style={{ minHeight: 100 }} />
     </div>
   )
 }

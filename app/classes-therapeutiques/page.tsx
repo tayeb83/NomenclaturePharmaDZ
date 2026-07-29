@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { getAtcRootsWithCounts } from '@/lib/queries'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
+import { AdInContent } from '@/components/ads/AdBanner'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
@@ -92,6 +93,7 @@ export default async function ClassesTherapeutiquesPage() {
           )}
         </div>
       </div>
+      <AdInContent />
     </>
   )
 }
