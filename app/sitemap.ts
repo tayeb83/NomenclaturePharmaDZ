@@ -152,12 +152,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getGardeCoverage().catch(() => []),
   ])
 
-  const medicamentPages: MetadataRoute.Sitemap = medicamentIds.map(({ source, id, updated_at }) => ({
-    url: `${APP_URL}/medicament/${source}/${id}`,
-    lastModified: updated_at ? new Date(updated_at) : new Date(),
-    changeFrequency: source === 'enregistrement' ? 'monthly' : 'yearly',
-    priority: source === 'enregistrement' ? 0.6 : 0.4,
-  }))
+  // Chaque fiche existe en deux versions indexables (FR et AR), reliées entre
+  // elles par des balises hreflang. On déclare les deux : sans cela, la
+  // version arabe resterait invisible pour les moteurs.
+  const medicamentPages: MetadataRoute.Sitemap = medicamentIds.flatMap(({ source, id, updated_at }) => {
+    const lastModified = updated_at ? new Date(updated_at) : new Date()
+    const changeFrequency = source === 'enregistrement' ? ('monthly' as const) : ('yearly' as const)
+    const priority = source === 'enregistrement' ? 0.6 : 0.4
+    return [
+      { url: `${APP_URL}/medicament/${source}/${id}`, lastModified, changeFrequency, priority },
+      { url: `${APP_URL}/ar/medicament/${source}/${id}`, lastModified, changeFrequency, priority },
+    ]
+  })
 
   const laboPages: MetadataRoute.Sitemap = laboSlugs.map(({ slug }) => ({
     url: `${APP_URL}/laboratoire/${slug}`,
