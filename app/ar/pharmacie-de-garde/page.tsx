@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { getGardeCoverage, buildWilayaHub } from '@/lib/garde'
 import { GardeWilayaGrid } from '@/app/pharmacie-de-garde/GardeWilayaGrid'
+import { AdInContent } from '@/components/ads/AdBanner'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
@@ -46,6 +47,7 @@ export default async function GardeHubPageAr() {
       </div>
 
       <GardeWilayaGrid wilayas={wilayas} lang="ar" basePath="/ar/pharmacie-de-garde" />
+      <AdInContent />
     </div>
   )
 }

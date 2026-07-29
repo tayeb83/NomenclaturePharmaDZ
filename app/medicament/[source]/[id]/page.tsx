@@ -9,6 +9,7 @@ import { isLang, pickLang, type Lang } from '@/lib/i18n'
 import { PrintButton } from '@/components/ui/PrintButton'
 import { GlossarySection } from '@/components/ui/GlossarySection'
 import { BackButton } from '@/components/ui/BackButton'
+import { AdInContent } from '@/components/ads/AdBanner'
 
 const TYPE_LABELS: Record<string, { fr: string; ar: string }> = {
   GE: { fr: 'Générique', ar: 'جنيس' }, 'Gé': { fr: 'Générique', ar: 'جنيس' }, RE: { fr: 'Référence étrangère', ar: 'مرجعي أجنبي' },
@@ -463,6 +464,8 @@ export default async function MedicamentDetailPage(
               label={pickLang(lang, { fr: 'Imprimer / PDF', ar: 'طباعة / PDF' })}
             />
           </div>
+
+          <AdInContent />
 
           {/* ─── Glossaire des abréviations ───────────────────── */}
           <GlossarySection lang={lang} />

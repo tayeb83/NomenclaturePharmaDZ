@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
 import { ARTICLES, getArticleBySlug, getRelatedArticles, type ArticleSection } from '@/lib/articles'
+import { AdInContent } from '@/components/ads/AdBanner'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
@@ -475,6 +476,7 @@ export default async function ArticleDetailPage({ params }: { params: { slug: st
       <style>{`
         .article-card:hover { border-color: #0284c7 !important; }
       `}</style>
+      <AdInContent />
     </>
   )
 }

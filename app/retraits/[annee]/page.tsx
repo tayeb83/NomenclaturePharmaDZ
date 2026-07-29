@@ -6,6 +6,7 @@ import { getRetraitsByAnnee, getAllRetraitAnnees } from '@/lib/queries'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
 import { PrintButton } from '@/components/ui/PrintButton'
 import { GlossarySection } from '@/components/ui/GlossarySection'
+import { AdInContent } from '@/components/ads/AdBanner'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
@@ -232,6 +233,7 @@ export default async function RetraitsAnneePage({ params }: { params: { annee: s
           </div>
         </div>
       </div>
+      <AdInContent />
     </>
   )
 }
