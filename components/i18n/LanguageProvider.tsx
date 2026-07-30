@@ -18,6 +18,7 @@ const LanguageContext = createContext<LanguageContextValue | null>(null)
 function arPathFor(pathname: string): string | null {
   if (pathname === '/pharmacie-de-garde') return '/ar/pharmacie-de-garde'
   if (pathname.startsWith('/pharmacie-de-garde/')) return `/ar${pathname}`
+  if (pathname.startsWith('/medicament/')) return `/ar${pathname}`
   return null
 }
 
