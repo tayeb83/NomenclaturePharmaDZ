@@ -8,6 +8,7 @@ import {
   getAllNouveauteAnneeMois,
 } from '@/lib/queries'
 import { getGardeCoverage, slugify } from '@/lib/garde'
+import { medicamentPath } from '@/lib/medicament-url'
 import { ARTICLES } from '@/lib/articles'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
@@ -155,13 +156,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Chaque fiche existe en deux versions indexables (FR et AR), reliées entre
   // elles par des balises hreflang. On déclare les deux : sans cela, la
   // version arabe resterait invisible pour les moteurs.
-  const medicamentPages: MetadataRoute.Sitemap = medicamentIds.flatMap(({ source, id, updated_at }) => {
+  const medicamentPages: MetadataRoute.Sitemap = medicamentIds.flatMap((med) => {
+    const { source, id, updated_at } = med
     const lastModified = updated_at ? new Date(updated_at) : new Date()
     const changeFrequency = source === 'enregistrement' ? ('monthly' as const) : ('yearly' as const)
     const priority = source === 'enregistrement' ? 0.6 : 0.4
+    // On déclare la forme canonique (avec segment descriptif) : soumettre
+    // l'URL nue enverrait les robots sur une redirection à chaque fiche.
     return [
-      { url: `${APP_URL}/medicament/${source}/${id}`, lastModified, changeFrequency, priority },
-      { url: `${APP_URL}/ar/medicament/${source}/${id}`, lastModified, changeFrequency, priority },
+      { url: `${APP_URL}${medicamentPath(source, id, med, 'fr')}`, lastModified, changeFrequency, priority },
+      { url: `${APP_URL}${medicamentPath(source, id, med, 'ar')}`, lastModified, changeFrequency, priority },
     ]
   })
 

@@ -1775,16 +1775,32 @@ export async function getLastVersionDate(): Promise<string | null> {
 }
 
 // ─── SITEMAP ───────────────────────────────────────────────────
-export async function getAllMedicamentIds(): Promise<Array<{ source: string; id: number; updated_at: string | null }>> {
+/**
+ * Identité minimale de chaque fiche pour le sitemap. On remonte aussi le nom
+ * commercial, le dosage et la forme : ils composent le segment descriptif de
+ * l'URL canonique, qui doit être celle déclarée aux moteurs.
+ */
+type MedicamentSitemapRow = {
+  source: string
+  id: number
+  updated_at: string | null
+  nom_marque: string
+  dosage: string | null
+  forme: string | null
+}
+
+export async function getAllMedicamentIds(): Promise<MedicamentSitemapRow[]> {
+  const cols = `id, nom_marque, dosage, forme, NULL::TEXT AS updated_at`
+  type Row = Omit<MedicamentSitemapRow, 'source'>
   const [enregistrements, retraits, nonRenouveles] = await Promise.all([
-    query<{ id: number; updated_at: string | null }>(`SELECT id, NULL::TEXT AS updated_at FROM enregistrements ORDER BY id`),
-    query<{ id: number; updated_at: string | null }>(`SELECT id, NULL::TEXT AS updated_at FROM retraits ORDER BY id`),
-    query<{ id: number; updated_at: string | null }>(`SELECT id, NULL::TEXT AS updated_at FROM non_renouveles ORDER BY id`),
+    query<Row>(`SELECT ${cols} FROM enregistrements ORDER BY id`),
+    query<Row>(`SELECT ${cols} FROM retraits ORDER BY id`),
+    query<Row>(`SELECT ${cols} FROM non_renouveles ORDER BY id`),
   ])
   return [
-    ...enregistrements.map(r => ({ source: 'enregistrement', id: r.id, updated_at: r.updated_at })),
-    ...retraits.map(r => ({ source: 'retrait', id: r.id, updated_at: r.updated_at })),
-    ...nonRenouveles.map(r => ({ source: 'non_renouvele', id: r.id, updated_at: r.updated_at })),
+    ...enregistrements.map(r => ({ ...r, source: 'enregistrement' })),
+    ...retraits.map(r => ({ ...r, source: 'retrait' })),
+    ...nonRenouveles.map(r => ({ ...r, source: 'non_renouvele' })),
   ]
 }
 
