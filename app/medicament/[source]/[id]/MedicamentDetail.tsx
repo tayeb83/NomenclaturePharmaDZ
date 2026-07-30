@@ -1,10 +1,11 @@
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getMedicamentById, getAlternatifsDCI, getAtcHierarchyByDci } from '@/lib/queries'
 import type { Metadata } from 'next'
 import type { MedicamentDetail, AtcCode } from '@/lib/db-types'
 import { getCountryFlag } from '@/lib/countryFlag'
 import { pickLang, type Lang } from '@/lib/i18n'
+import { medicamentPath, medicamentSlug } from '@/lib/medicament-url'
 import { PrintButton } from '@/components/ui/PrintButton'
 import { GlossarySection } from '@/components/ui/GlossarySection'
 import { BackButton } from '@/components/ui/BackButton'
@@ -75,8 +76,10 @@ export async function buildMedicamentMetadata(
     ar: `${med.nom_marque}${dosageSuffix}${dciSuffix}${med.forme ? ` — ${med.forme}` : ''}${med.labo ? ` — ${med.labo}` : ''}. دواء متوفر في الجزائر، البدائل الجنيسة والتسمية الرسمية لوزارة الصناعة الصيدلانية.`,
   })
 
-  const frUrl = `${APP_URL}/medicament/${params.source}/${params.id}`
-  const arUrl = `${APP_URL}/ar/medicament/${params.source}/${params.id}`
+  // URLs canoniques enrichies du nom commercial : c'est cette forme qui est
+  // déclarée aux moteurs et affichée dans les résultats de recherche.
+  const frUrl = `${APP_URL}${medicamentPath(params.source, params.id, med, 'fr')}`
+  const arUrl = `${APP_URL}${medicamentPath(params.source, params.id, med, 'ar')}`
   const canonical = pickLang(lang, { fr: frUrl, ar: arUrl })
 
   return {
@@ -98,13 +101,29 @@ export async function buildMedicamentMetadata(
 }
 
 export async function MedicamentDetail(
-  { params, lang }: { params: { source: string; id: string }; lang: Lang }
+  { params, lang, routeLang = 'fr' }: {
+    params: { source: string; id: string; slug?: string[] }
+    /** Langue d'affichage (peut suivre la préférence du visiteur). */
+    lang: Lang
+    /** Langue de la route, qui détermine la forme canonique de l'URL. */
+    routeLang?: Lang
+  }
 ) {
   const id = parseInt(params.id)
   if (isNaN(id)) notFound()
 
   const med = await getMedicamentById(params.source, id)
   if (!med) notFound()
+
+  // Une seule URL par fiche : si le segment descriptif est absent ou périmé
+  // (nom commercial modifié depuis la mise en cache d'un lien), on redirige
+  // vers la forme canonique plutôt que de servir le même contenu sous
+  // plusieurs adresses.
+  const expectedSlug = medicamentSlug(med)
+  const requestedSlug = params.slug?.join('/') || ''
+  if (expectedSlug && requestedSlug !== expectedSlug) {
+    redirect(medicamentPath(params.source, params.id, med, routeLang))
+  }
 
   const isRetrait = med.source === 'retrait'
   const isNonRenouv = med.source === 'non_renouvele'
@@ -138,7 +157,7 @@ export async function MedicamentDetail(
     ...(med.labo ? { manufacturer: { '@type': 'Organization', name: med.labo } } : {}),
     ...(med.pays ? { countryOfOrigin: { '@type': 'Country', name: med.pays } } : {}),
     description: `${med.nom_marque}${med.dosage ? ` ${med.dosage}` : ''}${med.dci ? ` (${med.dci})` : ''}. Nomenclature pharmaceutique algérienne MIPH.`,
-    url: `${APP_URL}${lang === 'ar' ? '/ar' : ''}/medicament/${med.source}/${med.id}`,
+    url: `${APP_URL}${medicamentPath(med.source, med.id, med, routeLang)}`,
     inLanguage: lang,
   }
 
@@ -203,11 +222,11 @@ export async function MedicamentDetail(
         <div className="container" style={{ maxWidth: 960 }}>
           <p style={{ fontSize: 13, margin: '0 0 12px' }}>
             {lang === 'ar' ? (
-              <Link href={`/medicament/${params.source}/${params.id}`} style={{ color: 'var(--blue)' }}>
+              <Link href={medicamentPath(params.source, params.id, med, 'fr')} style={{ color: 'var(--blue)' }}>
                 Voir cette fiche en français
               </Link>
             ) : (
-              <Link href={`/ar/medicament/${params.source}/${params.id}`} style={{ color: 'var(--blue)' }}>
+              <Link href={medicamentPath(params.source, params.id, med, 'ar')} style={{ color: 'var(--blue)' }}>
                 بالعربية — عرض بطاقة الدواء بالعربية
               </Link>
             )}

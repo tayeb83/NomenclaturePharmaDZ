@@ -6,10 +6,11 @@ import type { KeyboardEvent } from 'react'
 import type { SearchResult } from '@/lib/db-types'
 import { getCountryFlag } from '@/lib/countryFlag'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
+import { medicamentPath } from '@/lib/medicament-url'
 
 function buildWhatsAppUrl(drug: SearchResult, type: string, lang: 'fr' | 'ar'): string {
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
-  const ficheUrl = `${baseUrl}/medicament/${drug.source || type}/${drug.id}`
+  const ficheUrl = `${baseUrl}${medicamentPath(drug.source || type, drug.id, drug, lang)}`
   let msg = ''
   if (type === 'retrait') {
     msg = `🚨 *${lang === 'ar' ? 'سحب' : 'RETRAIT'} — ${drug.nom_marque}* (${drug.dci})\n`
@@ -49,7 +50,9 @@ export function DrugCard({
   const isNonRenouv = type === 'non_renouvele'
   const { lang } = useLanguage()
   const router = useRouter()
-  const href = `/medicament/${drug.source || type}/${drug.id}`
+  // URL canonique directe (avec segment descriptif) : évite une redirection
+  // au clic et fait circuler les mots-clés dans le maillage interne.
+  const href = medicamentPath(drug.source || type, drug.id, drug, lang)
 
   const openDetails = () => {
     if (onOpen) onOpen()

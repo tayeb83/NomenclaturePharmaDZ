@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { isLang, type Lang } from '@/lib/i18n'
-import { MedicamentDetail, buildMedicamentMetadata } from './MedicamentDetail'
+import { MedicamentDetail, buildMedicamentMetadata } from '../MedicamentDetail'
 
-type Params = { source: string; id: string }
+type Params = { source: string; id: string; slug?: string[] }
 
 // Les métadonnées sont indexées par les robots, qui n'ont pas de cookie : on
 // les fige sur la langue de la ROUTE. Faire dépendre le canonical du cookie
@@ -16,5 +16,5 @@ export default async function MedicamentDetailPage({ params }: { params: Params 
   // L'affichage, lui, suit la préférence du visiteur (comportement inchangé).
   const langCookie = cookies().get('lang')?.value
   const lang: Lang = isLang(langCookie) ? langCookie : 'fr'
-  return <MedicamentDetail params={params} lang={lang} />
+  return <MedicamentDetail params={params} lang={lang} routeLang="fr" />
 }
