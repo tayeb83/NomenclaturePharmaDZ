@@ -5,6 +5,8 @@ import { cookies } from 'next/headers'
 import { getMedicamentsByDci, getAllDciList } from '@/lib/queries'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
 import { getCountryFlag } from '@/lib/countryFlag'
+import { medicamentPath } from '@/lib/medicament-url'
+import { medicalPageJsonLd } from '@/lib/schema'
 import { AdInContent } from '@/components/ads/AdBanner'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
@@ -63,24 +65,34 @@ export default async function DciPage({ params }: { params: { slug: string } }) 
   const importes = meds.filter(m => m.statut !== 'F')
   const generiques = meds.filter(m => ['GE', 'Gé'].includes(m.type_prod ?? ''))
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Drug',
-    name: dci.toUpperCase(),
-    nonproprietaryName: dci.toUpperCase(),
-    activeIngredient: dci.toUpperCase(),
-    description: `${dci.toUpperCase()} — ${meds.length} médicaments enregistrés en Algérie dans la nomenclature officielle MIPH. Génériques, formes et dosages disponibles.`,
-    url: `${APP_URL}/dci/${params.slug}`,
-    availableIn: {
-      '@type': 'Country',
-      name: 'Algeria',
-      identifier: 'DZ',
+  const dciUpper = dci.toUpperCase()
+  const dciUrl = `${APP_URL}/dci/${params.slug}`
+  const jsonLd = medicalPageJsonLd({
+    name: `${dciUpper} — médicaments enregistrés en Algérie`,
+    description: `${dciUpper} — ${meds.length} médicaments enregistrés en Algérie dans la nomenclature officielle MIPH. Génériques, formes et dosages disponibles.`,
+    url: dciUrl,
+    about: {
+      name: dciUpper,
+      activeIngredient: dciUpper,
+      url: dciUrl,
     },
-    brand: meds.slice(0, 5).map(m => ({
-      '@type': 'Brand',
-      name: m.nom_marque,
-    })),
-  }
+    mentions: [{ '@type': 'Country', name: 'Algeria', identifier: 'DZ' }],
+    // Les spécialités disponibles sous cette DCI : un ItemList reste hors de
+    // la hiérarchie Product, contrairement au `brand` d'un nœud Drug.
+    extra: {
+      mainEntity: {
+        '@type': 'ItemList',
+        name: `Médicaments à base de ${dciUpper}`,
+        numberOfItems: meds.length,
+        itemListElement: meds.slice(0, 20).map((m, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          name: m.nom_marque,
+          url: `${APP_URL}${medicamentPath('enregistrement', m.id, m)}`,
+        })),
+      },
+    },
+  })
 
   return (
     <>
