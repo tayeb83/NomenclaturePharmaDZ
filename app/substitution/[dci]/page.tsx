@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { getMedicamentsDciSubstitution, getAllDciList } from '@/lib/queries'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
 import { getCountryFlag } from '@/lib/countryFlag'
+import { medicalPageJsonLd } from '@/lib/schema'
 import { AdInContent } from '@/components/ads/AdBanner'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
@@ -52,14 +53,17 @@ export default async function SubstitutionDciPage({ params }: { params: { dci: s
 
   if (!total) notFound()
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Drug',
-    name: dci,
-    activeIngredient: dci,
+  const substitutionUrl = `${APP_URL}/substitution/${params.dci}`
+  const jsonLd = medicalPageJsonLd({
+    name: `${dci} — génériques et équivalents en Algérie`,
     description: `${dci} — ${generiques.length} générique(s) enregistré(s) en Algérie. Nomenclature MIPH.`,
-    url: `${APP_URL}/substitution/${params.dci}`,
-  }
+    url: substitutionUrl,
+    about: {
+      name: dci,
+      activeIngredient: dci,
+      url: substitutionUrl,
+    },
+  })
 
   function TypeBadge({ typeProd }: { typeProd: string | null }) {
     if (!typeProd) return null

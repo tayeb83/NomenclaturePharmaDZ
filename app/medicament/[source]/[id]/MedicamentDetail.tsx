@@ -6,6 +6,7 @@ import type { MedicamentDetail, AtcCode } from '@/lib/db-types'
 import { getCountryFlag } from '@/lib/countryFlag'
 import { pickLang, type Lang } from '@/lib/i18n'
 import { medicamentPath, medicamentSlug } from '@/lib/medicament-url'
+import { medicalPageJsonLd } from '@/lib/schema'
 import { PrintButton } from '@/components/ui/PrintButton'
 import { GlossarySection } from '@/components/ui/GlossarySection'
 import { BackButton } from '@/components/ui/BackButton'
@@ -147,19 +148,23 @@ export async function MedicamentDetail(
     ? { label: pickLang(lang, { fr: '⚠️ AMM non renouvelée', ar: '⚠️ AMM غير مجددة' }), bg: '#fef3c7', color: '#92400e' }
     : { label: pickLang(lang, { fr: '✅ Médicament actif', ar: '✅ دواء نشط' }), bg: '#d1fae5', color: '#065f46' }
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Drug',
-    name: med.nom_marque,
-    ...(med.dosage ? { dosageForm: med.dosage } : {}),
-    ...(med.forme ? { administrationRoute: med.forme } : {}),
-    ...(med.dci ? { activeIngredient: med.dci } : {}),
-    ...(med.labo ? { manufacturer: { '@type': 'Organization', name: med.labo } } : {}),
-    ...(med.pays ? { countryOfOrigin: { '@type': 'Country', name: med.pays } } : {}),
+  const canonicalUrl = `${APP_URL}${medicamentPath(med.source, med.id, med, routeLang)}`
+  const jsonLd = medicalPageJsonLd({
+    name: [med.nom_marque, med.dosage, med.forme].filter(Boolean).join(' — '),
     description: `${med.nom_marque}${med.dosage ? ` ${med.dosage}` : ''}${med.dci ? ` (${med.dci})` : ''}. Nomenclature pharmaceutique algérienne MIPH.`,
-    url: `${APP_URL}${medicamentPath(med.source, med.id, med, routeLang)}`,
+    url: canonicalUrl,
     inLanguage: lang,
-  }
+    about: {
+      name: med.nom_marque,
+      activeIngredient: med.dci,
+      description: [med.forme, med.dosage].filter(Boolean).join(' — ') || null,
+      url: canonicalUrl,
+    },
+    mentions: [
+      ...(med.labo ? [{ '@type': 'Organization', name: med.labo }] : []),
+      ...(med.pays ? [{ '@type': 'Country', name: med.pays }] : []),
+    ],
+  })
 
   return (
     <>
