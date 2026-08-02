@@ -457,6 +457,55 @@ Prérequis : la classification ATC et le mapping DCI doivent être chargés (tab
 
 ---
 
+## Import des plannings de garde (DSP)
+
+Les listes de garde publiées par les DSP (photo Facebook → extraction
+vision-LLM → JSON `garde_officines`) sont chargées avec :
+
+```bash
+# Toujours simuler d'abord : tout est joué puis annulé, le rapport est identique
+python scripts/import_garde.py --json data/garde_saida_202608.json --dry-run
+python scripts/import_garde.py --json data/garde_saida_202608.json
+```
+
+**Un fichier peut couvrir plusieurs communes.** Si `meta` ne porte pas de
+commune, chaque pharmacie déclare la sienne (`commune_name_fr`, ou
+simplement `commune`) et un roster `garde_rosters` est créé par commune,
+avec la tranche correspondante du fichier en `raw_payload`. Les codes et
+noms arabes peuvent être déclarés dans `meta.communes[]` :
+
+```json
+"communes": [
+  { "code": "2001", "name_fr": "Saïda", "name_ar": "سعيدة" },
+  { "code": "2002", "name_fr": "Aïn El Hadjar", "name_ar": "عين الحجر" }
+]
+```
+
+Si une commune existe déjà en base sous un autre `commune_code`, c'est le
+code existant qui est conservé (sinon la même commune apparaîtrait deux
+fois dans la couverture) — `--no-reuse-commune-codes` pour forcer celui du
+fichier.
+
+**Les données saisies à la main sont préservées.** Adresses (FR/AR),
+téléphones et points posés dans `/admin/garde`
+(`geocode_status = 'manual'`) ne sont jamais écrasés par une nouvelle
+extraction : celle-ci ne remplit que les champs vides. Comme les `id`
+d'extraction ne sont pas stables d'un mois à l'autre, une pharmacie non
+retrouvée par son `external_id` est rapprochée par son nom normalisé
+(casse, accents, préfixe « Pharmacie ») dans la même commune, et c'est la
+fiche existante qui est mise à jour — adresse, géoloc, signalements et
+revendication suivent. Le rapprochement par nom est refusé en cas
+d'homonymes dans la commune : une nouvelle fiche est créée plutôt que de
+recopier l'adresse d'une autre pharmacie.
+
+Pour laisser le fichier reprendre la main : `--overwrite-addresses`
+(adresses + téléphones) et `--overwrite-geo` (points manuels).
+
+Après import, géocoder les nouvelles fiches (`geocode_status = 'none'`) :
+`python scripts/geocode_garde.py`.
+
+---
+
 ## Crowdsourcing pharmacies de garde
 
 ```bash
