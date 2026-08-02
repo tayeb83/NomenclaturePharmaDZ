@@ -8,6 +8,14 @@ import type { GardeNowResult, GardeMonthResult } from '@/lib/garde'
 import { slugify } from '@/lib/slug'
 import type { Lang } from '@/lib/i18n'
 import { GardeFeedback } from '@/components/garde/GardeFeedback'
+import {
+  isPremium,
+  premiumCardStyle,
+  usePremiumViews,
+  PremiumBadges,
+  PremiumDetails,
+  WhatsAppButton,
+} from '@/components/garde/PremiumCard'
 
 const GardeMap = dynamic(() => import('../garde/GardeMap'), { ssr: false })
 
@@ -292,10 +300,17 @@ export function GardeCommuneClient({
       if (a.distanceKm != null && b.distanceKm != null) return a.distanceKm - b.distanceKm
       if (a.distanceKm != null) return -1
       if (b.distanceKm != null) return 1
+      // Mise en avant premium : uniquement en dernier recours. Une officine
+      // ouverte maintenant ou plus proche passe toujours devant — le service
+      // rendu au visiteur ne s'achète pas.
+      if (isPremium(a.shift) !== isPremium(b.shift)) return isPremium(a.shift) ? -1 : 1
       return new Date(a.shift.starts_at).getTime() - new Date(b.shift.starts_at).getTime()
     })
     return rows
   }, [data, userPos])
+
+  // Consultations comptabilisées pour les fiches premium affichées.
+  usePremiumViews(data?.day_schedule || [], wilayaCode)
 
   const wilayas = useMemo(() => {
     const seen = new Set<string>()
@@ -436,10 +451,14 @@ export function GardeCommuneClient({
               <div key={shift.id} style={{
                 background: '#fff', border: '1px solid var(--slate-200)', borderRadius: 10, padding: '16px 18px',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                ...(isPremium(shift) ? premiumCardStyle : null),
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: 15.5, color: 'var(--navy)' }}>{displayName(shift, lang)}</div>
+                    <div style={{ fontWeight: 700, fontSize: 15.5, color: 'var(--navy)' }}>
+                      {displayName(shift, lang)}
+                      <PremiumBadges shift={shift} lang={lang} />
+                    </div>
                     {shift.name_fr && shift.name_ar && (
                       <div dir={lang === 'ar' ? 'ltr' : 'rtl'} lang={lang === 'ar' ? 'fr' : 'ar'} style={{ color: 'var(--slate-500)', fontSize: 13.5, marginTop: 2 }}>
                         {lang === 'ar' ? shift.name_fr : shift.name_ar}
@@ -458,7 +477,8 @@ export function GardeCommuneClient({
                 <div style={{ fontSize: 13, color: 'var(--slate-500)', marginTop: 6 }}>
                   {formatTimeRange(shift.starts_at, shift.ends_at)}
                 </div>
-                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                <PremiumDetails shift={shift} lang={lang} />
+                <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
                   {shift.phone_e164 ? (
                     <a href={`tel:${shift.phone_e164}`} style={{
                       background: 'var(--blue)', color: '#fff', borderRadius: 8, padding: '8px 14px',
@@ -469,6 +489,7 @@ export function GardeCommuneClient({
                   ) : (
                     <span style={{ color: 'var(--slate-400)', fontSize: 13, padding: '8px 14px' }}>{t.unavailable}</span>
                   )}
+                  <WhatsAppButton shift={shift} lang={lang} />
                   <a href={mapsHref(shift)} target="_blank" rel="noopener noreferrer" style={{
                     background: '#fff', border: '1px solid var(--slate-200)', color: 'var(--slate-700)',
                     borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, textDecoration: 'none',

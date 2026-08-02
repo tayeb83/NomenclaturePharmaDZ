@@ -4,22 +4,14 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 
+import { PharmacyFieldsEditor } from './PharmacyFieldsEditor'
+import { PremiumEditor } from './PremiumEditor'
+import { NewPharmacyForm } from './NewPharmacyForm'
+import type { AdminPharmacy } from './types'
+
 const GeocodePickerMap = dynamic(() => import('./GeocodePickerMap'), { ssr: false })
 
-type PharmacyRow = {
-  id: number
-  wilaya_code: string
-  wilaya_name_fr: string | null
-  commune_name_fr: string
-  name_fr: string | null
-  name_ar: string | null
-  address_fr: string | null
-  address_ar: string | null
-  phone_e164: string | null
-  lat: number | null
-  lng: number | null
-  geocode_status: string
-}
+type PharmacyRow = AdminPharmacy
 
 type SearchResult = { label: string; lat: number; lng: number }
 
@@ -67,10 +59,8 @@ export function GardeGeocodeClient() {
 
   const [selected, setSelected] = useState<PharmacyRow | null>(null)
   const [position, setPosition] = useState<[number, number]>(DEFAULT_CENTER)
-  const [addressFr, setAddressFr] = useState('')
-  const [addressAr, setAddressAr] = useState('')
-  const [savingAddress, setSavingAddress] = useState(false)
-  const [addressSaved, setAddressSaved] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [pendingSelectId, setPendingSelectId] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
@@ -117,6 +107,18 @@ export function GardeGeocodeClient() {
 
   useEffect(() => { load() }, [load])
 
+  // Sélection différée d'une fiche qui vient d'être créée : elle n'apparaît
+  // qu'au rechargement de la liste.
+  useEffect(() => {
+    if (pendingSelectId == null) return
+    const created = rows.find(r => String(r.id) === String(pendingSelectId))
+    if (created) {
+      selectPharmacy(created)
+      setPendingSelectId(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, pendingSelectId])
+
   const wilayaOptions = useMemo(() => {
     const map = new Map<string, string>()
     rows.forEach(r => { if (!map.has(r.wilaya_code)) map.set(r.wilaya_code, r.wilaya_name_fr || r.wilaya_code) })
@@ -131,9 +133,7 @@ export function GardeGeocodeClient() {
     setPosition(row.lat != null && row.lng != null ? [row.lat, row.lng] : DEFAULT_CENTER)
     setPasteInput('')
     setPasteError('')
-    setAddressFr(row.address_fr || '')
-    setAddressAr(row.address_ar || '')
-    setAddressSaved(false)
+    setCreating(false)
   }
 
   /** Répercute la fiche modifiée dans la liste et dans la sélection courante. */
@@ -142,34 +142,20 @@ export function GardeGeocodeClient() {
     setSelected(prev => (prev && prev.id === id ? { ...prev, ...patch } : prev))
   }
 
-  async function saveAddress() {
-    if (!selected) return
-    setSavingAddress(true)
-    setAddressSaved(false)
-    try {
-      const res = await fetch(`/api/admin/garde/pharmacies/${selected.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address_fr: addressFr, address_ar: addressAr }),
-      })
-      const json = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(json.error || 'Échec')
-
-      applyRowUpdate(selected.id, {
-        address_fr: json.data?.address_fr ?? null,
-        address_ar: json.data?.address_ar ?? null,
-      })
-      setAddressSaved(true)
-    } catch (err: any) {
-      alert(err.message || "Échec de l'enregistrement de l'adresse.")
-    } finally {
-      setSavingAddress(false)
-    }
+  function handleDeleted(id: number) {
+    setRows(prev => prev.filter(r => r.id !== id))
+    setSelected(null)
+    loadStats()
   }
 
-  const addressDirty =
-    !!selected &&
-    (addressFr.trim() !== (selected.address_fr || '') || addressAr.trim() !== (selected.address_ar || ''))
+  function handleCreated(id: number) {
+    setCreating(false)
+    // La fiche neuve n'a ni garde ni repère : on bascule sur « Toutes »
+    // pour la retrouver, et on la sélectionne dès qu'elle arrive.
+    setStatusFilter('all')
+    setPendingSelectId(id)
+    loadStats()
+  }
 
   function applyPaste() {
     const coords = parseCoordsInput(pasteInput)
@@ -351,6 +337,16 @@ export function GardeGeocodeClient() {
 
           {error && <div style={{ color: '#dc2626', fontSize: 13, marginBottom: 10 }}>{error}</div>}
 
+          <button
+            onClick={() => { setCreating(true); setSelected(null) }}
+            style={{
+              width: '100%', background: '#059669', color: '#fff', border: 'none', borderRadius: 8,
+              padding: '9px 12px', fontSize: 13, fontWeight: 700, cursor: 'pointer', marginBottom: 12,
+            }}
+          >
+            ➕ Ajouter une pharmacie
+          </button>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 560, overflowY: 'auto' }}>
             {rows.map(row => (
               <button
@@ -363,7 +359,10 @@ export function GardeGeocodeClient() {
                   cursor: 'pointer',
                 }}
               >
-                <div style={{ fontWeight: 700, fontSize: 13, color: '#0f172a' }}>{row.name_fr || row.name_ar || 'Pharmacie'}</div>
+                <div style={{ fontWeight: 700, fontSize: 13, color: '#0f172a' }}>
+                  {row.is_premium && <span title="Fiche premium">⭐ </span>}
+                  {row.name_fr || row.name_ar || 'Pharmacie'}
+                </div>
                 <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
                   {row.address_fr || row.address_ar || row.commune_name_fr} · {row.wilaya_name_fr || row.wilaya_code}
                 </div>
@@ -374,9 +373,16 @@ export function GardeGeocodeClient() {
 
         {/* Colonne pointage */}
         <div style={{ background: 'white', borderRadius: 12, border: '1px solid #e2e8f0', padding: 16 }}>
-          {!selected ? (
+          {creating ? (
+            <NewPharmacyForm
+              wilayaOptions={wilayaOptions}
+              defaultWilaya={wilayaFilter}
+              onCreated={handleCreated}
+              onCancel={() => setCreating(false)}
+            />
+          ) : !selected ? (
             <div style={{ color: '#64748b', fontSize: 14, padding: 40, textAlign: 'center' }}>
-              Sélectionnez une pharmacie à gauche pour corriger son adresse ou la positionner sur la carte.
+              Sélectionnez une pharmacie à gauche pour modifier sa fiche, son abonnement premium ou sa position.
             </div>
           ) : (
             <>
@@ -388,57 +394,24 @@ export function GardeGeocodeClient() {
                 </div>
               </div>
 
-              {/* Correction d'adresse — les extractions du document DSP
-                  décalent parfois une ligne, l'adresse atterrit sur la
-                  pharmacie voisine. */}
-              <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, padding: 12, marginBottom: 14 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 8 }}>
-                  ✏️ Adresse (corrige la fiche publiée)
-                </div>
+              {/* Édition complète — les extractions du document DSP décalent
+                  parfois une ligne, l'adresse atterrit sur la pharmacie
+                  voisine et le nom ne correspond plus. */}
+              <PharmacyFieldsEditor
+                pharmacy={selected}
+                onSaved={patch => applyRowUpdate(selected.id, patch)}
+                onDeleted={handleDeleted}
+              />
 
-                <label style={{ display: 'block', fontSize: 11, color: '#78350f', marginBottom: 4 }}>Adresse (arabe)</label>
-                <input
-                  type="text"
-                  value={addressAr}
-                  onChange={e => { setAddressAr(e.target.value); setAddressSaved(false) }}
-                  dir="rtl"
-                  lang="ar"
-                  placeholder="العنوان بالعربية"
-                  style={{ width: '100%', border: '1px solid #fcd34d', borderRadius: 8, padding: '8px 12px', fontSize: 14, marginBottom: 8, background: '#fff' }}
-                />
+              <PremiumEditor
+                pharmacyId={selected.id}
+                pharmacyName={selected.name_fr || selected.name_ar || 'cette pharmacie'}
+                onChanged={(isPremium, verified) =>
+                  applyRowUpdate(selected.id, { is_premium: isPremium, premium_verified: verified })}
+              />
 
-                <label style={{ display: 'block', fontSize: 11, color: '#78350f', marginBottom: 4 }}>Adresse (français)</label>
-                <input
-                  type="text"
-                  value={addressFr}
-                  onChange={e => { setAddressFr(e.target.value); setAddressSaved(false) }}
-                  placeholder="Rue, quartier, repère…"
-                  style={{ width: '100%', border: '1px solid #fcd34d', borderRadius: 8, padding: '8px 12px', fontSize: 14, marginBottom: 10, background: '#fff' }}
-                />
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <button
-                    onClick={saveAddress}
-                    disabled={savingAddress || !addressDirty}
-                    style={{
-                      background: savingAddress || !addressDirty ? '#d6d3d1' : '#b45309', color: '#fff',
-                      border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 700,
-                      cursor: savingAddress || !addressDirty ? 'not-allowed' : 'pointer',
-                    }}
-                  >
-                    {savingAddress ? 'Enregistrement…' : "✓ Enregistrer l'adresse"}
-                  </button>
-                  {addressSaved && <span style={{ fontSize: 12, color: '#059669', fontWeight: 600 }}>Adresse enregistrée</span>}
-                </div>
-
-                {addressSaved && selected.geocode_status !== 'none' && (
-                  <div style={{ fontSize: 11, color: '#92400e', marginTop: 8 }}>
-                    ⚠️ Le repère actuel a pu être posé d&apos;après l&apos;ancienne adresse — vérifiez-le ci-dessous.
-                  </div>
-                )}
-                <div style={{ fontSize: 11, color: '#a16207', marginTop: 8 }}>
-                  Un réimport ne l&apos;écrasera pas : l&apos;extraction ne remplit que les champs vides.
-                </div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a', marginBottom: 8 }}>
+                📍 Position sur la carte
               </div>
 
               <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>

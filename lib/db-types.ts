@@ -148,6 +148,16 @@ export type GardePharmacy = {
   commune_name_fr?: string
   commune_name_ar?: string | null
   geocode_status?: string
+  // Fiche premium (offre /pro) — absents tant que sql/15_garde_premium.sql
+  // n'est pas appliqué, d'où l'optionalité.
+  is_premium?: boolean
+  premium_verified?: boolean | null
+  whatsapp_e164?: string | null
+  hours_fr?: string | null
+  hours_ar?: string | null
+  highlight_fr?: string | null
+  highlight_ar?: string | null
+  photos?: { url: string; caption?: string | null }[] | null
 }
 
 export type GardeShift = GardePharmacy & {

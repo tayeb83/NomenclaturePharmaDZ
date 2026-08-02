@@ -8,10 +8,11 @@ import { query, queryOne } from '@/lib/db'
 import type { GardeShift, GardeRosterMeta, GardeCoverageEntry } from '@/lib/db-types'
 import { slugify } from '@/lib/slug'
 import { ALGERIA_WILAYAS } from '@/lib/wilayas'
+import { premiumFields, premiumJoin, premiumOrder, premiumTableAvailable } from '@/lib/garde-premium'
 
 export { slugify }
 
-const SHIFT_FIELDS = `
+const BASE_SHIFT_FIELDS = `
   dp.id, dp.shift, dp.duty_date, dp.weekday, dp.starts_at, dp.ends_at, dp.source, dp.source_ref,
   ph.external_id AS pharmacy_id, ph.type,
   COALESCE(ph.name_fr, ph.name_ar) AS name_fr,
@@ -19,6 +20,11 @@ const SHIFT_FIELDS = `
   ph.name_fr_confidence,
   ph.address_fr, ph.address_ar, ph.phone_e164, ph.lat, ph.lng
 `
+
+/** Colonnes d'une garde + extras premium quand l'abonnement est en cours. */
+function shiftFields(premium: boolean): string {
+  return `${BASE_SHIFT_FIELDS}, ${premiumFields(premium)}`
+}
 
 const ROSTER_META_FIELDS = `
   wilaya_code, wilaya_name_fr, commune_code, commune_name_fr,
@@ -121,23 +127,27 @@ export async function getGardeNow(wilaya: string, commune: string, opts: { at?: 
   )
   const targetDate = dateRow?.target_date
 
+  const premium = await premiumTableAvailable()
+
   const [currentRows, dayRows, rosterMeta] = await Promise.all([
     query<GardeShift>(`
-      SELECT ${SHIFT_FIELDS}
+      SELECT ${shiftFields(premium)}
       FROM garde_duty_periods dp
       JOIN garde_pharmacies ph ON ph.id = dp.pharmacy_id
+      ${premiumJoin(premium)}
       WHERE dp.wilaya_code = $1 AND dp.commune_code = $2
         AND dp.starts_at <= $3::timestamptz AND dp.ends_at > $3::timestamptz
       ORDER BY dp.starts_at DESC
       LIMIT 1
     `, [wilaya, commune, at]),
     query<GardeShift & { active_now: boolean }>(`
-      SELECT ${SHIFT_FIELDS},
+      SELECT ${shiftFields(premium)},
         (dp.starts_at <= $4::timestamptz AND dp.ends_at > $4::timestamptz) AS active_now
       FROM garde_duty_periods dp
       JOIN garde_pharmacies ph ON ph.id = dp.pharmacy_id
+      ${premiumJoin(premium)}
       WHERE dp.wilaya_code = $1 AND dp.commune_code = $2 AND dp.duty_date = $3
-      ORDER BY dp.starts_at ASC
+      ORDER BY dp.starts_at ASC, ${premiumOrder(premium)}COALESCE(ph.name_fr, ph.name_ar)
     `, [wilaya, commune, targetDate, at]),
     queryOne<GardeRosterMeta>(`
       SELECT ${ROSTER_META_FIELDS}
@@ -180,14 +190,17 @@ export function currentGardeMonth(): string {
 export async function getGardeMonth(wilaya: string, commune: string, monthParam: string): Promise<GardeMonthResult> {
   const month = isValidGardeMonth(monthParam) ? monthParam : currentGardeMonth()
 
+  const premium = await premiumTableAvailable()
+
   const [rows, rosterMeta] = await Promise.all([
     query<GardeShift>(`
-      SELECT ${SHIFT_FIELDS}
+      SELECT ${shiftFields(premium)}
       FROM garde_duty_periods dp
       JOIN garde_pharmacies ph ON ph.id = dp.pharmacy_id
+      ${premiumJoin(premium)}
       WHERE dp.wilaya_code = $1 AND dp.commune_code = $2
         AND to_char(dp.duty_date, 'YYYY-MM') = $3
-      ORDER BY dp.duty_date ASC, dp.starts_at ASC
+      ORDER BY dp.duty_date ASC, dp.starts_at ASC, ${premiumOrder(premium)}COALESCE(ph.name_fr, ph.name_ar)
     `, [wilaya, commune, month]),
     queryOne<GardeRosterMeta>(`
       SELECT ${ROSTER_META_FIELDS}
