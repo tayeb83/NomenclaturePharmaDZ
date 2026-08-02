@@ -26,3 +26,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 /data/
+
+__pycache__/
+*.pyc
