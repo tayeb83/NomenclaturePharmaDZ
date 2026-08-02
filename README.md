@@ -493,7 +493,14 @@ données.
 **Les données saisies à la main sont préservées.** Adresses (FR/AR),
 téléphones et points posés dans `/admin/garde`
 (`geocode_status = 'manual'`) ne sont jamais écrasés par une nouvelle
-extraction : celle-ci ne remplit que les champs vides. Comme les `id`
+extraction : celle-ci ne remplit que les champs vides.
+
+Corriger une fiche se fait dans `/admin/garde` : le filtre **« Toutes »**
+(au lieu de « À géocoder ») plus la recherche par nom/adresse/commune
+donnent accès à n'importe quelle pharmacie, y compris déjà pointée ;
+l'adresse arabe et française y sont éditables à côté de la carte. Utile
+quand l'extraction du document DSP décale une ligne et attribue à une
+pharmacie l'adresse de sa voisine. Comme les `id`
 d'extraction ne sont pas stables d'un mois à l'autre, une pharmacie non
 retrouvée par son `external_id` est rapprochée par son nom normalisé
 (casse, accents, préfixe « Pharmacie ») dans la même commune, et c'est la
