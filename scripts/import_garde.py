@@ -205,24 +205,71 @@ def bundle_payload(payload: Dict[str, Any], bundle: CommuneBundle) -> Dict[str, 
 
 
 def existing_commune_codes(cur, wilaya_code: str) -> Dict[str, str]:
-    """Codes commune déjà en base pour cette wilaya, par nom normalisé."""
+    """Codes commune déjà en base pour cette wilaya, par nom normalisé.
+
+    La valeur peut être vide : d'anciens imports ont écrit un commune_code
+    vide (meta sans code), ce qui reste une commune connue mais sans clé
+    exploitable — cf. rekey_commune().
+    """
     cur.execute(
         """
-        SELECT commune_code, commune_name_fr FROM garde_rosters WHERE wilaya_code = %s
+        SELECT COALESCE(commune_code, '') AS commune_code, commune_name_fr
+          FROM garde_rosters WHERE wilaya_code = %s
         UNION
-        SELECT commune_code, commune_name_fr FROM garde_pharmacies WHERE wilaya_code = %s
+        SELECT COALESCE(commune_code, '') AS commune_code, commune_name_fr
+          FROM garde_pharmacies WHERE wilaya_code = %s
         """,
         (wilaya_code, wilaya_code),
     )
     known: Dict[str, str] = {}
     for row in cur.fetchall():
         key = normalize_name(row["commune_name_fr"])
-        if key:
-            known.setdefault(key, row["commune_code"])
+        if not key:
+            continue
+        # Un code renseigné l'emporte sur un code vide pour la même commune.
+        current = known.get(key)
+        if current is None or (not current and row["commune_code"]):
+            known[key] = row["commune_code"]
     return known
 
 
-def resolve_commune_codes(cur, wilaya_code: str, bundles: List[CommuneBundle], reuse: bool) -> None:
+def rekey_commune(cur, wilaya_code: str, new_code: str, commune_name_fr: str) -> int:
+    """Donne un commune_code aux lignes d'une commune qui n'en avaient pas.
+
+    Sans ça, l'import créerait un doublon de commune : les anciennes fiches
+    (et leur géoloc pointée à la main) resteraient sous le code vide, les
+    nouvelles gardes sous le vrai code, et la page publique — qui résout par
+    commune_code — ne verrait que l'une des deux.
+    """
+    cur.execute(
+        """
+        SELECT count(*) AS n FROM garde_rosters
+        WHERE wilaya_code = %s AND commune_code = %s
+        """,
+        (wilaya_code, new_code),
+    )
+    if cur.fetchone()["n"]:
+        raise ValueError(
+            f"commune '{commune_name_fr}' : des lignes existent déjà sous le code "
+            f"'{new_code}' et d'autres sans code. À arbitrer à la main avant import."
+        )
+
+    blank = "(commune_code IS NULL OR commune_code = '')"
+    updated = 0
+    for table in ("garde_pharmacies", "garde_rosters", "garde_duty_periods", "garde_reports", "garde_claims"):
+        cur.execute("SELECT to_regclass(%s) AS t", (table,))
+        if cur.fetchone()["t"] is None:
+            continue
+        cur.execute(
+            f"UPDATE {table} SET commune_code = %s WHERE wilaya_code = %s AND {blank}",
+            (new_code, wilaya_code),
+        )
+        updated += cur.rowcount
+
+    return updated
+
+
+def resolve_commune_codes(cur, wilaya_code: str, bundles: List[CommuneBundle], reuse: bool) -> Dict[str, str]:
     """Fixe bundle.code en privilégiant le code déjà utilisé en base.
 
     Les URLs publiques sont construites sur le slug du nom de commune,
@@ -230,8 +277,14 @@ def resolve_commune_codes(cur, wilaya_code: str, bundles: List[CommuneBundle], r
     nouvelle extraction change le code d'une commune déjà importée, le
     site se retrouve avec deux entrées concurrentes pour la même commune.
     On réaligne donc sur le code existant.
+
+    Renvoie les communes déjà connues en base (nom normalisé -> code), pour
+    distinguer ensuite une commune réellement nouvelle d'une commune déjà
+    importée dont le code aurait changé.
     """
-    known = existing_commune_codes(cur, wilaya_code) if reuse else {}
+    known = existing_commune_codes(cur, wilaya_code)
+    if not reuse:
+        known = {}
 
     for bundle in bundles:
         existing = known.get(normalize_name(bundle.name_fr))
@@ -246,6 +299,17 @@ def resolve_commune_codes(cur, wilaya_code: str, bundles: List[CommuneBundle], r
         if not existing and not declared:
             print(f"  · commune '{bundle.name_fr}' : aucun code fourni, code dérivé '{bundle.code}'")
 
+        # Commune déjà en base mais sans code : on lui applique celui-ci
+        # plutôt que d'ouvrir une seconde commune du même nom.
+        if existing == "" and reuse:
+            updated = rekey_commune(cur, wilaya_code, bundle.code, bundle.name_fr)
+            print(
+                f"  · commune '{bundle.name_fr}' : {updated} ligne(s) sans commune_code "
+                f"reprises sous '{bundle.code}'"
+            )
+
+    return known
+
 
 # ─── Pharmacies : rapprochement + fusion ──────────────────────
 
@@ -254,8 +318,10 @@ class PharmacyIndex:
     """Pharmacies déjà en base pour une wilaya, indexées pour rapprochement."""
 
     def __init__(self, rows: List[Dict[str, Any]]) -> None:
+        self.rows = rows
         self.by_external_id: Dict[str, Dict[str, Any]] = {}
         self.by_commune_name: Dict[Tuple[str, str], List[Dict[str, Any]]] = {}
+        self.by_name: Dict[str, List[Dict[str, Any]]] = {}
         self.claimed: set = set()
 
         for row in rows:
@@ -264,6 +330,10 @@ class PharmacyIndex:
                 key = normalize_name(name)
                 if key:
                     self.by_commune_name.setdefault((row["commune_code"], key), []).append(row)
+                    self.by_name.setdefault(key, []).append(row)
+
+    def commune_size(self, commune_code: str) -> int:
+        return sum(1 for row in self.rows if row["commune_code"] == commune_code)
 
     def match(self, p: Dict[str, Any], commune_code: str) -> Tuple[Optional[Dict[str, Any]], str]:
         existing = self.by_external_id.get(str(p.get("id")))
@@ -271,10 +341,11 @@ class PharmacyIndex:
             self.claimed.add(existing["id"])
             return existing, "external_id"
 
-        for name in (p.get("name_fr"), p.get("name_ar")):
-            key = normalize_name(name)
-            if not key:
-                continue
+        # Le nom peut n'exister qu'en arabe (name_fr NULL sur beaucoup de
+        # fiches DSP) : les deux langues servent de clé.
+        keys = [key for key in (normalize_name(p.get("name_fr")), normalize_name(p.get("name_ar"))) if key]
+
+        for key in keys:
             candidates = [
                 row
                 for row in self.by_commune_name.get((commune_code, key), [])
@@ -286,6 +357,16 @@ class PharmacyIndex:
             if len(candidates) == 1:
                 self.claimed.add(candidates[0]["id"])
                 return candidates[0], "nom"
+
+        # Filet : si le commune_code a changé d'une extraction à l'autre, la
+        # fiche existe dans la wilaya sous un autre code. On ne l'accepte que
+        # si le nom est unique dans toute la wilaya — « Pharmacie Centrale »
+        # existe dans chaque commune.
+        for key in keys:
+            candidates = [row for row in self.by_name.get(key, []) if row["id"] not in self.claimed]
+            if len(candidates) == 1:
+                self.claimed.add(candidates[0]["id"])
+                return candidates[0], "nom-wilaya"
 
         return None, "nouvelle"
 
@@ -309,6 +390,7 @@ class MergeStats:
         self.created = 0
         self.matched_external_id = 0
         self.matched_name = 0
+        self.matched_name_wilaya = 0
         self.addresses_kept = 0
         self.addresses_filled = 0
         self.addresses_overwritten = 0
@@ -316,10 +398,11 @@ class MergeStats:
         self.manual_geo_kept = 0
 
     def summary(self) -> str:
+        matched_by_name = self.matched_name + self.matched_name_wilaya
         return (
             f"{self.created} nouvelle(s), "
-            f"{self.matched_external_id + self.matched_name} existante(s) "
-            f"(dont {self.matched_name} rapprochée(s) par nom) | "
+            f"{self.matched_external_id + matched_by_name} existante(s) "
+            f"(dont {matched_by_name} rapprochée(s) par nom) | "
             f"adresses conservées {self.addresses_kept}, complétées {self.addresses_filled}, "
             f"remplacées {self.addresses_overwritten} | "
             f"téléphones conservés {self.phones_kept} | "
@@ -351,9 +434,12 @@ def merge_pharmacy(
         "external_id": p["id"],
         "wilaya_code": wilaya_code,
         "type": p.get("type") or (existing or {}).get("type") or "officine",
-        "name_fr": p["name_fr"],
+        # Beaucoup de fiches DSP n'ont qu'un nom arabe : une extraction sans
+        # name_fr ne doit pas effacer un nom français saisi entre-temps.
+        "name_fr": p.get("name_fr") or (existing or {}).get("name_fr"),
         "name_ar": p.get("name_ar") or (existing or {}).get("name_ar"),
-        "name_fr_confidence": p.get("name_fr_confidence"),
+        "name_fr_confidence": p.get("name_fr_confidence")
+        or (None if p.get("name_fr") else (existing or {}).get("name_fr_confidence")),
         "commune_code": commune.code,
         "commune_name_fr": p.get("commune_name_fr") or p.get("commune") or commune.name_fr,
         "commune_name_ar": p.get("commune_name_ar") or p.get("commune_ar") or commune.name_ar,
@@ -415,13 +501,19 @@ def upsert_pharmacies(
 
     for p in bundle.pharmacies:
         existing, how = index.match(p, bundle.code)
+        label = p.get("name_fr") or p.get("name_ar") or p.get("id")
         if how == "external_id":
             stats.matched_external_id += 1
-        elif how == "nom":
-            stats.matched_name += 1
+        elif how in ("nom", "nom-wilaya"):
+            if how == "nom":
+                stats.matched_name += 1
+                origin = ""
+            else:
+                stats.matched_name_wilaya += 1
+                origin = f", commune '{existing['commune_code']}' -> '{bundle.code}'"
             print(
-                f"    ~ '{p.get('name_fr')}' rapprochée de la fiche #{existing['id']} "
-                f"(external_id '{existing['external_id']}' -> '{p['id']}')"
+                f"    ~ '{label}' rapprochée de la fiche #{existing['id']} "
+                f"(external_id '{existing['external_id']}' -> '{p['id']}'{origin})"
             )
         else:
             stats.created += 1
@@ -639,14 +731,26 @@ def import_payload(cur, payload: Dict[str, Any], args: argparse.Namespace) -> No
         f"{meta['period']['from']} -> {meta['period']['to']}"
     )
 
-    resolve_commune_codes(cur, wilaya_code, bundles, reuse=not args.no_reuse_commune_codes)
+    known_communes = resolve_commune_codes(
+        cur, wilaya_code, bundles, reuse=not args.no_reuse_commune_codes
+    )
     index = load_pharmacy_index(cur, wilaya_code)
+    print(f"  {len(index.rows)} fiche(s) déjà en base pour la wilaya '{wilaya_code}'")
 
     total_pharmacies = 0
     total_duties = 0
 
     for bundle in bundles:
-        print(f"\n  {bundle.name_fr} ({bundle.code})")
+        already = index.commune_size(bundle.code)
+        print(f"\n  {bundle.name_fr} ({bundle.code}) — {already} fiche(s) déjà en base pour cette commune")
+        if already == 0 and normalize_name(bundle.name_fr) in known_communes:
+            # Rien à rapprocher ici alors que la wilaya est peuplée : le plus
+            # souvent un commune_code qui a changé d'une extraction à l'autre.
+            print(
+                "    · aucune fiche existante sous ce commune_code — vérifier les codes en base :\n"
+                "      SELECT commune_code, commune_name_fr, count(*) FROM garde_pharmacies "
+                f"WHERE wilaya_code = '{wilaya_code}' GROUP BY 1,2;"
+            )
         external_id_to_pk, stats = upsert_pharmacies(
             cur, bundle, wilaya_code, index, args.overwrite_addresses, args.overwrite_geo
         )
