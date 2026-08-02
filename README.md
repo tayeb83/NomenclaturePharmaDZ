@@ -493,7 +493,20 @@ données.
 **Les données saisies à la main sont préservées.** Adresses (FR/AR),
 téléphones et points posés dans `/admin/garde`
 (`geocode_status = 'manual'`) ne sont jamais écrasés par une nouvelle
-extraction : celle-ci ne remplit que les champs vides. Comme les `id`
+extraction : celle-ci ne remplit que les champs vides.
+
+Corriger une fiche se fait dans `/admin/garde` : le filtre **« Toutes »**
+(au lieu de « À géocoder ») plus la recherche par nom/adresse/commune
+donnent accès à n'importe quelle pharmacie, y compris déjà pointée. Tous
+les champs y sont éditables (noms FR/AR, adresses FR/AR, téléphone,
+commune, type), une fiche absente du document peut être **ajoutée** et une
+fiche erronée **supprimée** — avec le nombre de gardes qui partiraient
+avec elle en confirmation. Utile quand l'extraction du document DSP décale
+une ligne et attribue à une pharmacie l'adresse de sa voisine.
+
+Le téléphone se saisit comme sur le document (`07.91.90.96.97`) : le
+format E.164 (`+213791909697`), seul utilisable pour un lien d'appel, en
+est déduit — mobiles et fixes. Comme les `id`
 d'extraction ne sont pas stables d'un mois à l'autre, une pharmacie non
 retrouvée par son `external_id` est rapprochée par son nom normalisé
 (casse, accents, préfixe « Pharmacie ») dans la même commune, et c'est la
@@ -532,6 +545,41 @@ Sur chaque pharmacie des pages `/pharmacie-de-garde/[wilaya]/[commune]` (FR + AR
 - **🏪 C'est ma pharmacie** — revendication de fiche par le pharmacien (`POST /api/garde/claim` : nom, téléphone, WhatsApp, email). Après vérification manuelle, il devient contributeur de sa fiche (et prospect naturel de la fiche premium).
 
 Modération : `/admin/garde/signalements` (liste + changement de statut). Anti-abus : rate-limit par hash d'IP salé (pas d'IP en clair).
+
+---
+
+## Fiche Pharmacie Premium (offre `/pro`, 500 DZD/mois)
+
+```bash
+psql "$DATABASE_URL" -f sql/15_garde_premium.sql
+```
+
+Concrétise l'offre annoncée sur `/pro`. L'abonnement vit dans
+`garde_pharmacy_premium`, **table séparée de `garde_pharmacies`** : les
+fiches sont réécrites à chaque import DSP, l'abonnement ne doit dépendre
+d'aucune colonne que l'import touche. Il est rattaché à l'`id` interne, pas
+à l'`external_id` d'extraction — il survit donc à un réimport qui change
+les identifiants.
+
+Gestion dans `/admin/garde`, panneau **⭐ Fiche premium** d'une pharmacie :
+activation, badge « Vérifiée », dates d'abonnement, WhatsApp, horaires
+détaillés (FR/AR), accroche (FR/AR), jusqu'à 6 photos (URL https), note
+interne jamais affichée, et le compteur de consultations.
+
+Côté public (`/pharmacie-de-garde/…` FR et AR), une fiche premium active
+affiche le badge « Vérifiée », son accroche, ses horaires, ses photos et un
+bouton WhatsApp, sur une carte mise en avant. **La mise en avant ne joue
+qu'à service égal** : une officine ouverte maintenant, ou plus proche du
+visiteur, passe toujours devant une fiche premium — l'ordre d'affichage
+n'est pas à vendre.
+
+Les consultations (`garde_pharmacy_views`) sont comptées une fois par
+session et par pharmacie, sans aucun identifiant visiteur : seulement un
+compteur par jour. C'est la statistique remontée au pharmacien.
+
+Tant que la migration n'est pas appliquée, tout continue de fonctionner :
+les pages de garde s'affichent sans les extras, `/api/garde/view` ne compte
+rien, et l'admin indique quelle migration lancer.
 
 ---
 
