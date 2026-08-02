@@ -496,7 +496,17 @@ retrouvée par son `external_id` est rapprochée par son nom normalisé
 fiche existante qui est mise à jour — adresse, géoloc, signalements et
 revendication suivent. Le rapprochement par nom est refusé en cas
 d'homonymes dans la commune : une nouvelle fiche est créée plutôt que de
-recopier l'adresse d'une autre pharmacie.
+recopier l'adresse d'une autre pharmacie. Beaucoup de fiches DSP n'ont
+qu'un nom arabe (`name_fr` à `null`) : le rapprochement se fait alors sur
+`name_ar`, et une extraction sans `name_fr` n'efface pas un nom français
+saisi entre-temps.
+
+Le rapport indique, avant chaque commune, le nombre de fiches déjà en base
+pour ce `commune_code`. **Si tout ressort en « nouvelles » alors que le
+mois précédent est chargé, c'est ce compteur qu'il faut lire** : à 0 sur
+une commune déjà importée, le `commune_code` (ou le `wilaya_code`) a changé
+d'une extraction à l'autre. Le script tente alors un rapprochement à
+l'échelle de la wilaya, accepté seulement si le nom y est unique.
 
 Pour laisser le fichier reprendre la main : `--overwrite-addresses`
 (adresses + téléphones) et `--overwrite-geo` (points manuels).
