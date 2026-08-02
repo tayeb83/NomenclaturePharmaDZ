@@ -205,21 +205,68 @@ def bundle_payload(payload: Dict[str, Any], bundle: CommuneBundle) -> Dict[str, 
 
 
 def existing_commune_codes(cur, wilaya_code: str) -> Dict[str, str]:
-    """Codes commune déjà en base pour cette wilaya, par nom normalisé."""
+    """Codes commune déjà en base pour cette wilaya, par nom normalisé.
+
+    La valeur peut être vide : d'anciens imports ont écrit un commune_code
+    vide (meta sans code), ce qui reste une commune connue mais sans clé
+    exploitable — cf. rekey_commune().
+    """
     cur.execute(
         """
-        SELECT commune_code, commune_name_fr FROM garde_rosters WHERE wilaya_code = %s
+        SELECT COALESCE(commune_code, '') AS commune_code, commune_name_fr
+          FROM garde_rosters WHERE wilaya_code = %s
         UNION
-        SELECT commune_code, commune_name_fr FROM garde_pharmacies WHERE wilaya_code = %s
+        SELECT COALESCE(commune_code, '') AS commune_code, commune_name_fr
+          FROM garde_pharmacies WHERE wilaya_code = %s
         """,
         (wilaya_code, wilaya_code),
     )
     known: Dict[str, str] = {}
     for row in cur.fetchall():
         key = normalize_name(row["commune_name_fr"])
-        if key:
-            known.setdefault(key, row["commune_code"])
+        if not key:
+            continue
+        # Un code renseigné l'emporte sur un code vide pour la même commune.
+        current = known.get(key)
+        if current is None or (not current and row["commune_code"]):
+            known[key] = row["commune_code"]
     return known
+
+
+def rekey_commune(cur, wilaya_code: str, new_code: str, commune_name_fr: str) -> int:
+    """Donne un commune_code aux lignes d'une commune qui n'en avaient pas.
+
+    Sans ça, l'import créerait un doublon de commune : les anciennes fiches
+    (et leur géoloc pointée à la main) resteraient sous le code vide, les
+    nouvelles gardes sous le vrai code, et la page publique — qui résout par
+    commune_code — ne verrait que l'une des deux.
+    """
+    cur.execute(
+        """
+        SELECT count(*) AS n FROM garde_rosters
+        WHERE wilaya_code = %s AND commune_code = %s
+        """,
+        (wilaya_code, new_code),
+    )
+    if cur.fetchone()["n"]:
+        raise ValueError(
+            f"commune '{commune_name_fr}' : des lignes existent déjà sous le code "
+            f"'{new_code}' et d'autres sans code. À arbitrer à la main avant import."
+        )
+
+    blank = "(commune_code IS NULL OR commune_code = '')"
+    updated = 0
+    for table in ("garde_pharmacies", "garde_rosters", "garde_duty_periods", "garde_reports", "garde_claims"):
+        cur.execute("SELECT to_regclass(%s) AS t", (table,))
+        if cur.fetchone()["t"] is None:
+            continue
+        cur.execute(
+            f"UPDATE {table} SET commune_code = %s WHERE wilaya_code = %s AND {blank}",
+            (new_code, wilaya_code),
+        )
+        updated += cur.rowcount
+
+    return updated
 
 
 def resolve_commune_codes(cur, wilaya_code: str, bundles: List[CommuneBundle], reuse: bool) -> Dict[str, str]:
@@ -251,6 +298,15 @@ def resolve_commune_codes(cur, wilaya_code: str, bundles: List[CommuneBundle], r
         bundle.code = existing or declared or slug_code(bundle.name_fr)
         if not existing and not declared:
             print(f"  · commune '{bundle.name_fr}' : aucun code fourni, code dérivé '{bundle.code}'")
+
+        # Commune déjà en base mais sans code : on lui applique celui-ci
+        # plutôt que d'ouvrir une seconde commune du même nom.
+        if existing == "" and reuse:
+            updated = rekey_commune(cur, wilaya_code, bundle.code, bundle.name_fr)
+            print(
+                f"  · commune '{bundle.name_fr}' : {updated} ligne(s) sans commune_code "
+                f"reprises sous '{bundle.code}'"
+            )
 
     return known
 

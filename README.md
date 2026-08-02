@@ -484,7 +484,11 @@ noms arabes peuvent être déclarés dans `meta.communes[]` :
 Si une commune existe déjà en base sous un autre `commune_code`, c'est le
 code existant qui est conservé (sinon la même commune apparaîtrait deux
 fois dans la couverture) — `--no-reuse-commune-codes` pour forcer celui du
-fichier.
+fichier. Cas particulier des imports anciens faits **sans** code : les
+lignes de la commune (fiches, rosters, gardes, signalements,
+revendications) sont reprises sous le code du fichier, sinon la page
+publique — qui résout par `commune_code` — ne verrait que la moitié des
+données.
 
 **Les données saisies à la main sont préservées.** Adresses (FR/AR),
 téléphones et points posés dans `/admin/garde`
