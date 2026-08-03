@@ -248,16 +248,59 @@ Génération manuelle possible depuis l'admin (« Générer un brouillon »).
 { "path": "/api/cron/social-publish", "schedule": "0 8 * * *" }
 ```
 
-### Pharmacies de garde — publication Facebook quotidienne
+#### Jeton Facebook : diagnostic et erreur « on behalf of user »
 
-Chaque jour à **8h (heure d'Alger)**, le cron `/api/cron/garde-daily`
-publie sur la Page Facebook, **pour chaque wilaya couverte en base**, une
-image générée automatiquement (liste des officines de garde du jour,
-rendu `next/og`) accompagnée de la liste détaillée en légende
-(commune, adresse, téléphone, vacation jour/nuit) et du lien vers
-`/pharmacie-de-garde`.
+L'erreur `Cannot call API for app <app_id> on behalf of user <user_id>`
+signifie que `FACEBOOK_PAGE_ACCESS_TOKEN` contient un **jeton utilisateur**
+(ou un jeton émis pour un compte qui n'autorise plus l'application) : l'API
+Graph exige un **jeton de Page** pour publier.
 
-- **Bilingue** : par défaut deux posts distincts par wilaya — un en
+- **Correction automatique** : avant chaque publication, l'application
+  interroge `GET /{page-id}?fields=access_token` et publie avec le jeton de
+  Page ainsi dérivé (résultat mis en cache 30 min). Un jeton utilisateur
+  valide suffit donc désormais à publier.
+- **Diagnostic** : bouton « Vérifier la configuration » sur `/admin/social`
+  (route `GET /api/admin/social/diagnostic`) — type de jeton, application
+  émettrice, autorisations, expiration, accès à la Page, et la marche à
+  suivre en cas de blocage. Renseigner `FACEBOOK_APP_ID` et
+  `FACEBOOK_APP_SECRET` active l'inspection complète du jeton
+  (`debug_token`).
+- Si la dérivation échoue, reconnectez la Page dans les Outils Graph API
+  avec `pages_show_list`, `pages_manage_posts` et `pages_read_engagement`,
+  puis copiez le champ `access_token` renvoyé par `/me/accounts`.
+- Les erreurs de publication sont désormais enregistrées et affichées avec
+  la piste de correction correspondante.
+
+### Pharmacies de garde — publication Facebook (automatique + manuelle)
+
+Pour chaque wilaya (et chaque commune) couverte en base, le site publie
+sur la Page Facebook une image générée automatiquement (rendu `next/og`)
+accompagnée de la liste détaillée en légende (adresse, téléphone,
+vacation jour/nuit) et du lien vers `/pharmacie-de-garde`.
+
+**Trois périodes**, servies par le même moteur (`lib/garde-social.tsx`) :
+
+| Période  | Contenu                                | Cron Vercel                                  |
+|----------|----------------------------------------|----------------------------------------------|
+| `day`    | Les officines de garde du jour         | `/api/cron/garde-daily` — tous les jours 7h   |
+| `friday` | Le **vendredi suivant**, posté en amont (badge « À venir ») | `…?period=friday` — jeudi 16h |
+| `month`  | Le planning du mois, une ligne par jour, vendredis surlignés | `…?period=month` — le 1er du mois 6h |
+
+**Publication manuelle** — `/admin/garde/publication` : on choisit la
+wilaya, éventuellement la commune, les langues, puis on clique sur le
+visuel à publier (aperçu réel, encadré aux couleurs du drapeau). Une case
+« Simuler sans publier » permet de vérifier légende et visuel sans rien
+envoyer. La page liste aussi les dernières publications et leur statut.
+
+- **Wilaya ou commune** : `granularity` = `wilaya` (un post pour toute la
+  wilaya, défaut, réglable via `GARDE_PUBLISH_GRANULARITY`) ou `commune`
+  (un post par commune — recommandé pour les grandes wilayas). Le planning
+  mensuel est toujours publié par commune, sinon le visuel est illisible.
+- **Logo de la wilaya** : déposable depuis `/admin/garde/publication`
+  (PNG/JPEG ≤ 400 Ko, stocké en base — `sql/16_garde_wilaya_logos.sql`).
+  Il s'affiche en tête du visuel, à côté du logo DwaDZ ; sans logo
+  enregistré, le visuel se rend simplement sans.
+- **Bilingue** : par défaut deux posts distincts par cible — un en
   français (image LTR, lien `/pharmacie-de-garde`) et un en arabe
   (« صيدليات المناوبة », image RTL, lien `/ar/pharmacie-de-garde`).
   Réglable via `GARDE_PUBLISH_LOCALES` (`fr`, `ar`, `fr,ar`…).
@@ -265,28 +308,33 @@ rendu `next/og`) accompagnée de la liste détaillée en légende
   `FACEBOOK_PAGE_ACCESS_TOKEN` que les alertes (token de Page longue durée
   avec `pages_manage_posts`).
 - Le lien en légende pointe vers la page directe de la commune quand la
-  wilaya n'en a qu'une, sinon vers le hub ancré sur la wilaya.
+  publication ne concerne qu'elle, sinon vers le hub ancré sur la wilaya.
 - Idempotent : chaque publication (par langue) est journalisée dans
-  `social_posts` (`type='garde'`) ; relancer le cron le même jour ne crée
-  pas de doublon.
+  `social_posts` (`type='garde'`) ; relancer le cron ou recliquer sur
+  « Publier » le même jour ne crée pas de doublon.
 - **Publications espacées** : par défaut 8 s entre chaque post (réglable
   via `GARDE_POST_DELAY_MS`) pour ne pas saturer le fil ni l'API Graph.
   Un budget de temps interne (`GARDE_TIME_BUDGET_MS`, ~50 s) borne la durée
   totale sous la limite d'exécution Vercel : au-delà, les posts restants
   sont publiés sans attente plutôt que coupés.
-- Aperçu du visuel sans publier (ajouter `&lang=ar` pour l'arabe) :
-  `GET /api/garde/social-image?wilaya=16&date=2026-07-22`
+- Aperçu du visuel sans publier (`&lang=ar` pour l'arabe) :
+  `GET /api/garde/social-image?wilaya=16&period=day`
+  `…?wilaya=20&commune=2001&period=month&month=2026-08`
 - Test à blanc (aucune publication) :
   `curl -H "Authorization: Bearer $CRON_SECRET" "https://www.dzair-pharma.net/api/cron/garde-daily?dry=1"`
 - Déclenchement manuel ciblé :
   `POST /api/publish` avec `{"type": "garde_daily", "wilaya": "16"}`
-  (header `x-api-secret`).
+  (header `x-api-secret`), ou `POST /api/admin/garde/publish` avec
+  `{"period":"friday","wilaya":"16","commune":"1601"}` (session admin).
 
-> ⚠️ Vercel plan Hobby : 2 cron jobs max — `weekly` + `garde-daily`
-> atteignent cette limite. Le domaine apex (`dzair-pharma.net`) redirige
-> vers `www` : pour les tests `curl` manuels, viser `www.dzair-pharma.net`
-> ou ajouter `--location-trusted` (le cron interne Vercel n'est pas
-> concerné).
+> ⚠️ `vercel.json` déclare 6 crons (dont `period=friday` et `period=month`).
+> Le plan Hobby en autorise 2, déclenchés une fois par jour : au-delà, les
+> crons supplémentaires ne se déclenchent pas — le bouton « Publier » de
+> `/admin/garde/publication` reste alors la voie manuelle, et le plan Pro
+> lève la limite.
+> Le domaine apex (`dzair-pharma.net`) redirige vers `www` : pour les tests
+> `curl` manuels, viser `www.dzair-pharma.net` ou ajouter
+> `--location-trusted` (le cron interne Vercel n'est pas concerné).
 
 ---
 

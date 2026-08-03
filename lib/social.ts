@@ -163,13 +163,88 @@ function getMotifEmoji(motif: string | null | undefined) {
 // Surchargeable pour les tests et les montées de version de l'API Graph.
 const FACEBOOK_GRAPH_BASE = process.env.FACEBOOK_GRAPH_API_BASE || 'https://graph.facebook.com/v18.0'
 
-export async function postToFacebook(message: string): Promise<{ success: boolean; postId?: string; error?: string }> {
-  const token = process.env.FACEBOOK_PAGE_ACCESS_TOKEN
-  const pageId = process.env.FACEBOOK_PAGE_ID
-
-  if (!token || !pageId) {
-    return { success: false, error: 'Facebook credentials manquants' }
+/**
+ * Traduit en clair les erreurs Graph les plus fréquentes, pour que l'admin
+ * sache quoi corriger sans aller lire la doc Meta.
+ *
+ * En particulier « Cannot call API for app X on behalf of user Y » : le
+ * jeton fourni est un jeton **utilisateur** (ou un jeton de Page émis pour
+ * un utilisateur qui n'a plus autorisé l'application). Publier sur une Page
+ * exige un *Page Access Token* portant pages_manage_posts.
+ */
+export function facebookErrorHint(message?: string | null): string | undefined {
+  if (!message) return undefined
+  const m = message.toLowerCase()
+  if (m.includes('on behalf of user')) {
+    return "FACEBOOK_PAGE_ACCESS_TOKEN semble être un jeton *utilisateur*, pas un jeton de Page — ou l'utilisateur qui l'a émis n'autorise plus l'application. Reconnectez la Page dans les Outils Graph API (autorisations pages_show_list, pages_manage_posts, pages_read_engagement), puis reprenez le jeton de la Page (champ access_token de /me/accounts)."
   }
+  if (m.includes('session has expired') || m.includes('session is invalid') || m.includes('expired')) {
+    return 'Le jeton a expiré. Générez un jeton de Page longue durée (échange du jeton utilisateur longue durée via /oauth/access_token, puis /me/accounts).'
+  }
+  if (m.includes('permission') || m.includes('(#200)') || m.includes('(#10)')) {
+    return "Autorisation manquante : la Page doit accorder pages_manage_posts (et pages_read_engagement) à l'application."
+  }
+  if (m.includes('unsupported get request') || m.includes('does not exist')) {
+    return "FACEBOOK_PAGE_ID est introuvable avec ce jeton — vérifiez l'identifiant de la Page et que le jeton appartient bien à cette Page."
+  }
+  return undefined
+}
+
+function withHint(error?: string): string | undefined {
+  if (!error) return error
+  const hint = facebookErrorHint(error)
+  return hint ? `${error} — ${hint}` : error
+}
+
+/**
+ * Jeton effectivement utilisé pour publier. Si la variable
+ * FACEBOOK_PAGE_ACCESS_TOKEN contient un jeton utilisateur (cause n°1 de
+ * l'erreur « Cannot call API for app … on behalf of user … »), on demande à
+ * Graph le jeton de la Page correspondante et on publie avec celui-là.
+ * Mis en cache par instance : une requête toutes les 30 min au plus.
+ */
+const PAGE_TOKEN_TTL_MS = 30 * 60 * 1000
+const globalForFbToken = globalThis as unknown as {
+  _fbPageToken?: { token: string; source: 'page' | 'configured'; at: number }
+}
+
+export async function resolvePageAccessToken(force = false): Promise<{
+  token?: string
+  pageId?: string
+  source?: 'page' | 'configured'
+  error?: string
+}> {
+  const configured = process.env.FACEBOOK_PAGE_ACCESS_TOKEN
+  const pageId = process.env.FACEBOOK_PAGE_ID
+  if (!configured || !pageId) return { error: 'Facebook credentials manquants' }
+
+  const cached = globalForFbToken._fbPageToken
+  if (!force && cached && Date.now() - cached.at < PAGE_TOKEN_TTL_MS) {
+    return { token: cached.token, pageId, source: cached.source }
+  }
+
+  let resolved: { token: string; source: 'page' | 'configured' } = { token: configured, source: 'configured' }
+  try {
+    const res = await axios.get(`${FACEBOOK_GRAPH_BASE}/${pageId}`, {
+      params: { fields: 'access_token', access_token: configured },
+      timeout: 10000,
+    })
+    if (typeof res.data?.access_token === 'string' && res.data.access_token) {
+      resolved = { token: res.data.access_token, source: 'page' }
+    }
+  } catch (err: any) {
+    // Le jeton configuré ne permet pas de lire le jeton de la Page : on
+    // publie avec ce qu'on a et on laisse l'erreur de publication parler.
+    console.warn('[social] Jeton de Page non résolu:', err.response?.data?.error?.message || err.message)
+  }
+
+  globalForFbToken._fbPageToken = { ...resolved, at: Date.now() }
+  return { token: resolved.token, pageId, source: resolved.source }
+}
+
+export async function postToFacebook(message: string): Promise<{ success: boolean; postId?: string; error?: string }> {
+  const { token, pageId, error } = await resolvePageAccessToken()
+  if (!token || !pageId) return { success: false, error: error || 'Facebook credentials manquants' }
 
   try {
     const res = await axios.post(
@@ -178,7 +253,7 @@ export async function postToFacebook(message: string): Promise<{ success: boolea
     )
     return { success: true, postId: res.data.id }
   } catch (err: any) {
-    return { success: false, error: err.response?.data?.error?.message || err.message }
+    return { success: false, error: withHint(err.response?.data?.error?.message || err.message) }
   }
 }
 
@@ -188,12 +263,8 @@ export async function postToFacebook(message: string): Promise<{ success: boolea
  * middleware anti-bot bloque). La légende accompagne la photo.
  */
 export async function postFacebookPhoto(image: Buffer, caption: string): Promise<{ success: boolean; postId?: string; error?: string }> {
-  const token = process.env.FACEBOOK_PAGE_ACCESS_TOKEN
-  const pageId = process.env.FACEBOOK_PAGE_ID
-
-  if (!token || !pageId) {
-    return { success: false, error: 'Facebook credentials manquants' }
-  }
+  const { token, pageId, error: tokenError } = await resolvePageAccessToken()
+  if (!token || !pageId) return { success: false, error: tokenError || 'Facebook credentials manquants' }
 
   try {
     const form = new FormData()
@@ -207,12 +278,126 @@ export async function postFacebookPhoto(image: Buffer, caption: string): Promise
     })
     const data: any = await res.json().catch(() => ({}))
     if (!res.ok) {
-      return { success: false, error: data?.error?.message || `HTTP ${res.status}` }
+      return { success: false, error: withHint(data?.error?.message || `HTTP ${res.status}`) }
     }
     return { success: true, postId: data.post_id || data.id }
   } catch (err: any) {
-    return { success: false, error: err.message }
+    return { success: false, error: withHint(err.message) }
   }
+}
+
+// ─── DIAGNOSTIC FACEBOOK ──────────────────────────────────────
+
+export type FacebookDiagnostic = {
+  configured: { pageId: boolean; token: boolean; appId: boolean; appSecret: boolean }
+  tokenType?: string
+  tokenAppId?: string
+  tokenAppName?: string
+  tokenUserId?: string
+  expiresAt?: string | null
+  scopes?: string[]
+  missingScopes?: string[]
+  page?: { id: string; name?: string; canPost: boolean }
+  usedTokenSource?: 'page' | 'configured'
+  ok: boolean
+  problems: string[]
+  hints: string[]
+}
+
+const REQUIRED_SCOPES = ['pages_manage_posts', 'pages_read_engagement']
+
+/**
+ * Vérifie la configuration Facebook sans rien publier : type de jeton,
+ * application émettrice, autorisations, expiration, accès à la Page.
+ * Utilisé par l'écran admin pour diagnostiquer les échecs de partage.
+ */
+export async function diagnoseFacebook(): Promise<FacebookDiagnostic> {
+  const pageId = process.env.FACEBOOK_PAGE_ID
+  const configuredToken = process.env.FACEBOOK_PAGE_ACCESS_TOKEN
+  const appId = process.env.FACEBOOK_APP_ID
+  const appSecret = process.env.FACEBOOK_APP_SECRET
+
+  const diag: FacebookDiagnostic = {
+    configured: { pageId: !!pageId, token: !!configuredToken, appId: !!appId, appSecret: !!appSecret },
+    ok: false,
+    problems: [],
+    hints: [],
+  }
+
+  if (!pageId) diag.problems.push('FACEBOOK_PAGE_ID non défini')
+  if (!configuredToken) diag.problems.push('FACEBOOK_PAGE_ACCESS_TOKEN non défini')
+  if (!pageId || !configuredToken) return diag
+
+  // 1. Nature du jeton configuré (nécessite l'app id + secret pour debug_token)
+  if (appId && appSecret) {
+    try {
+      const res = await axios.get(`${FACEBOOK_GRAPH_BASE}/debug_token`, {
+        params: { input_token: configuredToken, access_token: `${appId}|${appSecret}` },
+        timeout: 10000,
+      })
+      const d = res.data?.data || {}
+      diag.tokenType = d.type
+      diag.tokenAppId = d.app_id
+      diag.tokenAppName = d.application
+      diag.tokenUserId = d.user_id
+      diag.scopes = d.scopes || []
+      diag.expiresAt = d.expires_at ? new Date(d.expires_at * 1000).toISOString() : null
+      diag.missingScopes = REQUIRED_SCOPES.filter((s) => !(d.scopes || []).includes(s))
+
+      if (d.is_valid === false) diag.problems.push('Jeton invalide ou révoqué')
+      if (diag.missingScopes.length) {
+        diag.problems.push(`Autorisations manquantes : ${diag.missingScopes.join(', ')}`)
+      }
+      if (d.expires_at && d.expires_at * 1000 < Date.now()) {
+        diag.problems.push('Jeton expiré')
+      }
+    } catch (err: any) {
+      diag.problems.push(`debug_token : ${err.response?.data?.error?.message || err.message}`)
+    }
+  } else {
+    diag.hints.push("Définissez FACEBOOK_APP_ID et FACEBOOK_APP_SECRET pour un diagnostic complet du jeton (type, autorisations, expiration).")
+  }
+
+  // 2. Accès effectif à la Page (et récupération du jeton de Page)
+  const resolved = await resolvePageAccessToken(true)
+  diag.usedTokenSource = resolved.source
+  try {
+    const res = await axios.get(`${FACEBOOK_GRAPH_BASE}/${pageId}`, {
+      params: { fields: 'id,name,tasks', access_token: resolved.token },
+      timeout: 10000,
+    })
+    const tasks: string[] = res.data?.tasks || []
+    diag.page = {
+      id: res.data?.id || pageId,
+      name: res.data?.name,
+      // `tasks` n'est renvoyé qu'avec un jeton utilisateur ; avec un jeton de
+      // Page l'absence de la liste n'est pas un signe d'échec.
+      canPost: tasks.length ? tasks.includes('CREATE_CONTENT') : true,
+    }
+    if (tasks.length && !tasks.includes('CREATE_CONTENT')) {
+      diag.problems.push("Le compte lié n'a pas le rôle permettant de publier sur la Page (CREATE_CONTENT).")
+    }
+  } catch (err: any) {
+    const message = err.response?.data?.error?.message || err.message
+    diag.problems.push(`Accès à la Page : ${message}`)
+    const hint = facebookErrorHint(message)
+    if (hint) diag.hints.push(hint)
+  }
+
+  // Un jeton utilisateur ne bloque pas la publication tant que le jeton de
+  // la Page en est dérivé (c'est ce que fait resolvePageAccessToken) — ce
+  // n'est un problème que si la dérivation échoue.
+  if (diag.tokenType && diag.tokenType !== 'PAGE') {
+    if (resolved.source === 'page') {
+      diag.hints.push(`Le jeton configuré est de type ${diag.tokenType} : le jeton de la Page en est dérivé automatiquement avant chaque publication. Pour éviter tout aléa, vous pouvez enregistrer directement le jeton de Page (champ access_token renvoyé par /me/accounts).`)
+    } else {
+      diag.problems.push(`Jeton de type ${diag.tokenType} et jeton de Page non dérivable — publier exige un jeton de Page.`)
+      diag.hints.push("Reconnectez la Page dans les Outils Graph API (pages_show_list, pages_manage_posts, pages_read_engagement), puis renseignez le jeton de la Page dans FACEBOOK_PAGE_ACCESS_TOKEN.")
+    }
+  }
+
+  diag.ok = diag.problems.length === 0
+  return diag
 }
 
 // ─── PUBLICATION TWITTER/X ────────────────────────────────────
