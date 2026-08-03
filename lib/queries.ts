@@ -911,6 +911,138 @@ export async function getAdminAnalyticsStats(days: number = 30): Promise<{
   }
 }
 
+// ─── PAGES & RECHERCHES POPULAIRES (index public) ───────────
+/**
+ * Le classement affiché sur l'accueil est dérivé du trafic réel
+ * (page_visit_events) et des clics de recherche (search_click_events). Il sert
+ * à la fois de raccourci pour les visiteurs et de maillage interne : les pages
+ * les plus demandées reçoivent un lien depuis la page la plus visitée du site.
+ */
+
+export type PopularPage = {
+  path: string
+  label: string
+  visits: number
+}
+
+export type PopularSearch = {
+  query: string
+  clicks: number
+}
+
+/** Les chemins sans intérêt dans un index public (accueil, back-office, API). */
+const POPULAR_PAGES_EXCLUDED_PATHS = ['/', '/ar', '/admin', '/ar/admin']
+const POPULAR_PAGES_EXCLUDED_PREFIXES = ['/admin/', '/ar/admin/', '/api/', '/pro/leads']
+
+/** Le titre stocké vient de document.title : il porte le suffixe du site. */
+const PAGE_TITLE_SITE_SUFFIX = /\s*[|–—-]\s*(dwadz|pharma\s*dz|pharmaveille[\s-]*dz)\s*$/i
+const MAX_POPULAR_LABEL_LENGTH = 80
+
+function cleanPageTitle(raw: string): string {
+  const collapsed = raw.replace(/\s+/g, ' ').trim()
+  const withoutSuffix = collapsed.replace(PAGE_TITLE_SITE_SUFFIX, '').trim()
+  const label = withoutSuffix || collapsed
+  if (label.length <= MAX_POPULAR_LABEL_LENGTH) return label
+  return `${label.slice(0, MAX_POPULAR_LABEL_LENGTH).replace(/\s+\S*$/, '')}…`
+}
+
+/**
+ * Repli quand aucune visite n'a enregistré de titre : on reconstruit un libellé
+ * lisible à partir du dernier segment parlant de l'URL
+ * (/medicament/enregistrement/1943/doliprane-500-mg → « Doliprane 500 mg »).
+ */
+function labelFromPath(path: string): string {
+  const segments = path.split('/').filter(Boolean).filter(seg => seg !== 'ar')
+  const meaningful = segments.filter(seg => !/^\d+$/.test(seg))
+  const last = meaningful[meaningful.length - 1] ?? segments[segments.length - 1]
+  if (!last) return path
+
+  let decoded = last
+  try {
+    decoded = decodeURIComponent(last)
+  } catch {
+    // segment mal encodé : on garde la forme brute
+  }
+
+  const words = decoded.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim()
+  if (!words) return path
+  return words.charAt(0).toUpperCase() + words.slice(1)
+}
+
+/** Top des pages réellement consultées sur la période, hors accueil et admin. */
+export async function getPopularPages(limit: number = 10, days: number = 30): Promise<PopularPage[]> {
+  try {
+    if (!await hasTable('page_visit_events')) return []
+
+    const clampedLimit = Math.min(Math.max(limit, 1), 50)
+    const clampedDays = Math.min(Math.max(days, 1), 365)
+
+    const rows = await query<{ page_path: string; page_title: string | null; visits: number }>(`
+      WITH ranked AS (
+        SELECT page_path, COUNT(*)::INT AS visits
+        FROM page_visit_events
+        WHERE created_at >= NOW() - $1::INTERVAL
+          AND page_path <> ALL($2::TEXT[])
+          AND page_path NOT LIKE ALL($3::TEXT[])
+        GROUP BY page_path
+        ORDER BY visits DESC, page_path ASC
+        LIMIT $4
+      )
+      SELECT
+        ranked.page_path,
+        ranked.visits,
+        (
+          SELECT event.page_title
+          FROM page_visit_events event
+          WHERE event.page_path = ranked.page_path
+            AND COALESCE(event.page_title, '') <> ''
+          ORDER BY event.created_at DESC
+          LIMIT 1
+        ) AS page_title
+      FROM ranked
+      ORDER BY ranked.visits DESC, ranked.page_path ASC
+    `, [
+      `${clampedDays} days`,
+      POPULAR_PAGES_EXCLUDED_PATHS,
+      POPULAR_PAGES_EXCLUDED_PREFIXES.map(prefix => `${prefix}%`),
+      clampedLimit,
+    ])
+
+    return rows.map(row => ({
+      path: row.page_path,
+      label: row.page_title ? cleanPageTitle(row.page_title) : labelFromPath(row.page_path),
+      visits: row.visits,
+    }))
+  } catch {
+    // L'accueil ne doit jamais tomber à cause d'un bloc secondaire
+    return []
+  }
+}
+
+/** Top des termes tapés dans le moteur de recherche (clic sur un résultat). */
+export async function getPopularSearches(limit: number = 10, days: number = 30): Promise<PopularSearch[]> {
+  try {
+    if (!await hasTable('search_click_events')) return []
+
+    const clampedLimit = Math.min(Math.max(limit, 1), 50)
+    const clampedDays = Math.min(Math.max(days, 1), 365)
+
+    const rows = await query<{ query: string; clicks: number }>(`
+      SELECT LOWER(TRIM(search_query)) AS query, COUNT(*)::INT AS clicks
+      FROM search_click_events
+      WHERE created_at >= NOW() - $1::INTERVAL
+        AND LENGTH(TRIM(search_query)) >= 2
+      GROUP BY LOWER(TRIM(search_query))
+      ORDER BY clicks DESC, query ASC
+      LIMIT $2
+    `, [`${clampedDays} days`, clampedLimit])
+
+    return rows
+  } catch {
+    return []
+  }
+}
+
 type AdvancedSearchCondition = {
   field: string
   operator: string

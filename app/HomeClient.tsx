@@ -5,6 +5,7 @@ import { DrugCard } from '@/components/drug/DrugCard'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 import { AdHorizontal } from '@/components/ads/AdBanner'
 import { getFeaturedArticles } from '@/lib/articles'
+import type { PopularPage, PopularSearch } from '@/lib/queries'
 
 // Remplacez ces IDs par vos vrais slots AdSense (disponibles dans Google AdSense > Annonces > Par bloc)
 const AD_SLOT_HOME_TOP = process.env.NEXT_PUBLIC_AD_SLOT_HOME_TOP || '1234567890'
@@ -30,11 +31,15 @@ export function HomeClient({
   nouveautes,
   retraits,
   lastVersionDate,
+  popularPages = [],
+  popularSearches = [],
 }: {
   stats: Stats | null
   nouveautes: any[]
   retraits: any[]
   lastVersionDate: string | null
+  popularPages?: PopularPage[]
+  popularSearches?: PopularSearch[]
 }) {
   const { lang } = useLanguage()
   const t = (fr: string, ar: string) => lang === 'ar' ? ar : fr
@@ -157,6 +162,57 @@ export function HomeClient({
               ))}
             </div>
           </section>
+
+          {/* Index des pages les plus consultées — alimenté par le trafic réel */}
+          {popularPages.length > 0 && (
+            <section style={{ marginBottom: 36 }}>
+              <div className="section-title">
+                🔥 {t(
+                  `Top ${popularPages.length} des pages les plus recherchées`,
+                  `أكثر ${popularPages.length} صفحات بحثًا`
+                )}
+              </div>
+              <div className="section-sub">
+                {t(
+                  'Le classement des pages les plus consultées par les visiteurs sur les 30 derniers jours.',
+                  'ترتيب الصفحات الأكثر زيارة من طرف المستخدمين خلال آخر 30 يومًا.'
+                )}
+              </div>
+
+              <ol className="home-popular-list">
+                {popularPages.map((page, index) => (
+                  <li key={page.path} className="home-popular-row">
+                    <Link href={page.path} className="home-popular-item">
+                      <span className="home-popular-rank">{index + 1}</span>
+                      <span className="home-popular-label">{page.label}</span>
+                      <span className="home-popular-count">
+                        {page.visits.toLocaleString('fr')} {t('vues', 'مشاهدة')}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ol>
+
+              {popularSearches.length > 0 && (
+                <div className="home-popular-searches">
+                  <div className="home-popular-searches-title">
+                    🔎 {t('Recherches populaires', 'عمليات البحث الشائعة')}
+                  </div>
+                  <div className="home-popular-chips">
+                    {popularSearches.map(search => (
+                      <Link
+                        key={search.query}
+                        href={`/recherche?q=${encodeURIComponent(search.query)}`}
+                        className="home-popular-chip"
+                      >
+                        {search.query}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
 
           {/* Nouveautés + Retraits */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
