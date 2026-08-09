@@ -59,6 +59,9 @@ type FacebookDiagnostic = {
   missingScopes?: string[]
   page?: { id: string; name?: string; canPost: boolean }
   usedTokenSource?: 'page' | 'configured'
+  tokenAttempts?: { path: string; ok: boolean; error?: string }[]
+  identity?: { id?: string; name?: string; error?: string }
+  visiblePages?: { id: string; name?: string }[]
   ok: boolean
   problems: string[]
   hints: string[]
@@ -282,9 +285,33 @@ function FacebookDiagnosticPanel() {
               {diag.expiresAt && ` — expire le ${new Date(diag.expiresAt).toLocaleDateString('fr-FR')}`}
               {diag.expiresAt === null && diag.tokenType && ' — sans expiration'}
             </li>
+            <li>Compte du jeton : {diag.identity?.error
+              ? <span style={{ color: '#b91c1c' }}>non reconnu — {diag.identity.error}</span>
+              : diag.identity?.name
+                ? `${diag.identity.name} (${diag.identity.id})`
+                : '—'}
+            </li>
+            {diag.visiblePages?.length ? (
+              <li>Pages accessibles : {diag.visiblePages.map((p) => `${p.name || '—'} (${p.id})`).join(', ')}</li>
+            ) : null}
             {diag.tokenAppName && <li>Application : {diag.tokenAppName} ({diag.tokenAppId})</li>}
             {diag.scopes?.length ? <li>Autorisations : {diag.scopes.join(', ')}</li> : null}
           </ul>
+
+          {diag.tokenAttempts?.length ? (
+            <details style={{ marginTop: 8 }}>
+              <summary style={{ cursor: 'pointer', fontSize: 12, color: '#64748b' }}>
+                Dérivation du jeton de Page — {diag.tokenAttempts.length} tentative(s)
+              </summary>
+              <ul style={{ margin: '6px 0 0', paddingLeft: 18, fontSize: 12, lineHeight: 1.6 }}>
+                {diag.tokenAttempts.map((a, i) => (
+                  <li key={i} style={{ color: a.ok ? '#065f46' : '#b91c1c' }}>
+                    {a.ok ? '✓' : '✗'} {a.path}{a.error ? ` — ${a.error}` : ''}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
 
           {diag.problems.map((p, i) => (
             <div key={i} style={{ marginTop: 8, fontSize: 13, color: '#b91c1c' }}>⚠️ {p}</div>

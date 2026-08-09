@@ -205,25 +205,34 @@ function withHint(error?: string): string | undefined {
  */
 const PAGE_TOKEN_TTL_MS = 30 * 60 * 1000
 const globalForFbToken = globalThis as unknown as {
-  _fbPageToken?: { token: string; source: 'page' | 'configured'; at: number }
+  _fbPageToken?: { token: string; source: 'page' | 'configured'; at: number; attempts: TokenAttempt[] }
 }
 
-export async function resolvePageAccessToken(force = false): Promise<{
+/** Trace d'une tentative de dérivation, affichée par le diagnostic admin. */
+export type TokenAttempt = { path: string; ok: boolean; error?: string }
+
+export type ResolvedPageToken = {
   token?: string
   pageId?: string
   source?: 'page' | 'configured'
   error?: string
-}> {
+  attempts: TokenAttempt[]
+}
+
+export async function resolvePageAccessToken(force = false): Promise<ResolvedPageToken> {
   const configured = process.env.FACEBOOK_PAGE_ACCESS_TOKEN
   const pageId = process.env.FACEBOOK_PAGE_ID
-  if (!configured || !pageId) return { error: 'Facebook credentials manquants' }
+  if (!configured || !pageId) return { error: 'Facebook credentials manquants', attempts: [] }
 
   const cached = globalForFbToken._fbPageToken
   if (!force && cached && Date.now() - cached.at < PAGE_TOKEN_TTL_MS) {
-    return { token: cached.token, pageId, source: cached.source }
+    return { token: cached.token, pageId, source: cached.source, attempts: cached.attempts }
   }
 
   let resolved: { token: string; source: 'page' | 'configured' } = { token: configured, source: 'configured' }
+  const attempts: TokenAttempt[] = []
+
+  // 1. Le plus direct : le jeton de la Page est un champ de la Page.
   try {
     const res = await axios.get(`${FACEBOOK_GRAPH_BASE}/${pageId}`, {
       params: { fields: 'access_token', access_token: configured },
@@ -231,15 +240,51 @@ export async function resolvePageAccessToken(force = false): Promise<{
     })
     if (typeof res.data?.access_token === 'string' && res.data.access_token) {
       resolved = { token: res.data.access_token, source: 'page' }
+      attempts.push({ path: `GET /${pageId}?fields=access_token`, ok: true })
+    } else {
+      attempts.push({ path: `GET /${pageId}?fields=access_token`, ok: false, error: 'champ access_token absent de la réponse' })
     }
   } catch (err: any) {
-    // Le jeton configuré ne permet pas de lire le jeton de la Page : on
-    // publie avec ce qu'on a et on laisse l'erreur de publication parler.
-    console.warn('[social] Jeton de Page non résolu:', err.response?.data?.error?.message || err.message)
+    attempts.push({
+      path: `GET /${pageId}?fields=access_token`,
+      ok: false,
+      error: err.response?.data?.error?.message || err.message,
+    })
   }
 
-  globalForFbToken._fbPageToken = { ...resolved, at: Date.now() }
-  return { token: resolved.token, pageId, source: resolved.source }
+  // 2. Repli : la liste des Pages du compte porte aussi leurs jetons.
+  if (resolved.source !== 'page') {
+    try {
+      const res = await axios.get(`${FACEBOOK_GRAPH_BASE}/me/accounts`, {
+        params: { fields: 'id,name,access_token', access_token: configured },
+        timeout: 10000,
+      })
+      const page = (res.data?.data || []).find((p: any) => String(p.id) === String(pageId))
+      if (page?.access_token) {
+        resolved = { token: page.access_token, source: 'page' }
+        attempts.push({ path: 'GET /me/accounts', ok: true })
+      } else {
+        attempts.push({
+          path: 'GET /me/accounts',
+          ok: false,
+          error: (res.data?.data || []).length
+            ? `la Page ${pageId} n'est pas dans la liste des Pages de ce compte`
+            : 'aucune Page accessible avec ce jeton',
+        })
+      }
+    } catch (err: any) {
+      attempts.push({ path: 'GET /me/accounts', ok: false, error: err.response?.data?.error?.message || err.message })
+    }
+  }
+
+  if (resolved.source !== 'page') {
+    // Aucune dérivation possible : on publie avec le jeton configuré et on
+    // laisse l'erreur de publication (et le diagnostic) parler.
+    console.warn('[social] Jeton de Page non résolu:', attempts.map(a => `${a.path} → ${a.error}`).join(' | '))
+  }
+
+  globalForFbToken._fbPageToken = { ...resolved, at: Date.now(), attempts }
+  return { token: resolved.token, pageId, source: resolved.source, attempts }
 }
 
 export async function postToFacebook(message: string): Promise<{ success: boolean; postId?: string; error?: string }> {
@@ -299,6 +344,11 @@ export type FacebookDiagnostic = {
   missingScopes?: string[]
   page?: { id: string; name?: string; canPost: boolean }
   usedTokenSource?: 'page' | 'configured'
+  /** Tentatives de dérivation du jeton de Page, avec leur erreur éventuelle. */
+  tokenAttempts?: TokenAttempt[]
+  /** Ce que le jeton configuré arrive à faire : identité et Pages visibles. */
+  identity?: { id?: string; name?: string; error?: string }
+  visiblePages?: { id: string; name?: string }[]
   ok: boolean
   problems: string[]
   hints: string[]
@@ -358,9 +408,40 @@ export async function diagnoseFacebook(): Promise<FacebookDiagnostic> {
     diag.hints.push("Définissez FACEBOOK_APP_ID et FACEBOOK_APP_SECRET pour un diagnostic complet du jeton (type, autorisations, expiration).")
   }
 
-  // 2. Accès effectif à la Page (et récupération du jeton de Page)
+  // 2. Ce que le jeton sait faire par lui-même : sans app id/secret, c'est
+  // la seule façon de distinguer « jeton révoqué » de « Page inaccessible ».
+  try {
+    const me = await axios.get(`${FACEBOOK_GRAPH_BASE}/me`, {
+      params: { fields: 'id,name', access_token: configuredToken },
+      timeout: 10000,
+    })
+    diag.identity = { id: me.data?.id, name: me.data?.name }
+  } catch (err: any) {
+    // Informatif à ce stade : seul l'accès effectif à la Page (ci-dessous)
+    // décide si la publication est possible.
+    diag.identity = { error: err.response?.data?.error?.message || err.message }
+  }
+
+  try {
+    const pages = await axios.get(`${FACEBOOK_GRAPH_BASE}/me/accounts`, {
+      params: { fields: 'id,name', access_token: configuredToken },
+      timeout: 10000,
+    })
+    diag.visiblePages = (pages.data?.data || []).map((p: any) => ({ id: String(p.id), name: p.name }))
+    if (diag.visiblePages?.length && !diag.visiblePages.some((p) => p.id === String(pageId))) {
+      diag.problems.push(
+        `La Page ${pageId} n'apparaît pas parmi les Pages accessibles avec ce jeton (${diag.visiblePages.map((p) => `${p.name} — ${p.id}`).join(', ')}). Vérifiez FACEBOOK_PAGE_ID.`
+      )
+    }
+  } catch {
+    // Sans pages_show_list la liste est inaccessible : ce n'est pas
+    // bloquant en soi, les tentatives de dérivation ci-dessous le diront.
+  }
+
+  // 3. Accès effectif à la Page (et récupération du jeton de Page)
   const resolved = await resolvePageAccessToken(true)
   diag.usedTokenSource = resolved.source
+  diag.tokenAttempts = resolved.attempts
   try {
     const res = await axios.get(`${FACEBOOK_GRAPH_BASE}/${pageId}`, {
       params: { fields: 'id,name,tasks', access_token: resolved.token },
@@ -382,20 +463,38 @@ export async function diagnoseFacebook(): Promise<FacebookDiagnostic> {
     diag.problems.push(`Accès à la Page : ${message}`)
     const hint = facebookErrorHint(message)
     if (hint) diag.hints.push(hint)
+    // La Page est injoignable : si le jeton n'est déjà reconnu par aucun
+    // compte, c'est lui qui est en cause, pas l'identifiant de la Page.
+    if (diag.identity?.error) {
+      diag.problems.push(`Le jeton n'est reconnu par aucun compte : ${diag.identity.error}`)
+    }
   }
 
   // Un jeton utilisateur ne bloque pas la publication tant que le jeton de
   // la Page en est dérivé (c'est ce que fait resolvePageAccessToken) — ce
   // n'est un problème que si la dérivation échoue.
-  if (diag.tokenType && diag.tokenType !== 'PAGE') {
-    if (resolved.source === 'page') {
+  if (resolved.source === 'page') {
+    if (diag.tokenType && diag.tokenType !== 'PAGE') {
       diag.hints.push(`Le jeton configuré est de type ${diag.tokenType} : le jeton de la Page en est dérivé automatiquement avant chaque publication. Pour éviter tout aléa, vous pouvez enregistrer directement le jeton de Page (champ access_token renvoyé par /me/accounts).`)
-    } else {
-      diag.problems.push(`Jeton de type ${diag.tokenType} et jeton de Page non dérivable — publier exige un jeton de Page.`)
-      diag.hints.push("Reconnectez la Page dans les Outils Graph API (pages_show_list, pages_manage_posts, pages_read_engagement), puis renseignez le jeton de la Page dans FACEBOOK_PAGE_ACCESS_TOKEN.")
     }
+  } else if (diag.tokenType !== 'PAGE') {
+    // Ni jeton de Page confirmé, ni dérivation possible : c'est le cas qui
+    // produit « Cannot call API for app … on behalf of user … ».
+    const detail = (resolved.attempts || []).filter(a => !a.ok).map(a => `${a.path} → ${a.error}`).join(' ; ')
+    diag.problems.push(`Jeton de Page non dérivable${detail ? ` (${detail})` : ''}.`)
+    diag.hints.push(
+      "Marche à suivre : 1) ouvrez developers.facebook.com/tools/explorer, sélectionnez l'application et la Page ; " +
+      '2) demandez pages_show_list, pages_manage_posts et pages_read_engagement, puis « Generate Access Token » et acceptez la Page ; ' +
+      "3) vérifiez dans facebook.com/settings?tab=business_tools que l'application n'a pas été retirée ; " +
+      "4) si l'application est en mode Développement, le compte doit y avoir un rôle (Administrateur/Testeur) ; " +
+      '5) copiez le jeton renvoyé par GET /me/accounts pour cette Page dans FACEBOOK_PAGE_ACCESS_TOKEN, puis rendez-le longue durée via /oauth/access_token?grant_type=fb_exchange_token.'
+    )
   }
 
+  // La même cause remonte souvent par plusieurs chemins (identité, Page,
+  // dérivation) : on ne l'affiche qu'une fois.
+  diag.problems = Array.from(new Set(diag.problems))
+  diag.hints = Array.from(new Set(diag.hints))
   diag.ok = diag.problems.length === 0
   return diag
 }

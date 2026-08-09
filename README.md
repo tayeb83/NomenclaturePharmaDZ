@@ -255,21 +255,33 @@ signifie que `FACEBOOK_PAGE_ACCESS_TOKEN` contient un **jeton utilisateur**
 (ou un jeton émis pour un compte qui n'autorise plus l'application) : l'API
 Graph exige un **jeton de Page** pour publier.
 
-- **Correction automatique** : avant chaque publication, l'application
-  interroge `GET /{page-id}?fields=access_token` et publie avec le jeton de
-  Page ainsi dérivé (résultat mis en cache 30 min). Un jeton utilisateur
-  valide suffit donc désormais à publier.
+- **Correction automatique** : avant chaque publication, l'application tente
+  `GET /{page-id}?fields=access_token`, puis `GET /me/accounts` en repli, et
+  publie avec le jeton de Page ainsi dérivé (mis en cache 30 min). Un jeton
+  utilisateur **valide** suffit donc à publier.
+- **Si les deux tentatives échouent avec la même erreur**, le problème est
+  côté Meta et aucun code ne peut le contourner : le compte qui a émis le
+  jeton n'autorise plus l'application. Il faut regénérer le jeton.
 - **Diagnostic** : bouton « Vérifier la configuration » sur `/admin/social`
-  (route `GET /api/admin/social/diagnostic`) — type de jeton, application
-  émettrice, autorisations, expiration, accès à la Page, et la marche à
-  suivre en cas de blocage. Renseigner `FACEBOOK_APP_ID` et
-  `FACEBOOK_APP_SECRET` active l'inspection complète du jeton
-  (`debug_token`).
-- Si la dérivation échoue, reconnectez la Page dans les Outils Graph API
-  avec `pages_show_list`, `pages_manage_posts` et `pages_read_engagement`,
-  puis copiez le champ `access_token` renvoyé par `/me/accounts`.
-- Les erreurs de publication sont désormais enregistrées et affichées avec
-  la piste de correction correspondante.
+  (route `GET /api/admin/social/diagnostic`) — type de jeton, compte
+  propriétaire, Pages accessibles, autorisations, expiration, accès à la
+  Page, **et le détail de chaque tentative de dérivation avec son erreur**.
+  Renseigner `FACEBOOK_APP_ID` et `FACEBOOK_APP_SECRET` active l'inspection
+  complète du jeton (`debug_token`).
+- Marche à suivre pour regénérer un jeton valide :
+  1. `developers.facebook.com/tools/explorer` → sélectionner l'application
+     **et** la Page ;
+  2. demander `pages_show_list`, `pages_manage_posts`,
+     `pages_read_engagement` → « Generate Access Token » → accepter la Page ;
+  3. vérifier dans `facebook.com/settings?tab=business_tools` que
+     l'application n'a pas été retirée du compte ;
+  4. si l'application est en mode Développement, le compte doit y avoir un
+     rôle (Administrateur / Testeur) ;
+  5. reprendre le jeton de la Page (`GET /me/accounts`), l'échanger en
+     longue durée (`/oauth/access_token?grant_type=fb_exchange_token`) et le
+     placer dans `FACEBOOK_PAGE_ACCESS_TOKEN`.
+- Les erreurs de publication sont enregistrées dans `social_posts` et
+  affichées avec la piste de correction correspondante.
 
 ### Pharmacies de garde — publication Facebook (automatique + manuelle)
 
