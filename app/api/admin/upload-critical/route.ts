@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import * as XLSX from 'xlsx'
 import { checkAdminAuth } from '@/lib/admin-auth'
+import { NOMENCLATURE_TAG } from '@/lib/medicament-cache'
 import { getPool } from '@/lib/db'
 
 export const runtime = 'nodejs'
@@ -203,6 +205,10 @@ export async function POST(req: NextRequest) {
     await ensureCriticalTable(client)
     const imported = await upsertCriticalRows(client, rows, sourceLabel, publishedAt)
     await client.query('COMMIT')
+
+    // Le badge « médicament critique » est calculé dans les fiches mises en
+    // cache : il faut les invalider pour que la nouvelle liste s'y reflète.
+    revalidateTag(NOMENCLATURE_TAG)
 
     return NextResponse.json({
       success: true,

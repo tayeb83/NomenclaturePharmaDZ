@@ -1,7 +1,14 @@
 import { NewsletterSection } from '@/components/ui/NewsletterSection'
 import type { Metadata } from 'next'
 
-export const metadata: Metadata = { title: 'Newsletter' }
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
+
+export const metadata: Metadata = {
+  title: 'Newsletter',
+  // ?confirmed / ?unsubscribed sont des états d'affichage, pas des pages :
+  // ils doivent se rabattre sur l'URL nue.
+  alternates: { canonical: `${APP_URL}/newsletter` },
+}
 
 export default function NewsletterPage({
   searchParams,

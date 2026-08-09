@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { checkAdminAuth } from '@/lib/admin-auth'
+import { NOMENCLATURE_TAG } from '@/lib/medicament-cache'
 import { getPool } from '@/lib/db'
 import {
   parseNomenclatureFile,
@@ -375,6 +377,11 @@ export async function POST(req: NextRequest) {
     ])
 
     await client.query('COMMIT')
+
+    // Les fiches sont servies depuis le cache de données (lib/medicament-cache) :
+    // sans cette invalidation, la nouvelle nomenclature mettrait jusqu'à 24 h à
+    // apparaître sur le site.
+    revalidateTag(NOMENCLATURE_TAG)
 
     return NextResponse.json({
       success: true,

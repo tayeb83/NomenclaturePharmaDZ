@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { getRetraitsByAnnee, getAllRetraitAnnees } from '@/lib/queries'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
+import { medicamentPath } from '@/lib/medicament-url'
 import { PrintButton } from '@/components/ui/PrintButton'
 import { GlossarySection } from '@/components/ui/GlossarySection'
 import { AdInContent } from '@/components/ads/AdBanner'
@@ -177,7 +178,7 @@ export default async function RetraitsAnneePage({ params }: { params: { annee: s
                 {items.map(med => (
                   <Link
                     key={med.id}
-                    href={`/medicament/retrait/${med.id}`}
+                    href={medicamentPath('retrait', med.id, med)}
                     style={{
                       display: 'block', background: 'white', border: '1.5px solid #fecaca',
                       borderRadius: 9, padding: '12px 16px', textDecoration: 'none',

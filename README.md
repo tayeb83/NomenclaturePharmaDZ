@@ -60,6 +60,46 @@ d'installation et documentation complète des pages : **`/help`**
   et la newsletter. Pour un rate limiting distribué plus strict, activer le
   pare-feu Vercel (WAF) en complément.
 
+## Indexation (règles à ne pas casser)
+
+Le catalogue représente ~11 000 URLs de fiches (FR + AR) pour un site sans
+grande autorité : Google n'explore qu'une fraction de ce volume à chaque
+passage. Tout ce qui gaspille ce budget se paye en pages « Détectée,
+actuellement non indexée ». D'où les invariants suivants.
+
+- **Un seul chemin par fiche.** L'URL canonique porte le segment descriptif
+  (`/medicament/enregistrement/1020/molsidomine-beker-2mg-comprime-secable`).
+  Tout lien interne passe par `medicamentPath()` — **jamais**
+  `` `/medicament/${source}/${id}` `` écrit à la main : l'URL nue déclenche
+  une redirection, et faire explorer 11 000 redirections revient à diviser
+  par deux le budget utile. Les fiches atteintes sans slug répondent en
+  **308** (permanent) et non en 307 : un 307 demande aux moteurs de garder
+  l'ancienne URL dans l'index, où elle concurrence la forme canonique.
+- **Pas de `alternates` dans `app/layout.tsx`.** Les métadonnées Next sont
+  héritées : un canonical déclaré à la racine s'applique à toute page qui
+  n'en définit pas, et lui fait déclarer l'accueil comme version de
+  référence. Toute nouvelle page publique déclare son propre
+  `alternates.canonical` — y compris les composants clients, via un
+  `layout.tsx` frère (cf. `app/help/layout.tsx`).
+- **Les pages `/ar/*` doivent différer de leurs jumelles FR.** Les données
+  (nom de marque, DCI, dosage) restent en caractères latins : si l'habillage
+  éditorial reste français lui aussi, les deux versions sont identiques à
+  quelques mots près et Google les traite comme des doublons. Tout libellé
+  visible passe par `pickLang()`, et chaque fiche porte un résumé rédigé
+  (`buildResume()`) dans la langue de sa route.
+- **`lastmod` honnête dans le sitemap.** Dater toutes les URLs de l'instant
+  de génération revient à annoncer 20 000 modifications quotidiennes ; Google
+  le constate et cesse d'accorder du crédit au signal. Les pages du catalogue
+  portent la date de la nomenclature en vigueur (`getLastVersionDate()`),
+  les gardes la date du jour, les pages figées aucune date.
+- **Fiches servies depuis le cache de données** (`lib/medicament-cache.ts`) :
+  le layout racine lit cookies et en-têtes, donc tout est rendu
+  dynamiquement — sans ce cache, chaque fiche coûterait une demi-douzaine
+  d'allers-retours PostgreSQL à chaque visite de Googlebot. L'ingestion
+  d'une nomenclature ou d'une liste de médicaments critiques appelle
+  `revalidateTag(NOMENCLATURE_TAG)` : toute nouvelle route d'import qui
+  modifie ces tables doit faire de même.
+
 ---
 
 # Guide de déploiement (Recherche • Alertes • Substitution)

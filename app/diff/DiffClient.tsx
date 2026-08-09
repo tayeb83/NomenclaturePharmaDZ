@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
+import { medicamentPath } from '@/lib/medicament-url'
 
 type AddedDrug = {
   id: number
@@ -92,7 +93,7 @@ function AddedDrugRow({ drug }: { drug: AddedDrug }) {
       )}
       <div style={{ marginTop: 4 }}>
         <Link
-          href={`/medicament/enregistrement/${drug.id}`}
+          href={medicamentPath('enregistrement', drug.id, { ...drug, nom_marque: drug.nom_marque || '' })}
           style={{ fontSize: 11.5, color: '#0284c7', textDecoration: 'none', fontWeight: 600 }}
         >
           Voir la fiche →

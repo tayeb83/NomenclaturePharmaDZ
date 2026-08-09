@@ -170,7 +170,7 @@ export default async function DciPage({ params }: { params: { slug: string } }) 
             {meds.map(med => (
               <Link
                 key={med.id}
-                href={`/medicament/enregistrement/${med.id}`}
+                href={medicamentPath('enregistrement', med.id, med)}
                 style={{
                   display: 'block', background: 'white', border: '1.5px solid #e2e8f0',
                   borderRadius: 10, padding: '14px 16px', textDecoration: 'none',

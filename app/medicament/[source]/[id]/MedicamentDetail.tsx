@@ -1,6 +1,10 @@
-import { notFound, redirect } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import Link from 'next/link'
-import { getMedicamentById, getAlternatifsDCI, getAtcHierarchyByDci } from '@/lib/queries'
+import {
+  getCachedMedicamentById,
+  getCachedAlternatifsDCI,
+  getCachedAtcHierarchyByDci,
+} from '@/lib/medicament-cache'
 import type { Metadata } from 'next'
 import type { MedicamentDetail, AtcCode } from '@/lib/db-types'
 import { getCountryFlag } from '@/lib/countryFlag'
@@ -34,6 +38,81 @@ function googleBoxSearchHref(med: { nom_marque: string; dci: string; dosage: str
   return `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(parts.filter(Boolean).join(' '))}`
 }
 
+/**
+ * Résumé en prose d'une fiche, dans la langue de la route.
+ *
+ * Les fiches sont des tableaux étiquette/valeur : hors les quelques mots du
+ * nom commercial et de la DCI, deux fiches partagent la totalité de leur
+ * texte. Pour un moteur de recherche c'est la définition d'un doublon, et
+ * c'est ce qui vaut aux versions arabes d'être signalées « page en double »
+ * puis abandonnées avant même l'exploration. Ce paragraphe recompose les
+ * mêmes données en une phrase — qui varie donc d'une fiche à l'autre, et
+ * d'une langue à l'autre.
+ */
+function buildResume(
+  med: {
+    nom_marque: string
+    dci: string
+    dosage?: string | null
+    forme?: string | null
+    labo?: string | null
+    pays?: string | null
+    source?: string | null
+    statut?: string | null
+    prescription?: string | null
+    date_retrait?: string | null
+    motif_retrait?: string | null
+  },
+  lang: Lang
+): string {
+  const designation = [med.nom_marque, med.dosage].filter(Boolean).join(' ')
+  const forme = med.forme ? med.forme.toLowerCase() : null
+
+  if (lang === 'ar') {
+    const phrases: string[] = []
+    phrases.push(
+      `${designation} دواء${forme ? ` على شكل ${forme}` : ''} مادته الفعالة ${med.dci}` +
+      `${med.labo ? `، من إنتاج مخبر ${med.labo}` : ''}${med.pays ? ` (${med.pays})` : ''}.`
+    )
+    if (med.source === 'retrait') {
+      phrases.push(
+        `تم سحب هذا الدواء من التسمية الوطنية للمنتجات الصيدلانية${med.date_retrait ? ` بتاريخ ${med.date_retrait}` : ''}` +
+        `${med.motif_retrait ? ` للسبب التالي : ${med.motif_retrait}` : ''}.`
+      )
+    } else if (med.source === 'non_renouvele') {
+      phrases.push('لم يتم تجديد رخصة التسويق (AMM) الخاصة بهذا الدواء : فهو لم يعد مسجلا في التسمية الجارية.')
+    } else {
+      phrases.push(
+        `وهو مسجل لدى وزارة الصناعة الصيدلانية${med.statut === 'F' ? ' ومصنع في الجزائر' : med.statut === 'I' ? ' ومستورد' : ''}.`
+      )
+    }
+    if (med.prescription) phrases.push(`الوصفة : ${med.prescription}.`)
+    phrases.push('تجدون أسفله البدائل الجنيسة المسجلة بنفس المادة الفعالة.')
+    return phrases.join(' ')
+  }
+
+  const phrases: string[] = []
+  phrases.push(
+    `${designation} est un médicament${forme ? ` sous forme de ${forme}` : ''} dont la substance active est ${med.dci}` +
+    `${med.labo ? `, produit par le laboratoire ${med.labo}` : ''}${med.pays ? ` (${med.pays})` : ''}.`
+  )
+  if (med.source === 'retrait') {
+    phrases.push(
+      `Il a été retiré de la nomenclature nationale des produits pharmaceutiques${med.date_retrait ? ` le ${med.date_retrait}` : ''}` +
+      `${med.motif_retrait ? `, pour le motif suivant : ${med.motif_retrait}` : ''}.`
+    )
+  } else if (med.source === 'non_renouvele') {
+    phrases.push("Son autorisation de mise sur le marché (AMM) n'a pas été renouvelée : il ne figure plus dans la nomenclature en vigueur.")
+  } else {
+    phrases.push(
+      `Il est enregistré auprès du Ministère de l'Industrie Pharmaceutique${med.statut === 'F' ? ' et fabriqué en Algérie' : med.statut === 'I' ? ' et importé' : ''}.`
+    )
+  }
+  if (med.prescription) phrases.push(`Prescription : ${med.prescription}.`)
+  phrases.push('Les génériques enregistrés avec la même substance active sont listés plus bas.')
+  return phrases.join(' ')
+}
+
 function motifColor(m: string | null) {
   if (!m) return '#6b7280'
   if (m.includes('INTERDICTION')) return '#dc2626'
@@ -60,7 +139,7 @@ export async function buildMedicamentMetadata(
 ): Promise<Metadata> {
   const id = parseInt(params.id)
   if (isNaN(id)) return { title: 'Médicament introuvable' }
-  const med = await getMedicamentById(params.source, id)
+  const med = await getCachedMedicamentById(params.source, id)
   if (!med) return { title: 'Médicament introuvable' }
   const dosageSuffix = med.dosage ? ` ${med.dosage}` : ''
   const dciSuffix = med.dci ? ` (${med.dci})` : ''
@@ -113,25 +192,28 @@ export async function MedicamentDetail(
   const id = parseInt(params.id)
   if (isNaN(id)) notFound()
 
-  const med = await getMedicamentById(params.source, id)
+  const med = await getCachedMedicamentById(params.source, id)
   if (!med) notFound()
 
   // Une seule URL par fiche : si le segment descriptif est absent ou périmé
   // (nom commercial modifié depuis la mise en cache d'un lien), on redirige
   // vers la forme canonique plutôt que de servir le même contenu sous
-  // plusieurs adresses.
+  // plusieurs adresses. La redirection est PERMANENTE (308) : un 307
+  // temporaire dit aux moteurs de conserver l'ancienne URL dans l'index, qui
+  // reste alors en concurrence avec la forme canonique et se retrouve
+  // signalée « page en double » ou « page avec redirection ».
   const expectedSlug = medicamentSlug(med)
   const requestedSlug = params.slug?.join('/') || ''
   if (expectedSlug && requestedSlug !== expectedSlug) {
-    redirect(medicamentPath(params.source, params.id, med, routeLang))
+    permanentRedirect(medicamentPath(params.source, params.id, med, routeLang))
   }
 
   const isRetrait = med.source === 'retrait'
   const isNonRenouv = med.source === 'non_renouvele'
 
   const [alternatifs, atcHierarchy] = await Promise.all([
-    getAlternatifsDCI(med.dci, 10),
-    getAtcHierarchyByDci(med.dci),
+    getCachedAlternatifsDCI(med.dci, 10),
+    getCachedAtcHierarchyByDci(med.dci),
   ])
   const autres = alternatifs.filter(a => !(med.source === 'enregistrement' && a.id === med.id))
   const atcLevel5 = atcHierarchy.find(a => a.niveau === 5)
@@ -148,12 +230,21 @@ export async function MedicamentDetail(
     ? { label: pickLang(lang, { fr: '⚠️ AMM non renouvelée', ar: '⚠️ AMM غير مجددة' }), bg: '#fef3c7', color: '#92400e' }
     : { label: pickLang(lang, { fr: '✅ Médicament actif', ar: '✅ دواء نشط' }), bg: '#d1fae5', color: '#065f46' }
 
+  // Le résumé suit la langue d'AFFICHAGE, comme le reste des libellés de la
+  // page. Les robots n'ont pas de cookie : pour eux `lang` vaut toujours
+  // `routeLang`, donc le texte indexé sous une URL reste bien celui de la
+  // langue qu'elle déclare.
+  const resume = buildResume(med, lang)
+
   const canonicalUrl = `${APP_URL}${medicamentPath(med.source, med.id, med, routeLang)}`
   const jsonLd = medicalPageJsonLd({
     name: [med.nom_marque, med.dosage, med.forme].filter(Boolean).join(' — '),
-    description: `${med.nom_marque}${med.dosage ? ` ${med.dosage}` : ''}${med.dci ? ` (${med.dci})` : ''}. Nomenclature pharmaceutique algérienne MIPH.`,
+    description: `${med.nom_marque}${med.dosage ? ` ${med.dosage}` : ''}${med.dci ? ` (${med.dci})` : ''}. ${pickLang(routeLang, {
+      fr: 'Nomenclature pharmaceutique algérienne MIPH.',
+      ar: 'التسمية الصيدلانية الجزائرية الرسمية (MIPH).',
+    })}`,
     url: canonicalUrl,
-    inLanguage: lang,
+    inLanguage: routeLang,
     about: {
       name: med.nom_marque,
       activeIngredient: med.dci,
@@ -184,7 +275,7 @@ export async function MedicamentDetail(
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap', marginTop: 12 }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '.06em', marginBottom: 4 }}>
-                DCI — DÉNOMINATION COMMUNE INTERNATIONALE
+                {pickLang(lang, { fr: 'DCI — DÉNOMINATION COMMUNE INTERNATIONALE', ar: 'DCI — التسمية الدولية المشتركة' })}
               </div>
               <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>{med.dci}</div>
               <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: 'white', margin: 0 }}>
@@ -222,19 +313,32 @@ export async function MedicamentDetail(
 
       {/* ─── Body ───────────────────────────────────────────── */}
       <div className="page-body">
-        {/* Lien vers l'autre version linguistique : utile au visiteur, et
-            c'est par ce lien que les moteurs découvrent la page jumelle. */}
         <div className="container" style={{ maxWidth: 960 }}>
+          {/* Lien vers l'autre version linguistique : utile au visiteur, et
+              c'est par ce lien que les moteurs découvrent la page jumelle. Il
+              suit la langue de la ROUTE et non la préférence d'affichage —
+              sinon la version française proposait un lien vers elle-même aux
+              visiteurs dont le cookie est en arabe. */}
           <p style={{ fontSize: 13, margin: '0 0 12px' }}>
-            {lang === 'ar' ? (
-              <Link href={medicamentPath(params.source, params.id, med, 'fr')} style={{ color: 'var(--blue)' }}>
+            {routeLang === 'ar' ? (
+              <Link href={medicamentPath(params.source, params.id, med, 'fr')} hrefLang="fr" style={{ color: 'var(--blue)' }}>
                 Voir cette fiche en français
               </Link>
             ) : (
-              <Link href={medicamentPath(params.source, params.id, med, 'ar')} style={{ color: 'var(--blue)' }}>
+              <Link href={medicamentPath(params.source, params.id, med, 'ar')} hrefLang="ar" style={{ color: 'var(--blue)' }}>
                 بالعربية — عرض بطاقة الدواء بالعربية
               </Link>
             )}
+          </p>
+
+          {/* Résumé rédigé à partir des données de la fiche. Une fiche
+              réduite à un tableau d'étiquettes et de valeurs n'offre presque
+              aucun texte propre : deux fiches se ressemblent alors à
+              l'octet près et Google les traite comme des doublons. Ce
+              paragraphe donne à chaque page — et à chaque version
+              linguistique — une prose qui lui appartient. */}
+          <p style={{ fontSize: 14, lineHeight: 1.75, color: '#334155', margin: '0 0 20px' }}>
+            {resume}
           </p>
         </div>
         <div className="container" style={{ maxWidth: 960 }}>
@@ -242,13 +346,14 @@ export async function MedicamentDetail(
           {/* Alerte retrait */}
           {isRetrait && med.motif_retrait && (
             <div className="alert-banner error" style={{ borderColor: motifColor(med.motif_retrait), color: motifColor(med.motif_retrait), background: '#fef2f2', marginBottom: 24 }}>
-              <strong>Motif de retrait :</strong> {med.motif_retrait}
+              <strong>{pickLang(lang, { fr: 'Motif de retrait :', ar: 'سبب السحب :' })}</strong> {med.motif_retrait}
               {med.date_retrait && <span style={{ marginLeft: 12, fontWeight: 400, color: '#7f1d1d' }}>({med.date_retrait})</span>}
             </div>
           )}
           {isNonRenouv && med.date_final && (
             <div className="alert-banner warning" style={{ marginBottom: 24 }}>
-              <strong>AMM expirée :</strong> Date de fin de validité — {med.date_final}
+              <strong>{pickLang(lang, { fr: 'AMM expirée :', ar: 'AMM منتهية الصلاحية :' })}</strong>{' '}
+              {pickLang(lang, { fr: 'Date de fin de validité', ar: 'تاريخ نهاية الصلاحية' })} — {med.date_final}
             </div>
           )}
           {med.is_critical && (
@@ -381,7 +486,7 @@ export async function MedicamentDetail(
             {/* ─── Observations (si présentes) ─────────────── */}
             {med.obs && (
               <div className="detail-card" style={{ gridColumn: '1 / -1' }}>
-                <div className="detail-card-title">📝 Observations</div>
+                <div className="detail-card-title">{pickLang(lang, { fr: '📝 Observations', ar: '📝 ملاحظات' })}</div>
                 <div style={{ fontSize: 13.5, color: '#334155', lineHeight: 1.7 }}>{med.obs}</div>
               </div>
             )}
@@ -390,9 +495,12 @@ export async function MedicamentDetail(
           {/* ─── Classification ATC ──────────────────────────── */}
           {atcHierarchy.length > 0 && (
             <div style={{ marginTop: 32 }}>
-              <div className="section-title">🧬 Classification ATC</div>
+              <div className="section-title">{pickLang(lang, { fr: '🧬 Classification ATC', ar: '🧬 التصنيف ATC' })}</div>
               <div className="section-sub">
-                Anatomical Therapeutic Chemical — Classification OMS
+                {pickLang(lang, {
+                  fr: 'Anatomical Therapeutic Chemical — Classification OMS',
+                  ar: 'Anatomical Therapeutic Chemical — تصنيف منظمة الصحة العالمية',
+                })}
               </div>
               <div style={{
                 background: '#f8fafc',
@@ -448,13 +556,20 @@ export async function MedicamentDetail(
           {/* ─── Médicaments similaires (même DCI) ───────────── */}
           {autres.length > 0 && (
             <div style={{ marginTop: 40 }}>
-              <div className="section-title">🔁 Autres médicaments avec la même DCI</div>
-              <div className="section-sub">{autres.length} médicament(s) enregistré(s) contenant <strong>{med.dci}</strong></div>
+              <div className="section-title">
+                {pickLang(lang, { fr: '🔁 Autres médicaments avec la même DCI', ar: '🔁 أدوية أخرى بنفس المادة الفعالة' })}
+              </div>
+              <div className="section-sub">
+                {pickLang(lang, {
+                  fr: <>{autres.length} médicament(s) enregistré(s) contenant <strong>{med.dci}</strong></>,
+                  ar: <>{autres.length} دواء مسجل يحتوي على <strong>{med.dci}</strong></>,
+                })}
+              </div>
               <div className="detail-alt-grid">
                 {autres.map(a => (
                   <Link
                     key={a.id}
-                    href={`/medicament/enregistrement/${a.id}`}
+                    href={medicamentPath('enregistrement', a.id, a, routeLang)}
                     className="detail-alt-card"
                   >
                     <div className="detail-alt-name">{a.nom_marque}</div>
@@ -499,7 +614,7 @@ export async function MedicamentDetail(
               borderRadius: 8, fontWeight: 600, fontSize: 13, textDecoration: 'none',
               transition: 'all .15s',
             }}>
-              🔍 Tous les médicaments avec cette DCI
+              {pickLang(lang, { fr: '🔍 Tous les médicaments avec cette DCI', ar: '🔍 كل الأدوية بهذه المادة الفعالة' })}
             </Link>
             <a
               href={googleBoxSearchHref(med)}

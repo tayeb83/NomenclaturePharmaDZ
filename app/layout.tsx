@@ -31,7 +31,12 @@ export const metadata: Metadata = {
   ],
   metadataBase: new URL(APP_URL),
   manifest: '/manifest.json',
-  alternates: { canonical: APP_URL },
+  // Pas de `alternates` ici : les métadonnées Next sont HÉRITÉES par tous les
+  // segments enfants qui ne les redéfinissent pas. Un canonical pointant vers
+  // l'accueil déclaré à la racine faisait donc dire à chaque page dépourvue de
+  // canonical propre « ma version de référence est la page d'accueil » — soit,
+  // pour Google, un doublon de l'accueil à désindexer. L'accueil déclare son
+  // propre canonical dans app/page.tsx.
   robots: { index: true, follow: true },
   appleWebApp: {
     capable: true,
