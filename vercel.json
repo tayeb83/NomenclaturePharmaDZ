@@ -10,6 +10,14 @@
       "schedule": "0 7 * * *"
     },
     {
+      "path": "/api/cron/garde-daily?period=friday",
+      "schedule": "0 16 * * 4"
+    },
+    {
+      "path": "/api/cron/garde-daily?period=month",
+      "schedule": "0 6 1 * *"
+    },
+    {
       "path": "/api/cron/social-prepare",
       "schedule": "0 3 * * *"
     },

@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
-import { publishGardeDailyToFacebook } from '@/lib/garde-social'
+import { isGardeGranularity, isGardePeriod, publishGardeToFacebook } from '@/lib/garde-social'
 
-// Appelé chaque matin par Vercel Cron (voir vercel.json) : publie sur la
-// Page Facebook, wilaya par wilaya, la liste illustrée des pharmacies de
-// garde du jour. Test manuel possible :
+// Appelé par Vercel Cron (voir vercel.json) : publie sur la Page Facebook,
+// wilaya par wilaya (ou commune par commune), la liste illustrée des
+// pharmacies de garde. Trois planifications utilisent cette route via le
+// paramètre `period` : la garde du jour, celle du vendredi suivant (postée
+// en amont) et le planning du mois. Test manuel possible :
 //   curl -H "Authorization: Bearer $CRON_SECRET" \
-//     "https://…/api/cron/garde-daily?dry=1"          (aperçu sans publier)
-//     "…?wilaya=16&date=2026-07-22"                    (wilaya/date ciblées)
+//     "https://…/api/cron/garde-daily?dry=1"           (aperçu sans publier)
+//     "…?wilaya=16&date=2026-07-22"                     (wilaya/date ciblées)
+//     "…?period=friday"                                 (vendredi suivant)
+//     "…?period=month&month=2026-08&granularity=commune"
 
 export const dynamic = 'force-dynamic'
 // Les publications sont espacées (GARDE_POST_DELAY_MS) : on laisse la
@@ -34,15 +38,24 @@ export async function GET(request: NextRequest) {
 
   const params = request.nextUrl.searchParams
   const date = params.get('date') || undefined
+  const month = params.get('month') || undefined
   const wilaya = params.get('wilaya') || undefined
+  const commune = params.get('commune') || undefined
   const dryRun = params.get('dry') === '1'
+  const periodParam = params.get('period') || 'day'
+  const period = isGardePeriod(periodParam) ? periodParam : 'day'
+  const granularityParam = params.get('granularity')
+  const granularity = isGardeGranularity(granularityParam) ? granularityParam : undefined
 
   if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
     return NextResponse.json({ error: 'Date invalide (format attendu : YYYY-MM-DD)' }, { status: 400 })
   }
+  if (month && !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
+    return NextResponse.json({ error: 'Mois invalide (format attendu : YYYY-MM)' }, { status: 400 })
+  }
 
   try {
-    const result = await publishGardeDailyToFacebook({ date, wilaya, dryRun })
+    const result = await publishGardeToFacebook({ period, date, month, wilaya, commune, granularity, dryRun })
     return NextResponse.json({ success: true, ...result })
   } catch (error) {
     console.error('[api/cron/garde-daily] Internal error:', error)

@@ -48,6 +48,22 @@ function fmtDateInput(iso: string | null): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
+type FacebookDiagnostic = {
+  configured: { pageId: boolean; token: boolean; appId: boolean; appSecret: boolean }
+  tokenType?: string
+  tokenAppId?: string
+  tokenAppName?: string
+  tokenUserId?: string
+  expiresAt?: string | null
+  scopes?: string[]
+  missingScopes?: string[]
+  page?: { id: string; name?: string; canPost: boolean }
+  usedTokenSource?: 'page' | 'configured'
+  ok: boolean
+  problems: string[]
+  hints: string[]
+}
+
 export function SocialClient() {
   const [posts, setPosts] = useState<SocialPost[]>([])
   const [loading, setLoading] = useState(true)
@@ -148,7 +164,12 @@ export function SocialClient() {
             Générer 5 brouillons
           </button>
           <button onClick={load} disabled={loading} style={btnSecondary}>↻ Rafraîchir</button>
+          <Link href="/admin/garde/publication" style={{ ...btnSecondary, textDecoration: 'none', display: 'inline-block' }}>
+            🇩🇿 Publier les gardes
+          </Link>
         </div>
+
+        <FacebookDiagnosticPanel />
 
         {msg && (
           <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', color: '#1e40af', padding: '8px 12px', borderRadius: 8, fontSize: 14, marginBottom: 16 }}>
@@ -209,6 +230,75 @@ export function SocialClient() {
 }
 
 // ─── Sous-composants ─────────────────────────────────────────────────────────
+
+/**
+ * Vérification de la configuration Facebook, sans rien publier. Répond à
+ * l'erreur « Cannot call API for app … on behalf of user … » : elle signale
+ * un jeton *utilisateur* là où l'API Graph attend un jeton de Page.
+ */
+function FacebookDiagnosticPanel() {
+  const [diag, setDiag] = useState<FacebookDiagnostic | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function run() {
+    setLoading(true); setError(null)
+    try {
+      const res = await fetch('/api/admin/social/diagnostic', { cache: 'no-store' })
+      const data = await res.json()
+      if (res.ok) setDiag(data)
+      else setError(data.error || 'Erreur de diagnostic')
+    } catch {
+      setError('Erreur réseau')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 14, fontWeight: 700 }}>🩺 Connexion Facebook</span>
+        <button onClick={run} disabled={loading} style={btnSecondary}>
+          {loading ? 'Vérification…' : 'Vérifier la configuration'}
+        </button>
+      </div>
+
+      {error && <div style={{ marginTop: 8, fontSize: 13, color: '#b91c1c' }}>{error}</div>}
+
+      {diag && (
+        <div style={{ marginTop: 10, fontSize: 13, color: '#334155' }}>
+          <div style={{
+            display: 'inline-block', fontSize: 12, fontWeight: 700, borderRadius: 999, padding: '3px 10px',
+            color: diag.ok ? '#065f46' : '#991b1b', background: diag.ok ? '#d1fae5' : '#fee2e2',
+          }}>
+            {diag.ok ? 'Configuration valide' : 'Publication impossible en l’état'}
+          </div>
+
+          <ul style={{ margin: '10px 0 0', paddingLeft: 18, lineHeight: 1.6 }}>
+            <li>Page : {diag.page?.name ? `${diag.page.name} (${diag.page.id})` : diag.configured.pageId ? 'identifiant configuré, non joignable' : 'FACEBOOK_PAGE_ID manquant'}</li>
+            <li>Jeton : {diag.tokenType ? `type ${diag.tokenType}` : 'type inconnu'}
+              {diag.usedTokenSource === 'page' && ' — jeton de Page dérivé automatiquement ✓'}
+              {diag.expiresAt && ` — expire le ${new Date(diag.expiresAt).toLocaleDateString('fr-FR')}`}
+              {diag.expiresAt === null && diag.tokenType && ' — sans expiration'}
+            </li>
+            {diag.tokenAppName && <li>Application : {diag.tokenAppName} ({diag.tokenAppId})</li>}
+            {diag.scopes?.length ? <li>Autorisations : {diag.scopes.join(', ')}</li> : null}
+          </ul>
+
+          {diag.problems.map((p, i) => (
+            <div key={i} style={{ marginTop: 8, fontSize: 13, color: '#b91c1c' }}>⚠️ {p}</div>
+          ))}
+          {diag.hints.map((h, i) => (
+            <div key={i} style={{ marginTop: 8, fontSize: 13, color: '#1e40af', background: '#eff6ff', padding: '8px 10px', borderRadius: 8 }}>
+              💡 {h}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
