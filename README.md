@@ -654,3 +654,42 @@ Aucune donnée de prix ni de remboursement n'est disponible dans ce projet à ce
 2. **Liste CNAS des médicaments remboursables** — document officiel distinct, publié en PDF (voir [version 2023 relayée par l'OMS](https://www.who.int/publications/m/item/algeria--la-liste-des-m-dicaments-remboursables-par-la-s-curit--sociale-2023-(french))), avec conditions de remboursement et prix de référence. Pas de format structuré public connu : nécessiterait un parsing PDF + un rapprochement DCI/forme/dosage avec la nomenclature, avec un risque d'erreurs de correspondance à valider manuellement avant tout affichage (donnée sensible pour le patient).
 
 Recommandation : ne pas afficher de prix tant que l'une de ces deux sources n'est pas confirmée et vérifiée manuellement — un prix erroné dans une app médicale est pire que l'absence de prix.
+
+---
+
+## Analytics internes & top 10 des pages sur l'accueil
+
+Le site enregistre son propre trafic, sans outil tiers, dans trois tables : `page_visit_events` (visites, alimentée par `components/analytics/PageVisitTracker.tsx`), `search_click_events` (clic sur un résultat de recherche) et `api_exec_events` (appels API). Elles alimentent deux surfaces :
+
+- **`/admin` → onglet 📊 Analytics** — pages les plus visitées, requêtes et résultats les plus cliqués, appels API.
+- **La page d'accueil** — section « 🔥 Top 10 des pages les plus recherchées » (classement sur 30 jours) et puces « Recherches populaires ».
+
+### Créer les tables sur une base existante
+
+Ces tables ne figuraient que dans `sql/01_schema.sql` : **une base créée avant leur ajout ne les possède pas**, et `sql/01_schema.sql` ne peut pas être rejoué tel quel (ses `CREATE INDEX` ne sont pas idempotents). D'où une migration dédiée :
+
+```bash
+psql "$DATABASE_URL" -f sql/16_analytics_events.sql
+```
+
+Elle est intégralement idempotente (`IF NOT EXISTS` partout) : sans risque même si les tables existent déjà.
+
+### Si le classement n'apparaît pas sur l'accueil
+
+La section est volontairement masquée quand il n'y a rien à classer — elle ne s'affiche jamais vide. Dans l'ordre :
+
+1. **Les tables existent-elles ?**
+   ```bash
+   psql "$DATABASE_URL" -c "SELECT COUNT(*) FROM page_visit_events"
+   ```
+   Erreur `relation ... does not exist` → lancer la migration ci-dessus. Le code teste la présence de chaque table avant de l'interroger (`hasTable`), donc leur absence ne remonte aucune erreur : le classement reste simplement vide.
+2. **Y a-t-il des données ?** Même requête : `0` signifie qu'aucune visite n'a encore été enregistrée. Ouvrir une page du site (autre que l'accueil), puis vérifier à nouveau.
+3. **Reste-t-il quelque chose après filtrage ?** Le classement exclut l'accueil (`/`, `/ar`), l'admin et les routes API :
+   ```sql
+   SELECT page_path, COUNT(*) FROM page_visit_events
+   WHERE created_at >= NOW() - INTERVAL '30 days'
+     AND page_path NOT IN ('/', '/ar', '/admin', '/ar/admin')
+     AND page_path NOT LIKE '/admin/%' AND page_path NOT LIKE '/api/%'
+   GROUP BY page_path ORDER BY 2 DESC LIMIT 10;
+   ```
+4. **Cache** : l'accueil est en ISR (`revalidate = 3600`), le classement peut mettre jusqu'à une heure à refléter les nouvelles données.
