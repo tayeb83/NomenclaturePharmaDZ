@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 import type { Lang } from '@/lib/i18n'
+import { medicamentPath } from '@/lib/medicament-url'
 
 type Medicament = {
   id: number
@@ -290,7 +291,7 @@ export function MedicamentsClient() {
           {data.map((med) => (
             <Link
               key={`${mode}-${med.id}-${med.version_label || ''}`}
-              href={`/medicament/enregistrement/${med.id}`}
+              href={medicamentPath('enregistrement', med.id, med)}
               style={{
                 display: 'block', textDecoration: 'none', color: 'inherit',
                 background: '#fff',

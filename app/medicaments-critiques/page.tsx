@@ -7,9 +7,14 @@ import { MappingView } from './MappingView'
 
 export const revalidate = 3600
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
+
 export const metadata = {
   title: 'Médicaments critiques — DwaDZ',
   description: 'Liste des médicaments critiques (DCI + forme + dosage) publiée par les autorités sanitaires, avec correspondances dans la nomenclature pharmaceutique algérienne.',
+  // La page se filtre par ?q= et ?vue= : sans canonical explicite, chaque
+  // combinaison est une URL distincte au même contenu.
+  alternates: { canonical: `${APP_URL}/medicaments-critiques` },
 }
 
 type Props = {

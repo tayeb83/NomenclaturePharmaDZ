@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { getMedicamentsDciSubstitution, getAllDciList } from '@/lib/queries'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
 import { getCountryFlag } from '@/lib/countryFlag'
+import { medicamentPath } from '@/lib/medicament-url'
 import { medicalPageJsonLd } from '@/lib/schema'
 import { AdInContent } from '@/components/ads/AdBanner'
 
@@ -87,7 +88,7 @@ export default async function SubstitutionDciPage({ params }: { params: { dci: s
   function MedCard({ med }: { med: (typeof generiques)[0] }) {
     return (
       <Link
-        href={`/medicament/enregistrement/${med.id}`}
+        href={medicamentPath('enregistrement', med.id, med)}
         style={{
           display: 'block', background: 'white', borderRadius: 10,
           padding: '14px 16px', textDecoration: 'none',

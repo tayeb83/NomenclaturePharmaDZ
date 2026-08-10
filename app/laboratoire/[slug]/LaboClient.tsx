@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { medicamentPath } from '@/lib/medicament-url'
 import type {
   LaboStats,
   LaboDciItem,
@@ -222,7 +223,7 @@ export function LaboClient({
               {visibleProducts.map((p, i) => (
                 <tr
                   key={`${p.source}-${p.id}`}
-                  onClick={() => router.push(`/medicament/${p.source}/${p.id}`)}
+                  onClick={() => router.push(medicamentPath(p.source, p.id, p))}
                   style={{
                     borderBottom: '1px solid #f1f5f9',
                     background: i % 2 === 0 ? '#fff' : '#fafafa',

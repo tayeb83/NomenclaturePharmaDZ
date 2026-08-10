@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { getNouveautesByAnneeMois, getAllNouveauteAnneeMois } from '@/lib/queries'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
+import { medicamentPath } from '@/lib/medicament-url'
 import { AdInContent } from '@/components/ads/AdBanner'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
@@ -190,7 +191,7 @@ export default async function NouveautesAnneeMoisPage({ params }: { params: { an
             {meds.map(med => (
               <Link
                 key={med.id}
-                href={`/medicament/enregistrement/${med.id}`}
+                href={medicamentPath('enregistrement', med.id, med)}
                 style={{
                   display: 'block', background: 'white', border: '1.5px solid #e2e8f0',
                   borderRadius: 10, padding: '14px 16px', textDecoration: 'none',
