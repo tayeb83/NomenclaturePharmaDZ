@@ -243,7 +243,20 @@ export function LaboClient({
                     {p.dci}
                   </td>
                   <td style={{ padding: '8px 12px', fontWeight: 600, color: '#0f172a' }}>
-                    {p.nom_marque}
+                    {/* Un vrai <a> : la ligne entière restait cliquable via
+                        `router.push`, mais un gestionnaire onClick n'est pas un
+                        lien — les robots ne le suivent pas. Les fiches de ce
+                        laboratoire n'étaient donc atteignables que par le
+                        sitemap, sans aucun lien entrant : Google les découvre,
+                        les met en file, et ne les explore jamais (« Détectée,
+                        actuellement non indexée »). */}
+                    <Link
+                      href={medicamentPath(p.source, p.id, p)}
+                      onClick={e => e.stopPropagation()}
+                      style={{ color: '#0f172a', textDecoration: 'none' }}
+                    >
+                      {p.nom_marque}
+                    </Link>
                   </td>
                   <td style={{ padding: '8px 12px', color: '#64748b' }}>{p.forme ?? '—'}</td>
                   <td style={{ padding: '8px 12px', color: '#64748b' }}>{p.dosage ?? '—'}</td>

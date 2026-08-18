@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { getMedicamentsByForme, getAllFormeList } from '@/lib/queries'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
 import { medicamentPath } from '@/lib/medicament-url'
+import { canonicalSegment, decodedSegment } from '@/lib/seo-url'
 import { AdInContent } from '@/components/ads/AdBanner'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
@@ -12,18 +13,19 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_
 export async function generateStaticParams() {
   try {
     const list = await getAllFormeList(200)
-    return list.map(f => ({ slug: encodeURIComponent(f.forme.toLowerCase()) }))
+    // Valeurs brutes : Next encode les segments lui-même (cf. app/dci).
+    return list.map(f => ({ slug: f.forme.toLowerCase() }))
   } catch {
     return []
   }
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const forme = decodeURIComponent(params.slug)
+  const forme = decodedSegment(params.slug)
   const meds = await getMedicamentsByForme(forme, 3)
-  if (!meds.length) return { title: 'Forme introuvable' }
+  if (!meds.length) return { title: 'Forme introuvable', robots: { index: false, follow: false } }
 
-  const canonical = `${APP_URL}/forme/${params.slug}`
+  const canonical = `${APP_URL}/forme/${canonicalSegment(params.slug)}`
   const title = `${forme} — médicaments enregistrés en Algérie | DwaDZ`
   const description = `Tous les médicaments sous forme de ${forme} enregistrés dans la nomenclature officielle MIPH Algérie.`
 
@@ -68,7 +70,7 @@ const FORME_AR: Record<string, string> = {
 }
 
 export default async function FormePage({ params }: { params: { slug: string } }) {
-  const forme = decodeURIComponent(params.slug)
+  const forme = decodedSegment(params.slug)
   const langCookie = cookies().get('lang')?.value
   const lang: Lang = isLang(langCookie) ? langCookie : 'fr'
 
@@ -94,7 +96,7 @@ export default async function FormePage({ params }: { params: { slug: string } }
     name: `Médicaments ${forme} — Algérie`,
     description: `${meds.length} médicaments sous forme ${forme} dans la nomenclature MIPH Algérie`,
     numberOfItems: meds.length,
-    url: `${APP_URL}/forme/${params.slug}`,
+    url: `${APP_URL}/forme/${canonicalSegment(params.slug)}`,
   }
 
   return (
@@ -149,7 +151,7 @@ export default async function FormePage({ params }: { params: { slug: string } }
           {dciGroups.map(([dci, drugs]) => (
             <div key={dci} style={{ marginBottom: 28 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                <Link href={`/dci/${encodeURIComponent(dci.toLowerCase())}`} style={{
+                <Link href={`/dci/${canonicalSegment(dci)}`} style={{
                   fontSize: 14, fontWeight: 700, color: '#0284c7', textDecoration: 'none',
                   background: '#eff6ff', border: '1.5px solid #bfdbfe', borderRadius: 6,
                   padding: '3px 10px',

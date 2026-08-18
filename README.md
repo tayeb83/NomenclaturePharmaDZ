@@ -87,6 +87,40 @@ actuellement non indexée ». D'où les invariants suivants.
   quelques mots près et Google les traite comme des doublons. Tout libellé
   visible passe par `pickLang()`, et chaque fiche porte un résumé rédigé
   (`buildResume()`) dans la langue de sa route.
+- **Tout ce qui est au sitemap doit être lié depuis une page HTML.** Une URL
+  connue du seul sitemap n'a aucun lien entrant : Google la découvre puis la
+  laisse en file d'attente derrière tout le reste — c'est le rapport « Détectée,
+  actuellement non indexée ». Le piège est propre aux composants clients : une
+  ligne de tableau rendue cliquable par `onClick`/`router.push` **n'est pas un
+  lien** et n'est pas suivie, pas plus qu'un accordéon dont le contenu n'existe
+  qu'après un `useState`. Le maillage server-rendu qui doit rester intact :
+  `/medicaments` → `<CatalogueIndex>` → `/dci/*` et `/forme/*` → fiches ;
+  `/laboratoires` → `/laboratoire/*` → fiches (colonne « Nom de marque ») ;
+  `/substitution` → `/substitution/*` et `/dci/*`. Une liste chargée depuis
+  `/api/*` ne compte pas : `robots.txt` interdit `/api/`.
+- **Les URLs canoniques se construisent avec `canonicalSegment()`**
+  (`lib/seo-url.ts`), jamais avec `params.slug` brut. Next livre les segments
+  dynamiques **décodés** : réinjecté tel quel, `latanoprost%2Ftimolol` donne un
+  canonical `/dci/latanoprost/timolol` qui ne désigne aucune page, et Google
+  reclasse la fiche en « page en double sans URL canonique sélectionnée par
+  l'utilisateur ». Le helper est idempotent et normalise la casse — sitemap,
+  liens internes et canonical produisent ainsi la même chaîne, à la lettre près.
+  Pour la même raison, `generateStaticParams()` retourne des valeurs **brutes** :
+  un segment déjà encodé est ré-encodé par Next (`%2F` → `%252F`).
+- **Un slug SQL doit reproduire son slug JS à l'identique.** `LABO_SLUG_EXPR`
+  et `laboToSlug()` divergeaient sur les tirets de bord : « BOTTU S.A. » donnait
+  `bottu-s-a` dans le sitemap et `bottu-s-a-` en base, et toutes les fiches de
+  laboratoire dont le nom finit par un point ou une parenthèse répondaient 404.
+  `getLaboNameBySlug()` garde en plus un repli applicatif pour les noms
+  accentués, que PostgreSQL ne normalise pas comme le NFD de JavaScript.
+- **Les résultats de recherche `/recherche?q=` sont `noindex, follow`.** Une
+  page indexable par requête, c'est un espace d'URLs sans fond, redisant ce que
+  disent déjà les pages DCI. `follow` laisse les robots atteindre les fiches
+  qu'elle liste.
+- **Aucun `generateStaticParams()` ne doit pouvoir faire échouer le build.**
+  Tous entourent leur requête d'un `try/catch` : une base injoignable pendant un
+  déploiement casserait la compilation, donc la mise en ligne et la
+  régénération du sitemap.
 - **`lastmod` honnête dans le sitemap.** Dater toutes les URLs de l'instant
   de génération revient à annoncer 20 000 modifications quotidiennes ; Google
   le constate et cesse d'accorder du crédit au signal. Les pages du catalogue

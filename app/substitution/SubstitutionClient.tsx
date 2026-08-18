@@ -2,6 +2,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
+import { canonicalSegment } from '@/lib/seo-url'
 
 export function SubstitutionClient({ generiques }: { generiques: any[] }) {
   const [search, setSearch] = useState('')
@@ -95,6 +96,27 @@ export function SubstitutionClient({ generiques }: { generiques: any[] }) {
                   <span style={{ color: '#475569', fontSize: 18 }}>{expanded === g.dci ? '▲' : '▼'}</span>
                 </div>
               </button>
+
+              {/* Lien vers la page de substitution de la DCI. L'accordéon
+                  n'ouvrait qu'un état React : les pages /substitution/[dci] et
+                  /dci/[slug] figuraient au sitemap sans le moindre lien entrant
+                  depuis ce hub, qui est pourtant leur page mère. Ce lien doit
+                  rester rendu en permanence (et non seulement une fois la
+                  section dépliée) pour exister dans le HTML servi aux robots. */}
+              <div style={{ padding: '0 16px 12px', display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <Link
+                  href={`/substitution/${canonicalSegment(g.dci)}`}
+                  style={{ fontSize: 12.5, fontWeight: 700, color: '#047857', textDecoration: 'none' }}
+                >
+                  ♻️ {t(`Génériques de ${g.dci}`, `جنيسات ${g.dci}`)} →
+                </Link>
+                <Link
+                  href={`/dci/${canonicalSegment(g.dci)}`}
+                  style={{ fontSize: 12.5, fontWeight: 600, color: '#0284c7', textDecoration: 'none' }}
+                >
+                  📋 {t('Fiche DCI', 'بطاقة DCI')} →
+                </Link>
+              </div>
 
               {expanded === g.dci && (
                 <div style={{ padding: '0 16px 16px', borderTop: '1px solid #d1fae5' }}>

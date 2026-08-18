@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { canonicalSegment } from '@/lib/seo-url'
 import { cookies } from 'next/headers'
 import { getAtcNode, getAtcAncestors, getAtcChildrenWithCounts, getDcisByAtcPrefix } from '@/lib/queries'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
@@ -160,7 +161,7 @@ export default async function AtcCodePage({ params }: { params: { code: string }
                           </Link>
                         </td>
                         <td style={{ padding: '10px 14px' }}>
-                          <Link href={`/dci/${encodeURIComponent(row.dci.toLowerCase())}`} style={{ color: '#0f172a', fontWeight: 700, textDecoration: 'none' }}>
+                          <Link href={`/dci/${canonicalSegment(row.dci)}`} style={{ color: '#0f172a', fontWeight: 700, textDecoration: 'none' }}>
                             {row.dci}
                           </Link>
                         </td>

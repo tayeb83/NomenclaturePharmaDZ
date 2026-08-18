@@ -36,8 +36,17 @@ function formatTodayFr() {
 }
 
 export async function generateStaticParams() {
-  const coverage = await getGardeCoverage()
-  return coverage.map(c => ({ wilaya: slugify(c.wilaya_name_fr), commune: slugify(c.commune_name_fr) }))
+  // Comme partout ailleurs dans l'app : une base injoignable ne doit pas faire
+  // ÉCHOUER le build. Sans ce garde-fou, une indisponibilité passagère de
+  // PostgreSQL pendant un déploiement casse la compilation entière — donc plus
+  // de mise en ligne, plus de sitemap régénéré, et un catalogue qui se périme
+  // dans l'index de Google. Les pages restent servies à la demande (ISR).
+  try {
+    const coverage = await getGardeCoverage()
+    return coverage.map(c => ({ wilaya: slugify(c.wilaya_name_fr), commune: slugify(c.commune_name_fr) }))
+  } catch {
+    return []
+  }
 }
 
 export const revalidate = 300

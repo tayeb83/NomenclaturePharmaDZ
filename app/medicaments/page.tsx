@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { MedicamentsClient } from './MedicamentsClient'
 import { AdHorizontal } from '@/components/ads/AdBanner'
+import { CatalogueIndex } from '@/components/seo/CatalogueIndex'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
@@ -21,7 +22,11 @@ export const metadata: Metadata = {
   },
 }
 
-export default function MedicamentsPage() {
+// La liste elle-même est chargée côté client ; l'index de bas de page,
+// lui, est rendu au serveur et mis en cache 24 h comme le reste du catalogue.
+export const revalidate = 86400
+
+export default async function MedicamentsPage() {
   return (
     <div className="container" style={{ maxWidth: 900, margin: '0 auto', padding: '40px 16px 80px' }}>
       {/* En-tête */}
@@ -39,6 +44,8 @@ export default function MedicamentsPage() {
       <AdHorizontal slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MEDICAMENTS || '0000000000'} />
 
       <MedicamentsClient />
+
+      <CatalogueIndex />
     </div>
   )
 }

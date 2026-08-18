@@ -18,10 +18,15 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const laboName = await getLaboNameBySlug(params.slug)
-  if (!laboName) return { title: 'Laboratoire introuvable' }
+  if (!laboName) return { title: 'Laboratoire introuvable', robots: { index: false, follow: false } }
 
   const stats = await getLaboStats(laboName)
   const total = stats?.total_enregistres ?? 0
+
+  // Canonical construit depuis le NOM en base, jamais depuis le slug demandé :
+  // une variante de casse ou de ponctuation atteint la même fiche et doit
+  // pointer vers l'unique forme publiée dans le sitemap.
+  const canonical = `${APP_URL}/laboratoire/${laboToSlug(laboName)}`
 
   return {
     title: `${laboName} — Portefeuille pharmaceutique Algérie`,
@@ -32,11 +37,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       `${laboName} nomenclature MIPH`,
       `laboratoire pharmaceutique ${laboName}`,
     ],
-    alternates: { canonical: `${APP_URL}/laboratoire/${params.slug}` },
+    alternates: { canonical },
     openGraph: {
       title: `${laboName} — Portefeuille pharmaceutique Algérie`,
       description: `${total} produits enregistrés — Nomenclature officielle MIPH.`,
-      url: `${APP_URL}/laboratoire/${params.slug}`,
+      url: canonical,
       type: 'website',
     },
   }

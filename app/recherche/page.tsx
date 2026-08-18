@@ -16,17 +16,25 @@ export async function generateMetadata({
   if (q) {
     const title = `${q} en Algérie — médicaments, prix et disponibilité | DwaDZ`
     const description = `Résultats pour "${q}" dans la nomenclature pharmaceutique algérienne (MIPH). Statut, laboratoire, génériques disponibles en Algérie.`
+    // Une page de résultats par requête, c'est un espace d'URLs sans fond :
+    // chaque `?q=` s'auto-déclarait canonique et redisait, à quelques lignes
+    // près, ce que dit déjà la fiche DCI correspondante. Google les classait
+    // « page en double » et y dépensait un budget d'exploration qui manquait
+    // ensuite aux fiches. On les garde utiles aux visiteurs et parcourables par
+    // les robots (`follow`), mais hors index, avec un canonical vers la
+    // recherche nue — la page de destination, elle, est indexable.
     return {
       title,
       description,
-      alternates: { canonical: `${APP_URL}/recherche?q=${encodeURIComponent(q)}` },
+      robots: { index: false, follow: true },
+      alternates: { canonical: `${APP_URL}/recherche` },
       openGraph: {
         title,
         description,
         type: 'website',
         siteName: 'DwaDZ',
         locale: 'fr_DZ',
-        url: `${APP_URL}/recherche?q=${encodeURIComponent(q)}`,
+        url: `${APP_URL}/recherche`,
       },
     }
   }

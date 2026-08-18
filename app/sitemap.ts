@@ -11,6 +11,7 @@ import {
 import { getGardeCoverage, slugify } from '@/lib/garde'
 import { medicamentPath } from '@/lib/medicament-url'
 import { ARTICLES } from '@/lib/articles'
+import { canonicalSegment } from '@/lib/seo-url'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
@@ -224,14 +225,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }))
 
   const dciPages: MetadataRoute.Sitemap = dciList.map(({ dci }) => ({
-    url: `${APP_URL}/dci/${encodeURIComponent(dci.toLowerCase())}`,
+    url: `${APP_URL}/dci/${canonicalSegment(dci)}`,
     lastModified: catalogueDate,
     changeFrequency: 'monthly' as const,
     priority: 0.8,
   }))
 
   const formePages: MetadataRoute.Sitemap = formeList.map(({ forme }) => ({
-    url: `${APP_URL}/forme/${encodeURIComponent(forme.toLowerCase())}`,
+    url: `${APP_URL}/forme/${canonicalSegment(forme)}`,
     lastModified: catalogueDate,
     changeFrequency: 'monthly' as const,
     priority: 0.7,
@@ -252,7 +253,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }))
 
   const substitutionPages: MetadataRoute.Sitemap = substitutionDcis.map(({ dci }) => ({
-    url: `${APP_URL}/substitution/${encodeURIComponent(dci.toLowerCase())}`,
+    url: `${APP_URL}/substitution/${canonicalSegment(dci)}`,
     lastModified: catalogueDate,
     changeFrequency: 'monthly' as const,
     priority: 0.8,

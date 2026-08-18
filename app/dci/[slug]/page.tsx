@@ -7,6 +7,7 @@ import { isLang, pickLang, type Lang } from '@/lib/i18n'
 import { getCountryFlag } from '@/lib/countryFlag'
 import { medicamentPath } from '@/lib/medicament-url'
 import { medicalPageJsonLd } from '@/lib/schema'
+import { canonicalSegment, decodedSegment } from '@/lib/seo-url'
 import { AdInContent } from '@/components/ads/AdBanner'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
@@ -15,18 +16,23 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_
 export async function generateStaticParams() {
   try {
     const list = await getAllDciList(500)
-    return list.map(d => ({ slug: encodeURIComponent(d.dci.toLowerCase()) }))
+    // Valeurs BRUTES : Next encode lui-même les segments au moment de générer
+    // les chemins. Fournir un segment déjà encodé le fait ré-encoder (« %2F »
+    // devient « %252F »), et la page statique se retrouve publiée sous une URL
+    // que rien ne référence — pendant que l'URL réelle repart en rendu à la
+    // demande.
+    return list.map(d => ({ slug: d.dci.toLowerCase() }))
   } catch {
     return []
   }
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const dci = decodeURIComponent(params.slug)
+  const dci = decodedSegment(params.slug)
   const meds = await getMedicamentsByDci(dci, 5)
-  if (!meds.length) return { title: 'DCI introuvable' }
+  if (!meds.length) return { title: 'DCI introuvable', robots: { index: false, follow: false } }
 
-  const canonical = `${APP_URL}/dci/${params.slug}`
+  const canonical = `${APP_URL}/dci/${canonicalSegment(params.slug)}`
   const dciUpper = dci.toUpperCase()
   const title = `${dciUpper} en Algérie — prix, génériques et disponibilité | DwaDZ`
   const description = `${dciUpper} en Algérie : ${meds.length}+ médicaments enregistrés dans la nomenclature officielle MIPH. Génériques disponibles, laboratoires, formes et dosages. Données officielles mises à jour.`
@@ -54,7 +60,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 export const revalidate = 86400 // 24h
 
 export default async function DciPage({ params }: { params: { slug: string } }) {
-  const dci = decodeURIComponent(params.slug)
+  const dci = decodedSegment(params.slug)
   const langCookie = cookies().get('lang')?.value
   const lang: Lang = isLang(langCookie) ? langCookie : 'fr'
 
@@ -66,7 +72,7 @@ export default async function DciPage({ params }: { params: { slug: string } }) 
   const generiques = meds.filter(m => ['GE', 'Gé'].includes(m.type_prod ?? ''))
 
   const dciUpper = dci.toUpperCase()
-  const dciUrl = `${APP_URL}/dci/${params.slug}`
+  const dciUrl = `${APP_URL}/dci/${canonicalSegment(params.slug)}`
   const jsonLd = medicalPageJsonLd({
     name: `${dciUpper} — médicaments enregistrés en Algérie`,
     description: `${dciUpper} — ${meds.length} médicaments enregistrés en Algérie dans la nomenclature officielle MIPH. Génériques, formes et dosages disponibles.`,
@@ -152,7 +158,7 @@ export default async function DciPage({ params }: { params: { slug: string } }) 
                   {pickLang(lang, { fr: 'Voir les options de substitution', ar: 'عرض خيارات الاستبدال' })}
                 </span>
               </div>
-              <Link href={`/substitution/${encodeURIComponent(dci.toLowerCase())}`} style={{
+              <Link href={`/substitution/${canonicalSegment(dci)}`} style={{
                 padding: '8px 16px', background: '#16a34a', color: 'white',
                 borderRadius: 7, fontSize: 13, fontWeight: 700, textDecoration: 'none',
               }}>

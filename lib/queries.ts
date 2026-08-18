@@ -2173,8 +2173,22 @@ export function laboToSlug(name: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
-/** Expression SQL pour normaliser un nom de labo en slug */
-const LABO_SLUG_EXPR = `LOWER(REGEXP_REPLACE(COALESCE(labo, ''), '[^a-zA-Z0-9]+', '-', 'g'))`
+/**
+ * Expression SQL pour normaliser un nom de labo en slug.
+ *
+ * Doit reproduire `laboToSlug()` **à l'identique**, sans quoi le slug publié
+ * dans le sitemap ne retrouve plus sa ligne et la fiche répond 404. Le piège
+ * historique : les tirets de bord. « MUSTAFA NEVZAT ILAC SANAYII A.S. » donne
+ * `mustafa-nevzat-ilac-sanayii-a-s` côté JS (qui rogne les tirets de bord) mais
+ * `mustafa-nevzat-ilac-sanayii-a-s-` côté SQL — le point final devenant un
+ * tiret. Même divergence pour tout nom terminé par une parenthèse
+ * (« …ALGERIEN (GPA) »). D'où le `TRIM(BOTH '-')`.
+ *
+ * Reste une différence irréductible : `laboToSlug()` retire les diacritiques
+ * (NFD) là où PostgreSQL, sans l'extension `unaccent`, transforme un « é » en
+ * tiret. `getLaboNameBySlug()` couvre ce cas par un repli applicatif.
+ */
+const LABO_SLUG_EXPR = `TRIM(BOTH '-' FROM LOWER(REGEXP_REPLACE(COALESCE(labo, ''), '[^a-zA-Z0-9]+', '-', 'g')))`
 
 /**
  * Liste tous les laboratoires distincts avec leurs compteurs.
@@ -2218,14 +2232,32 @@ export async function getAllLaboratoires(): Promise<LaboSummary[]> {
 
 /**
  * Trouve le nom exact du labo correspondant à un slug.
+ *
+ * Le slug reçu est renormalisé avant comparaison : une variante de casse
+ * (`/laboratoire/BEKER`) désigne la même fiche et ne doit pas répondre 404,
+ * ce qui créerait une seconde URL indexable pour un même contenu.
  */
 export async function getLaboNameBySlug(slug: string): Promise<string | null> {
+  const normalized = laboToSlug(slug)
+  if (!normalized) return null
+
   const row = await queryOne<{ labo: string }>(`
     SELECT labo FROM enregistrements
     WHERE ${LABO_SLUG_EXPR} = $1 AND labo IS NOT NULL
     LIMIT 1
-  `, [slug])
-  return row?.labo ?? null
+  `, [normalized])
+  if (row?.labo) return row.labo
+
+  // Repli : les noms accentués ne se normalisent pas de la même façon en SQL
+  // (pas d'`unaccent` garanti sur l'instance) qu'en JS. On compare alors slug
+  // à slug côté application — sur la liste distincte des laboratoires, soit
+  // quelques centaines de lignes, et uniquement lorsque la voie rapide a
+  // échoué.
+  const all = await query<{ labo: string }>(`
+    SELECT DISTINCT labo FROM enregistrements
+    WHERE labo IS NOT NULL AND labo != ''
+  `)
+  return all.find(r => laboToSlug(r.labo) === normalized)?.labo ?? null
 }
 
 /**

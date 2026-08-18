@@ -7,6 +7,7 @@ import { isLang, pickLang, type Lang } from '@/lib/i18n'
 import { getCountryFlag } from '@/lib/countryFlag'
 import { medicamentPath } from '@/lib/medicament-url'
 import { medicalPageJsonLd } from '@/lib/schema'
+import { canonicalSegment, decodedSegment } from '@/lib/seo-url'
 import { AdInContent } from '@/components/ads/AdBanner'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
@@ -15,15 +16,16 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_
 export async function generateStaticParams() {
   try {
     const list = await getAllDciList(500)
-    return list.map(d => ({ dci: encodeURIComponent(d.dci.toLowerCase()) }))
+    // Valeurs brutes : Next encode les segments lui-même (cf. app/dci).
+    return list.map(d => ({ dci: d.dci.toLowerCase() }))
   } catch {
     return []
   }
 }
 
 export async function generateMetadata({ params }: { params: { dci: string } }): Promise<Metadata> {
-  const dci = decodeURIComponent(params.dci).toUpperCase()
-  const canonical = `${APP_URL}/substitution/${params.dci}`
+  const dci = decodedSegment(params.dci).toUpperCase()
+  const canonical = `${APP_URL}/substitution/${canonicalSegment(params.dci)}`
   const title = `Substitution ${dci} — génériques enregistrés en Algérie | DwaDZ`
   const description = `Tous les génériques de ${dci} enregistrés dans la nomenclature officielle MIPH Algérie. Trouvez les équivalents disponibles.`
 
@@ -45,7 +47,7 @@ export async function generateMetadata({ params }: { params: { dci: string } }):
 export const revalidate = 86400
 
 export default async function SubstitutionDciPage({ params }: { params: { dci: string } }) {
-  const dci = decodeURIComponent(params.dci).toUpperCase()
+  const dci = decodedSegment(params.dci).toUpperCase()
   const langCookie = cookies().get('lang')?.value
   const lang: Lang = isLang(langCookie) ? langCookie : 'fr'
 
@@ -54,7 +56,7 @@ export default async function SubstitutionDciPage({ params }: { params: { dci: s
 
   if (!total) notFound()
 
-  const substitutionUrl = `${APP_URL}/substitution/${params.dci}`
+  const substitutionUrl = `${APP_URL}/substitution/${canonicalSegment(params.dci)}`
   const jsonLd = medicalPageJsonLd({
     name: `${dci} — génériques et équivalents en Algérie`,
     description: `${dci} — ${generiques.length} générique(s) enregistré(s) en Algérie. Nomenclature MIPH.`,
@@ -212,7 +214,7 @@ export default async function SubstitutionDciPage({ params }: { params: { dci: s
             }}>
               {pickLang(lang, { fr: '← Toutes les substitutions', ar: '→ كل الاستبدالات' })}
             </Link>
-            <Link href={`/dci/${encodeURIComponent(dci.toLowerCase())}`} style={{
+            <Link href={`/dci/${canonicalSegment(dci)}`} style={{
               padding: '10px 20px', background: '#0284c7', color: 'white',
               borderRadius: 8, fontWeight: 600, fontSize: 13, textDecoration: 'none',
             }}>
