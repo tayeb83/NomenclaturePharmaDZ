@@ -304,6 +304,7 @@ avec le message) :
 | 463 | Jeton expiré (un jeton utilisateur court vit ~1 h, un long 60 j) | Générer un **jeton de Page**, qui lui n'expire pas |
 | 467 | Jeton révoqué par Meta | Regénérer le jeton |
 | 492 | Le compte n'a plus de rôle sur la Page | Le remettre administrateur de la Page (Meta Business Suite) |
+| 493 | Accès aux données expiré (90 j après la dernière autorisation, même sur un jeton « permanent ») | Ré-autoriser l'app dans l'explorateur Graph et regénérer le jeton |
 
 À vérifier dans cet ordre quand la publication tombe en panne :
 
@@ -318,13 +319,20 @@ avec le message) :
    comptes qui y ont un rôle. Une app en Live doit avoir `pages_manage_posts`
    approuvée (App Review).
 3. **Regénérer un jeton de Page longue durée** :
-   `node scripts/facebook_page_token.mjs <jeton-utilisateur-court>` (avec
-   `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` dans l'environnement). Le script
-   vérifie les autorisations, échange le jeton court contre un jeton longue
-   durée, puis affiche pour chaque Page le couple `FACEBOOK_PAGE_ID` /
-   `FACEBOOK_PAGE_ACCESS_TOKEN` à copier — et son expiration. Sur Vercel,
-   mettre à jour la variable **et redéployer** (les variables ne sont lues
-   qu'au démarrage).
+   `node scripts/facebook_page_token.mjs <jeton>` (avec `FACEBOOK_APP_ID` /
+   `FACEBOOK_APP_SECRET` dans l'environnement). Le script accepte aussi bien
+   un **jeton utilisateur** — qu'il échange contre un jeton longue durée
+   avant de dériver les jetons de Page via `/me/accounts` — qu'un **jeton de
+   Page** déjà généré, dont il retrouve alors l'identifiant via `/me` (une
+   Page n'ayant pas d'edge `accounts`). Dans les deux cas il vérifie les
+   autorisations et affiche le couple `FACEBOOK_PAGE_ID` /
+   `FACEBOOK_PAGE_ACCESS_TOKEN` à copier, son expiration et la date de fin
+   d'accès aux données. Sur Vercel, mettre à jour la variable **et
+   redéployer** (les variables ne sont lues qu'au démarrage).
+
+   ⚠️ Un jeton de Page dérivé d'un jeton utilisateur *court* expire lui aussi
+   en ~1 h : partir d'un jeton **utilisateur** est le seul moyen d'obtenir un
+   jeton de Page permanent.
 
 Ce que fait l'application de son côté :
 
