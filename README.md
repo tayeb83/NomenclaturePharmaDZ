@@ -290,26 +290,52 @@ Génération manuelle possible depuis l'admin (« Générer un brouillon »).
 
 #### Jeton Facebook : diagnostic et erreur « on behalf of user »
 
-L'erreur `Cannot call API for app <app_id> on behalf of user <user_id>`
-signifie que `FACEBOOK_PAGE_ACCESS_TOKEN` contient un **jeton utilisateur**
-(ou un jeton émis pour un compte qui n'autorise plus l'application) : l'API
-Graph exige un **jeton de Page** pour publier.
+L'erreur `Cannot call API for app <app_id> on behalf of user <user_id>` ne
+vient pas du code : elle dit que **l'application ne peut plus agir pour le
+compte Facebook qui a émis le jeton**. Le jeton est mort côté Meta, quelle
+que soit sa valeur dans les variables d'environnement. Cinq causes possibles,
+que le **sous-code** de l'erreur distingue (`error_subcode`, désormais affiché
+avec le message) :
 
-- **Correction automatique** : avant chaque publication, l'application
-  interroge `GET /{page-id}?fields=access_token` et publie avec le jeton de
-  Page ainsi dérivé (résultat mis en cache 30 min). Un jeton utilisateur
-  valide suffit donc désormais à publier.
-- **Diagnostic** : bouton « Vérifier la configuration » sur `/admin/social`
-  (route `GET /api/admin/social/diagnostic`) — type de jeton, application
-  émettrice, autorisations, expiration, accès à la Page, et la marche à
-  suivre en cas de blocage. Renseigner `FACEBOOK_APP_ID` et
-  `FACEBOOK_APP_SECRET` active l'inspection complète du jeton
-  (`debug_token`).
-- Si la dérivation échoue, reconnectez la Page dans les Outils Graph API
-  avec `pages_show_list`, `pages_manage_posts` et `pages_read_engagement`,
-  puis copiez le champ `access_token` renvoyé par `/me/accounts`.
-- Les erreurs de publication sont désormais enregistrées et affichées avec
-  la piste de correction correspondante.
+| Sous-code | Cause | Correction |
+|---|---|---|
+| 458 | L'application a été retirée du compte, **ou** l'app est en mode *Développement* et le compte n'y a plus de rôle | Rendre le compte administrateur/développeur/testeur de l'app, ou repasser l'app en Live ; puis regénérer le jeton |
+| 460 | Mot de passe Facebook changé / déconnexion de toutes les sessions | Regénérer le jeton |
+| 463 | Jeton expiré (un jeton utilisateur court vit ~1 h, un long 60 j) | Générer un **jeton de Page**, qui lui n'expire pas |
+| 467 | Jeton révoqué par Meta | Regénérer le jeton |
+| 492 | Le compte n'a plus de rôle sur la Page | Le remettre administrateur de la Page (Meta Business Suite) |
+
+À vérifier dans cet ordre quand la publication tombe en panne :
+
+1. **Diagnostic** : bouton « Vérifier la configuration » sur `/admin/social`
+   (route `GET /api/admin/social/diagnostic`) — validité et type du jeton,
+   application émettrice, utilisateur émetteur, autorisations, expiration,
+   **liste des Pages réellement accessibles** et concordance avec
+   `FACEBOOK_PAGE_ID`. Renseigner `FACEBOOK_APP_ID` et `FACEBOOK_APP_SECRET`
+   active l'inspection complète du jeton (`debug_token`) : sans elles, le
+   diagnostic ne peut pas dire *pourquoi* un jeton est refusé.
+2. **Mode de l'application** : une app en Développement ne publie que pour les
+   comptes qui y ont un rôle. Une app en Live doit avoir `pages_manage_posts`
+   approuvée (App Review).
+3. **Regénérer un jeton de Page longue durée** :
+   `node scripts/facebook_page_token.mjs <jeton-utilisateur-court>` (avec
+   `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` dans l'environnement). Le script
+   vérifie les autorisations, échange le jeton court contre un jeton longue
+   durée, puis affiche pour chaque Page le couple `FACEBOOK_PAGE_ID` /
+   `FACEBOOK_PAGE_ACCESS_TOKEN` à copier — et son expiration. Sur Vercel,
+   mettre à jour la variable **et redéployer** (les variables ne sont lues
+   qu'au démarrage).
+
+Ce que fait l'application de son côté :
+
+- **Dérivation automatique du jeton de Page** : avant chaque publication,
+  `GET /{page-id}?fields=access_token`, et à défaut `GET /me/accounts`
+  (qui rattrape aussi un `FACEBOOK_PAGE_ID` erroné). Un jeton utilisateur
+  *valide* suffit donc à publier. Résultat mis en cache 30 min en cas de
+  succès, 2 min en cas d'échec.
+- **Erreurs explicites** : les échecs de publication sont enregistrés et
+  affichés avec le code, le sous-code et la piste de correction
+  correspondante.
 
 ### Pharmacies de garde — publication Facebook (automatique + manuelle)
 

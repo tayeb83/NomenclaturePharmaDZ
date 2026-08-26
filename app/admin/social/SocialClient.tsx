@@ -54,10 +54,13 @@ type FacebookDiagnostic = {
   tokenAppId?: string
   tokenAppName?: string
   tokenUserId?: string
+  tokenValid?: boolean
   expiresAt?: string | null
   scopes?: string[]
   missingScopes?: string[]
   page?: { id: string; name?: string; canPost: boolean }
+  accessiblePages?: { id: string; name?: string; canPost: boolean }[]
+  pageIdMatches?: boolean
   usedTokenSource?: 'page' | 'configured'
   ok: boolean
   problems: string[]
@@ -283,7 +286,19 @@ function FacebookDiagnosticPanel() {
               {diag.expiresAt === null && diag.tokenType && ' — sans expiration'}
             </li>
             {diag.tokenAppName && <li>Application : {diag.tokenAppName} ({diag.tokenAppId})</li>}
+            {diag.tokenUserId && <li>Émis pour l’utilisateur : {diag.tokenUserId}</li>}
             {diag.scopes?.length ? <li>Autorisations : {diag.scopes.join(', ')}</li> : null}
+            {diag.accessiblePages && (
+              <li>
+                Pages accessibles :{' '}
+                {diag.accessiblePages.length
+                  ? diag.accessiblePages
+                      .map((p) => `${p.name || '?'} (${p.id})${p.canPost ? '' : ' — publication interdite'}`)
+                      .join(', ')
+                  : 'aucune'}
+                {diag.pageIdMatches === false && ' — FACEBOOK_PAGE_ID n’en fait pas partie'}
+              </li>
+            )}
           </ul>
 
           {diag.problems.map((p, i) => (
