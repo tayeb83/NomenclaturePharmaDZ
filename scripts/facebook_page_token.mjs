@@ -89,14 +89,16 @@ if (missing.length) {
 
 // ─── 2a. Jeton de Page : il ne reste qu'à retrouver l'identifiant ────────────
 if (d.type === 'PAGE') {
-  const page = await graph('me', { fields: 'id,name,tasks', access_token: inputToken })
-  const canPost = Array.isArray(page.tasks) ? page.tasks.includes('CREATE_CONTENT') : true
+  // `tasks` n'est pas lisible ici : ce champ n'existe que dans un contexte
+  // utilisateur (/me/accounts). Les autorisations du jeton, déjà vérifiées
+  // plus haut, sont ce qui détermine le droit de publier.
+  const page = await graph('me', { fields: 'id,name', access_token: inputToken })
 
   console.log('\n✅ C’est déjà un jeton de Page — rien à échanger.\n')
   console.log(`── ${page.name} ──`)
   console.log(`   FACEBOOK_PAGE_ID=${page.id}`)
   console.log(`   FACEBOOK_PAGE_ACCESS_TOKEN=${inputToken}`)
-  console.log(`   publication autorisée : ${canPost ? 'oui' : 'NON (tâche « Contenu » manquante sur la Page)'}`)
+  console.log(`   autorisations : ${(d.scopes || []).join(', ') || 'aucune'}`)
   console.log(`   expiration : ${stamp(d.expires_at)}`)
   warnDataAccess(d)
 
