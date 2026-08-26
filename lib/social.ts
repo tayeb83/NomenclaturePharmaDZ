@@ -213,6 +213,8 @@ export function facebookErrorHint(message?: string | null, code?: number, subcod
       return `Le jeton a été révoqué (souvent après une alerte de sécurité Meta ou une rotation d'application). Régénérez-le. ${RECONNECT}`
     case 492:
       return "Le compte émetteur n'a plus de rôle sur la Page : rendez-le administrateur de la Page (ou donnez-lui la tâche « Contenu ») dans Meta Business Suite, puis régénérez le jeton."
+    case 493:
+      return `L'accès aux données a expiré : même un jeton de Page « permanent » cesse de fonctionner 90 jours après la dernière autorisation explicite du compte. Ré-autorisez l'application et regénérez le jeton. ${RECONNECT}`
   }
 
   if (code === 190) {
@@ -497,9 +499,36 @@ export async function diagnoseFacebook(): Promise<FacebookDiagnostic> {
       diag.hints.push("Reprenez l'identifiant de la Page tel que renvoyé par /me/accounts et corrigez FACEBOOK_PAGE_ID.")
     }
   } else if (listError) {
-    // Un jeton de Page ne peut pas appeler /me/accounts : ce n'est un
-    // problème que si le jeton configuré n'est pas de type PAGE.
-    if (diag.tokenType && diag.tokenType !== 'PAGE') {
+    // Un jeton de Page ne peut pas appeler /me/accounts (une Page n'a pas
+    // d'edge « accounts ») : dans ce cas /me désigne la Page elle-même, ce
+    // qui donne son identifiant réel et permet de le confronter à la
+    // configuration.
+    let identified = false
+    try {
+      const me = await axios.get(`${FACEBOOK_GRAPH_BASE}/me`, {
+        params: { fields: 'id,name,tasks', access_token: configuredToken },
+        timeout: 10000,
+      })
+      if (me.data?.id) {
+        identified = true
+        const tasks: string[] = me.data?.tasks || []
+        diag.accessiblePages = [{
+          id: String(me.data.id),
+          name: me.data.name,
+          canPost: tasks.length ? tasks.includes('CREATE_CONTENT') : true,
+        }]
+        diag.pageIdMatches = String(me.data.id) === String(pageId)
+        if (!diag.pageIdMatches) {
+          diag.problems.push(
+            `Le jeton appartient à la Page ${me.data.name || '?'} (${me.data.id}), alors que FACEBOOK_PAGE_ID vaut ${pageId}.`
+          )
+          diag.hints.push(`Corrigez FACEBOOK_PAGE_ID en ${me.data.id}, ou fournissez le jeton de la Page ${pageId}.`)
+        }
+      }
+    } catch {
+      // On retombe sur le diagnostic générique ci-dessous.
+    }
+    if (!identified && diag.tokenType !== 'PAGE') {
       diag.problems.push(`Liste des Pages (/me/accounts) : ${formatGraphError(listError)}`)
       const hint = facebookErrorHint(listError.message, listError.code, listError.subcode)
       if (hint) diag.hints.push(hint)
