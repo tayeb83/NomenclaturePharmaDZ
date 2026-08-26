@@ -297,6 +297,31 @@ async function listPageAccounts(token: string): Promise<{ pages?: PageAccount[];
   }
 }
 
+/**
+ * Lit le profil d'une Page. Le champ `tasks` (rôles du compte sur la Page)
+ * n'existe que dans un contexte *utilisateur* : le demander avec un jeton de
+ * Page échoue en « (#100) nonexisting field (tasks) ». On retente alors sans
+ * lui plutôt que de conclure à tort à une erreur d'accès.
+ */
+async function fetchPageProfile(
+  target: string,
+  token: string
+): Promise<{ id: string; name?: string; tasks?: string[] }> {
+  const get = (fields: string) =>
+    axios.get(`${FACEBOOK_GRAPH_BASE}/${target}`, {
+      params: { fields, access_token: token },
+      timeout: 10000,
+    })
+  try {
+    const res = await get('id,name,tasks')
+    return { id: String(res.data?.id ?? target), name: res.data?.name, tasks: res.data?.tasks }
+  } catch (err: any) {
+    if (graphError(err).code !== 100) throw err
+    const res = await get('id,name')
+    return { id: String(res.data?.id ?? target), name: res.data?.name }
+  }
+}
+
 export async function resolvePageAccessToken(force = false): Promise<{
   token?: string
   pageId?: string
@@ -505,24 +530,20 @@ export async function diagnoseFacebook(): Promise<FacebookDiagnostic> {
     // configuration.
     let identified = false
     try {
-      const me = await axios.get(`${FACEBOOK_GRAPH_BASE}/me`, {
-        params: { fields: 'id,name,tasks', access_token: configuredToken },
-        timeout: 10000,
-      })
-      if (me.data?.id) {
+      const me = await fetchPageProfile('me', configuredToken)
+      if (me.id) {
         identified = true
-        const tasks: string[] = me.data?.tasks || []
         diag.accessiblePages = [{
-          id: String(me.data.id),
-          name: me.data.name,
-          canPost: tasks.length ? tasks.includes('CREATE_CONTENT') : true,
+          id: me.id,
+          name: me.name,
+          canPost: me.tasks?.length ? me.tasks.includes('CREATE_CONTENT') : true,
         }]
-        diag.pageIdMatches = String(me.data.id) === String(pageId)
+        diag.pageIdMatches = me.id === String(pageId)
         if (!diag.pageIdMatches) {
           diag.problems.push(
-            `Le jeton appartient à la Page ${me.data.name || '?'} (${me.data.id}), alors que FACEBOOK_PAGE_ID vaut ${pageId}.`
+            `Le jeton appartient à la Page ${me.name || '?'} (${me.id}), alors que FACEBOOK_PAGE_ID vaut ${pageId}.`
           )
-          diag.hints.push(`Corrigez FACEBOOK_PAGE_ID en ${me.data.id}, ou fournissez le jeton de la Page ${pageId}.`)
+          diag.hints.push(`Corrigez FACEBOOK_PAGE_ID en ${me.id}, ou fournissez le jeton de la Page ${pageId}.`)
         }
       }
     } catch {
@@ -539,14 +560,11 @@ export async function diagnoseFacebook(): Promise<FacebookDiagnostic> {
   const resolved = await resolvePageAccessToken(true)
   diag.usedTokenSource = resolved.source
   try {
-    const res = await axios.get(`${FACEBOOK_GRAPH_BASE}/${pageId}`, {
-      params: { fields: 'id,name,tasks', access_token: resolved.token },
-      timeout: 10000,
-    })
-    const tasks: string[] = res.data?.tasks || []
+    const page = await fetchPageProfile(String(pageId), resolved.token!)
+    const tasks = page.tasks || []
     diag.page = {
-      id: res.data?.id || pageId,
-      name: res.data?.name,
+      id: page.id || String(pageId),
+      name: page.name,
       // `tasks` n'est renvoyé qu'avec un jeton utilisateur ; avec un jeton de
       // Page l'absence de la liste n'est pas un signe d'échec.
       canPost: tasks.length ? tasks.includes('CREATE_CONTENT') : true,
