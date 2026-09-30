@@ -10,11 +10,11 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_
 export const revalidate = 86400 // 24h
 
 export const metadata: Metadata = {
-  title: 'Classes thérapeutiques (ATC) — médicaments en Algérie | DwaDZ',
+  title: 'Classes thérapeutiques (ATC) — médicaments en Algérie',
   description: 'Naviguez dans la nomenclature pharmaceutique algérienne par classe thérapeutique : classification ATC de l\'OMS, du groupe anatomique jusqu\'à la substance active.',
   alternates: { canonical: `${APP_URL}/classes-therapeutiques` },
   openGraph: {
-    title: 'Classes thérapeutiques (ATC) — médicaments en Algérie | DwaDZ',
+    title: 'Classes thérapeutiques (ATC) — médicaments en Algérie',
     description: 'Classification ATC de l\'OMS appliquée à la nomenclature algérienne : naviguez par système anatomique et classe thérapeutique.',
     type: 'website',
     siteName: 'DwaDZ',

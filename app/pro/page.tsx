@@ -4,7 +4,7 @@ import { ProClient } from './ProClient'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
 export const metadata: Metadata = {
-  title: 'Espace Pro — veille réglementaire, API nomenclature, fiche pharmacie | DwaDZ',
+  title: 'Espace Pro — veille réglementaire, API nomenclature, fiche pharmacie',
   description: 'Offres professionnelles DwaDZ : veille réglementaire personnalisée pour laboratoires et distributeurs, API de la nomenclature algérienne structurée, fiche pharmacie premium vérifiée.',
   alternates: { canonical: `${APP_URL}/pro` },
   openGraph: {

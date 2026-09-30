@@ -5,10 +5,10 @@ const CONTACT_EMAIL = 'admin@nomenclature-pharma.org'
 
 export const metadata: Metadata = {
   title: 'Politique de confidentialité',
-  description: 'Politique de confidentialité de DwaDZ : données de localisation, données techniques, finalités, partage, conservation et droits des utilisateurs.',
+  description: 'Politique de confidentialité de DwaDZ : données de localisation, données techniques, cookies et publicité (Google AdSense), finalités, partage, conservation et droits des utilisateurs.',
   alternates: { canonical: `${APP_URL}/privacy` },
   openGraph: {
-    title: 'Politique de confidentialité | DwaDZ',
+    title: 'Politique de confidentialité',
     description: 'Informations sur les données utilisées par DwaDZ et les choix proposés aux utilisateurs.',
     url: `${APP_URL}/privacy`,
   },
@@ -85,7 +85,49 @@ const sections = [
     ),
   },
   {
-    title: '4. Données de santé',
+    title: '4. Cookies et publicité',
+    content: (
+      <>
+        <p>
+          Le site affiche des annonces diffusées par Google AdSense, qui financent son fonctionnement et sa
+          gratuité.
+        </p>
+        <ul>
+          <li>
+            Des fournisseurs tiers, dont Google, utilisent des cookies pour diffuser des annonces en fonction des
+            visites précédentes de l’utilisateur sur ce site ou sur d’autres sites.
+          </li>
+          <li>
+            Les cookies publicitaires permettent à Google et à ses partenaires de diffuser des annonces en fonction
+            de ces visites.
+          </li>
+          <li>
+            L’utilisateur peut désactiver la publicité personnalisée depuis les{' '}
+            <a href="https://myadcenter.google.com/" target="_blank" rel="noopener noreferrer">paramètres des annonces Google</a>,
+            ou désactiver les cookies de fournisseurs tiers via{' '}
+            <a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener noreferrer">www.aboutads.info</a>.
+          </li>
+          <li>
+            Pour en savoir plus :{' '}
+            <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener noreferrer">
+              comment Google utilise les données des sites partenaires
+            </a>.
+          </li>
+        </ul>
+        <p>
+          Les visiteurs situés dans l’Espace économique européen, au Royaume-Uni ou en Suisse sont invités à donner
+          ou refuser leur consentement via le bandeau affiché à leur première visite ; ils peuvent modifier ce choix
+          à tout moment.
+        </p>
+        <p>
+          Le site utilise aussi des cookies techniques strictement nécessaires (langue d’affichage, session
+          d’administration) et une mesure d’audience interne, qui ne servent pas au ciblage publicitaire.
+        </p>
+      </>
+    ),
+  },
+  {
+    title: '5. Données de santé',
     content: (
       <>
         <p>DwaDZ ne demande pas à l’utilisateur de saisir des données médicales personnelles.</p>
@@ -98,7 +140,7 @@ const sections = [
     ),
   },
   {
-    title: '5. Conservation des données',
+    title: '6. Conservation des données',
     content: (
       <>
         <p>La position de l’utilisateur n’est pas conservée par DwaDZ après le calcul ou l’ouverture de l’itinéraire.</p>
@@ -110,7 +152,7 @@ const sections = [
     ),
   },
   {
-    title: '6. Permissions demandées',
+    title: '7. Permissions demandées',
     content: (
       <>
         <p>L’application peut demander la permission d’accéder à la localisation de l’appareil.</p>
@@ -120,7 +162,7 @@ const sections = [
     ),
   },
   {
-    title: '7. Sécurité',
+    title: '8. Sécurité',
     content: (
       <p>
         Nous mettons en œuvre des mesures raisonnables pour protéger les données traitées par l’application contre
@@ -129,7 +171,7 @@ const sections = [
     ),
   },
   {
-    title: '8. Droits des utilisateurs',
+    title: '9. Droits des utilisateurs',
     content: (
       <p>
         Selon la réglementation applicable, l’utilisateur peut demander l’accès, la rectification ou la suppression
@@ -139,7 +181,7 @@ const sections = [
     ),
   },
   {
-    title: '9. Contact',
+    title: '10. Contact',
     content: (
       <p>
         Pour toute question concernant cette politique de confidentialité ou le fonctionnement de l’application :{' '}

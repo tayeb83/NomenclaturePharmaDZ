@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: 'Contactez DwaDZ — questions, suggestions, signalement d\'erreurs sur la nomenclature pharmaceutique algérienne.',
   alternates: { canonical: `${APP_URL}/contact` },
   openGraph: {
-    title: 'Contact | DwaDZ',
+    title: 'Contact',
     description: 'Contactez-nous pour toute question sur les médicaments en Algérie.',
     url: `${APP_URL}/contact`,
   },

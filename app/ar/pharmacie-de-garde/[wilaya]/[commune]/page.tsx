@@ -53,7 +53,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const frUrl = `${APP_URL}/pharmacie-de-garde/${wilayaSlug}/${communeSlug}`
   const arUrl = `${APP_URL}/ar/pharmacie-de-garde/${wilayaSlug}/${communeSlug}`
 
-  const title = `صيدلية المناوبة اليوم في ${communeAr} (${today}) | DwaDZ`
+  const title = `صيدلية المناوبة اليوم في ${communeAr} (${today})`
   const description = `قائمة محدّثة لصيدليات المناوبة في ${communeAr}، ولاية ${wilayaAr} — الأسماء، العناوين، أرقام الهاتف وأوقات المناوبة. مصدر رسمي (مديرية الصحة والسكان)، تحديث دوري.`
 
   return {

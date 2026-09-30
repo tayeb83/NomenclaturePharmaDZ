@@ -16,8 +16,8 @@
  */
 
 import { unstable_cache } from 'next/cache'
-import { getMedicamentById, getAlternatifsDCI, getAtcHierarchyByDci } from './queries'
-import type { MedicamentDetail, AtcCode, Enregistrement } from './db-types'
+import { getMedicamentById, getAlternatifsDCI, getAtcHierarchyByDci, getMedicamentsByDci, getStats } from './queries'
+import type { MedicamentDetail, AtcCode, Enregistrement, Stats } from './db-types'
 
 /** Tag d'invalidation : `revalidateTag(NOMENCLATURE_TAG)` après un import. */
 export const NOMENCLATURE_TAG = 'nomenclature'
@@ -49,5 +49,27 @@ export function getCachedAtcHierarchyByDci(dci: string): Promise<AtcCode[]> {
     () => getAtcHierarchyByDci(dci),
     ['atc-hierarchy', dci],
     { revalidate: REVALIDATE_SECONDS, tags: [NOMENCLATURE_TAG] }
+  )()
+}
+
+/** Pages /dci/[slug] : parmi les plus visitées depuis Google. */
+export function getCachedMedicamentsByDci(dci: string, limit: number): Promise<Enregistrement[]> {
+  return unstable_cache(
+    () => getMedicamentsByDci(dci, limit),
+    ['medicaments-by-dci', dci.toLowerCase(), String(limit)],
+    { revalidate: REVALIDATE_SECONDS, tags: [NOMENCLATURE_TAG] }
+  )()
+}
+
+/**
+ * Statistiques globales : lues par le layout racine à CHAQUE page (version
+ * affichée dans la nav). Sans cache, chaque affichage payait une requête
+ * PostgreSQL de plus avant le moindre octet envoyé.
+ */
+export function getCachedStats(): Promise<Stats> {
+  return unstable_cache(
+    () => getStats(),
+    ['stats'],
+    { revalidate: 3600, tags: [NOMENCLATURE_TAG] }
   )()
 }

@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: `${APP_URL}/pharmacies` },
   openGraph: {
-    title: 'Annuaire des pharmacies en Algérie | DwaDZ',
+    title: 'Annuaire des pharmacies en Algérie',
     description: 'Toutes les pharmacies référencées par wilaya et commune, avec adresse, téléphone et position.',
     url: `${APP_URL}/pharmacies`,
     type: 'website',

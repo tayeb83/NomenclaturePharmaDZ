@@ -5,7 +5,7 @@ import { Footer } from '@/components/layout/Footer'
 import { LanguageProvider } from '@/components/i18n/LanguageProvider'
 import { PWAManager } from '@/components/pwa/PWAManager'
 import { PageVisitTracker } from '@/components/analytics/PageVisitTracker'
-import { getStats } from '@/lib/queries'
+import { getCachedStats } from '@/lib/medicament-cache'
 import { isAdminSessionValid } from '@/lib/admin-auth'
 import { cookies, headers } from 'next/headers'
 import { getDir, isLang } from '@/lib/i18n'
@@ -72,7 +72,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Récupère la version courante côté serveur pour l'afficher dans la Nav
   let currentVersion: string | null = null
   try {
-    const stats = await getStats()
+    const stats = await getCachedStats()
     currentVersion = stats.last_version ?? null
   } catch {
     // Silencieux : la nav affiche le fallback si la DB est inaccessible

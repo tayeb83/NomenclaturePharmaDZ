@@ -9,12 +9,12 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Articles & Veille Réglementaire | DwaDZ',
+  title: 'Articles & Veille Réglementaire',
   description:
     'Articles de fond sur la réglementation pharmaceutique en Algérie : Loi 18-11, exercice officinal, Data Matrix, pharmacovigilance et fiches de révision pour étudiants en pharmacie.',
   alternates: { canonical: `${APP_URL}/articles` },
   openGraph: {
-    title: 'Articles & Veille Réglementaire | DwaDZ',
+    title: 'Articles & Veille Réglementaire',
     description: 'Loi 18-11, réglementation officine, Data Matrix, pharmacovigilance et fiches de révision — DwaDZ.',
     url: `${APP_URL}/articles`,
     siteName: 'DwaDZ',

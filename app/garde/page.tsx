@@ -55,7 +55,7 @@ export async function generateMetadata({
       : mode === 'friday'
         ? ' — vendredi prochain'
         : ' — aujourd\'hui'
-    const title = `Pharmacies de garde à ${place}${suffix} | DwaDZ`
+    const title = `Pharmacies de garde à ${place}${suffix}`
     const description = `Liste des pharmacies de garde à ${place} (wilaya de ${meta.wilaya_name_fr}) — source officielle ${meta.issuer_fr || 'DSP'}. Adresses, horaires et téléphones.`
     return {
       title,
@@ -75,7 +75,7 @@ export async function generateMetadata({
     ],
     alternates: { canonical },
     openGraph: {
-      title: 'Pharmacies de garde en Algérie | DwaDZ',
+      title: 'Pharmacies de garde en Algérie',
       description: 'Pharmacie ouverte maintenant, cette nuit ou vendredi, triée par distance — listes officielles DSP par wilaya et commune.',
       url: canonical,
       type: 'website',

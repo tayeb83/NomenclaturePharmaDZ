@@ -14,7 +14,7 @@ export async function generateMetadata({
   const q = (params.q || '').trim()
 
   if (q) {
-    const title = `${q} en Algérie — médicaments, prix et disponibilité | DwaDZ`
+    const title = `${q} en Algérie — médicaments, prix et disponibilité`
     const description = `Résultats pour "${q}" dans la nomenclature pharmaceutique algérienne (MIPH). Statut, laboratoire, génériques disponibles en Algérie.`
     return {
       title,
@@ -32,11 +32,11 @@ export async function generateMetadata({
   }
 
   return {
-    title: 'Recherche de médicaments en Algérie | DwaDZ',
+    title: 'Recherche de médicaments en Algérie',
     description: 'Recherchez par DCI, nom de marque, laboratoire ou forme. Nomenclature pharmaceutique algérienne officielle MIPH.',
     alternates: { canonical: `${APP_URL}/recherche` },
     openGraph: {
-      title: 'Recherche de médicaments en Algérie | DwaDZ',
+      title: 'Recherche de médicaments en Algérie',
       description: 'Recherchez par DCI, nom de marque, laboratoire ou forme. Nomenclature pharmaceutique algérienne officielle MIPH.',
       type: 'website',
       siteName: 'DwaDZ',

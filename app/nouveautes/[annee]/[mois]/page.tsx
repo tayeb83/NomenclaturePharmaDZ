@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: { params: { annee: string; mo
 
   const canonical = `${APP_URL}/nouveautes/${annee}/${String(mois).padStart(2, '0')}`
   const moisLabel = MOIS_FR[mois] ?? String(mois)
-  const title = `Nouveaux médicaments — ${moisLabel} ${annee} — Algérie | DwaDZ`
+  const title = `Nouveaux médicaments — ${moisLabel} ${annee} — Algérie`
   const description = `Liste des nouveaux médicaments enregistrés en Algérie en ${moisLabel} ${annee}. Nomenclature officielle MIPH.`
 
   return {

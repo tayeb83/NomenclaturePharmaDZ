@@ -8,7 +8,7 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_
 export const revalidate = 3600
 
 export const metadata: Metadata = {
-  title: 'Pharmacie de garde en Algérie — toutes les wilayas | DwaDZ',
+  title: 'Pharmacie de garde en Algérie — toutes les wilayas',
   description: 'Trouvez la pharmacie de garde ouverte aujourd\'hui, cette nuit ou vendredi dans votre commune — Oran, Sidi Bel Abbès, Saïda et les 58 wilayas d\'Algérie. Listes officielles DSP, adresses, téléphones et horaires.',
   keywords: [
     'pharmacie de garde algérie', 'pharmacie de garde par wilaya', 'pharmacie de garde oran',
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     languages: { fr: `${APP_URL}/pharmacie-de-garde`, ar: `${APP_URL}/ar/pharmacie-de-garde`, 'x-default': `${APP_URL}/pharmacie-de-garde` },
   },
   openGraph: {
-    title: 'Pharmacie de garde en Algérie — toutes les wilayas | DwaDZ',
+    title: 'Pharmacie de garde en Algérie — toutes les wilayas',
     description: 'Listes officielles DSP par wilaya et commune — adresses, téléphones, horaires.',
     url: `${APP_URL}/pharmacie-de-garde`,
     type: 'website',

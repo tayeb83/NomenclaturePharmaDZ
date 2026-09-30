@@ -90,9 +90,11 @@ export function HomeClient({
         </div>
       </section>
 
-      {/* SEO anchor — visually minimal, preserved for search engine indexing */}
-      <div aria-hidden="true" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', opacity: 0, pointerEvents: 'none' }}>
-        <h2>{t('Pharma DZ : votre guide médicaments en Algérie', 'Pharma DZ: دليلك لأدوية الجزائر')}</h2>
+      {/* Présentation courte, VISIBLE. Elle était auparavant masquée (1 px,
+          opacité 0) : Google traite le texte caché comme du spam, ce qui
+          pénalise le classement et peut bloquer la validation AdSense. */}
+      <div className="container" style={{ maxWidth: 900, margin: '16px auto 0', fontSize: 14, color: 'var(--slate-600)', lineHeight: 1.6 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--navy)', margin: '0 0 6px' }}>{t('Pharma DZ : votre guide médicaments en Algérie', 'Pharma DZ: دليلك لأدوية الجزائر')}</h2>
         <p>
           {lang === 'ar' ? (
             <>إذا كنت تبحث عن <strong>Pharma DZ</strong> أو <strong>صيدلية الجزائر</strong> أو <strong>أدوية الجزائر</strong>، يوفر لك DwaDZ البحث السريع في التسمية الرسمية مع صفحات مخصصة لـ <Link href="/recherche">الأدوية</Link> و<Link href="/alertes">التنبيهات</Link> و<Link href="/substitution">البدائل الجنيسة</Link>.</>
