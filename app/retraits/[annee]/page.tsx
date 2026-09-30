@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: { params: { annee: string } }
   if (isNaN(annee)) return { title: 'Année invalide' }
 
   const canonical = `${APP_URL}/retraits/${annee}`
-  const title = `Médicaments retirés en ${annee} — Algérie | DwaDZ`
+  const title = `Médicaments retirés en ${annee} — Algérie`
   const description = `Liste complète des médicaments retirés du marché algérien en ${annee}. Source officielle MIPH.`
 
   return {

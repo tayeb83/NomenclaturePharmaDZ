@@ -2,7 +2,8 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
-import { getMedicamentsByDci, getAllDciList } from '@/lib/queries'
+import { getAllDciList } from '@/lib/queries'
+import { getCachedMedicamentsByDci } from '@/lib/medicament-cache'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
 import { getCountryFlag } from '@/lib/countryFlag'
 import { medicamentPath } from '@/lib/medicament-url'
@@ -23,13 +24,18 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const dci = decodeURIComponent(params.slug)
-  const meds = await getMedicamentsByDci(dci, 5)
+  // Même appel (et même entrée de cache) que la page : le compte affiché
+  // dans le snippet Google est exact, et non plafonné à « 5+ ».
+  const meds = await getCachedMedicamentsByDci(dci, 300)
   if (!meds.length) return { title: 'DCI introuvable' }
 
   const canonical = `${APP_URL}/dci/${params.slug}`
   const dciUpper = dci.toUpperCase()
-  const title = `${dciUpper} en Algérie — prix, génériques et disponibilité | DwaDZ`
-  const description = `${dciUpper} en Algérie : ${meds.length}+ médicaments enregistrés dans la nomenclature officielle MIPH. Génériques disponibles, laboratoires, formes et dosages. Données officielles mises à jour.`
+  const nbGeneriques = meds.filter(m => ['GE', 'Gé'].includes(m.type_prod ?? '')).length
+  // Les noms commerciaux sont ce que l'internaute reconnaît dans le snippet.
+  const marques = Array.from(new Set(meds.map(m => m.nom_marque?.split(' ')[0]).filter(Boolean))).slice(0, 4)
+  const title = `${dciUpper} en Algérie — prix, génériques et disponibilité`
+  const description = `${dciUpper} en Algérie : ${meds.length} médicament${meds.length > 1 ? 's' : ''} enregistré${meds.length > 1 ? 's' : ''}${nbGeneriques ? `, dont ${nbGeneriques} générique${nbGeneriques > 1 ? 's' : ''}` : ''}${marques.length ? ` (${marques.join(', ')}…)` : ''}. Noms commerciaux, laboratoires, formes et dosages — nomenclature officielle MIPH.`
 
   return {
     title,
@@ -58,7 +64,7 @@ export default async function DciPage({ params }: { params: { slug: string } }) 
   const langCookie = cookies().get('lang')?.value
   const lang: Lang = isLang(langCookie) ? langCookie : 'fr'
 
-  const meds = await getMedicamentsByDci(dci, 300)
+  const meds = await getCachedMedicamentsByDci(dci, 300)
   if (!meds.length) notFound()
 
   const locaux = meds.filter(m => m.statut === 'F')
@@ -139,6 +145,8 @@ export default async function DciPage({ params }: { params: { slug: string } }) 
               </div>
             ))}
           </div>
+
+          <AdInContent style={{ margin: '0 auto 28px' }} />
 
           {/* Lien substitution */}
           {generiques.length > 0 && (

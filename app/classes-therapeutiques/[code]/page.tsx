@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: { code: string } })
 
   const label = node.label_fr || node.label_en || code
   const canonical = `${APP_URL}/classes-therapeutiques/${code}`
-  const title = `${code} — ${label} : médicaments en Algérie | DwaDZ`
+  const title = `${code} — ${label} : médicaments en Algérie`
   const description = `Classe thérapeutique ATC ${code} (${label}) : substances actives et médicaments enregistrés dans la nomenclature pharmaceutique algérienne (MIPH).`
 
   return {

@@ -8,6 +8,7 @@ import type { GardeNowResult, GardeMonthResult } from '@/lib/garde'
 import { slugify } from '@/lib/slug'
 import type { Lang } from '@/lib/i18n'
 import { GardeFeedback } from '@/components/garde/GardeFeedback'
+import { AdInContent } from '@/components/ads/AdBanner'
 import {
   isPremium,
   premiumCardStyle,
@@ -347,6 +348,66 @@ export function GardeCommuneClient({
     monthLabel
   )
 
+  const renderShift = ({ shift, distanceKm }: (typeof sortedSchedule)[number]) => (
+    <div key={shift.id} style={{
+      background: '#fff', border: '1px solid var(--slate-200)', borderRadius: 10, padding: '16px 18px',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+      ...(isPremium(shift) ? premiumCardStyle : null),
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 15.5, color: 'var(--navy)' }}>
+            {displayName(shift, lang)}
+            <PremiumBadges shift={shift} lang={lang} />
+          </div>
+          {shift.name_fr && shift.name_ar && (
+            <div dir={lang === 'ar' ? 'ltr' : 'rtl'} lang={lang === 'ar' ? 'fr' : 'ar'} style={{ color: 'var(--slate-500)', fontSize: 13.5, marginTop: 2 }}>
+              {lang === 'ar' ? shift.name_fr : shift.name_ar}
+            </div>
+          )}
+        </div>
+        {shift.active_now ? (
+          <span className="badge badge-green">{t.now_}</span>
+        ) : (
+          <span className="badge badge-gray">{shift.shift === 'nuit' ? t.night : t.day}</span>
+        )}
+      </div>
+      <div style={{ fontSize: 13, color: 'var(--slate-600)', marginTop: 4 }}>
+        {(lang === 'ar' ? (shift.address_ar || shift.address_fr) : (shift.address_fr || shift.address_ar))}{distanceKm != null && ` · ${formatDistance(distanceKm)}`}
+      </div>
+      <div style={{ fontSize: 13, color: 'var(--slate-500)', marginTop: 6 }}>
+        {formatTimeRange(shift.starts_at, shift.ends_at)}
+      </div>
+      <PremiumDetails shift={shift} lang={lang} />
+      <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+        {shift.phone_e164 ? (
+          <a href={`tel:${shift.phone_e164}`} style={{
+            background: 'var(--blue)', color: '#fff', borderRadius: 8, padding: '8px 14px',
+            fontSize: 13, fontWeight: 700, textDecoration: 'none',
+          }}>
+            {t.call}
+          </a>
+        ) : (
+          <span style={{ color: 'var(--slate-400)', fontSize: 13, padding: '8px 14px' }}>{t.unavailable}</span>
+        )}
+        <WhatsAppButton shift={shift} lang={lang} />
+        <a href={mapsHref(shift)} target="_blank" rel="noopener noreferrer" style={{
+          background: '#fff', border: '1px solid var(--slate-200)', color: 'var(--slate-700)',
+          borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, textDecoration: 'none',
+        }}>
+          {t.route}
+        </a>
+      </div>
+      <GardeFeedback
+        lang={lang}
+        wilayaCode={wilayaCode}
+        communeCode={communeCode}
+        pharmacyExternalId={shift.pharmacy_id ?? null}
+        pharmacyName={displayName(shift, lang)}
+      />
+    </div>
+  )
+
   return (
     <div dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       <div style={{ marginBottom: 28 }}>
@@ -446,67 +507,19 @@ export function GardeCommuneClient({
             <div className="alert-banner info">{t.none(communeName)}</div>
           )}
 
+          {/* Pub après les deux premières pharmacies : le visiteur a déjà sa
+              réponse, et l'emplacement est vu (celui du bas de page ne l'était
+              presque jamais). Deux grilles distinctes plutôt qu'un index dans
+              le map : l'emplacement ne se remonte pas quand le tri change. */}
           <div style={{ display: 'grid', gap: 10 }}>
-            {sortedSchedule.map(({ shift, distanceKm }) => (
-              <div key={shift.id} style={{
-                background: '#fff', border: '1px solid var(--slate-200)', borderRadius: 10, padding: '16px 18px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                ...(isPremium(shift) ? premiumCardStyle : null),
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 15.5, color: 'var(--navy)' }}>
-                      {displayName(shift, lang)}
-                      <PremiumBadges shift={shift} lang={lang} />
-                    </div>
-                    {shift.name_fr && shift.name_ar && (
-                      <div dir={lang === 'ar' ? 'ltr' : 'rtl'} lang={lang === 'ar' ? 'fr' : 'ar'} style={{ color: 'var(--slate-500)', fontSize: 13.5, marginTop: 2 }}>
-                        {lang === 'ar' ? shift.name_fr : shift.name_ar}
-                      </div>
-                    )}
-                  </div>
-                  {shift.active_now ? (
-                    <span className="badge badge-green">{t.now_}</span>
-                  ) : (
-                    <span className="badge badge-gray">{shift.shift === 'nuit' ? t.night : t.day}</span>
-                  )}
-                </div>
-                <div style={{ fontSize: 13, color: 'var(--slate-600)', marginTop: 4 }}>
-                  {(lang === 'ar' ? (shift.address_ar || shift.address_fr) : (shift.address_fr || shift.address_ar))}{distanceKm != null && ` · ${formatDistance(distanceKm)}`}
-                </div>
-                <div style={{ fontSize: 13, color: 'var(--slate-500)', marginTop: 6 }}>
-                  {formatTimeRange(shift.starts_at, shift.ends_at)}
-                </div>
-                <PremiumDetails shift={shift} lang={lang} />
-                <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
-                  {shift.phone_e164 ? (
-                    <a href={`tel:${shift.phone_e164}`} style={{
-                      background: 'var(--blue)', color: '#fff', borderRadius: 8, padding: '8px 14px',
-                      fontSize: 13, fontWeight: 700, textDecoration: 'none',
-                    }}>
-                      {t.call}
-                    </a>
-                  ) : (
-                    <span style={{ color: 'var(--slate-400)', fontSize: 13, padding: '8px 14px' }}>{t.unavailable}</span>
-                  )}
-                  <WhatsAppButton shift={shift} lang={lang} />
-                  <a href={mapsHref(shift)} target="_blank" rel="noopener noreferrer" style={{
-                    background: '#fff', border: '1px solid var(--slate-200)', color: 'var(--slate-700)',
-                    borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                  }}>
-                    {t.route}
-                  </a>
-                </div>
-                <GardeFeedback
-                  lang={lang}
-                  wilayaCode={wilayaCode}
-                  communeCode={communeCode}
-                  pharmacyExternalId={shift.pharmacy_id ?? null}
-                  pharmacyName={displayName(shift, lang)}
-                />
-              </div>
-            ))}
+            {sortedSchedule.slice(0, 2).map(renderShift)}
           </div>
+          {sortedSchedule.length > 2 && <AdInContent style={{ margin: '14px auto' }} />}
+          {sortedSchedule.length > 2 && (
+            <div style={{ display: 'grid', gap: 10 }}>
+              {sortedSchedule.slice(2).map(renderShift)}
+            </div>
+          )}
         </>
       )}
 

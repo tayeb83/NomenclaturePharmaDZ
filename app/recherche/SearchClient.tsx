@@ -4,6 +4,7 @@ import { useState, useTransition, useCallback, useRef, useEffect, useMemo } from
 import { useRouter } from 'next/navigation'
 import type { SearchResult } from '@/lib/db-types'
 import { DrugCard } from '@/components/drug/DrugCard'
+import { AdInContent } from '@/components/ads/AdBanner'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 
 type AdvancedSearchCondition = {
@@ -557,8 +558,13 @@ export function SearchClient({
         </div>
       )}
 
-      {!loading && filteredResults.map((d, i) => (
+      {!loading && filteredResults.slice(0, 3).map((d, i) => (
         <DrugCard key={`${d.source}-${d.id}-${i}`} drug={d} type={d.source} onOpen={() => trackResultOpen(d)} />
+      ))}
+      {/* Pub après les 3 premiers résultats : la recherche n'en affichait aucune. */}
+      {!loading && filteredResults.length > 3 && <AdInContent style={{ margin: '16px auto' }} />}
+      {!loading && filteredResults.slice(3).map((d, i) => (
+        <DrugCard key={`${d.source}-${d.id}-${i + 3}`} drug={d} type={d.source} onOpen={() => trackResultOpen(d)} />
       ))}
     </>
   )

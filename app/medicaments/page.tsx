@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: `${APP_URL}/medicaments` },
   openGraph: {
-    title: 'Tous les médicaments enregistrés en Algérie | DwaDZ',
+    title: 'Tous les médicaments enregistrés en Algérie',
     description: 'Nomenclature pharmaceutique algérienne complète — liste paginée avec filtres (type, statut, année), nouveautés de version et médicaments retirés par année.',
     url: `${APP_URL}/medicaments`,
     type: 'website',

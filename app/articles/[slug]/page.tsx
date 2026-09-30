@@ -23,7 +23,7 @@ export async function generateMetadata(
 
   const canonical = `${APP_URL}/articles/${article.slug}`
   return {
-    title: `${article.seoTitle || article.title} | DwaDZ`,
+    title: `${article.seoTitle || article.title}`,
     description: article.description,
     keywords: article.seoKeywords,
     alternates: { canonical },

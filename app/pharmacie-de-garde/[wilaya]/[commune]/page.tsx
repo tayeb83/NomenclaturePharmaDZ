@@ -53,7 +53,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const frUrl = `${APP_URL}/pharmacie-de-garde/${wilayaSlug}/${communeSlug}`
   const arUrl = `${APP_URL}/ar/pharmacie-de-garde/${wilayaSlug}/${communeSlug}`
 
-  const title = `Pharmacie de garde à ${commune} aujourd'hui (${today}) | DwaDZ`
+  const title = `Pharmacie de garde à ${commune} aujourd'hui (${today})`
   const description = `Liste à jour des pharmacies de garde à ${commune}, wilaya de ${wilayaName} — noms, adresses, téléphones et horaires. Source officielle DSP, mise à jour régulièrement.`
 
   return {

@@ -8,7 +8,7 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_
 export const revalidate = 3600
 
 export const metadata: Metadata = {
-  title: 'صيدلية المناوبة في الجزائر — حسب الولاية | DwaDZ',
+  title: 'صيدلية المناوبة في الجزائر — حسب الولاية',
   description: 'ابحث عن صيدلية المناوبة المفتوحة اليوم أو هذه الليلة أو يوم الجمعة في بلديتك — وهران، سيدي بلعباس، سعيدة و58 ولاية جزائرية. قوائم رسمية من مديريات الصحة والسكان.',
   keywords: [
     'صيدلية المناوبة الجزائر', 'صيدلية مناوبة', 'صيدلية المناوبة وهران',
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     languages: { fr: `${APP_URL}/pharmacie-de-garde`, ar: `${APP_URL}/ar/pharmacie-de-garde`, 'x-default': `${APP_URL}/pharmacie-de-garde` },
   },
   openGraph: {
-    title: 'صيدلية المناوبة في الجزائر — حسب الولاية | DwaDZ',
+    title: 'صيدلية المناوبة في الجزائر — حسب الولاية',
     description: 'قوائم رسمية حسب الولاية والبلدية — العناوين، الهواتف، أوقات المناوبة.',
     url: `${APP_URL}/ar/pharmacie-de-garde`,
     type: 'website',

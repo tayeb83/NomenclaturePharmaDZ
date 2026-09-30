@@ -148,8 +148,8 @@ export async function buildMedicamentMetadata(
   // dénominations officielles), mais tout l'habillage éditorial est traduit :
   // c'est lui qui porte les mots-clés sur lesquels on se positionne en arabe.
   const title = pickLang(lang, {
-    fr: `${med.nom_marque}${dosageSuffix} — Fiche technique et substitution | DwaDZ`,
-    ar: `${med.nom_marque}${dosageSuffix} — بطاقة الدواء والبدائل | DwaDZ`,
+    fr: `${med.nom_marque}${dosageSuffix} — Fiche technique et substitution`,
+    ar: `${med.nom_marque}${dosageSuffix} — بطاقة الدواء والبدائل`,
   })
   const description = pickLang(lang, {
     fr: `${med.nom_marque}${dosageSuffix}${dciSuffix}${med.forme ? ` — ${med.forme}` : ''}${med.labo ? ` — ${med.labo}` : ''}. Médicament disponible en Algérie, substituts génériques et nomenclature MIPH officielle.`,
@@ -491,6 +491,11 @@ export async function MedicamentDetail(
               </div>
             )}
           </div>
+
+          {/* Pub juste après l'essentiel de la fiche : c'est là que le
+              visiteur venu de Google a encore les yeux. Celle du bas de page
+              n'était presque jamais vue. */}
+          <AdInContent />
 
           {/* ─── Classification ATC ──────────────────────────── */}
           {atcHierarchy.length > 0 && (
