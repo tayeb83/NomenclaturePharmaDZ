@@ -162,9 +162,16 @@ export async function buildMedicamentMetadata(
   const arUrl = `${APP_URL}${medicamentPath(params.source, params.id, med, 'ar')}`
   const canonical = pickLang(lang, { fr: frUrl, ar: arUrl })
 
+  // Les produits non renouvelés sont d'immenses séries de fiches quasi
+  // identiques (même gamme, même laboratoire) que Google explore puis écarte
+  // (« explorée, actuellement non indexée »). Ils restent consultables, mais
+  // on n'impose pas ce budget d'index aux fiches qui valent d'être trouvées.
+  const robots = med.source === 'non_renouvele' ? { index: false, follow: true } : undefined
+
   return {
     title,
     description,
+    ...(robots ? { robots } : {}),
     alternates: {
       canonical,
       languages: { fr: frUrl, ar: arUrl, 'x-default': frUrl },

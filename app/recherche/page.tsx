@@ -19,7 +19,11 @@ export async function generateMetadata({
     return {
       title,
       description,
-      alternates: { canonical: `${APP_URL}/recherche?q=${encodeURIComponent(q)}` },
+      // Page de résultats internes : contenu mince et quasi infini (une URL par
+      // requête). Google les signalait « page en double sans canonique ». On
+      // les laisse explorables (follow) pour que le maillage vers les fiches
+      // continue de circuler, mais hors de l'index.
+      robots: { index: false, follow: true },
       openGraph: {
         title,
         description,

@@ -201,7 +201,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Chaque fiche existe en deux versions indexables (FR et AR), reliées entre
   // elles par des balises hreflang. On déclare les deux : sans cela, la
   // version arabe resterait invisible pour les moteurs.
-  const medicamentPages: MetadataRoute.Sitemap = medicamentIds.flatMap((med) => {
+  // Les produits non renouvelés sont en `noindex` (cf. buildMedicamentMetadata) :
+  // les déclarer dans le sitemap enverrait un signal contradictoire.
+  const medicamentPages: MetadataRoute.Sitemap = medicamentIds
+    .filter(med => med.source !== 'non_renouvele')
+    .flatMap((med) => {
     const { source, id, updated_at } = med
     const parsedRowDate = updated_at ? new Date(updated_at) : null
     const lastModified =
