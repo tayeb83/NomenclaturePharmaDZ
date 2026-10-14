@@ -8,6 +8,7 @@ import { isLang, pickLang, type Lang } from '@/lib/i18n'
 import { getCountryFlag } from '@/lib/countryFlag'
 import { medicamentPath } from '@/lib/medicament-url'
 import { medicalPageJsonLd } from '@/lib/schema'
+import { groupByMarque } from '@/lib/dci-groups'
 import { AdInContent } from '@/components/ads/AdBanner'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
@@ -33,7 +34,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const dciUpper = dci.toUpperCase()
   const nbGeneriques = meds.filter(m => ['GE', 'Gé'].includes(m.type_prod ?? '')).length
   // Les noms commerciaux sont ce que l'internaute reconnaît dans le snippet.
-  const marques = Array.from(new Set(meds.map(m => m.nom_marque?.split(' ')[0]).filter(Boolean))).slice(0, 4)
+  const marques = groupByMarque(meds).map(g => g.nom).slice(0, 4)
   const title = `${dciUpper} en Algérie — prix, génériques et disponibilité`
   const description = `${dciUpper} en Algérie : ${meds.length} médicament${meds.length > 1 ? 's' : ''} enregistré${meds.length > 1 ? 's' : ''}${nbGeneriques ? `, dont ${nbGeneriques} générique${nbGeneriques > 1 ? 's' : ''}` : ''}${marques.length ? ` (${marques.join(', ')}…)` : ''}. Noms commerciaux, laboratoires, formes et dosages — nomenclature officielle MIPH.`
 
@@ -70,6 +71,7 @@ export default async function DciPage({ params }: { params: { slug: string } }) 
   const locaux = meds.filter(m => m.statut === 'F')
   const importes = meds.filter(m => m.statut !== 'F')
   const generiques = meds.filter(m => ['GE', 'Gé'].includes(m.type_prod ?? ''))
+  const marques = groupByMarque(meds)
 
   const dciUpper = dci.toUpperCase()
   const dciUrl = `${APP_URL}/dci/${params.slug}`
@@ -169,43 +171,88 @@ export default async function DciPage({ params }: { params: { slug: string } }) 
             </div>
           )}
 
-          {/* Liste des médicaments */}
+          {/* Présentation par nom commercial */}
           <div className="section-title">
-            {pickLang(lang, { fr: `💊 Médicaments enregistrés avec ${dci}`, ar: `💊 الأدوية المسجلة بـ ${dci}` })}
+            {pickLang(lang, { fr: `💊 Noms commerciaux de ${dci}`, ar: `💊 الأسماء التجارية لـ ${dci}` })}
           </div>
+          <p style={{ color: '#475569', fontSize: 14, lineHeight: 1.6, margin: '8px 0 16px' }}>
+            {pickLang(lang, {
+              fr: `${dciUpper} est commercialisé en Algérie sous ${marques.length} nom${marques.length > 1 ? 's' : ''} commercia${marques.length > 1 ? 'ux' : 'l'}, pour ${meds.length} présentation${meds.length > 1 ? 's' : ''} (formes, dosages, laboratoires). Chaque bloc ci-dessous regroupe les présentations d'une même marque, avec un lien vers sa fiche détaillée.`,
+              ar: `يُسوَّق ${dciUpper} في الجزائر تحت ${marques.length} اسم تجاري، في ${meds.length} تقديم (أشكال، جرعات، مخابر). تجمع كل كتلة أدناه تقديمات علامة واحدة مع رابط إلى بطاقتها.`,
+            })}
+          </p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 12, marginTop: 16 }}>
-            {meds.map(med => (
-              <Link
-                key={med.id}
-                href={medicamentPath('enregistrement', med.id, med)}
-                style={{
-                  display: 'block', background: 'white', border: '1.5px solid #e2e8f0',
-                  borderRadius: 10, padding: '14px 16px', textDecoration: 'none',
-                  transition: 'border-color .15s, box-shadow .15s',
-                }}
-              >
-                <div style={{ fontWeight: 700, color: '#0f172a', fontSize: 14, marginBottom: 4 }}>{med.nom_marque}</div>
-                {(med.forme || med.dosage) && (
-                  <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>
-                    {[med.forme, med.dosage].filter(Boolean).join(' — ')}
-                  </div>
-                )}
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                  {med.type_prod && (
-                    <span className={`badge ${['GE', 'Gé'].includes(med.type_prod) ? 'badge-green' : med.type_prod === 'BIO' ? 'badge-purple' : 'badge-blue'}`} style={{ fontSize: 11 }}>
-                      {['GE', 'Gé'].includes(med.type_prod) ? (lang === 'ar' ? 'جنيس' : 'Générique') : med.type_prod}
-                    </span>
-                  )}
-                  {med.statut === 'F' && (
-                    <span className="badge badge-green" style={{ fontSize: 11 }}>🇩🇿 {lang === 'ar' ? 'جزائري' : 'DZ'}</span>
-                  )}
-                  {med.labo && <span style={{ fontSize: 11, color: '#475569' }}>🏭 {med.labo}</span>}
-                  {med.pays && med.statut !== 'F' && (
-                    <span style={{ fontSize: 11, color: '#475569' }}>{getCountryFlag(med.pays)} {med.pays}</span>
-                  )}
+          {marques.length > 6 && (
+            <nav
+              aria-label={pickLang(lang, { fr: 'Accès rapide par nom commercial', ar: 'وصول سريع حسب الاسم التجاري' })}
+              style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}
+            >
+              {marques.map(g => (
+                <a key={g.anchor} href={`#${g.anchor}`} className="badge badge-slate" style={{ fontSize: 11, textDecoration: 'none' }}>
+                  {g.nom}
+                </a>
+              ))}
+            </nav>
+          )}
+
+          <div style={{ display: 'grid', gap: 16 }}>
+            {marques.map(g => (
+              <section key={g.anchor} id={g.anchor} style={{ scrollMarginTop: 80 }}>
+                <h3 style={{ fontSize: 16, fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>
+                  {g.nom}
+                  <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b', marginInlineStart: 8 }}>
+                    {pickLang(lang, {
+                      fr: `${g.presentations.length} présentation${g.presentations.length > 1 ? 's' : ''}`,
+                      ar: `${g.presentations.length} تقديم`,
+                    })}
+                    {g.labos.length > 0 && ` · ${g.labos.slice(0, 3).join(', ')}${g.labos.length > 3 ? '…' : ''}`}
+                  </span>
+                </h3>
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>{pickLang(lang, { fr: 'Forme', ar: 'الشكل' })}</th>
+                        <th>{pickLang(lang, { fr: 'Dosage', ar: 'الجرعة' })}</th>
+                        <th>{pickLang(lang, { fr: 'Laboratoire', ar: 'المخبر' })}</th>
+                        <th>{pickLang(lang, { fr: 'Origine', ar: 'المصدر' })}</th>
+                        <th>{pickLang(lang, { fr: 'Type', ar: 'النوع' })}</th>
+                        <th />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {g.presentations.map(med => (
+                        <tr key={med.id}>
+                          <td>{med.forme || '—'}</td>
+                          <td>{med.dosage || '—'}</td>
+                          <td>{med.labo || '—'}</td>
+                          <td>
+                            {med.statut === 'F'
+                              ? `🇩🇿 ${lang === 'ar' ? 'جزائري' : 'DZ'}`
+                              : med.pays ? `${getCountryFlag(med.pays)} ${med.pays}` : '—'}
+                          </td>
+                          <td>
+                            {med.type_prod ? (
+                              <span className={`badge ${['GE', 'Gé'].includes(med.type_prod) ? 'badge-green' : med.type_prod === 'BIO' ? 'badge-purple' : 'badge-blue'}`} style={{ fontSize: 11 }}>
+                                {['GE', 'Gé'].includes(med.type_prod) ? (lang === 'ar' ? 'جنيس' : 'Générique') : med.type_prod}
+                              </span>
+                            ) : '—'}
+                          </td>
+                          <td>
+                            <Link
+                              href={medicamentPath('enregistrement', med.id, med)}
+                              aria-label={`${med.nom_marque} ${med.dosage ?? ''} ${med.forme ?? ''}`.replace(/\s+/g, ' ').trim()}
+                              style={{ fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap' }}
+                            >
+                              {pickLang(lang, { fr: 'Voir la fiche →', ar: 'عرض البطاقة ←' })}
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              </Link>
+              </section>
             ))}
           </div>
 
