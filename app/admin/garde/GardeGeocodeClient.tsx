@@ -6,6 +6,8 @@ import Link from 'next/link'
 
 import { PharmacyFieldsEditor } from './PharmacyFieldsEditor'
 import { PremiumEditor } from './PremiumEditor'
+import { ProfileEditor } from './ProfileEditor'
+import { PlaceTitlesEditor } from './PlaceTitlesEditor'
 import { NewPharmacyForm } from './NewPharmacyForm'
 import type { AdminPharmacy } from './types'
 
@@ -285,6 +287,8 @@ export function GardeGeocodeClient() {
             </div>
           )}
         </div>
+
+        <PlaceTitlesEditor />
       </div>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px 24px', display: 'grid', gridTemplateColumns: '360px 1fr', gap: 20 }}>
@@ -402,6 +406,8 @@ export function GardeGeocodeClient() {
                 onSaved={patch => applyRowUpdate(selected.id, patch)}
                 onDeleted={handleDeleted}
               />
+
+              <ProfileEditor pharmacy={selected} />
 
               <PremiumEditor
                 pharmacyId={selected.id}

@@ -31,7 +31,28 @@ par wilaya et commune. Interface bilingue **français / arabe** (RTL).
 - Version arabe indexable sur `/ar/pharmacie-de-garde`.
 - Crowdsourcing : confirmation d'ouverture, signalement d'erreur,
   revendication de fiche par le pharmacien.
-- Annuaire général : `/pharmacies`.
+- Annuaire général : `/pharmacies` (voir ci-dessous).
+
+### 📒 Annuaire des pharmacies
+- **Pages par zone**, FR et AR, avec un titre qui suit la zone :
+  `/pharmacies` → « Annuaire des pharmacies d'Algérie », `/pharmacies/saida`
+  → « … de Saïda », `/pharmacies/mascara/maoussa` → « … de Maoussa (Mascara) »
+  (`/ar/pharmacies/…` pour la version arabe). Les titres se corrigent en admin
+  (table `annuaire_places`).
+- **Fiche par pharmacie** : `/pharmacie/<id>-<slug>`. Lien stable : seul l'`id`
+  compte, un slug absent ou périmé est redirigé (308) vers l'adresse canonique.
+  Version arabe : `/ar/pharmacie/<id>-<slug>`.
+- **Recherche** par nom, quartier, commune ; filtres « ouvertes maintenant »,
+  « de garde », « vérifiées », « près de moi ». Les filtres sont dans l'URL
+  (`?q=…&garde=1`), donc partageables.
+- **Statut** : de garde (planning DSP) > jour de repos > horaires de la fiche >
+  10h–21h par défaut. Calculé à l'heure du visiteur (Algérie = UTC+1).
+- **Numéros** : toujours en chiffres occidentaux et isolés en LTR, même dans
+  une page arabe ; les saisies en chiffres arabo-indiens sont normalisées.
+- **Admin** (`/admin/garde`) : par pharmacie, badge « Vérifiée », horaires, jours
+  de repos, mobile, masquage ; par zone, titre de l'annuaire. À activer avec
+  `psql "$DATABASE_URL" -f sql/17_annuaire.sql` (l'annuaire fonctionne aussi
+  sans, avec les valeurs par défaut).
 
 ### 📲 Application web (PWA)
 Le site s'installe comme une application (bannière « Installer DwaDZ », ou
