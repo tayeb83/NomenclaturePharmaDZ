@@ -35,8 +35,8 @@ export default function PharmaciesMap({ userPos, pins }: Props) {
   return (
     <MapContainer center={center} zoom={12} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
       <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-        attribution="&copy; OpenStreetMap, &copy; CARTO"
+        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         subdomains="abcd"
         maxZoom={19}
       />
