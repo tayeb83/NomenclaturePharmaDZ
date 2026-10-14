@@ -12,9 +12,11 @@ type Props = {
 function FitBounds({ userPos, pins }: Props) {
   const map = useMap()
 
+  // Priorité aux pharmacies : la position de l'utilisateur ne sert de repère
+  // que lorsqu'aucune pharmacie n'est géolocalisée.
   const points: [number, number][] = []
-  if (userPos) points.push([userPos.lat, userPos.lng])
   pins.forEach(p => { if (p.lat != null && p.lng != null) points.push([p.lat, p.lng]) })
+  if (points.length === 0 && userPos) points.push([userPos.lat, userPos.lng])
 
   if (points.length > 1) {
     map.fitBounds(points, { padding: [32, 32] })
@@ -26,16 +28,16 @@ function FitBounds({ userPos, pins }: Props) {
 }
 
 export default function GardeMap({ userPos, pins }: Props) {
-  const center: [number, number] = userPos
-    ? [userPos.lat, userPos.lng]
-    : (pins[0]?.lat != null && pins[0]?.lng != null ? [pins[0].lat, pins[0].lng] : [36.75, 3.06])
+  const firstPin = pins.find(p => p.lat != null && p.lng != null)
+  const center: [number, number] = firstPin
+    ? [firstPin.lat as number, firstPin.lng as number]
+    : userPos ? [userPos.lat, userPos.lng] : [36.75, 3.06]
 
   return (
     <MapContainer center={center} zoom={13} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
       <TileLayer
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        subdomains="abcd"
         maxZoom={19}
       />
       {userPos && (
