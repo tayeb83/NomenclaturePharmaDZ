@@ -11,6 +11,7 @@ import { getCountryFlag } from '@/lib/countryFlag'
 import { pickLang, type Lang } from '@/lib/i18n'
 import { medicamentPath, medicamentSlug } from '@/lib/medicament-url'
 import { medicalPageJsonLd } from '@/lib/schema'
+import { buildMedicamentTitle, buildMedicamentDescription } from '@/lib/medicament-seo'
 import { PrintButton } from '@/components/ui/PrintButton'
 import { GlossarySection } from '@/components/ui/GlossarySection'
 import { BackButton } from '@/components/ui/BackButton'
@@ -141,20 +142,11 @@ export async function buildMedicamentMetadata(
   if (isNaN(id)) return { title: 'Médicament introuvable' }
   const med = await getCachedMedicamentById(params.source, id)
   if (!med) return { title: 'Médicament introuvable' }
-  const dosageSuffix = med.dosage ? ` ${med.dosage}` : ''
-  const dciSuffix = med.dci ? ` (${med.dci})` : ''
-
-  // Le nom de marque et la DCI restent en caractères latins (ce sont les
-  // dénominations officielles), mais tout l'habillage éditorial est traduit :
-  // c'est lui qui porte les mots-clés sur lesquels on se positionne en arabe.
-  const title = pickLang(lang, {
-    fr: `${med.nom_marque}${dosageSuffix} — Fiche technique et substitution`,
-    ar: `${med.nom_marque}${dosageSuffix} — بطاقة الدواء والبدائل`,
-  })
-  const description = pickLang(lang, {
-    fr: `${med.nom_marque}${dosageSuffix}${dciSuffix}${med.forme ? ` — ${med.forme}` : ''}${med.labo ? ` — ${med.labo}` : ''}. Médicament disponible en Algérie, substituts génériques et nomenclature MIPH officielle.`,
-    ar: `${med.nom_marque}${dosageSuffix}${dciSuffix}${med.forme ? ` — ${med.forme}` : ''}${med.labo ? ` — ${med.labo}` : ''}. دواء متوفر في الجزائر، البدائل الجنيسة والتسمية الرسمية لوزارة الصناعة الصيدلانية.`,
-  })
+  // Le nom de marque et la DCI restent en caractères latins (dénominations
+  // officielles, et ce que tapent les internautes), y compris en tête des
+  // titres arabes ; seul l'habillage éditorial est traduit.
+  const title = buildMedicamentTitle(med, lang)
+  const description = buildMedicamentDescription(med, lang)
 
   // URLs canoniques enrichies du nom commercial : c'est cette forme qui est
   // déclarée aux moteurs et affichée dans les résultats de recherche.
