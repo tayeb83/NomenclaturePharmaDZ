@@ -4,6 +4,7 @@ import {
   getCachedMedicamentById,
   getCachedAlternatifsDCI,
   getCachedAtcHierarchyByDci,
+  getCachedMedicamentsByMarque,
 } from '@/lib/medicament-cache'
 import type { Metadata } from 'next'
 import type { MedicamentDetail, AtcCode } from '@/lib/db-types'
@@ -11,6 +12,7 @@ import { getCountryFlag } from '@/lib/countryFlag'
 import { pickLang, type Lang } from '@/lib/i18n'
 import { medicamentPath, medicamentSlug } from '@/lib/medicament-url'
 import { medicalPageJsonLd, breadcrumbJsonLd, faqJsonLd } from '@/lib/schema'
+import { marqueSlug, MIN_FAMILY_SIZE } from '@/lib/marque'
 import { buildMedicamentFaq } from '@/lib/medicament-faq'
 import { buildMedicamentTitle, buildMedicamentDescription } from '@/lib/medicament-seo'
 import { PrintButton } from '@/components/ui/PrintButton'
@@ -211,10 +213,15 @@ export async function MedicamentDetail(
   const isRetrait = med.source === 'retrait'
   const isNonRenouv = med.source === 'non_renouvele'
 
-  const [alternatifs, atcHierarchy] = await Promise.all([
+  const familleSlug = med.source === 'enregistrement' ? marqueSlug(med.nom_marque) : ''
+  const [alternatifs, atcHierarchy, famille] = await Promise.all([
     getCachedAlternatifsDCI(med.dci, 10),
     getCachedAtcHierarchyByDci(med.dci),
+    familleSlug ? getCachedMedicamentsByMarque(familleSlug) : Promise.resolve([]),
   ])
+  // Page « famille de marque » : proposée seulement si elle regroupe plusieurs
+  // présentations (sinon elle est en noindex et n'apporterait rien).
+  const familleHref = famille.length >= MIN_FAMILY_SIZE ? `/marque/${familleSlug}` : null
   const autres = alternatifs.filter(a => !(med.source === 'enregistrement' && a.id === med.id))
   const atcLevel5 = atcHierarchy.find(a => a.niveau === 5)
 
@@ -649,6 +656,18 @@ export async function MedicamentDetail(
               label={pickLang(lang, { fr: '← Retour', ar: '→ رجوع' })}
               fallbackHref="/recherche"
             />
+            {familleHref && (
+              <Link href={familleHref} style={{
+                padding: '10px 20px', background: 'white', color: '#0f172a',
+                border: '1.5px solid #e2e8f0', borderRadius: 8, fontWeight: 600, fontSize: 13,
+                textDecoration: 'none',
+              }}>
+                {pickLang(lang, {
+                  fr: `📚 Toutes les présentations de ${med.nom_marque.trim().split(/\s+/)[0]}`,
+                  ar: `📚 كل تقديمات ${med.nom_marque.trim().split(/\s+/)[0]}`,
+                })}
+              </Link>
+            )}
             <Link href={`/recherche?q=${encodeURIComponent(med.dci)}`} style={{
               padding: '10px 20px', background: '#0284c7', color: 'white',
               borderRadius: 8, fontWeight: 600, fontSize: 13, textDecoration: 'none',

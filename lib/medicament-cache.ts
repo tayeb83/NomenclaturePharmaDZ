@@ -16,7 +16,7 @@
  */
 
 import { unstable_cache } from 'next/cache'
-import { getMedicamentById, getAlternatifsDCI, getAtcHierarchyByDci, getMedicamentsByDci, getStats } from './queries'
+import { getMedicamentById, getAlternatifsDCI, getAtcHierarchyByDci, getMedicamentsByDci, getMedicamentsByMarque, getStats } from './queries'
 import type { MedicamentDetail, AtcCode, Enregistrement, Stats } from './db-types'
 
 /** Tag d'invalidation : `revalidateTag(NOMENCLATURE_TAG)` après un import. */
@@ -57,6 +57,15 @@ export function getCachedMedicamentsByDci(dci: string, limit: number): Promise<E
   return unstable_cache(
     () => getMedicamentsByDci(dci, limit),
     ['medicaments-by-dci', dci.toLowerCase(), String(limit)],
+    { revalidate: REVALIDATE_SECONDS, tags: [NOMENCLATURE_TAG] }
+  )()
+}
+
+/** Pages /marque/[slug] et lien « toutes les présentations » des fiches. */
+export function getCachedMedicamentsByMarque(slug: string, limit = 300): Promise<Enregistrement[]> {
+  return unstable_cache(
+    () => getMedicamentsByMarque(slug, limit),
+    ['medicaments-by-marque', slug, String(limit)],
     { revalidate: REVALIDATE_SECONDS, tags: [NOMENCLATURE_TAG] }
   )()
 }
