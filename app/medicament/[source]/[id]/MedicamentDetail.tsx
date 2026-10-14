@@ -276,7 +276,15 @@ export async function MedicamentDetail(
               <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '.06em', marginBottom: 4 }}>
                 {pickLang(lang, { fr: 'DCI — DÉNOMINATION COMMUNE INTERNATIONALE', ar: 'DCI — التسمية الدولية المشتركة' })}
               </div>
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>{med.dci}</div>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>
+                {/* Lien vers le hub DCI uniquement s'il existe des
+                    enregistrements actifs sous cette DCI (sinon 404). */}
+                {alternatifs.length > 0 && med.dci ? (
+                  <Link href={`/dci/${encodeURIComponent(med.dci.toLowerCase())}`} style={{ color: 'inherit', textDecoration: 'underline' }}>
+                    {med.dci}
+                  </Link>
+                ) : med.dci}
+              </div>
               <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: 'white', margin: 0 }}>
                 {med.nom_marque}
               </h1>
