@@ -7,10 +7,12 @@ import {
   getAllRetraitAnnees,
   getAllNouveauteAnneeMois,
   getLastVersionDate,
+  getAllMarqueFamilies,
 } from '@/lib/queries'
 import { getGardeCoverage, slugify } from '@/lib/garde'
 import { medicamentPath } from '@/lib/medicament-url'
 import { ARTICLES } from '@/lib/articles'
+import { MIN_FAMILY_SIZE } from '@/lib/marque'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
@@ -51,6 +53,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     substitutionDcis,
     gardeCoverage,
     versionDate,
+    marqueFamilies,
   ] = await Promise.all([
     getAllMedicamentIds().catch(() => []),
     getAllLaboSlugs().catch(() => []),
@@ -61,6 +64,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getAllDciList(500).catch(() => []),
     getGardeCoverage().catch(() => []),
     getLastVersionDate().catch(() => null),
+    getAllMarqueFamilies(MIN_FAMILY_SIZE).catch(() => []),
   ])
 
   // Toutes les pages dérivées du catalogue changent le jour où une nouvelle
@@ -234,6 +238,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }))
 
+  // Familles de marque d'au moins deux présentations (les autres sont en noindex).
+  const marquePages: MetadataRoute.Sitemap = marqueFamilies.map(({ slug }) => ({
+    url: `${APP_URL}/marque/${slug}`,
+    lastModified: catalogueDate,
+    changeFrequency: 'monthly' as const,
+    priority: 0.8,
+  }))
+
   const formePages: MetadataRoute.Sitemap = formeList.map(({ forme }) => ({
     url: `${APP_URL}/forme/${encodeURIComponent(forme.toLowerCase())}`,
     lastModified: catalogueDate,
@@ -302,6 +314,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...medicamentPages,
     ...laboPages,
     ...dciPages,
+    ...marquePages,
     ...formePages,
     ...retraitAnneePages,
     ...nouveautePages,

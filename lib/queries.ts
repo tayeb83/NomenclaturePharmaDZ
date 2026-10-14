@@ -2496,3 +2496,33 @@ export async function getAllLaboSlugs(): Promise<{ slug: string; labo: string }[
   `)
   return rows.map(r => ({ labo: r.labo, slug: laboToSlug(r.labo) }))
 }
+
+// Clé de famille de marque — doit rester identique à marqueSlug() (lib/marque.ts).
+const MARQUE_SLUG_SQL = `btrim(regexp_replace(lower(split_part(btrim(nom_marque), ' ', 1)), '[^a-z0-9]+', '-', 'g'), '-')`
+
+/** Présentations actives dont le premier mot du nom commercial correspond au slug. */
+export async function getMedicamentsByMarque(slug: string, limit = 300): Promise<Enregistrement[]> {
+  return query<Enregistrement>(`
+    SELECT * FROM enregistrements
+    WHERE ${MARQUE_SLUG_SQL} = $1
+    ORDER BY nom_marque ASC, dosage ASC, forme ASC
+    LIMIT $2
+  `, [slug, limit])
+}
+
+/** Familles de marque comptant au moins `minCount` présentations (sitemap). */
+export async function getAllMarqueFamilies(minCount = 2): Promise<{ slug: string; count: number }[]> {
+  const rows = await query<{ slug: string; count: string }>(`
+    SELECT slug, COUNT(*)::INT AS count
+    FROM (
+      SELECT ${MARQUE_SLUG_SQL} AS slug
+      FROM enregistrements
+      WHERE nom_marque IS NOT NULL AND btrim(nom_marque) <> ''
+    ) f
+    WHERE slug <> ''
+    GROUP BY slug
+    HAVING COUNT(*) >= $1
+    ORDER BY count DESC, slug ASC
+  `, [minCount])
+  return rows.map(r => ({ slug: r.slug, count: parseInt(r.count as unknown as string) }))
+}
