@@ -85,3 +85,32 @@ export function medicalPageJsonLd({
     ...extra,
   }
 }
+
+export type BreadcrumbEntry = { name: string; url: string }
+
+/** Fil d'Ariane (BreadcrumbList) : le dernier élément est la page courante. */
+export function breadcrumbJsonLd(entries: BreadcrumbEntry[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: entries.map((e, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: e.name,
+      item: e.url,
+    })),
+  }
+}
+
+/** FAQPage : à n'émettre que si les mêmes questions sont visibles sur la page. */
+export function faqJsonLd(items: Array<{ question: string; answer: string }>) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: items.map(i => ({
+      '@type': 'Question',
+      name: i.question,
+      acceptedAnswer: { '@type': 'Answer', text: i.answer },
+    })),
+  }
+}
