@@ -10,7 +10,8 @@ import type { MedicamentDetail, AtcCode } from '@/lib/db-types'
 import { getCountryFlag } from '@/lib/countryFlag'
 import { pickLang, type Lang } from '@/lib/i18n'
 import { medicamentPath, medicamentSlug } from '@/lib/medicament-url'
-import { medicalPageJsonLd } from '@/lib/schema'
+import { medicalPageJsonLd, breadcrumbJsonLd, faqJsonLd } from '@/lib/schema'
+import { buildMedicamentFaq } from '@/lib/medicament-faq'
 import { buildMedicamentTitle, buildMedicamentDescription } from '@/lib/medicament-seo'
 import { PrintButton } from '@/components/ui/PrintButton'
 import { GlossarySection } from '@/components/ui/GlossarySection'
@@ -256,12 +257,24 @@ export async function MedicamentDetail(
     ],
   })
 
+  const faq = buildMedicamentFaq(med, autres, lang)
+  const breadcrumb = breadcrumbJsonLd([
+    { name: pickLang(lang, { fr: 'Accueil', ar: 'الرئيسية' }), url: APP_URL },
+    { name: pickLang(lang, { fr: 'Médicaments', ar: 'الأدوية' }), url: `${APP_URL}/medicaments` },
+    ...(alternatifs.length > 0 && med.dci
+      ? [{ name: med.dci, url: `${APP_URL}/dci/${encodeURIComponent(med.dci.toLowerCase())}` }]
+      : []),
+    { name: med.nom_marque, url: canonicalUrl },
+  ])
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd(faq)) }} />
       {/* ─── Header ─────────────────────────────────────────── */}
       <div className="page-header" style={{ background: headerBg }}>
         <div className="container">
@@ -614,6 +627,21 @@ export async function MedicamentDetail(
               </div>
             </div>
           )}
+
+          {/* ─── FAQ (mêmes questions que le JSON-LD FAQPage) ──── */}
+          <section style={{ marginTop: 40 }}>
+            <div className="section-title">
+              {pickLang(lang, { fr: '❓ Questions fréquentes', ar: '❓ أسئلة شائعة' })}
+            </div>
+            <div style={{ marginTop: 12, display: 'grid', gap: 10 }}>
+              {faq.map(item => (
+                <div key={item.question} style={{ background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 10, padding: '14px 16px' }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', margin: '0 0 6px' }}>{item.question}</h3>
+                  <p style={{ fontSize: 13.5, lineHeight: 1.65, color: '#334155', margin: 0 }}>{item.answer}</p>
+                </div>
+              ))}
+            </div>
+          </section>
 
           {/* ─── Actions ─────────────────────────────────────── */}
           <div style={{ marginTop: 40, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
