@@ -13,8 +13,12 @@ const DZ_COUNTRY_CODE = '213'
 export function toDzE164(input: string | null | undefined): string | null {
   if (!input) return null
 
-  const hasPlus = input.trim().startsWith('+')
-  const digits = input.replace(/\D/g, '')
+  // Un numéro saisi en chiffres arabo-indiens (٠٥٥٠…) vaut son équivalent latin.
+  const latin = input
+    .replace(/[٠-٩]/g, d => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[۰-۹]/g, d => String(d.charCodeAt(0) - 0x06f0))
+  const hasPlus = latin.trim().startsWith('+')
+  const digits = latin.replace(/\D/g, '')
   if (!digits) return null
 
   // +213 6 61 23 63 11 / 00213…

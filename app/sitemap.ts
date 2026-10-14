@@ -10,6 +10,7 @@ import {
   getAllMarqueFamilies,
 } from '@/lib/queries'
 import { getGardeCoverage, slugify } from '@/lib/garde'
+import { getDirectoryPlaces, getAllPharmacyRefs, groupByWilaya, pharmacyPath } from '@/lib/annuaire'
 import { medicamentPath } from '@/lib/medicament-url'
 import { ARTICLES } from '@/lib/articles'
 import { MIN_FAMILY_SIZE } from '@/lib/marque'
@@ -52,6 +53,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     nouveautePeriodes,
     substitutionDcis,
     gardeCoverage,
+    directoryPlaces,
+    pharmacyRefs,
     versionDate,
     marqueFamilies,
   ] = await Promise.all([
@@ -63,6 +66,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getAllNouveauteAnneeMois().catch(() => []),
     getAllDciList(500).catch(() => []),
     getGardeCoverage().catch(() => []),
+    getDirectoryPlaces().catch(() => []),
+    getAllPharmacyRefs().catch(() => []),
     getLastVersionDate().catch(() => null),
     getAllMarqueFamilies(MIN_FAMILY_SIZE).catch(() => []),
   ])
@@ -147,6 +152,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: now,
       changeFrequency: 'weekly',
       priority: 0.7,
+    },
+    {
+      url: `${APP_URL}/ar/pharmacies`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.65,
     },
     {
       url: `${APP_URL}/a-propos`,
@@ -293,6 +304,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ]
   })
 
+  // ─── Annuaire des pharmacies ───────────────────────────────────
+  // Pages wilaya, commune et fiche, en FR et AR. Pas de lastmod : la date
+  // exacte d'une fiche n'est pas suivie, et un lastmod faux est pire qu'absent.
+  const annuairePages: MetadataRoute.Sitemap = [
+    ...groupByWilaya(directoryPlaces).flatMap(g => [
+      ...(['', '/ar'] as const).map(prefix => ({
+        url: `${APP_URL}${prefix}/pharmacies/${g.wilaya_slug}`,
+        changeFrequency: 'weekly' as const,
+        priority: prefix ? 0.6 : 0.7,
+      })),
+      ...g.communes.flatMap(c =>
+        (['', '/ar'] as const).map(prefix => ({
+          url: `${APP_URL}${prefix}/pharmacies/${g.wilaya_slug}/${c.commune_slug}`,
+          changeFrequency: 'weekly' as const,
+          priority: prefix ? 0.6 : 0.7,
+        }))
+      ),
+    ]),
+    ...pharmacyRefs.flatMap(p => [
+      { url: `${APP_URL}${pharmacyPath(p, 'fr')}`, changeFrequency: 'monthly' as const, priority: 0.6 },
+      { url: `${APP_URL}${pharmacyPath(p, 'ar')}`, changeFrequency: 'monthly' as const, priority: 0.5 },
+    ]),
+  ]
+
   // ─── Pages articles ────────────────────────────────────────────
   const articlePages: MetadataRoute.Sitemap = [
     {
@@ -320,5 +355,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...nouveautePages,
     ...substitutionPages,
     ...gardePages,
+    ...annuairePages,
   ]
 }

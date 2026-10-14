@@ -19,6 +19,9 @@ function arPathFor(pathname: string): string | null {
   if (pathname === '/pharmacie-de-garde') return '/ar/pharmacie-de-garde'
   if (pathname.startsWith('/pharmacie-de-garde/')) return `/ar${pathname}`
   if (pathname.startsWith('/medicament/')) return `/ar${pathname}`
+  // Annuaire : /pharmacies[/wilaya[/commune]] et /pharmacie/<id>-<slug>
+  if (pathname === '/pharmacies' || pathname.startsWith('/pharmacies/')) return `/ar${pathname}`
+  if (pathname.startsWith('/pharmacie/')) return `/ar${pathname}`
   return null
 }
 
