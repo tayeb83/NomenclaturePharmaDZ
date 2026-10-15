@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import type { Lang } from '@/lib/i18n'
 import type { DirectoryPharmacy } from '@/lib/annuaire'
 import { displayName, formatPhoneDisplay, pharmacyPath } from '@/lib/annuaire-types'
-import { algiersParts, computeStatus, effectiveHours, formatAlgiersTime, WEEK_ORDER } from '@/lib/annuaire-hours'
+import { algiersParts, computeStatus, effectiveHours, formatAlgiersTime, gardeLaterToday, WEEK_ORDER } from '@/lib/annuaire-hours'
 import { labels } from './labels'
 import { StatusPill } from './StatusPill'
 import { useNow } from './useNow'
@@ -26,6 +26,7 @@ export function FicheMain({ pharmacy: p, lang, renderedAt }: { pharmacy: Directo
   const now = useNow(renderedAt)
   const [toast, setToast] = useState('')
   const status = computeStatus(p.hours, p.garde, now)
+  const gardeAt = status.state === 'garde' ? null : gardeLaterToday(p.garde, now)
   const name = displayName(p, lang)
   const other = lang === 'ar' ? p.name_fr : p.name_ar
   const hours = effectiveHours(p.hours)
@@ -82,6 +83,7 @@ export function FicheMain({ pharmacy: p, lang, renderedAt }: { pharmacy: Directo
         )}
         <div className="an-meta" style={{ marginTop: 12 }}>
           <StatusPill status={status} t={t} />
+          {gardeAt && <span className="an-pill garde">{t.gardeLater(gardeAt)}</span>}
           {p.verified && <span className="an-pill verified">✓ {t.verified}</span>}
           {p.is_premium && <span className="an-pill plain" style={{ color: '#b45309' }}>★ {t.premium}</span>}
         </div>

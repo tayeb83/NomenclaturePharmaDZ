@@ -6,7 +6,7 @@ import type { Lang } from '@/lib/i18n'
 import { labels } from './labels'
 import { StatusPill } from './StatusPill'
 import { useNow } from './useNow'
-import { computeStatus, isAvailableNow } from '@/lib/annuaire-hours'
+import { computeStatus, gardeLaterToday, isAvailableNow } from '@/lib/annuaire-hours'
 import { displayName, formatPhoneDisplay, pharmacyPath, type ListPharmacy } from '@/lib/annuaire-types'
 import type { MapPin } from './AnnuaireMap'
 
@@ -107,11 +107,12 @@ export function DirectoryClient({ lang, pharmacies, renderedAt, communes }: Prop
       .map(p => ({
         p,
         status: computeStatus(p.hours, p.garde, now),
+        gardeAt: gardeLaterToday(p.garde, now),
         km: pos && p.lat != null && p.lng != null ? haversineKm(pos.lat, pos.lng, p.lat, p.lng) : null,
       }))
-      .filter(({ p, status }) => {
+      .filter(({ p, status, gardeAt }) => {
         if (commune && p.commune_slug !== commune) return false
-        if (onlyGarde && status.state !== 'garde') return false
+        if (onlyGarde && status.state !== 'garde' && !gardeAt) return false
         if (onlyOpen && !isAvailableNow(status)) return false
         if (onlyVerified && !p.verified) return false
         if (!needle) return true
@@ -192,7 +193,7 @@ export function DirectoryClient({ lang, pharmacies, renderedAt, communes }: Prop
         <div className="alert-banner info">{t.none}</div>
       ) : (
         <div className="an-list">
-          {rows.slice(0, limit).map(({ p, status, km }) => {
+          {rows.slice(0, limit).map(({ p, status, gardeAt, km }) => {
             const name = displayName(p, lang)
             const other = lang === 'ar' ? p.name_fr : p.name_ar
             const href = pharmacyPath(p, lang)
@@ -216,7 +217,10 @@ export function DirectoryClient({ lang, pharmacies, renderedAt, communes }: Prop
                     {km != null && ` · ${km < 1 ? Math.round(km * 1000) + ' m' : km.toFixed(1) + ' ' + t.km}`}
                   </div>
                   {hl && <div className="an-sub" style={{ color: '#047857' }}>{hl}</div>}
-                  <div className="an-meta"><StatusPill status={status} t={t} /></div>
+                  <div className="an-meta">
+                    <StatusPill status={status} t={t} />
+                    {status.state !== 'garde' && gardeAt && <span className="an-pill garde">{t.gardeLater(gardeAt)}</span>}
+                  </div>
                 </div>
                 <div className="an-side">
                   {p.phone_e164 ? (

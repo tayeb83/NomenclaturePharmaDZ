@@ -91,6 +91,19 @@ export function computeStatus(hours: PharmacyHours, garde: GardeWindow[], nowMs:
   return { state: 'closed' }
 }
 
+/**
+ * Garde qui commence plus tard dans la journée (heure d'Alger) : la pharmacie
+ * figure au planning du jour sans être encore « de garde ». Renvoie l'heure de
+ * début ('HH:MM') ou null. Les pages de garde listent ces pharmacies pour la
+ * date du jour ; l'annuaire doit les retrouver avec le filtre « De garde ».
+ */
+export function gardeLaterToday(garde: GardeWindow[], nowMs: number): string | null {
+  const dayStart = Math.floor((nowMs + ALGIERS_OFFSET_MS) / 86_400_000) * 86_400_000 - ALGIERS_OFFSET_MS
+  const dayEnd = dayStart + 86_400_000
+  const next = garde.filter(([start]) => start > nowMs && start < dayEnd).sort((a, b) => a[0] - b[0])[0]
+  return next ? formatAlgiersTime(next[0]) : null
+}
+
 /** Ouverte au sens large : de garde, ouverte ou sur le point de fermer. */
 export function isAvailableNow(status: OpenStatus): boolean {
   return status.state !== 'closed'
