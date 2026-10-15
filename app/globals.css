@@ -647,12 +647,25 @@ body {
 .an-photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .an-photos img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 10px; }
 .an-map { height: 320px; border-radius: 12px; overflow: hidden; border: 1px solid var(--slate-200); margin-bottom: 16px; }
-.an-wgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
-.an-wcard { background: #fff; border: 1px solid var(--slate-200); border-radius: 12px; padding: 14px 16px; }
-.an-wcard > a { font-weight: 700; color: var(--navy); text-decoration: none; font-size: 16px; }
-.an-wcard summary { cursor: pointer; font-size: 13px; color: var(--slate-500); margin-top: 6px; }
-.an-wcard ul { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 4px; font-size: 14px; }
-.an-hit { display: block; background: #fff; border: 1px solid var(--slate-200); border-radius: 10px; padding: 10px 14px; text-decoration: none; color: var(--navy); }
+.an-wgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; align-items: start; }
+.an-wcard { background: #fff; border: 1px solid var(--slate-200); border-radius: 14px; padding: 16px 18px; box-shadow: 0 1px 2px rgba(15,23,42,.04); transition: box-shadow .15s, border-color .15s; }
+.an-wcard:hover { border-color: var(--slate-400); box-shadow: var(--shadow); }
+.an-wcard > a { font-weight: 800; color: var(--navy); text-decoration: none; font-size: 17px; display: block; }
+.an-wcard > a:hover { color: var(--blue); }
+.an-wcard summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--blue); margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--slate-200); list-style-position: inside; }
+.an-wcard ul { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.an-wcard li a { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 11px; border: 1px solid var(--slate-200); background: var(--slate-50); border-radius: 999px; color: var(--slate-700); font-size: 13px; font-weight: 600; text-decoration: none; transition: background .12s, border-color .12s, color .12s; }
+.an-wcard li a em { font-style: normal; font-size: 11.5px; font-weight: 700; background: #fff; color: var(--slate-500); border-radius: 999px; padding: 1px 7px; min-width: 22px; text-align: center; }
+.an-wcard li a:hover { background: var(--blue-light); border-color: var(--blue); color: var(--blue); }
+.an-wcard li a:hover em { color: var(--blue); }
+[dir="rtl"] .an-wcard li a { padding: 4px 11px 4px 6px; }
+.an-map-loading { height: 100%; background: var(--slate-100); animation: an-pulse 1.2s ease-in-out infinite; }
+@keyframes an-pulse { 50% { opacity: .55; } }
+.an-map { position: relative; margin-bottom: 14px; }
+.an-map-note { position: absolute; left: 8px; bottom: 8px; z-index: 500; background: rgba(255,255,255,.92); color: var(--slate-600); font-size: 11.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px; box-shadow: var(--shadow); }
+.an-hit { display: block; background: #fff; border: 1px solid var(--slate-200); border-radius: 10px; padding: 10px 14px; text-decoration: none; color: var(--navy); transition: border-color .12s, box-shadow .12s; }
+.an-hit:hover { border-color: var(--blue); box-shadow: var(--shadow); }
+.an-hit strong { font-weight: 700; }
 .an-hit span { display: block; font-size: 13px; color: var(--slate-500); }
 .an-toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--navy); color: #fff; padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 14px; z-index: 50; }
 @media (max-width: 860px) { .an-grid2 { grid-template-columns: 1fr; } .an-bar { grid-template-columns: 1fr; } }

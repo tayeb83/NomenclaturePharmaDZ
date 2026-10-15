@@ -111,9 +111,9 @@ export async function HubPage({ lang }: { lang: Lang }) {
                   {g.communes.map(c => (
                     <li key={c.commune_slug}>
                       <a href={directoryPath(lang, g.wilaya_slug, c.commune_slug)}>
-                        {lang === 'ar' ? c.commune_name_ar || c.commune_name_fr : c.commune_name_fr}
-                      </a>{' '}
-                      <span style={{ color: 'var(--slate-500)' }}>({c.count})</span>
+                        <span>{lang === 'ar' ? c.commune_name_ar || c.commune_name_fr : c.commune_name_fr}</span>
+                        <em>{c.count}</em>
+                      </a>
                     </li>
                   ))}
                 </ul>
@@ -331,11 +331,18 @@ export async function FichePage({ lang, param }: { lang: Lang; param: string }) 
         <FicheMain pharmacy={p} lang={lang} renderedAt={Date.now()} />
 
         <aside>
-          {p.lat != null && p.lng != null && (
-            <div className="an-map" style={{ height: 260 }}>
-              <FicheMap lat={p.lat} lng={p.lng} name={name} />
-            </div>
-          )}
+          <div className="an-map" style={{ height: 260 }}>
+            <FicheMap
+              lat={p.lat}
+              lng={p.lng}
+              name={name}
+              queries={[
+                [p.address_fr || p.address_ar, p.commune_name_fr, p.wilaya_name_fr, 'Algérie'].filter(Boolean).join(', '),
+                [p.commune_name_fr, p.wilaya_name_fr, 'Algérie'].filter(Boolean).join(', '),
+              ]}
+              approxLabel={t.mapApprox}
+            />
+          </div>
 
           {p.is_premium && p.photos.length > 0 && (
             <div className="an-panel">
