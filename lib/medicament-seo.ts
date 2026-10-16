@@ -32,10 +32,19 @@ function truncate(s: string, max: number): string {
   return s.slice(0, max - 1).replace(/[\s,;:—-]+\S*$/, '').trimEnd() + '…'
 }
 
+/**
+ * « 200MG » → « 200 mg » : les internautes tapent « adfen 200 mg » (avec
+ * espace), alors que la nomenclature stocke « 200MG ». Google rapproche mal
+ * les deux graphies, d'où un dosage normalisé dans title et description.
+ */
+function normalizeDosage(s: string): string {
+  return s.replace(/(\d)\s*(mg|µg|mcg|g|ml|l)\b/gi, (_, n, u) => `${n} ${u.toLowerCase()}`)
+}
+
 /** Marque + dosage + forme, du plus complet au plus court. */
 function designations(med: SeoMed): string[] {
   const marque = clean(med.nom_marque)
-  const dosage = clean(med.dosage)
+  const dosage = normalizeDosage(clean(med.dosage))
   const forme = clean(med.forme).toLowerCase()
   const full = [marque, dosage, forme].filter(Boolean).join(' ')
   const noForme = [marque, dosage].filter(Boolean).join(' ')
@@ -44,7 +53,9 @@ function designations(med: SeoMed): string[] {
 
 const SUFFIXES: Record<Lang, Record<'actif' | 'retrait' | 'non_renouvele', string[]>> = {
   fr: {
-    actif: [' : notice, indications, générique', ' : notice et générique', ' : notice'],
+    // « Algérie » en tête de suffixe : c'est le mot que les internautes
+    // ajoutent à leur requête (« adfen 200 mg comprimé algérie »).
+    actif: [' Algérie : notice, générique', ' en Algérie : notice', ' Algérie : notice', ' : notice'],
     retrait: [' : médicament retiré, alternatives', ' : retiré, alternatives', ' : retiré'],
     non_renouvele: [' : AMM non renouvelée, équivalents', ' : AMM non renouvelée'],
   },
