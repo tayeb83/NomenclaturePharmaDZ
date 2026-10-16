@@ -2526,3 +2526,57 @@ export async function getAllMarqueFamilies(minCount = 2): Promise<{ slug: string
   `, [minCount])
   return rows.map(r => ({ slug: r.slug, count: parseInt(r.count as unknown as string) }))
 }
+
+
+// ─── ANALYSE D'UNE FICHE (équivalents exacts, laboratoire) ────
+
+export type MedicamentInsightsData = {
+  /** Autres présentations de même DCI, même dosage et même forme. */
+  equivalents: { id: number; nom_marque: string; dosage: string | null; forme: string | null; labo: string | null; statut: string | null }[]
+  equivalents_total: number
+  equivalents_labos: number
+  equivalents_locaux: number
+  /** Toutes les présentations actives de la DCI (hors la fiche). */
+  dci_total: number
+  /** Autres produits actifs du même laboratoire (hors la fiche). */
+  labo_total: number
+}
+
+const norm = (col: string) => `lower(regexp_replace(coalesce(${col}, ''), '\\s+', '', 'g'))`
+
+export async function getMedicamentInsightsData(med: {
+  id: number
+  dci: string | null
+  dosage: string | null
+  forme: string | null
+  labo: string | null
+}): Promise<MedicamentInsightsData> {
+  const dci = (med.dci ?? '').trim()
+  const eq = dci
+    ? await query<{ id: number; nom_marque: string; dosage: string | null; forme: string | null; labo: string | null; statut: string | null }>(`
+        SELECT id, nom_marque, dosage, forme, labo, statut FROM enregistrements
+        WHERE UPPER(btrim(dci)) = UPPER($1) AND id <> $2
+          AND ${norm('dosage')} = ${norm('$3')}
+          AND ${norm('forme')} = ${norm('$4')}
+        ORDER BY nom_marque, id
+        LIMIT 300
+      `, [dci, med.id, med.dosage, med.forme])
+    : []
+  const [dciRow, laboRow] = await Promise.all([
+    dci
+      ? queryOne<{ n: number }>(`SELECT COUNT(*)::INT AS n FROM enregistrements WHERE UPPER(btrim(dci)) = UPPER($1) AND id <> $2`, [dci, med.id])
+      : Promise.resolve(null),
+    med.labo
+      ? queryOne<{ n: number }>(`SELECT COUNT(*)::INT AS n FROM enregistrements WHERE labo = $1 AND id <> $2`, [med.labo, med.id])
+      : Promise.resolve(null),
+  ])
+  const labos = new Set(eq.map(e => (e.labo ?? '').trim().toUpperCase()).filter(Boolean))
+  return {
+    equivalents: eq.slice(0, 8),
+    equivalents_total: eq.length,
+    equivalents_labos: labos.size,
+    equivalents_locaux: eq.filter(e => e.statut === 'F').length,
+    dci_total: dciRow?.n ?? 0,
+    labo_total: laboRow?.n ?? 0,
+  }
+}
