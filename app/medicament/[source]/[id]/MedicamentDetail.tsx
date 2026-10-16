@@ -14,7 +14,7 @@ import { medicamentPath, medicamentSlug } from '@/lib/medicament-url'
 import { medicalPageJsonLd, breadcrumbJsonLd, faqJsonLd } from '@/lib/schema'
 import { marqueSlug, MIN_FAMILY_SIZE } from '@/lib/marque'
 import { buildMedicamentFaq } from '@/lib/medicament-faq'
-import { buildMedicamentTitle, buildMedicamentDescription } from '@/lib/medicament-seo'
+import { buildMedicamentTitle, buildMedicamentDescription, medicamentDesignation } from '@/lib/medicament-seo'
 import { PrintButton } from '@/components/ui/PrintButton'
 import { GlossarySection } from '@/components/ui/GlossarySection'
 import { BackButton } from '@/components/ui/BackButton'
@@ -306,13 +306,8 @@ export async function MedicamentDetail(
                 ) : med.dci}
               </div>
               <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: 'white', margin: 0 }}>
-                {med.nom_marque}
+                {medicamentDesignation(med)}
               </h1>
-              {(med.forme || med.dosage) && (
-                <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginTop: 6 }}>
-                  {[med.forme, med.dosage].filter(Boolean).join(' — ')}
-                </div>
-              )}
               {med.is_critical && (
                 <div style={{
                   marginTop: 10,

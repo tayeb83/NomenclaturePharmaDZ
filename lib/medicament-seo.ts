@@ -51,6 +51,11 @@ function designations(med: SeoMed): string[] {
   return Array.from(new Set([full, noForme, marque]))
 }
 
+/** Désignation complète normalisée (marque + dosage + forme), pour le H1. */
+export function medicamentDesignation(med: SeoMed): string {
+  return designations(med)[0]
+}
+
 const SUFFIXES: Record<Lang, Record<'actif' | 'retrait' | 'non_renouvele', string[]>> = {
   fr: {
     // « Algérie » en tête de suffixe : c'est le mot que les internautes
