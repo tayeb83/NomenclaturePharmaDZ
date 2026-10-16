@@ -5,6 +5,7 @@ import {
   getCachedAlternatifsDCI,
   getCachedAtcHierarchyByDci,
   getCachedMedicamentsByMarque,
+  getCachedMedicamentInsights,
 } from '@/lib/medicament-cache'
 import type { Metadata } from 'next'
 import type { MedicamentDetail, AtcCode } from '@/lib/db-types'
@@ -14,10 +15,13 @@ import { medicamentPath, medicamentSlug } from '@/lib/medicament-url'
 import { medicalPageJsonLd, breadcrumbJsonLd, faqJsonLd } from '@/lib/schema'
 import { marqueSlug, MIN_FAMILY_SIZE } from '@/lib/marque'
 import { buildMedicamentFaq } from '@/lib/medicament-faq'
-import { buildMedicamentTitle, buildMedicamentDescription } from '@/lib/medicament-seo'
+import { buildMedicamentTitle, buildMedicamentDescription, medicamentDesignation } from '@/lib/medicament-seo'
 import { PrintButton } from '@/components/ui/PrintButton'
 import { GlossarySection } from '@/components/ui/GlossarySection'
 import { BackButton } from '@/components/ui/BackButton'
+import { MedicamentInsights } from '@/components/drug/MedicamentInsights'
+import { MonographieSection } from '@/components/drug/MonographieSection'
+import { getPublishedMonographie, hasContent } from '@/lib/monographies'
 import { AdInContent } from '@/components/ads/AdBanner'
 
 const TYPE_LABELS: Record<string, { fr: string; ar: string }> = {
@@ -214,11 +218,14 @@ export async function MedicamentDetail(
   const isNonRenouv = med.source === 'non_renouvele'
 
   const familleSlug = med.source === 'enregistrement' ? marqueSlug(med.nom_marque) : ''
-  const [alternatifs, atcHierarchy, famille] = await Promise.all([
+  const [alternatifs, atcHierarchy, famille, insights, monographieRaw] = await Promise.all([
     getCachedAlternatifsDCI(med.dci, 10),
     getCachedAtcHierarchyByDci(med.dci),
     familleSlug ? getCachedMedicamentsByMarque(familleSlug) : Promise.resolve([]),
+    med.source === 'enregistrement' ? getCachedMedicamentInsights(med) : Promise.resolve(null),
+    med.dci ? getPublishedMonographie(med.dci, lang) : Promise.resolve(null),
   ])
+  const monographie = hasContent(monographieRaw) ? monographieRaw : null
   // Page « famille de marque » : proposée seulement si elle regroupe plusieurs
   // présentations (sinon elle est en noindex et n'apporterait rien).
   const familleHref = famille.length >= MIN_FAMILY_SIZE ? `/marque/${familleSlug}` : null
@@ -306,13 +313,8 @@ export async function MedicamentDetail(
                 ) : med.dci}
               </div>
               <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: 'white', margin: 0 }}>
-                {med.nom_marque}
+                {medicamentDesignation(med)}
               </h1>
-              {(med.forme || med.dosage) && (
-                <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginTop: 6 }}>
-                  {[med.forme, med.dosage].filter(Boolean).join(' — ')}
-                </div>
-              )}
               {med.is_critical && (
                 <div style={{
                   marginTop: 10,
@@ -523,6 +525,21 @@ export async function MedicamentDetail(
               visiteur venu de Google a encore les yeux. Celle du bas de page
               n'était presque jamais vue. */}
           <AdInContent />
+
+          {/* ─── Monographie de la DCI (contenu saisi et relu) ──── */}
+          {monographie && <MonographieSection m={monographie} dci={med.dci} lang={lang} />}
+
+          {/* ─── Analyse propre à la fiche ───────────────────── */}
+          {insights && (
+            <MedicamentInsights
+              med={med}
+              data={insights}
+              famille={famille}
+              familleHref={familleHref}
+              lang={lang}
+              routeLang={routeLang}
+            />
+          )}
 
           {/* ─── Classification ATC ──────────────────────────── */}
           {atcHierarchy.length > 0 && (

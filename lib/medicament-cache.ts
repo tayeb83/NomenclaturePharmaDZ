@@ -16,7 +16,7 @@
  */
 
 import { unstable_cache } from 'next/cache'
-import { getMedicamentById, getAlternatifsDCI, getAtcHierarchyByDci, getMedicamentsByDci, getMedicamentsByMarque, getStats } from './queries'
+import { getMedicamentById, getAlternatifsDCI, getAtcHierarchyByDci, getMedicamentsByDci, getMedicamentsByMarque, getStats, getMedicamentInsightsData, type MedicamentInsightsData } from './queries'
 import type { MedicamentDetail, AtcCode, Enregistrement, Stats } from './db-types'
 
 /** Tag d'invalidation : `revalidateTag(NOMENCLATURE_TAG)` après un import. */
@@ -80,5 +80,20 @@ export function getCachedStats(): Promise<Stats> {
     () => getStats(),
     ['stats'],
     { revalidate: 3600, tags: [NOMENCLATURE_TAG] }
+  )()
+}
+
+/** Équivalents exacts et volumes du laboratoire, pour le bloc « analyse » des fiches. */
+export function getCachedMedicamentInsights(med: {
+  id: number
+  dci: string | null
+  dosage: string | null
+  forme: string | null
+  labo: string | null
+}): Promise<MedicamentInsightsData> {
+  return unstable_cache(
+    () => getMedicamentInsightsData(med),
+    ['medicament-insights', String(med.id)],
+    { revalidate: REVALIDATE_SECONDS, tags: [NOMENCLATURE_TAG] }
   )()
 }
