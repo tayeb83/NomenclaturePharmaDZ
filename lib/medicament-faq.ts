@@ -116,6 +116,15 @@ export function buildMedicamentFaq(med: FaqMed, equivalents: Equivalent[], lang:
       : { question: `${nom} nécessite-t-il une ordonnance ?`, answer: `Mention de prescription dans la nomenclature : ${clean(med.prescription)}. Pour votre situation, demandez conseil à un médecin ou à un pharmacien.` })
   }
 
+  // Les requêtes qui amènent sur les fiches sont surtout « <marque> prix
+  // algérie ». La base n'a aucun prix : on le dit, au lieu de laisser le
+  // visiteur le chercher sur la page, et on l'oriente vers la source fiable.
+  if (med.source === 'enregistrement') {
+    items.push(ar
+      ? { question: `ما هو سعر ${nom} في الجزائر؟`, answer: `لا تنشر التسمية الوطنية (MIPH) أسعار الأدوية، ولا يتوفر موقعنا على سعر ${nom}. للاطلاع على السعر المعمول به، اسألوا الصيدلي.` }
+      : { question: `Quel est le prix de ${nom} en Algérie ?`, answer: `La nomenclature nationale (MIPH) ne publie pas les prix des médicaments, et DwaDZ ne dispose pas du prix de ${nom}. Pour connaître le prix en vigueur, demandez-le à votre pharmacien.` })
+  }
+
   items.push(ar
     ? { question: `أين أجد الجرعة والآثار الجانبية لـ ${nom}؟`, answer: 'لا تنشر التسمية الوطنية (MIPH) الجرعات ولا الآثار الجانبية. راجعوا نشرة الدواء المرفقة بالعلبة أو استشيروا طبيبا أو صيدليا.' }
     : { question: `Où trouver la posologie et les effets secondaires de ${nom} ?`, answer: "La nomenclature nationale (MIPH) ne publie ni posologie ni effets indésirables. Reportez-vous à la notice fournie avec la boîte, ou demandez conseil à un médecin ou à un pharmacien." })
