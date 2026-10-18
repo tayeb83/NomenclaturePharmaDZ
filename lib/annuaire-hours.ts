@@ -4,12 +4,12 @@
  * recalculent le statut à l'heure du visiteur.
  *
  * Règle : de garde (planning DSP) > jour de repos > horaires de la fiche >
- * 10h–21h par défaut. L'Algérie est à UTC+1 toute l'année (pas d'heure
+ * 10h–19h par défaut. L'Algérie est à UTC+1 toute l'année (pas d'heure
  * d'été) : on évite ainsi toute dépendance à Intl pour ce calcul.
  */
 
 export const DEFAULT_OPENS = '10:00'
-export const DEFAULT_CLOSES = '21:00'
+export const DEFAULT_CLOSES = '19:00'
 /** Délai avant fermeture à partir duquel on affiche « ferme bientôt ». */
 export const CLOSING_SOON_MINUTES = 45
 

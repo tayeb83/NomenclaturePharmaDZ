@@ -22,6 +22,7 @@ import { BackButton } from '@/components/ui/BackButton'
 import { MedicamentInsights } from '@/components/drug/MedicamentInsights'
 import { MonographieSection } from '@/components/drug/MonographieSection'
 import { getPublishedMonographie, hasContent } from '@/lib/monographies'
+import { getPpa, formatPpa } from '@/lib/ppa'
 import { AdInContent } from '@/components/ads/AdBanner'
 
 const TYPE_LABELS: Record<string, { fr: string; ar: string }> = {
@@ -218,12 +219,13 @@ export async function MedicamentDetail(
   const isNonRenouv = med.source === 'non_renouvele'
 
   const familleSlug = med.source === 'enregistrement' ? marqueSlug(med.nom_marque) : ''
-  const [alternatifs, atcHierarchy, famille, insights, monographieRaw] = await Promise.all([
+  const [alternatifs, atcHierarchy, famille, insights, monographieRaw, ppa] = await Promise.all([
     getCachedAlternatifsDCI(med.dci, 10),
     getCachedAtcHierarchyByDci(med.dci),
     familleSlug ? getCachedMedicamentsByMarque(familleSlug) : Promise.resolve([]),
     med.source === 'enregistrement' ? getCachedMedicamentInsights(med) : Promise.resolve(null),
     med.dci ? getPublishedMonographie(med.dci, lang) : Promise.resolve(null),
+    getPpa(med.n_enreg, med.code).catch(() => null),
   ])
   const monographie = hasContent(monographieRaw) ? monographieRaw : null
   // Page « famille de marque » : proposée seulement si elle regroupe plusieurs
@@ -466,6 +468,10 @@ export async function MedicamentDetail(
                 />
               )}
               <Field label={pickLang(lang, { fr: 'Conditionnement', ar: 'التعبئة' })} value={med.conditionnement} />
+              <Field
+                label={pickLang(lang, { fr: 'PPA (Prix public algérien)', ar: 'السعر العمومي الجزائري (PPA)' })}
+                value={ppa !== null ? formatPpa(ppa, lang) : pickLang(lang, { fr: 'Prix non disponible', ar: 'السعر غير متوفر' })}
+              />
               <Field label={pickLang(lang, { fr: 'Liste', ar: 'القائمة' })} value={med.liste} />
               <Field label={pickLang(lang, { fr: 'Prescription', ar: 'الوصفة' })} value={med.prescription} />
               {med.stabilite && <Field label={pickLang(lang, { fr: 'Stabilité', ar: 'الاستقرار' })} value={med.stabilite} />}

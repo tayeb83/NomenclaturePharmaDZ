@@ -46,7 +46,7 @@ par wilaya et commune. Interface bilingue **français / arabe** (RTL).
   « de garde », « vérifiées », « près de moi ». Les filtres sont dans l'URL
   (`?q=…&garde=1`), donc partageables.
 - **Statut** : de garde (planning DSP) > jour de repos > horaires de la fiche >
-  10h–21h par défaut. Calculé à l'heure du visiteur (Algérie = UTC+1).
+  10h–19h par défaut. Calculé à l'heure du visiteur (Algérie = UTC+1).
 - **Numéros** : toujours en chiffres occidentaux et isolés en LTR, même dans
   une page arabe ; les saisies en chiffres arabo-indiens sont normalisées.
 - **Admin** (`/admin/garde`) : par pharmacie, badge « Vérifiée », horaires, jours
