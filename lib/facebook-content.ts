@@ -57,7 +57,8 @@ function appUrl(): string {
  * Reconstruit un lien absolu à partir du domaine courant (appUrl), quel que
  * soit le domaine — éventuellement obsolète — stocké en base. On ne conserve
  * que le chemin (+query) du lien enregistré. Rend le système robuste à tout
- * changement de domaine, y compris pour les brouillons déjà en file.
+ * changement de domaine, y compris pour les brouillons déjà en file (ex. ceux
+ * générés avec un ancien domaine).
  */
 export function normalizeLien(lien: string | null | undefined): string | null {
   if (!lien) return null
