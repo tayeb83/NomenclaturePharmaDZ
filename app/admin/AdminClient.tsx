@@ -206,6 +206,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           <Link href="/admin/garde/publication" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
             🇩🇿 Publier les gardes
           </Link>
+          <Link href="/admin/ppa" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
+            💰 PPA
+          </Link>
           <Link href="/admin/monographies" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
             🧬 Monographies DCI
           </Link>

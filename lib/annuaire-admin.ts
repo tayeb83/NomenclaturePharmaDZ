@@ -60,7 +60,7 @@ export function parseProfile(body: Record<string, unknown>): { data: ProfileInpu
   if ('error' in opens) return opens
   const closes = cleanTime(body.closes_at, 'Fermeture')
   if ('error' in closes) return closes
-  if (!!opens.value !== !!closes.value) return { error: "Renseignez l'ouverture et la fermeture, ou aucune des deux (défaut 10:00–21:00)" }
+  if (!!opens.value !== !!closes.value) return { error: "Renseignez l'ouverture et la fermeture, ou aucune des deux (défaut 10:00–19:00)" }
   if (opens.value && closes.value && opens.value >= closes.value) return { error: "L'ouverture doit précéder la fermeture" }
 
   const days = cleanDays(body.closed_days)

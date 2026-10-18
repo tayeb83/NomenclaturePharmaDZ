@@ -37,7 +37,7 @@ function toDraft(r: Record | null): Draft {
 
 /**
  * Réglages de l'annuaire pour N'IMPORTE QUELLE pharmacie : badge « Vérifiée »,
- * horaires habituels (défaut 10:00–21:00), jours de repos, mobile, masquage.
+ * horaires habituels (défaut 10:00–19:00), jours de repos, mobile, masquage.
  * Indépendant de l'abonnement premium.
  */
 export function ProfileEditor({
@@ -142,7 +142,7 @@ export function ProfileEditor({
               <input style={input} type="time" value={draft.opens_at} onChange={e => set('opens_at', e.target.value)} />
             </div>
             <div>
-              <label style={label}>Fermeture habituelle <span style={{ fontWeight: 400 }}>(vide = 21:00)</span></label>
+              <label style={label}>Fermeture habituelle <span style={{ fontWeight: 400 }}>(vide = 19:00)</span></label>
               <input style={input} type="time" value={draft.closes_at} onChange={e => set('closes_at', e.target.value)} />
             </div>
           </div>

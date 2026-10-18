@@ -8,7 +8,7 @@
 --    (scripts/import_garde.py), ces réglages ne doivent pas être perdus.
 --
 --    Horaires : opens_at / closes_at / closed_days décrivent l'ouverture
---    habituelle HORS garde. Valeurs NULL = défaut du site, 10h → 21h.
+--    habituelle HORS garde. Valeurs NULL = défaut du site, 10h → 19h.
 --    closed_days : jours de repos, 0 = dimanche … 6 = samedi.
 --
 -- 2. annuaire_places : titre affiché pour une wilaya ou une commune

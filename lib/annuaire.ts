@@ -5,7 +5,7 @@
  * enrichie par annuaire_pharmacy_profile (badge vérifié, horaires, mobile,
  * masquage) et garde_pharmacy_premium (WhatsApp, photos, accroche) quand
  * ces tables existent. Les deux sont optionnelles : l'annuaire fonctionne
- * dès l'installation, avec les valeurs par défaut (10h–21h, non vérifiée).
+ * dès l'installation, avec les valeurs par défaut (10h–19h, non vérifiée).
  *
  * URLs stables : /pharmacie/<id>-<slug>. L'id est celui de garde_pharmacies
  * (conservé par les réimports DSP : upsert sur wilaya_code + external_id) ;

@@ -23,8 +23,8 @@ const FR = {
   trustUnverified: 'Fiche non vérifiée : les coordonnées viennent des listes officielles et peuvent avoir changé.',
   seeOnMap: 'Voir sur la carte', nearby: 'Autres pharmacies', in: 'à', pharmacy: 'Pharmacie', otherLang: 'بالعربية',
   communes: 'Communes', pharmaciesIn: 'pharmacies', wilayas: 'Wilayas couvertes', gardeLink: 'Pharmacies de garde',
-  hubIntro: 'Trouvez une pharmacie par nom, quartier ou commune : adresse, téléphone, horaires et pharmacies de garde. Hors garde, une pharmacie est considérée ouverte de 10h à 21h tant que son pharmacien n’a pas précisé d’autres horaires.',
-  placeIntro: (c: number) => `${c} pharmacie${c > 1 ? 's' : ''} référencée${c > 1 ? 's' : ''}. Hors garde, une pharmacie est considérée ouverte de 10h à 21h tant que son pharmacien n’a pas précisé d’autres horaires.`,
+  hubIntro: 'Trouvez une pharmacie par nom, quartier ou commune : adresse, téléphone, horaires et pharmacies de garde. Hors garde, une pharmacie est considérée ouverte de 10h à 19h tant que son pharmacien n’a pas précisé d’autres horaires.',
+  placeIntro: (c: number) => `${c} pharmacie${c > 1 ? 's' : ''} référencée${c > 1 ? 's' : ''}. Hors garde, une pharmacie est considérée ouverte de 10h à 19h tant que son pharmacien n’a pas précisé d’autres horaires.`,
   globalSearchPh: 'Nom de pharmacie, quartier, commune…', globalSearchBtn: 'Rechercher', globalNoHit: 'Aucun résultat.',
   mapApprox: 'Position approximative (adresse géocodée)',
   disclaimer: 'Liste non exhaustive, recensée au fil des plannings de garde officiels. Une erreur ? Signalez-la depuis la fiche de la pharmacie.',
@@ -55,8 +55,8 @@ const AR: typeof FR = {
   trustUnverified: 'بطاقة غير موثّقة: البيانات من القوائم الرسمية وقد تكون تغيّرت.',
   seeOnMap: 'عرض على الخريطة', nearby: 'صيدليات أخرى', in: 'في', pharmacy: 'صيدلية', otherLang: 'Français',
   communes: 'البلديات', pharmaciesIn: 'صيدلية', wilayas: 'الولايات المغطاة', gardeLink: 'الصيدليات المناوبة',
-  hubIntro: 'اعثر على صيدلية بالاسم أو الحي أو البلدية: العنوان والهاتف وساعات العمل والصيدليات المناوبة. خارج المناوبة تُعتبر الصيدلية مفتوحة من 10:00 إلى 21:00 ما لم يحدّد الصيدلي ساعات أخرى.',
-  placeIntro: (c: number) => `${c} صيدلية مسجلة. خارج المناوبة تُعتبر الصيدلية مفتوحة من 10:00 إلى 21:00 ما لم يحدّد الصيدلي ساعات أخرى.`,
+  hubIntro: 'اعثر على صيدلية بالاسم أو الحي أو البلدية: العنوان والهاتف وساعات العمل والصيدليات المناوبة. خارج المناوبة تُعتبر الصيدلية مفتوحة من 10:00 إلى 19:00 ما لم يحدّد الصيدلي ساعات أخرى.',
+  placeIntro: (c: number) => `${c} صيدلية مسجلة. خارج المناوبة تُعتبر الصيدلية مفتوحة من 10:00 إلى 19:00 ما لم يحدّد الصيدلي ساعات أخرى.`,
   globalSearchPh: 'اسم الصيدلية، الحي، البلدية…', globalSearchBtn: 'بحث', globalNoHit: 'لا توجد نتائج.',
   mapApprox: 'موقع تقريبي (حسب العنوان)',
   disclaimer: 'قائمة غير شاملة، جُمعت من برامج المناوبة الرسمية. وجدت خطأ؟ أبلغ عنه من بطاقة الصيدلية.',
@@ -71,7 +71,7 @@ export function labels(lang: Lang) {
 
 export type Labels = ReturnType<typeof labels>
 
-/** Texte secondaire d'un statut : « jusqu'à 21:00 », « ouvre demain à 10:00 »… */
+/** Texte secondaire d'un statut : « jusqu'à 19:00 », « ouvre demain à 10:00 »… */
 export function statusDetail(status: OpenStatus, t: Labels): string {
   if (status.state === 'closed') {
     if (!status.opensAt) return ''
