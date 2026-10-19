@@ -129,7 +129,7 @@ export default async function GardeCommunePage({
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Accueil', item: APP_URL },
       { '@type': 'ListItem', position: 2, name: 'Pharmacies de garde', item: `${APP_URL}/pharmacie-de-garde` },
-      { '@type': 'ListItem', position: 3, name: wilayaName, item: `${APP_URL}/pharmacie-de-garde#${wilayaSlug}` },
+      { '@type': 'ListItem', position: 3, name: wilayaName, item: `${APP_URL}/pharmacie-de-garde/${wilayaSlug}` },
       { '@type': 'ListItem', position: 4, name: communeName, item: `${APP_URL}/pharmacie-de-garde/${wilayaSlug}/${communeSlug}` },
     ],
   }
@@ -142,7 +142,7 @@ export default async function GardeCommunePage({
       <nav aria-label="Fil d'Ariane" style={{ fontSize: 13, color: 'var(--slate-500)', marginBottom: 16 }}>
         <a href="/" style={{ color: 'var(--slate-500)' }}>Accueil</a> {' › '}
         <a href="/pharmacie-de-garde" style={{ color: 'var(--slate-500)' }}>Pharmacies de garde</a> {' › '}
-        <span>{wilayaName}</span> {' › '}
+        <a href={`/pharmacie-de-garde/${wilayaSlug}`} style={{ color: 'var(--slate-500)' }}>{wilayaName}</a> {' › '}
         <span style={{ color: 'var(--navy)', fontWeight: 600 }}>{communeName}</span>
       </nav>
 

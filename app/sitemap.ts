@@ -285,6 +285,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }))
 
+  // Pages wilaya : seules les wilayas couvertes sont indexables (les autres
+  // sont en noindex), donc seules elles entrent dans le sitemap.
+  const gardeWilayaSlugs = Array.from(new Set(gardeCoverage.map(c => slugify(c.wilaya_name_fr))))
+  const gardeWilayaPages: MetadataRoute.Sitemap = gardeWilayaSlugs.flatMap(wilayaSlug => [
+    { url: `${APP_URL}/pharmacie-de-garde/${wilayaSlug}`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.9 },
+    { url: `${APP_URL}/ar/pharmacie-de-garde/${wilayaSlug}`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.85 },
+  ])
+
   const gardePages: MetadataRoute.Sitemap = gardeCoverage.flatMap(c => {
     const wilayaSlug = slugify(c.wilaya_name_fr)
     const communeSlug = slugify(c.commune_name_fr)
@@ -354,6 +362,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...retraitAnneePages,
     ...nouveautePages,
     ...substitutionPages,
+    ...gardeWilayaPages,
     ...gardePages,
     ...annuairePages,
   ]
