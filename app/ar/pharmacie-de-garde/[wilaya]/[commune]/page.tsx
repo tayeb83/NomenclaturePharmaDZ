@@ -129,7 +129,7 @@ export default async function GardeCommunePageAr({
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'الرئيسية', item: APP_URL },
       { '@type': 'ListItem', position: 2, name: 'صيدليات المناوبة', item: `${APP_URL}/ar/pharmacie-de-garde` },
-      { '@type': 'ListItem', position: 3, name: wilayaAr, item: `${APP_URL}/ar/pharmacie-de-garde#${wilayaSlug}` },
+      { '@type': 'ListItem', position: 3, name: wilayaAr, item: `${APP_URL}/ar/pharmacie-de-garde/${wilayaSlug}` },
       { '@type': 'ListItem', position: 4, name: communeAr, item: `${APP_URL}/ar/pharmacie-de-garde/${wilayaSlug}/${communeSlug}` },
     ],
   }
@@ -142,7 +142,7 @@ export default async function GardeCommunePageAr({
       <nav aria-label="مسار التصفح" style={{ fontSize: 13, color: 'var(--slate-500)', marginBottom: 16 }}>
         <a href="/" style={{ color: 'var(--slate-500)' }}>الرئيسية</a> {' › '}
         <a href="/ar/pharmacie-de-garde" style={{ color: 'var(--slate-500)' }}>صيدليات المناوبة</a> {' › '}
-        <span>{wilayaAr}</span> {' › '}
+        <a href={`/ar/pharmacie-de-garde/${wilayaSlug}`} style={{ color: 'var(--slate-500)' }}>{wilayaAr}</a> {' › '}
         <span style={{ color: 'var(--navy)', fontWeight: 600 }}>{communeAr}</span>
       </nav>
 
