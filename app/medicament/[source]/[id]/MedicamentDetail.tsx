@@ -131,13 +131,14 @@ function motifColor(m: string | null) {
   return '#6b7280'
 }
 
-function Field({ label, value }: { label: string; value: string | null | undefined }) {
-  if (!value) return null
+function Row({ label, value, children }: { label: string; value?: string | null; children?: React.ReactNode }) {
+  const content = children ?? value
+  if (!content) return null
   return (
-    <div className="detail-field">
-      <div className="detail-field-label">{label}</div>
-      <div className="detail-field-value">{value}</div>
-    </div>
+    <tr>
+      <th scope="row">{label}</th>
+      <td>{content}</td>
+    </tr>
   )
 }
 
@@ -398,134 +399,157 @@ export async function MedicamentDetail(
             </div>
           )}
 
-          <div className="detail-grid">
-            {/* ─── Identification ──────────────────────────── */}
-            <div className="detail-card">
-              <div className="detail-card-title">{pickLang(lang, { fr: '🔖 Identification', ar: '🔖 التعريف' })}</div>
-              <Field label={pickLang(lang, { fr: 'DCI (Substance active)', ar: 'DCI (المادة الفعالة)' })} value={med.dci} />
-              <Field label={pickLang(lang, { fr: 'Nom de marque', ar: 'الاسم التجاري' })} value={med.nom_marque} />
-              <Field label={pickLang(lang, { fr: "N° d'enregistrement", ar: 'رقم التسجيل' })} value={med.n_enreg} />
-              <Field label={pickLang(lang, { fr: 'Code produit', ar: 'رمز المنتج' })} value={med.code} />
-              {/* ─── Code ATC inline dans identification si disponible ─ */}
-              {med.code_atc && (
-                <div className="detail-field">
-                  <div className="detail-field-label">{pickLang(lang, { fr: 'Code ATC', ar: 'رمز ATC' })}</div>
-                  <div className="detail-field-value">
-                    <span style={{
-                      display: 'inline-block',
-                      fontFamily: 'var(--font-mono)',
-                      fontWeight: 700,
-                      fontSize: 13,
-                      background: '#eff6ff',
-                      color: '#1d4ed8',
-                      border: '1.5px solid #bfdbfe',
-                      borderRadius: 6,
-                      padding: '2px 10px',
-                      letterSpacing: '.04em',
-                    }}>
-                      {med.code_atc}
-                    </span>
-                    {(med.atc_label_fr || med.atc_label_en) && (
-                      <span style={{ marginLeft: 8, color: '#475569', fontSize: 13 }}>
-                        {med.atc_label_fr || med.atc_label_en}
+          <div className="fiche-layout">
+            <div className="fiche-main">
+              {/* ─── Identification ──────────────────────────── */}
+              <section className="fiche-box">
+                <h2 className="fiche-box-title">{pickLang(lang, { fr: 'Identification', ar: 'التعريف' })}</h2>
+                <table className="fiche-table"><tbody>
+                  <Row label={pickLang(lang, { fr: 'DCI (Substance active)', ar: 'DCI (المادة الفعالة)' })} value={med.dci} />
+                  <Row label={pickLang(lang, { fr: 'Nom de marque', ar: 'الاسم التجاري' })} value={med.nom_marque} />
+                  <Row label={pickLang(lang, { fr: "N° d'enregistrement", ar: 'رقم التسجيل' })} value={med.n_enreg} />
+                  <Row label={pickLang(lang, { fr: 'Code produit', ar: 'رمز المنتج' })} value={med.code} />
+                  {med.code_atc && (
+                    <Row label={pickLang(lang, { fr: 'Code ATC', ar: 'رمز ATC' })}>
+                      <span className="fiche-atc">{med.code_atc}</span>
+                      {(med.atc_label_fr || med.atc_label_en) && <> – {med.atc_label_fr || med.atc_label_en}</>}
+                    </Row>
+                  )}
+                  {med.type_prod && (
+                    <Row label={pickLang(lang, { fr: 'Type de produit', ar: 'نوع المنتج' })}>
+                      <span className={`badge ${med.type_prod === 'BIO' ? 'badge-purple' : med.type_prod === 'RE' || med.type_prod === 'Ré' ? 'badge-blue' : 'badge-green'}`}>
+                        {TYPE_LABELS[med.type_prod]?.[lang] || med.type_prod}
                       </span>
-                    )}
-                  </div>
-                </div>
-              )}
-              {med.type_prod && (
-                <div className="detail-field">
-                  <div className="detail-field-label">{pickLang(lang, { fr: 'Type de produit', ar: 'نوع المنتج' })}</div>
-                  <div className="detail-field-value">
-                    <span className={`badge ${med.type_prod === 'BIO' ? 'badge-purple' : med.type_prod === 'RE' || med.type_prod === 'Ré' ? 'badge-blue' : 'badge-green'}`}>
-                      {TYPE_LABELS[med.type_prod]?.[lang] || med.type_prod}
-                    </span>
-                  </div>
-                </div>
-              )}
-              {med.statut && (
-                <div className="detail-field">
-                  <div className="detail-field-label">{pickLang(lang, { fr: 'Origine de fabrication', ar: 'بلد التصنيع' })}</div>
-                  <div className="detail-field-value">
-                    <span className={`badge ${med.statut === 'F' ? 'badge-green' : 'badge-gray'}`}>
-                      {STATUT_LABELS[med.statut]?.[lang] || med.statut}
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* ─── Conditionnement ─────────────────────────── */}
-            <div className="detail-card">
-              <div className="detail-card-title">{pickLang(lang, { fr: '💊 Conditionnement', ar: '💊 الخصائص' })}</div>
-              <Field label={pickLang(lang, { fr: 'Forme pharmaceutique', ar: 'الشكل الصيدلاني' })} value={med.forme} />
-              <Field label={pickLang(lang, { fr: 'Dosage', ar: 'الجرعة' })} value={med.dosage} />
-              {med.is_critical && (
-                <Field
-                  label={pickLang(lang, { fr: 'Criticité', ar: 'الحرجية' })}
-                  value={med.critical_class_therapeutique
-                    ? pickLang(lang, { fr: `Critique (${med.critical_class_therapeutique})`, ar: `حرج (${med.critical_class_therapeutique})` })
-                    : pickLang(lang, { fr: 'Critique', ar: 'حرج' })}
-                />
-              )}
-              <Field label={pickLang(lang, { fr: 'Conditionnement', ar: 'التعبئة' })} value={med.conditionnement} />
-              <Field
-                label={pickLang(lang, { fr: 'PPA (Prix public algérien)', ar: 'السعر العمومي الجزائري (PPA)' })}
-                value={ppa !== null ? formatPpa(ppa, lang) : pickLang(lang, { fr: 'Prix non disponible', ar: 'السعر غير متوفر' })}
-              />
-              <Field label={pickLang(lang, { fr: 'Liste', ar: 'القائمة' })} value={med.liste} />
-              <Field label={pickLang(lang, { fr: 'Prescription', ar: 'الوصفة' })} value={med.prescription} />
-              {med.stabilite && <Field label={pickLang(lang, { fr: 'Stabilité', ar: 'الاستقرار' })} value={med.stabilite} />}
-            </div>
-
-            {/* ─── Fabricant ────────────────────────────────── */}
-            <div className="detail-card">
-              <div className="detail-card-title">{pickLang(lang, { fr: '🏭 Fabricant', ar: '🏭 المُصنّع' })}</div>
-              <Field label={pickLang(lang, { fr: 'Laboratoire', ar: 'المخبر' })} value={med.labo} />
-              {med.pays && (
-                <div className="detail-field">
-                  <div className="detail-field-label">{pickLang(lang, { fr: "Pays d'origine", ar: 'بلد المنشأ' })}</div>
-                  <div className="detail-field-value">
-                    {getCountryFlag(med.pays) && (
-                      <span style={{ fontSize: 20, marginRight: 6, verticalAlign: 'middle' }}>
-                        {getCountryFlag(med.pays)}
+                    </Row>
+                  )}
+                  {med.statut && (
+                    <Row label={pickLang(lang, { fr: 'Origine de fabrication', ar: 'بلد التصنيع' })}>
+                      <span className={`badge ${med.statut === 'F' ? 'badge-green' : 'badge-gray'}`}>
+                        {STATUT_LABELS[med.statut]?.[lang] || med.statut}
                       </span>
-                    )}
-                    <span style={{ verticalAlign: 'middle' }}>{med.pays}</span>
-                  </div>
-                </div>
+                    </Row>
+                  )}
+                </tbody></table>
+              </section>
+
+              {/* ─── Conditionnement ─────────────────────────── */}
+              <section className="fiche-box">
+                <h2 className="fiche-box-title">{pickLang(lang, { fr: 'Conditionnement', ar: 'الخصائص' })}</h2>
+                <table className="fiche-table"><tbody>
+                  <Row label={pickLang(lang, { fr: 'Forme pharmaceutique', ar: 'الشكل الصيدلاني' })} value={med.forme} />
+                  <Row label={pickLang(lang, { fr: 'Dosage', ar: 'الجرعة' })} value={med.dosage} />
+                  {med.is_critical && (
+                    <Row
+                      label={pickLang(lang, { fr: 'Criticité', ar: 'الحرجية' })}
+                      value={med.critical_class_therapeutique
+                        ? pickLang(lang, { fr: `Critique (${med.critical_class_therapeutique})`, ar: `حرج (${med.critical_class_therapeutique})` })
+                        : pickLang(lang, { fr: 'Critique', ar: 'حرج' })}
+                    />
+                  )}
+                  <Row label={pickLang(lang, { fr: 'Conditionnement', ar: 'التعبئة' })} value={med.conditionnement} />
+                  <Row label={pickLang(lang, { fr: 'Liste', ar: 'القائمة' })} value={med.liste} />
+                  <Row label={pickLang(lang, { fr: 'Prescription', ar: 'الوصفة' })} value={med.prescription} />
+                  <Row label={pickLang(lang, { fr: 'Stabilité', ar: 'الاستقرار' })} value={med.stabilite} />
+                </tbody></table>
+              </section>
+
+              {/* ─── Fabricant ────────────────────────────────── */}
+              <section className="fiche-box">
+                <h2 className="fiche-box-title">{pickLang(lang, { fr: 'Fabricant', ar: 'المُصنّع' })}</h2>
+                <table className="fiche-table"><tbody>
+                  <Row label={pickLang(lang, { fr: 'Laboratoire', ar: 'المخبر' })} value={med.labo} />
+                  {med.pays && (
+                    <Row label={pickLang(lang, { fr: "Pays d'origine", ar: 'بلد المنشأ' })}>
+                      {getCountryFlag(med.pays) && <span className="fiche-flag">{getCountryFlag(med.pays)}</span>}
+                      {med.pays}
+                    </Row>
+                  )}
+                </tbody></table>
+              </section>
+
+              {/* ─── Dates & Version ─────────────────────────── */}
+              <section className="fiche-box">
+                <h2 className="fiche-box-title">{pickLang(lang, { fr: 'Dates & Enregistrement', ar: 'التواريخ والتسجيل' })}</h2>
+                <table className="fiche-table"><tbody>
+                  <Row label={pickLang(lang, { fr: "Date d'enregistrement", ar: 'تاريخ التسجيل' })} value={med.date_init} />
+                  {!isRetrait && <Row label={pickLang(lang, { fr: 'Date de fin de validité', ar: 'نهاية الصلاحية' })} value={med.date_final} />}
+                  {med.annee && <Row label={pickLang(lang, { fr: 'Année de nomenclature', ar: 'سنة النومنكلاتور' })} value={String(med.annee)} />}
+                  <Row label={pickLang(lang, { fr: 'Version source', ar: 'نسخة المصدر' })} value={med.source_version} />
+                  {isRetrait && (
+                    <>
+                      <Row label={pickLang(lang, { fr: 'Date de retrait', ar: 'تاريخ السحب' })} value={med.date_retrait} />
+                      <Row label={pickLang(lang, { fr: 'Motif de retrait', ar: 'سبب السحب' })} value={med.motif_retrait} />
+                    </>
+                  )}
+                  {med.is_new_vs_previous === true && (
+                    <Row label="">
+                      <span className="badge badge-amber">Nouvelle inscription</span>
+                    </Row>
+                  )}
+                </tbody></table>
+              </section>
+
+              {/* ─── Observations (si présentes) ─────────────── */}
+              {med.obs && (
+                <section className="fiche-box">
+                  <h2 className="fiche-box-title">{pickLang(lang, { fr: 'Observations', ar: 'ملاحظات' })}</h2>
+                  <div className="fiche-obs">{med.obs}</div>
+                </section>
               )}
             </div>
 
-            {/* ─── Dates & Version ─────────────────────────── */}
-            <div className="detail-card">
-              <div className="detail-card-title">{pickLang(lang, { fr: '📅 Dates & Enregistrement', ar: '📅 التواريخ والتسجيل' })}</div>
-              <Field label={pickLang(lang, { fr: "Date d'enregistrement", ar: 'تاريخ التسجيل' })} value={med.date_init} />
-              {!isRetrait && <Field label={pickLang(lang, { fr: 'Date de fin de validité', ar: 'نهاية الصلاحية' })} value={med.date_final} />}
-              {med.annee && <Field label={pickLang(lang, { fr: 'Année de nomenclature', ar: 'سنة النومنكلاتور' })} value={String(med.annee)} />}
-              <Field label={pickLang(lang, { fr: 'Version source', ar: 'نسخة المصدر' })} value={med.source_version} />
-              {med.is_new_vs_previous === true && (
-                <div className="detail-field">
-                  <div className="detail-field-value">
-                    <span className="badge badge-amber">Nouvelle inscription</span>
-                  </div>
-                </div>
-              )}
-              {isRetrait && (
-                <>
-                  <Field label={pickLang(lang, { fr: 'Date de retrait', ar: 'تاريخ السحب' })} value={med.date_retrait} />
-                  <Field label={pickLang(lang, { fr: 'Motif de retrait', ar: 'سبب السحب' })} value={med.motif_retrait} />
-                </>
-              )}
-            </div>
+            {/* ─── Repères : prix, DCI, prescription, accès rapides ─── */}
+            <aside className="fiche-box fiche-aside">
+              <h2 className="fiche-box-title">{pickLang(lang, { fr: 'Repères', ar: 'معالم' })}</h2>
+              <div className="fiche-aside-body">
+                <div className="fiche-aside-label">{pickLang(lang, { fr: 'PPA', ar: 'السعر العمومي (PPA)' })}</div>
+                {ppa !== null ? (
+                  <div className="fiche-price">{formatPpa(ppa, lang)}</div>
+                ) : (
+                  <div className="fiche-price-na">{pickLang(lang, { fr: 'Prix non disponible', ar: 'السعر غير متوفر' })}</div>
+                )}
 
-            {/* ─── Observations (si présentes) ─────────────── */}
-            {med.obs && (
-              <div className="detail-card" style={{ gridColumn: '1 / -1' }}>
-                <div className="detail-card-title">{pickLang(lang, { fr: '📝 Observations', ar: '📝 ملاحظات' })}</div>
-                <div style={{ fontSize: 13.5, color: '#334155', lineHeight: 1.7 }}>{med.obs}</div>
+                <div className="fiche-aside-label">{pickLang(lang, { fr: 'DCI', ar: 'DCI' })}</div>
+                <div className="fiche-aside-value">
+                  {alternatifs.length > 0 && med.dci ? (
+                    <Link href={`/dci/${encodeURIComponent(med.dci.toLowerCase())}`}><strong>{med.dci}</strong></Link>
+                  ) : <strong>{med.dci}</strong>}
+                </div>
+
+                {med.prescription && (
+                  <>
+                    <div className="fiche-aside-label">{pickLang(lang, { fr: 'Prescription', ar: 'الوصفة' })}</div>
+                    <div className="fiche-aside-value"><strong>{med.prescription}</strong></div>
+                  </>
+                )}
+
+                {(med.forme || med.dosage) && (
+                  <>
+                    <div className="fiche-aside-label">{pickLang(lang, { fr: 'Forme / dosage', ar: 'الشكل / الجرعة' })}</div>
+                    <div className="fiche-aside-value">{[med.forme, med.dosage].filter(Boolean).join(' – ')}</div>
+                  </>
+                )}
+
+                {(med.statut || med.pays) && (
+                  <>
+                    <div className="fiche-aside-label">{pickLang(lang, { fr: 'Origine', ar: 'المنشأ' })}</div>
+                    <div className="fiche-aside-value">
+                      {med.pays && getCountryFlag(med.pays) && <span className="fiche-flag">{getCountryFlag(med.pays)}</span>}
+                      {med.statut ? (STATUT_LABELS[med.statut]?.[lang] || med.statut) : med.pays}
+                    </div>
+                  </>
+                )}
+
+                {autres.length > 0 && (
+                  <a className="fiche-btn" href="#meme-dci">
+                    {pickLang(lang, { fr: `Voir les génériques (${autres.length})`, ar: `عرض الأدوية الجنيسة (${autres.length})` })}
+                  </a>
+                )}
+                <a className="fiche-btn fiche-btn-outline" href={googleBoxSearchHref(med)} target="_blank" rel="noopener noreferrer">
+                  {pickLang(lang, { fr: 'Voir la boîte (Google)', ar: 'صورة العلبة (Google)' })}
+                </a>
               </div>
-            )}
+            </aside>
           </div>
 
           {/* Pub juste après l'essentiel de la fiche : c'est là que le
@@ -616,7 +640,7 @@ export async function MedicamentDetail(
 
           {/* ─── Médicaments similaires (même DCI) ───────────── */}
           {autres.length > 0 && (
-            <div style={{ marginTop: 40 }}>
+            <div id="meme-dci" style={{ marginTop: 40 }}>
               <div className="section-title">
                 {pickLang(lang, { fr: '🔁 Autres médicaments avec la même DCI', ar: '🔁 أدوية أخرى بنفس المادة الفعالة' })}
               </div>

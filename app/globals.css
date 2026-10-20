@@ -477,6 +477,42 @@ body {
 .detail-alt-name { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
 .detail-alt-meta { font-size: 12px; color: var(--slate-500); margin-bottom: 2px; }
 
+/* ─── Fiche médicament : mise en page deux colonnes ─────────── */
+.fiche-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 16px; margin-top: 24px; align-items: start; }
+.fiche-main { display: grid; gap: 14px; }
+.fiche-box { background: white; border: 1px solid #bbb; margin: 0; }
+.fiche-box-title { margin: 0; padding: 7px 12px; background: #e8e8e8; border-bottom: 1px solid #bbb; font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #222; }
+.fiche-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.fiche-table th, .fiche-table td { border-top: 1px solid #ddd; padding: 7px 12px; text-align: start; vertical-align: top; }
+.fiche-table tr:first-child th, .fiche-table tr:first-child td { border-top: 0; }
+.fiche-table th { width: 34%; background: #f4f4f4; font-weight: 700; color: #333; }
+.fiche-table td { color: #222; }
+.fiche-atc { font-family: var(--font-mono); font-weight: 700; color: #0b5394; }
+.fiche-flag { font-size: 18px; margin-inline-end: 6px; vertical-align: middle; }
+.fiche-obs { padding: 10px 12px; font-size: 13.5px; line-height: 1.7; color: #333; }
+.fiche-aside { position: sticky; top: 12px; }
+.fiche-aside-body { padding: 10px 12px 14px; }
+.fiche-aside-label { margin-top: 10px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #666; }
+.fiche-aside-label:first-child { margin-top: 0; }
+.fiche-aside-value { font-size: 14px; color: #222; }
+.fiche-aside-value a { color: #0b5394; }
+.fiche-price { font-size: 26px; font-weight: 700; color: #111; line-height: 1.2; }
+.fiche-price-na { font-size: 14px; font-style: italic; color: #777; }
+.fiche-btn { display: block; margin-top: 10px; padding: 7px 10px; text-align: center; font-size: 13px; font-weight: 600; text-decoration: none; border: 1px solid #0b5394; background: #0b5394; color: #fff; }
+.fiche-btn:first-of-type { margin-top: 16px; }
+.fiche-btn-outline { background: #fff; color: #0b5394; }
+@media (max-width: 860px) {
+  .fiche-layout { grid-template-columns: 1fr; }
+  .fiche-aside { position: static; order: -1; }
+  .fiche-table th { width: 40%; }
+}
+@media print {
+  .fiche-layout { grid-template-columns: 1fr 200pt; gap: 8pt; }
+  .fiche-box { break-inside: avoid; page-break-inside: avoid; border: 1pt solid #bbb; }
+  .fiche-aside { position: static; }
+  .fiche-btn { display: none; }
+}
+
 /* ─── RESPONSIVE ─────────────────────────────────────────── */
 @media (max-width: 768px) {
   .hero h1 { font-size: 28px; }
