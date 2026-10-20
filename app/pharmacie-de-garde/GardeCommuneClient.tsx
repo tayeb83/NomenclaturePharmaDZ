@@ -8,6 +8,7 @@ import type { GardeNowResult, GardeMonthResult } from '@/lib/garde'
 import { slugify } from '@/lib/slug'
 import type { Lang } from '@/lib/i18n'
 import { GardeFeedback } from '@/components/garde/GardeFeedback'
+import { StateMedal } from '@/components/annuaire/StateMedal'
 import { AdInContent } from '@/components/ads/AdBanner'
 import {
   isPremium,
@@ -350,13 +351,15 @@ export function GardeCommuneClient({
 
   const renderShift = ({ shift, distanceKm }: (typeof sortedSchedule)[number]) => (
     <div key={shift.id} style={{
-      background: '#fff', border: '1px solid var(--slate-200)', borderRadius: 10, padding: '16px 18px',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+      background: '#fff', border: '1px solid var(--slate-200)', borderRadius: 14, padding: '16px 18px',
+      display: 'flex', alignItems: 'flex-start', gap: 16,
       ...(isPremium(shift) ? premiumCardStyle : null),
     }}>
+      <StateMedal state="garde" size={46} />
+      <div style={{ flex: 1, minWidth: 0 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
         <div>
-          <div style={{ fontWeight: 700, fontSize: 15.5, color: 'var(--navy)' }}>
+          <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 21, lineHeight: 1.15, color: 'var(--navy)' }}>
             {displayName(shift, lang)}
             <PremiumBadges shift={shift} lang={lang} />
           </div>
@@ -405,14 +408,15 @@ export function GardeCommuneClient({
         pharmacyExternalId={shift.pharmacy_id ?? null}
         pharmacyName={displayName(shift, lang)}
       />
+      </div>
     </div>
   )
 
   return (
     <div dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 10, color: 'var(--navy)' }}>
-          🏥 {pageTitle}
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 700, lineHeight: 1.1, marginBottom: 10, color: 'var(--navy)' }}>
+          {pageTitle}
         </h1>
         <p style={{ color: 'var(--slate-500)', fontSize: 16, maxWidth: 640, lineHeight: 1.6 }}>
           {pageDescription}

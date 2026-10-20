@@ -15,13 +15,13 @@ function LaboCard({ labo }: { labo: LaboSummary }) {
     <Link href={`/laboratoire/${labo.slug}`} style={{ textDecoration: 'none' }}>
       <div
         style={{
-          background: '#fff', borderRadius: 12, padding: '16px 18px',
+          background: '#fff', borderRadius: 14, padding: '16px 18px',
           border: '1.5px solid #e2e8f0', transition: 'border-color 0.15s, box-shadow 0.15s',
           cursor: 'pointer',
         }}
         onMouseEnter={e => {
-          (e.currentTarget as HTMLDivElement).style.borderColor = '#3b82f6'
-          ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(59,130,246,0.1)'
+          (e.currentTarget as HTMLDivElement).style.borderColor = '#1d4e9e'
+          ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(29,78,158,0.12)'
         }}
         onMouseLeave={e => {
           (e.currentTarget as HTMLDivElement).style.borderColor = '#e2e8f0'
@@ -29,31 +29,31 @@ function LaboCard({ labo }: { labo: LaboSummary }) {
         }}
       >
         <div style={{
-          fontSize: 13, fontWeight: 700, color: '#0f172a',
-          marginBottom: 8, lineHeight: 1.3,
+          fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 700, color: '#12233f',
+          marginBottom: 8, lineHeight: 1.2,
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
           {labo.labo}
         </div>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           <span style={{
-            background: '#eff6ff', color: '#1d4ed8', fontSize: 11, fontWeight: 600,
-            padding: '3px 8px', borderRadius: 6,
+            background: '#e3f3ec', color: '#1b7f5a', fontSize: 12, fontWeight: 700,
+            padding: '2px 10px', borderRadius: 999,
           }}>
             💊 {labo.total_enregistres}
           </span>
           {labo.total_retraits > 0 && (
             <span style={{
-              background: '#fff1f2', color: '#be123c', fontSize: 11, fontWeight: 600,
-              padding: '3px 8px', borderRadius: 6,
+              background: '#fdecea', color: '#b3261e', fontSize: 12, fontWeight: 700,
+              padding: '2px 10px', borderRadius: 999,
             }}>
               🚨 {labo.total_retraits}
             </span>
           )}
           {labo.total_non_renouveles > 0 && (
             <span style={{
-              background: '#fffbeb', color: '#b45309', fontSize: 11, fontWeight: 600,
-              padding: '3px 8px', borderRadius: 6,
+              background: '#f9e9de', color: '#b4531a', fontSize: 12, fontWeight: 700,
+              padding: '2px 10px', borderRadius: 999,
             }}>
               📋 {labo.total_non_renouveles}
             </span>
@@ -110,8 +110,7 @@ export function LaboratoiresClient({ labos }: Props) {
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-          <span style={{ fontSize: 32 }}>🏭</span>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0f172a', margin: 0 }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 38, fontWeight: 700, lineHeight: 1.1, color: '#12233f', margin: 0 }}>
             {t('Laboratoires pharmaceutiques', 'المخابر الصيدلانية')}
           </h1>
         </div>
@@ -126,9 +125,9 @@ export function LaboratoiresClient({ labos }: Props) {
           value={search}
           onChange={e => setSearch(e.target.value)}
           style={{
-            width: '100%', maxWidth: 420, padding: '10px 16px', borderRadius: 10,
-            border: '1.5px solid #e2e8f0', fontSize: 15, outline: 'none',
-            background: '#f8fafc', color: '#0f172a',
+            width: '100%', maxWidth: 420, padding: '10px 16px', borderRadius: 999,
+            border: '2px solid #1d4e9e', fontSize: 15, outline: 'none',
+            background: '#fff', color: '#12233f',
           }}
         />
       </div>
@@ -155,7 +154,7 @@ export function LaboratoiresClient({ labos }: Props) {
           </div>
         </div>
         <Link href="/contact" style={{
-          background: '#3b82f6', color: '#fff', padding: '9px 20px',
+          background: '#1d4e9e', color: '#fff', padding: '9px 20px',
           borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: 'none',
           whiteSpace: 'nowrap',
         }}>

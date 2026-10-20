@@ -19,9 +19,9 @@ export function isPremium(shift: GardeShift): boolean {
 
 /** Style de la carte mise en avant, à fusionner avec celui de la carte normale. */
 export const premiumCardStyle: React.CSSProperties = {
-  border: '1px solid #fcd34d',
-  background: 'linear-gradient(180deg, #fffdf5 0%, #ffffff 60%)',
-  boxShadow: '0 1px 3px rgba(180,83,9,0.10)',
+  border: '1px solid var(--brass)',
+  background: '#fff',
+  boxShadow: 'inset 0 0 0 3px #fff, inset 0 0 0 4px rgba(185,132,37,0.6)',
 }
 
 export function PremiumBadges({ shift, lang }: { shift: GardeShift; lang: Lang }) {

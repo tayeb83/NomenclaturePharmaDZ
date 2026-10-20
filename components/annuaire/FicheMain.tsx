@@ -7,6 +7,7 @@ import { displayName, formatPhoneDisplay, pharmacyPath } from '@/lib/annuaire-ty
 import { algiersParts, computeStatus, effectiveHours, formatAlgiersTime, gardeLaterToday, WEEK_ORDER } from '@/lib/annuaire-hours'
 import { labels } from './labels'
 import { StatusPill } from './StatusPill'
+import { StateMedal } from './StateMedal'
 import { useNow } from './useNow'
 
 function mapsHref(p: DirectoryPharmacy) {
@@ -74,7 +75,9 @@ export function FicheMain({ pharmacy: p, lang, renderedAt }: { pharmacy: Directo
 
   return (
     <div>
-      <div className="an-panel">
+      <div className="an-panel an-fhead">
+        <StateMedal state={status.state} size={72} />
+        <div>
         <h1 className="an-h1" style={{ marginBottom: 4 }}>{name}</h1>
         {other && other !== name && (
           <div style={{ color: 'var(--slate-500)', fontSize: 18 }}>
@@ -93,6 +96,7 @@ export function FicheMain({ pharmacy: p, lang, renderedAt }: { pharmacy: Directo
           {wa && <a className="an-btn big wa" href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer">💬 {t.whatsapp}</a>}
           <a className="an-btn big ghost" href={mapsHref(p)} target="_blank" rel="noopener noreferrer">🧭 {t.route}</a>
           <button type="button" className="an-btn big ghost" onClick={share}>↗ {t.share}</button>
+        </div>
         </div>
       </div>
 
