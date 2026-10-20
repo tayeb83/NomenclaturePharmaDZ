@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import type { WilayaHubEntry } from '@/lib/garde'
 import { slugify } from '@/lib/slug'
 import type { Lang } from '@/lib/i18n'
+import { CodeMedal } from '@/components/annuaire/StateMedal'
 
 const LABELS = {
   fr: {
@@ -74,7 +75,7 @@ export function GardeWilayaGrid({ wilayas, lang, basePath }: { wilayas: WilayaHu
             flexDirection: 'column',
             gap: 8,
             padding: '16px 18px',
-            borderRadius: 12,
+            borderRadius: 14,
             border: w.covered ? '1px solid var(--slate-200)' : '1px dashed var(--slate-200)',
             background: w.covered ? '#fff' : 'var(--slate-50)',
             boxShadow: w.covered ? '0 1px 3px rgba(0,0,0,0.05)' : 'none',
@@ -84,14 +85,7 @@ export function GardeWilayaGrid({ wilayas, lang, basePath }: { wilayas: WilayaHu
 
           const header = (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{
-                fontFamily: 'var(--font-mono, monospace)', fontSize: 11.5, fontWeight: 700,
-                color: w.covered ? 'var(--blue)' : 'var(--slate-400)',
-                background: w.covered ? 'rgba(37,99,235,0.1)' : 'var(--slate-100, #f1f5f9)',
-                borderRadius: 6, padding: '2px 7px', flexShrink: 0,
-              }}>
-                {w.code}
-              </span>
+              <CodeMedal code={w.code} size={46} soon={!w.covered} />
               <div style={{ minWidth: 0 }}>
                 <div dir={lang === 'ar' ? 'rtl' : 'ltr'} lang={lang} style={{ fontWeight: 700, fontSize: 15, color: w.covered ? 'var(--navy)' : 'var(--slate-500)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {lang === 'ar' ? (w.name_ar || w.name_fr) : w.name_fr}

@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import type { Lang } from '@/lib/i18n'
 import { labels } from './labels'
 import { StatusPill } from './StatusPill'
+import { StateMedal } from './StateMedal'
 import { useNow } from './useNow'
 import { computeStatus, gardeLaterToday, isAvailableNow } from '@/lib/annuaire-hours'
 import { displayName, formatPhoneDisplay, pharmacyPath, type ListPharmacy } from '@/lib/annuaire-types'
@@ -146,8 +147,9 @@ export function DirectoryClient({ lang, pharmacies, renderedAt, communes }: Prop
   }
 
   return (
-    <div>
-      <div className="an-bar" role="search" style={communes.length > 1 ? undefined : { gridTemplateColumns: '1fr' }}>
+    <div className="an-split">
+      <aside className="an-rail" aria-label={t.search}>
+      <div className="an-bar" role="search">
         <input
           type="search" value={q} onChange={e => setQ(e.target.value)}
           placeholder={t.searchPh} aria-label={t.search} autoComplete="off"
@@ -172,6 +174,9 @@ export function DirectoryClient({ lang, pharmacies, renderedAt, communes }: Prop
         <button type="button" className="an-chip" aria-pressed={sort === 'open'} onClick={() => setSort(s => (s === 'open' ? 'name' : 'open'))}>{t.sortOpen}</button>
       </div>
 
+      </aside>
+
+      <div style={{ minWidth: 0 }}>
       <div className="an-count">
         <strong aria-live="polite">{t.count(rows.length)}</strong>
         <span style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -202,6 +207,7 @@ export function DirectoryClient({ lang, pharmacies, renderedAt, communes }: Prop
             const phone = formatPhoneDisplay(p.phone_e164, p.phone_raw)
             return (
               <article key={p.id} className={`an-card${p.is_premium ? ' premium' : ''}`}>
+                <StateMedal state={status.state} size={50} />
                 <div style={{ minWidth: 0 }}>
                   <h3>
                     <a href={href}>{name}</a>
@@ -242,6 +248,7 @@ export function DirectoryClient({ lang, pharmacies, renderedAt, communes }: Prop
           </button>
         </p>
       )}
+      </div>
       {toast && <div className="an-toast" role="status">{toast}</div>}
     </div>
   )
