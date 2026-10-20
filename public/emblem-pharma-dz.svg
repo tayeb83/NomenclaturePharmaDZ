@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="Croissant et coupe d'Hygie, symbole des pharmacies algériennes">
+  <path d="M30 4.5A20 20 0 1 0 30 43.5A24 24 0 0 1 30 4.5Z" fill="#d92128"/>
+  <path d="M22 21h23c-1 5-5.5 8-11.5 8S23 26 22 21z" fill="#0b9248"/>
+  <path d="M32.5 28h2v10h-2zM28 39.5c2-1.2 3-1.5 5.5-1.5s3.5.3 5.5 1.5z" fill="#0b9248"/>
+  <path d="M40 9.5C40 5.5 33 5.5 33 9.5S40 13.5 40 17.5S34 20 34 21" fill="none" stroke="#0b9248" stroke-width="2" stroke-linecap="round"/>
+</svg>
