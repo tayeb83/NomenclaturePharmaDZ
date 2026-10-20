@@ -22,6 +22,16 @@ par wilaya et commune. Interface bilingue **français / arabe** (RTL).
 - **Alertes & retraits** (`/alertes`, `/retraits`), **veille réglementaire**
   (`/veille`), **médicaments critiques** (`/medicaments-critiques`).
 
+### 📊 NAQESS — accès aux médicaments (participatif)
+- Sous chaque fiche : le visiteur signale anonymement « introuvable » / « prix
+  inattendu » / « trouvé », sa wilaya et le nombre de pharmacies consultées
+  (prévisualisation avant envoi). Aucune donnée personnelle ; hash d'IP salé
+  pour dédoublonner (24 h) et limiter les abus.
+- `/admin/acces` : tendances période × wilaya × médicament, export CSV.
+  Signalements (déclarations) et consultations (clics de recherche, national)
+  sont des colonnes distinctes ; « fiable » = au moins 3 déclarants distincts.
+- À activer avec `psql "$DATABASE_URL" -f sql/21_acces_signalements.sql`.
+
 ### 🌙 Pharmacies de garde
 - `/pharmacie-de-garde` : plannings de garde officiels par **wilaya puis
   commune**, avec vues « Maintenant », « Cette nuit », « Vendredi » et

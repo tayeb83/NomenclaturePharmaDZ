@@ -24,6 +24,7 @@ import { MonographieSection } from '@/components/drug/MonographieSection'
 import { getPublishedMonographie, hasContent } from '@/lib/monographies'
 import { getPpa, formatPpa } from '@/lib/ppa'
 import { AdInContent } from '@/components/ads/AdBanner'
+import { AccesSignalement } from '@/components/acces/AccesSignalement'
 
 const TYPE_LABELS: Record<string, { fr: string; ar: string }> = {
   GE: { fr: 'Générique', ar: 'جنيس' }, 'Gé': { fr: 'Générique', ar: 'جنيس' }, RE: { fr: 'Référence étrangère', ar: 'مرجعي أجنبي' },
@@ -531,6 +532,11 @@ export async function MedicamentDetail(
               visiteur venu de Google a encore les yeux. Celle du bas de page
               n'était presque jamais vue. */}
           <AdInContent />
+
+          {/* ─── NAQESS : signalement anonyme d'accès au médicament ── */}
+          {!isRetrait && (
+            <AccesSignalement lang={lang} medSource={med.source} medId={med.id} medName={med.nom_marque} dci={med.dci || null} />
+          )}
 
           {/* ─── Monographie de la DCI (contenu saisi et relu) ──── */}
           {monographie && <MonographieSection m={monographie} dci={med.dci} lang={lang} />}
