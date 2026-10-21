@@ -1936,6 +1936,42 @@ export async function getAllMedicamentIds(): Promise<MedicamentSitemapRow[]> {
   ]
 }
 
+/**
+ * Lettre d'index d'une fiche : initiale du nom commercial, sans accent ;
+ * tout ce qui n'est pas A–Z (chiffres, symboles) tombe dans « 0-9 ».
+ */
+const LETTRE_EXPR = `(
+  CASE WHEN translate(UPPER(LEFT(BTRIM(nom_marque), 1)), 'ÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ', 'AAAEEEEIIOOUUUC') ~ '^[A-Z]$'
+       THEN LOWER(translate(UPPER(LEFT(BTRIM(nom_marque), 1)), 'ÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ', 'AAAEEEEIIOOUUUC'))
+       ELSE '0-9' END
+)`
+
+/** Nombre de fiches actives par lettre d'index (clé = slug : « a » … « z », « 0-9 »). */
+export async function getLettreCounts(): Promise<Record<string, number>> {
+  const rows = await query<{ lettre: string; count: number }>(`
+    SELECT ${LETTRE_EXPR} AS lettre, COUNT(*)::INT AS count
+    FROM enregistrements
+    WHERE nom_marque IS NOT NULL AND BTRIM(nom_marque) <> ''
+    GROUP BY 1
+  `)
+  return Object.fromEntries(rows.map(r => [r.lettre, Number(r.count)]))
+}
+
+/** Une page d'index alphabétique : fiches actives dont le nom commence par la lettre. */
+export async function getMedicamentsByLettre(
+  lettre: string,
+  limit: number,
+  offset: number
+): Promise<Enregistrement[]> {
+  return query<Enregistrement>(`
+    SELECT * FROM enregistrements
+    WHERE nom_marque IS NOT NULL AND BTRIM(nom_marque) <> ''
+      AND ${LETTRE_EXPR} = $1
+    ORDER BY nom_marque ASC, dosage ASC NULLS LAST, id ASC
+    LIMIT $2 OFFSET $3
+  `, [lettre, limit, offset])
+}
+
 export async function getAlternatifsDCI(dci: string, limit = 8): Promise<Enregistrement[]> {
   return query<Enregistrement>(`
     SELECT * FROM enregistrements

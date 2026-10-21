@@ -1,6 +1,9 @@
 import type { Metadata } from 'next'
 import { MedicamentsClient } from './MedicamentsClient'
+import Link from 'next/link'
 import { AdHorizontal } from '@/components/ads/AdBanner'
+import { getLettreCounts } from '@/lib/queries'
+import { LETTRE_SLUGS, lettreLabel, lettrePath } from '@/lib/repertoire'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
@@ -21,7 +24,12 @@ export const metadata: Metadata = {
   },
 }
 
-export default function MedicamentsPage() {
+export default async function MedicamentsPage() {
+  // Liste A–Z rendue côté serveur : la liste filtrable ci-dessous est chargée
+  // en JavaScript, et ne donne donc aucun lien de fiche aux robots.
+  const counts = await getLettreCounts().catch(() => ({} as Record<string, number>))
+  const lettres = LETTRE_SLUGS.filter(l => counts[l])
+
   return (
     <div className="container" style={{ maxWidth: 900, margin: '0 auto', padding: '40px 16px 80px' }}>
       {/* En-tête */}
@@ -37,6 +45,26 @@ export default function MedicamentsPage() {
 
       {/* Publicité entre l'en-tête et la liste */}
       <AdHorizontal slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MEDICAMENTS || '0000000000'} />
+
+      {lettres.length > 0 && (
+        <nav aria-label="Répertoire alphabétique" style={{ marginBottom: 24 }}>
+          <h2 style={{ fontSize: 14, fontWeight: 700, color: '#334155', marginBottom: 8 }}>
+            Parcourir par ordre alphabétique
+          </h2>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {lettres.map(l => (
+              <Link
+                key={l}
+                href={lettrePath(l)}
+                title={`${counts[l]} médicaments commençant par ${lettreLabel(l)}`}
+                style={{ padding: '6px 11px', borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: 'none', border: '1.5px solid #e2e8f0', background: 'white', color: '#334155' }}
+              >
+                {lettreLabel(l)}
+              </Link>
+            ))}
+          </div>
+        </nav>
+      )}
 
       <MedicamentsClient />
     </div>

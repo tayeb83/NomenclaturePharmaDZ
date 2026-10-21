@@ -12,6 +12,7 @@ import type { MedicamentDetail, AtcCode } from '@/lib/db-types'
 import { getCountryFlag } from '@/lib/countryFlag'
 import { pickLang, type Lang } from '@/lib/i18n'
 import { medicamentPath, medicamentSlug } from '@/lib/medicament-url'
+import { lettreForNom, lettreLabel, lettrePath } from '@/lib/repertoire'
 import { medicalPageJsonLd, breadcrumbJsonLd, faqJsonLd } from '@/lib/schema'
 import { marqueSlug, MIN_FAMILY_SIZE } from '@/lib/marque'
 import { buildMedicamentFaq } from '@/lib/medicament-faq'
@@ -361,6 +362,19 @@ export async function MedicamentDetail(
               <Link href={medicamentPath(params.source, params.id, med, 'ar')} hrefLang="ar" style={{ color: 'var(--blue)' }}>
                 بالعربية — عرض بطاقة الدواء بالعربية
               </Link>
+            )}
+            {/* Retour vers le répertoire alphabétique : relie chaque fiche à
+                ses voisines, pour que les robots ne dépendent plus du seul
+                sitemap pour les découvrir. */}
+            {med.source === 'enregistrement' && lettreForNom(med.nom_marque) && (
+              <>
+                {' · '}
+                <Link href={lettrePath(lettreForNom(med.nom_marque)!)} style={{ color: 'var(--blue)' }}>
+                  {routeLang === 'ar'
+                    ? `الأدوية التي تبدأ بالحرف ${lettreLabel(lettreForNom(med.nom_marque)!)}`
+                    : `Médicaments commençant par ${lettreLabel(lettreForNom(med.nom_marque)!)}`}
+                </Link>
+              </>
             )}
           </p>
 
