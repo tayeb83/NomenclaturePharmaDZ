@@ -238,3 +238,68 @@ avec les libellés ci-dessus, cherchez « Facebook Login » et « URI de redirec
   des adresses ; un envoi d'e-mail plus lent que 1,9 s peut être interrompu sur
   une plateforme serverless : l'utilisateur redemande un lien.
 * `purgeExpired()` (jetons et sessions périmés) existe mais n'est pas encore branchée sur un cron.
+
+## Phase 4 — moteur d'examen, correction, relecture des questions
+
+Migration à appliquer : `psql "$DATABASE_URL" -f sql/25_training_exam.sql`
+(après 23 et 24). Elle ajoute `training_questions.manually_edited` et `training_flashcards`.
+
+### Routes
+
+| Route | Rôle |
+|---|---|
+| `/training/espace` | Démarrer une série (mode tuteur / examen, 10 à 100 questions), 2 examens blancs, dernières séries |
+| `/training/examen/<id>` | Interface d'examen (id = tentative) : barre du haut, navigateur, énoncé, A à E, Marquer, rayage, Précédente/Suivante, chrono |
+| `/training/resultats/<id>` | Score, détail par type et par question (après la fin seulement) |
+| `/training/correction/<question>?attempt=<id>` | Bandeau, énoncé, justification de chaque proposition, contexte, points clés, références, encart résultat |
+| `/admin/training/questions` | Relecture : filtres, édition, « Marquer relues », **Publier** (relecteur obligatoire) |
+| `/api/training/attempts…` | API de la tentative (voir `app/api/training/`) |
+
+### Sécurité : aucune bonne réponse avant la fin (mode examen)
+
+* Les vues du moteur (`lib/training/exam.ts`) n'ont pas de champ `correct_index`,
+  `explanation` ni `is_correct` : `review` n'est ajouté que si la tentative est
+  terminée, ou (tuteur) si la question vient d'être validée.
+* En base, `answers.is_correct` reste `NULL` jusqu'à la clôture.
+* Une correction (`/training/correction/<q>`) n'est lisible que pour une question
+  que **l'utilisateur lui-même** a déjà corrigée (tuteur : validée ; examen : tentative
+  terminée). Sinon 404, sans distinction avec « n'existe pas ».
+* Toutes les lectures et écritures filtrent par `user_id` (pas d'accès à la tentative d'autrui).
+* Chrono : l'horloge est celle du serveur (`started_at + time_limit_s`, 72 s par question) ;
+  une réponse tardive est refusée (409) et la tentative est clôturée à la prochaine lecture.
+* Tests : 21 tests du moteur dont « aucune fuite » (scan de toutes les réponses des vues
+  pour `correct_index`, `rationales`, texte des justifications…), isolation entre utilisateurs,
+  expiration, verrouillage tuteur. Vérifié aussi sur HTTP (serveur local) : 0 occurrence
+  des champs sensibles dans 30 réponses d'API avant la fin.
+* Un utilisateur sans session, en attente, refusé ou remis en attente reçoit 401 (API) ou
+  une redirection vers `/training/connexion` (pages).
+
+### Modes
+
+* **Tuteur** : choisir une proposition puis « Valider ma réponse » → page de correction
+  immédiate ; la réponse est ensuite verrouillée. Pas de chrono.
+* **Examen** : chronométré ; réponses modifiables, rayables, marquables ; correction et score
+  à la fin (« Terminer la section » avec confirmation, ou expiration du temps).
+* **Examens blancs** (`blanc-1`, `blanc-2`) : toujours en mode examen ; composition obtenue par un
+  mélange déterministe de la banque publiée (même ordre pour tous tant que la banque ne change
+  pas), jusqu'à 100 questions. Une tentative en cours garde sa liste figée.
+
+### Relecture et publication
+
+1. Générer : `python scripts/generate_questions.py sync --full`.
+2. `/admin/training/questions` : filtrer (brouillons, type, « à relire »), ouvrir, corriger
+   (énoncé, propositions, bonne réponse, contexte, justifications, points clés), puis
+   **Marquer relues** ou **Publier** en saisissant votre nom (stocké dans `relu_par`).
+3. Seules les questions `published` et non `stale` sont servies aux étudiants.
+4. Une question retouchée à la main porte `manually_edited` : la régénération ne l'écrase plus
+   jamais ; si la nomenclature change, elle est seulement marquée « à relire ».
+
+### Limites connues
+
+* Le contenu des questions est en français ; seule l'interface est bilingue (arabe à valider).
+* `Ajouter aux flashcards` fonctionne ; l'écran de révision des flashcards est en phase 5.
+* La composition des examens blancs dépend de la banque publiée : elle évolue quand on publie.
+* Un envoi de réponse échoué (réseau) est signalé et la sélection annulée ; il n'y a pas de file
+  hors ligne.
+* Le build complet (`next build`) de ce dépôt exige la base de production (pages de garde
+  prérendues) : ici seuls la compilation et le contrôle de types ont pu être vérifiés.

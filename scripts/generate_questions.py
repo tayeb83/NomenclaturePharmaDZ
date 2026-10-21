@@ -46,8 +46,8 @@ Régénération sans casse (`sync`) :
   * clé stable `question_key` = hachage des champs d'identité de l'enregistrement
     (nom, DCI, forme, dosage, laboratoire), indépendante des id SERIAL ;
   * nouvelle question ⇒ insérée en `draft` ;
-  * question `draft` dont le contenu change ⇒ mise à jour ;
-  * question `reviewed` / `published` ⇒ JAMAIS modifiée ; si la nomenclature
+  * question `draft` dont le contenu change ⇒ mise à jour (sauf si un relecteur l'a retouchée) ;
+  * question `reviewed` / `published` / retouchée à la main ⇒ JAMAIS modifiée ; si la nomenclature
     produit désormais un autre contenu, elle est seulement marquée `stale`
     (à relire) ;
   * avec --full, une question dont la source a disparu est marquée `stale`,
@@ -961,7 +961,7 @@ def sync_to_db(conn, questions: list[dict], ds: Nomenclature, full: bool) -> dic
     """Upsert non destructif — voir la docstring du module."""
     import psycopg2.extras
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("SELECT question_key, status, content_hash, stale, stale_reason FROM training_questions")
+    cur.execute("SELECT question_key, status, content_hash, stale, stale_reason, manually_edited FROM training_questions")
     existing = {r["question_key"]: r for r in cur.fetchall()}
     stats = Counter()
     produced = set()
@@ -981,7 +981,7 @@ def sync_to_db(conn, questions: list[dict], ds: Nomenclature, full: bool) -> dic
                 params,
             )
             stats["inserted"] += 1
-        elif ex["status"] == "draft":
+        elif ex["status"] == "draft" and not ex.get("manually_edited"):
             if ex["content_hash"] != q["content_hash"]:
                 cur.execute(
                     """UPDATE training_questions SET source_ref=%(source_ref)s, stem=%(stem)s, options=%(options)s::jsonb,
@@ -995,7 +995,7 @@ def sync_to_db(conn, questions: list[dict], ds: Nomenclature, full: bool) -> dic
             else:
                 cur.execute("UPDATE training_questions SET last_seen_version=%(db_version)s, stale=FALSE, stale_reason=NULL WHERE question_key=%(question_key)s", params)
                 stats["draft_unchanged"] += 1
-        else:  # reviewed / published : contenu intouchable
+        else:  # reviewed / published / brouillon retouché à la main : contenu intouchable
             if ex["content_hash"] != q["content_hash"]:
                 cur.execute(
                     """UPDATE training_questions SET stale=TRUE, stale_reason='contenu_modifie_nomenclature',
