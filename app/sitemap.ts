@@ -8,12 +8,14 @@ import {
   getAllNouveauteAnneeMois,
   getLastVersionDate,
   getAllMarqueFamilies,
+  getLettreCounts,
 } from '@/lib/queries'
 import { getGardeCoverage, slugify } from '@/lib/garde'
 import { getDirectoryPlaces, getAllPharmacyRefs, groupByWilaya, pharmacyPath } from '@/lib/annuaire'
 import { medicamentPath } from '@/lib/medicament-url'
 import { ARTICLES } from '@/lib/articles'
 import { MIN_FAMILY_SIZE } from '@/lib/marque'
+import { LETTRE_SLUGS, REPERTOIRE_PAGE_SIZE, lettrePath } from '@/lib/repertoire'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
@@ -25,7 +27,71 @@ export const revalidate = 86400
 // reçoit alors une erreur et n'indexe rien).
 export const maxDuration = 60
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+// ─── Découpage en segments ─────────────────────────────────────
+// Un fichier unique mélangeant ~40 000 URLs dépasse vite la limite de 50 000
+// URLs par sitemap (le surplus est ignoré) et empêche de savoir, dans la
+// Search Console, quelle famille de pages s'indexe. On sert donc un index
+// (/sitemap-index.xml) qui pointe vers :
+//   0  pages hub (catalogue, DCI, marques, labos, répertoire A–Z, articles…)
+//   1  pharmacies de garde
+//   2  annuaire des pharmacies
+//   3+ fiches médicament, par lots de FICHES_PAR_SEGMENT
+const SEGMENT_HUBS = 0
+const SEGMENT_GARDE = 1
+const SEGMENT_ANNUAIRE = 2
+const FIRST_FICHE_SEGMENT = 3
+const FICHES_PAR_SEGMENT = 10_000
+
+// Les fiches arabes sont jumelles des françaises (hreflang). Tant que les
+// françaises ne sont pas indexées, soumettre aussi les ~11 000 arabes double la
+// file d'attente de Google sans rien apporter. Les balises hreflang des pages
+// restent en place : l'arabe sera découvert par ce biais. Réactiver en posant
+// SITEMAP_INCLUDE_AR_FICHES=1 une fois les fiches FR indexées.
+const INCLUDE_AR_FICHES = process.env.SITEMAP_INCLUDE_AR_FICHES === '1'
+
+type FicheUrl = { url: string; lastModified?: Date; changeFrequency: 'monthly' | 'yearly'; priority: number }
+
+/** URLs des fiches indexables, ordonnées : toutes les françaises d'abord. */
+async function loadFicheUrls(catalogueDate?: Date): Promise<FicheUrl[]> {
+  // Les produits non renouvelés sont en `noindex` (cf. buildMedicamentMetadata) :
+  // les déclarer dans le sitemap enverrait un signal contradictoire.
+  const ids = (await getAllMedicamentIds().catch(() => [])).filter(med => med.source !== 'non_renouvele')
+  const langs = INCLUDE_AR_FICHES ? (['fr', 'ar'] as const) : (['fr'] as const)
+  return langs.flatMap(lang =>
+    ids.map(med => {
+      const { source, id, updated_at } = med
+      const parsedRowDate = updated_at ? new Date(updated_at) : null
+      const lastModified =
+        parsedRowDate && !isNaN(parsedRowDate.getTime()) ? parsedRowDate : catalogueDate
+      return {
+        // Forme canonique (avec segment descriptif) : l'URL nue passerait par une redirection.
+        url: `${APP_URL}${medicamentPath(source, id, med, lang)}`,
+        lastModified,
+        changeFrequency: source === 'enregistrement' ? ('monthly' as const) : ('yearly' as const),
+        priority: source === 'enregistrement' ? 0.6 : 0.4,
+      }
+    })
+  )
+}
+
+/** Identifiants des segments : appelé par Next et par /sitemap-index.xml. */
+export async function generateSitemaps(): Promise<{ id: number }[]> {
+  const ficheCount = (await loadFicheUrls()).length
+  const ficheSegments = Math.max(1, Math.ceil(ficheCount / FICHES_PAR_SEGMENT))
+  return Array.from({ length: FIRST_FICHE_SEGMENT + ficheSegments }, (_, id) => ({ id }))
+}
+
+export default async function sitemap({ id }: { id: number | string }): Promise<MetadataRoute.Sitemap> {
+  // Selon la version de Next, `id` arrive en chaîne.
+  const segment = Number(id)
+  const isHubs = segment === SEGMENT_HUBS
+  const isGarde = segment === SEGMENT_GARDE
+  const isAnnuaire = segment === SEGMENT_ANNUAIRE
+  const isFiches = segment >= FIRST_FICHE_SEGMENT
+  // Ne charge une source que si le segment demandé en a besoin.
+  const load = <T,>(needed: boolean, fn: () => Promise<T>, fallback: T): Promise<T> =>
+    needed ? fn().catch(() => fallback) : Promise.resolve(fallback)
+
   // ─── Dates de dernière modification ────────────────────────────
   // Une date de modification n'a de valeur que si elle est exacte. En datant
   // chaque URL de l'instant de génération, on affirmait que les ~20 000 fiches
@@ -45,7 +111,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // une erreur et ne découvrait aucune page. Un seul lot parallèle, chaque
   // source dégradant indépendamment si la DB est injoignable.
   const [
-    medicamentIds,
     laboSlugs,
     dciList,
     formeList,
@@ -57,19 +122,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     pharmacyRefs,
     versionDate,
     marqueFamilies,
+    lettreCounts,
   ] = await Promise.all([
-    getAllMedicamentIds().catch(() => []),
-    getAllLaboSlugs().catch(() => []),
-    getAllDciList(2000).catch(() => []),
-    getAllFormeList(200).catch(() => []),
-    getAllRetraitAnnees().catch(() => []),
-    getAllNouveauteAnneeMois().catch(() => []),
-    getAllDciList(500).catch(() => []),
-    getGardeCoverage().catch(() => []),
-    getDirectoryPlaces().catch(() => []),
-    getAllPharmacyRefs().catch(() => []),
-    getLastVersionDate().catch(() => null),
-    getAllMarqueFamilies(MIN_FAMILY_SIZE).catch(() => []),
+    load(isHubs, getAllLaboSlugs, []),
+    load(isHubs, () => getAllDciList(2000), []),
+    load(isHubs, () => getAllFormeList(200), []),
+    load(isHubs, getAllRetraitAnnees, []),
+    load(isHubs, getAllNouveauteAnneeMois, []),
+    load(isHubs, () => getAllDciList(500), []),
+    load(isGarde, getGardeCoverage, []),
+    load(isAnnuaire, getDirectoryPlaces, []),
+    load(isAnnuaire, getAllPharmacyRefs, []),
+    load(isHubs || isFiches, getLastVersionDate, null),
+    load(isHubs, () => getAllMarqueFamilies(MIN_FAMILY_SIZE), []),
+    load(isHubs, getLettreCounts, {} as Record<string, number>),
   ])
 
   // Toutes les pages dérivées du catalogue changent le jour où une nouvelle
@@ -213,26 +279,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ]
 
-  // Chaque fiche existe en deux versions indexables (FR et AR), reliées entre
-  // elles par des balises hreflang. On déclare les deux : sans cela, la
-  // version arabe resterait invisible pour les moteurs.
-  // Les produits non renouvelés sont en `noindex` (cf. buildMedicamentMetadata) :
-  // les déclarer dans le sitemap enverrait un signal contradictoire.
-  const medicamentPages: MetadataRoute.Sitemap = medicamentIds
-    .filter(med => med.source !== 'non_renouvele')
-    .flatMap((med) => {
-    const { source, id, updated_at } = med
-    const parsedRowDate = updated_at ? new Date(updated_at) : null
-    const lastModified =
-      parsedRowDate && !isNaN(parsedRowDate.getTime()) ? parsedRowDate : catalogueDate
-    const changeFrequency = source === 'enregistrement' ? ('monthly' as const) : ('yearly' as const)
-    const priority = source === 'enregistrement' ? 0.6 : 0.4
-    // On déclare la forme canonique (avec segment descriptif) : soumettre
-    // l'URL nue enverrait les robots sur une redirection à chaque fiche.
-    return [
-      { url: `${APP_URL}${medicamentPath(source, id, med, 'fr')}`, lastModified, changeFrequency, priority },
-      { url: `${APP_URL}${medicamentPath(source, id, med, 'ar')}`, lastModified, changeFrequency, priority },
-    ]
+  const lettrePages: MetadataRoute.Sitemap = LETTRE_SLUGS.flatMap(lettre => {
+    const pages = Math.ceil((lettreCounts[lettre] ?? 0) / REPERTOIRE_PAGE_SIZE)
+    return Array.from({ length: pages }, (_, i) => ({
+      url: `${APP_URL}${lettrePath(lettre, i + 1)}`,
+      lastModified: catalogueDate,
+      changeFrequency: 'monthly' as const,
+      priority: i === 0 ? 0.8 : 0.6,
+    }))
   })
 
   const laboPages: MetadataRoute.Sitemap = laboSlugs.map(({ slug }) => ({
@@ -351,10 +405,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   ]
 
+  if (isGarde) return [...gardeWilayaPages, ...gardePages]
+  if (isAnnuaire) return annuairePages
+  if (isFiches) {
+    const fiches = await loadFicheUrls(catalogueDate)
+    const start = (segment - FIRST_FICHE_SEGMENT) * FICHES_PAR_SEGMENT
+    return fiches.slice(start, start + FICHES_PAR_SEGMENT)
+  }
+  if (!isHubs) return []
+
   return [
     ...staticPages,
     ...articlePages,
-    ...medicamentPages,
+    ...lettrePages,
     ...laboPages,
     ...dciPages,
     ...marquePages,
@@ -362,8 +425,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...retraitAnneePages,
     ...nouveautePages,
     ...substitutionPages,
-    ...gardeWilayaPages,
-    ...gardePages,
-    ...annuairePages,
   ]
 }
