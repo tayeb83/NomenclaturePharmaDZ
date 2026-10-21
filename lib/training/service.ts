@@ -6,7 +6,7 @@
  * sur une vraie base PostgreSQL ou un faux `query`.
  */
 import { escapeHtml, type TrainingRole, type TrainingStatus } from './validation.ts'
-import { hashToken, LOGIN_TOKEN_TTL_MS, newLoginToken, toCsv } from './security.ts'
+import { hashToken, LOGIN_TOKEN_TTL_MS, newLoginToken, SESSION_TTL_MS, toCsv } from './security.ts'
 
 export type Query = <T = any>(sql: string, params?: any[]) => Promise<T[]>
 export type Mail = { to: string; subject: string; html: string; text: string }
@@ -66,7 +66,7 @@ export function createTrainingService(deps: TrainingDeps) {
     const rows = await query<{ id: number }>(
       `INSERT INTO training_users (email, source, facebook_id, role, faculte, status)
        VALUES ($1, $2, $3, $4, $5, 'pending')
-       ON CONFLICT (lower(email)) DO NOTHING
+       ON CONFLICT DO NOTHING
        RETURNING id`,
       [input.email, source, input.facebookId ?? null, input.role, input.faculte],
     )
@@ -150,7 +150,9 @@ export function createTrainingService(deps: TrainingDeps) {
 
   async function sendAccessEmail(user: Pick<TrainingUserRow, 'id' | 'email'>): Promise<boolean> {
     const token = await issueLoginToken(user.id)
-    const link = `${deps.appUrl()}/api/training/auth/verify?token=${encodeURIComponent(token)}`
+    // Le lien ouvre une page de confirmation (bouton) et non l'API : les antivirus et
+    // aperçus de messagerie « cliquent » les liens à l'avance et consommeraient un jeton à usage unique.
+    const link = `${deps.appUrl()}/training/connexion?token=${encodeURIComponent(token)}`
     const minutes = LOGIN_TOKEN_TTL_MS / 60000
     const html = `<p>Bonjour,</p>
 <p>Votre accès à <strong>Dzair-Pharma Training</strong> est ouvert.</p>
@@ -193,6 +195,7 @@ export function createTrainingService(deps: TrainingDeps) {
 
     if (status !== 'approved') {
       await query('UPDATE login_tokens SET expires_at = LEAST(expires_at, NOW()) WHERE user_id = $1 AND used_at IS NULL', [id])
+      await query('DELETE FROM training_sessions WHERE user_id = $1', [id])
       return { user, mailSent: null }
     }
     return { user, mailSent: await sendAccessEmail(user) }
@@ -213,7 +216,78 @@ export function createTrainingService(deps: TrainingDeps) {
     )
   }
 
-  return { submitRequest, listRequests, counts, setStatus, resendAccess, exportRequestsCsv, issueLoginToken }
+  /**
+   * « Recevoir un lien de connexion ». Ne renvoie rien, que l'adresse existe,
+   * soit validée ou non : l'appelant ne peut rien en déduire. Seul un
+   * utilisateur `approved` reçoit un message.
+   */
+  async function requestLoginLink(email: string): Promise<void> {
+    const user = (await query<TrainingUserRow>(
+      "SELECT * FROM training_users WHERE lower(email) = lower($1) AND status = 'approved'",
+      [email],
+    ))[0]
+    if (!user) return
+    await logEvent(user.id, 'login_link_sent', {})
+    await sendAccessEmail(user)
+  }
+
+  /**
+   * Échange un jeton de lien contre une session. L'UPDATE conditionnel rend
+   * l'usage unique atomique : deux requêtes simultanées avec le même jeton, une seule gagne.
+   * Expiré, déjà utilisé, inconnu ou utilisateur non validé : même résultat (null).
+   */
+  async function consumeLoginToken(token: string): Promise<{ sessionToken: string; user: TrainingUserRow } | null> {
+    if (typeof token !== 'string' || token.length < 20 || token.length > 200) return null
+    const used = await query<{ user_id: string }>(
+      `UPDATE login_tokens SET used_at = $2
+         WHERE token_hash = $1 AND used_at IS NULL AND expires_at > $2
+       RETURNING user_id`,
+      [hashToken(token), now().toISOString()],
+    )
+    if (used.length === 0) return null
+    const user = (await query<TrainingUserRow>(
+      "SELECT id, email, source, facebook_id, role, faculte, status, created_at, approved_at, last_login_at FROM training_users WHERE id = $1 AND status = 'approved'",
+      [used[0].user_id],
+    ))[0]
+    if (!user) return null
+    await query('UPDATE training_users SET last_login_at = $2 WHERE id = $1', [user.id, now().toISOString()])
+    await logEvent(user.id, 'login', {})
+    return { sessionToken: await createSession(user.id), user }
+  }
+
+  async function createSession(userId: number | string): Promise<string> {
+    const token = newLoginToken()
+    await query(
+      'INSERT INTO training_sessions (user_id, token_hash, expires_at) VALUES ($1, $2, $3)',
+      [userId, hashToken(token), new Date(now().getTime() + SESSION_TTL_MS).toISOString()],
+    )
+    return token
+  }
+
+  /** Utilisateur d'une session valide ET toujours `approved`, sinon null. */
+  async function getSessionUser(sessionToken: string | undefined | null): Promise<TrainingUserRow | null> {
+    if (!sessionToken || sessionToken.length > 200) return null
+    const rows = await query<TrainingUserRow>(
+      `SELECT u.id, u.email, u.source, u.facebook_id, u.role, u.faculte, u.status, u.created_at, u.approved_at, u.last_login_at
+         FROM training_sessions s JOIN training_users u ON u.id = s.user_id
+        WHERE s.token_hash = $1 AND s.expires_at > $2 AND u.status = 'approved'`,
+      [hashToken(sessionToken), now().toISOString()],
+    )
+    return rows[0] ?? null
+  }
+
+  async function destroySession(sessionToken: string | undefined | null): Promise<void> {
+    if (!sessionToken) return
+    await query('DELETE FROM training_sessions WHERE token_hash = $1', [hashToken(sessionToken)])
+  }
+
+  /** Nettoyage périodique (appelable depuis un cron) : jetons et sessions expirés. */
+  async function purgeExpired(): Promise<void> {
+    await query("DELETE FROM login_tokens WHERE expires_at < NOW() - INTERVAL '1 day'")
+    await query('DELETE FROM training_sessions WHERE expires_at < NOW()')
+  }
+
+  return { requestLoginLink, consumeLoginToken, createSession, getSessionUser, destroySession, purgeExpired, submitRequest, listRequests, counts, setStatus, resendAccess, exportRequestsCsv, issueLoginToken }
 }
 
 export type TrainingService = ReturnType<typeof createTrainingService>

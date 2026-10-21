@@ -16,8 +16,9 @@ export const metadata: Metadata = {
   },
 }
 
-export default function TrainingPage() {
+export default function TrainingPage({ searchParams }: { searchParams: { fb?: string | string[] } }) {
+  const fb = Array.isArray(searchParams.fb) ? searchParams.fb[0] : searchParams.fb
   // Le bouton Facebook n'est actif que lorsque l'application Meta est configurée (phase 3).
   const facebookEnabled = Boolean(process.env.TRAINING_FACEBOOK_APP_ID && process.env.TRAINING_FACEBOOK_APP_SECRET)
-  return <TrainingLanding facebookEnabled={facebookEnabled} />
+  return <TrainingLanding facebookEnabled={facebookEnabled} fbCode={fb ?? null} />
 }

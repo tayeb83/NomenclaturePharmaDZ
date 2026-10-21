@@ -8,7 +8,7 @@ import { getCopy } from '@/lib/training/copy'
 import { ROLES, type TrainingRole } from '@/lib/training/validation.ts'
 import { FacebookIcon } from './icons'
 
-export function SignupForm({ facebookEnabled }: { facebookEnabled: boolean }) {
+export function SignupForm({ facebookEnabled, fbCode }: { facebookEnabled: boolean; fbCode?: string | null }) {
   const { lang } = useLanguage()
   const t = getCopy(lang).form
   const router = useRouter()
@@ -47,11 +47,13 @@ export function SignupForm({ facebookEnabled }: { facebookEnabled: boolean }) {
   }
 
   const errorId = `${uid}-error`
+  const fbMessage = fbCode ? getCopy(lang).facebook.errors.fb[fbCode] : undefined
 
   return (
     <form className="tr-form" onSubmit={submit} noValidate>
       <h2 className="tr-form-title">{t.title}</h2>
       <p className="tr-form-lead">{t.lead}</p>
+      {fbMessage && <p className="tr-error" role="alert">{fbMessage}</p>}
 
       {facebookEnabled ? (
         <a className="tr-btn tr-btn-facebook" href="/api/training/auth/facebook">
@@ -132,6 +134,9 @@ export function SignupForm({ facebookEnabled }: { facebookEnabled: boolean }) {
       <p className="tr-privacy">
         {t.privacy}{' '}
         <Link href="/privacy">{t.privacyLink}</Link>
+      </p>
+      <p className="tr-privacy">
+        {getCopy(lang).login.already} <Link href="/training/connexion">{getCopy(lang).login.toLogin}</Link>
       </p>
     </form>
   )

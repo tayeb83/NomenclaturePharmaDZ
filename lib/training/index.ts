@@ -24,3 +24,11 @@ export function getTraining() {
   }
   return g._trainingService
 }
+
+/**
+ * Secret de signature des cookies courts (état OAuth, profil Facebook en
+ * attente). Dédié si TRAINING_SESSION_SECRET existe, sinon celui de l'admin.
+ */
+export function trainingSecret(): string | null {
+  return process.env.TRAINING_SESSION_SECRET || process.env.ADMIN_SESSION_SECRET || process.env.API_SECRET_KEY || null
+}
