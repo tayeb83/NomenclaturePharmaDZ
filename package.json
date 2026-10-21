@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:training": "node --test \"tests/training/*.test.ts\""
+    "test:training": "node --test --test-concurrency=1 \"tests/training/*.test.ts\""
   },
   "dependencies": {
     "axios": "^1.7.2",

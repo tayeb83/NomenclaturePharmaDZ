@@ -5,7 +5,7 @@ import { AR_VALIDATED, getCopy } from '@/lib/training/copy'
 import { CheckIcon } from './icons'
 import { SignupForm } from './SignupForm'
 
-export function TrainingLanding({ facebookEnabled }: { facebookEnabled: boolean }) {
+export function TrainingLanding({ facebookEnabled, fbCode }: { facebookEnabled: boolean; fbCode: string | null }) {
   const { lang } = useLanguage()
   const t = getCopy(lang)
 
@@ -77,7 +77,7 @@ export function TrainingLanding({ facebookEnabled }: { facebookEnabled: boolean 
         </div>
 
         <aside className="tr-aside" aria-label={t.form.title}>
-          <SignupForm facebookEnabled={facebookEnabled} />
+          <SignupForm facebookEnabled={facebookEnabled} fbCode={fbCode} />
         </aside>
       </div>
     </div>

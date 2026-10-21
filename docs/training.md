@@ -142,3 +142,99 @@ TEST_DATABASE_URL=postgresql://user:pass@localhost:5432/dwa_test npm run test:tr
 
 * Traductions arabes de `lib/training/copy.ts` (`AR_VALIDATED = false` affiche
   une mention « en cours de validation » sur les pages arabes).
+
+## Phase 3 — connexion par lien, sessions, Facebook Login
+
+Migration à appliquer : `psql "$DATABASE_URL" -f sql/24_training_sessions.sql`
+(après `sql/23_training.sql`).
+
+### Parcours
+
+1. L'admin valide → e-mail avec un lien `/training/connexion?token=…`.
+2. Le lien ouvre une **page de confirmation** (bouton « Me connecter ») : le jeton
+   n'est consommé que par ce clic. Les antivirus et aperçus de messagerie ouvrent
+   les liens à l'avance ; un `GET` qui consommerait le jeton le « brûlerait » avant
+   l'utilisateur. L'ancien format `/api/training/auth/verify?token=` redirige
+   vers cette page sans rien consommer.
+3. `POST /api/training/auth/verify` : jeton de 32 octets, **haché** en base, **usage
+   unique** (UPDATE conditionnel atomique), **15 minutes**. Expiré, déjà utilisé,
+   inconnu ou compte non validé : une seule réponse (`invalid`). Le jeton est retiré
+   de la barre d'adresse et la page est servie avec `Referrer-Policy: no-referrer`.
+4. Session : cookie `__Host-tr_session` (production) / `tr_session` (local),
+   **HttpOnly, Secure, SameSite=Lax**, 14 jours. Seul son hachage est en base
+   (`training_sessions`) : elle se révoque côté serveur.
+5. Utilisateur déjà validé : `/training/connexion` → « Recevoir un lien ». Réponse
+   identique (corps, statut, durée ≈ 2 s) que l'adresse existe ou non, soit validée,
+   en attente, refusée ou invalide. Limites : 8/h/IP et 3/h/adresse.
+6. Refuser ou remettre en attente coupe immédiatement les sessions et les liens actifs.
+   `getSessionUser` vérifie en plus `status = 'approved'` à chaque requête.
+
+### Protéger une page ou une route (phases 4-5)
+
+```ts
+import { requireTrainingUserPage, requireTrainingUserApi } from '@/lib/training/auth'
+const user = await requireTrainingUserPage()          // page : redirige vers /training/connexion
+const r = await requireTrainingUserApi(req)           // API : 401 JSON
+if ('response' in r) return r.response
+```
+`/training/espace` est la première page protégée (placeholder : les examens arrivent en phase 4).
+
+### Facebook Login
+
+Le flux ne fait **que créer une demande `pending`** : Facebook ne connecte jamais
+directement et ne prouve pas qu'un compte suit la page ; la validation reste manuelle.
+
+1. Bouton → `/api/training/auth/facebook` : état aléatoire dans un cookie signé (10 min).
+2. Retour → `/api/training/auth/facebook/callback` : état vérifié, `code` échangé
+   côté serveur (le secret ne quitte jamais le serveur), lecture de `id` et `email`.
+3. L'identifiant et l'e-mail sont placés dans un cookie signé de 10 minutes ;
+   `/training/facebook` demande le profil (étudiant / enseignant / pharmacien) et la
+   faculté, puis `POST /api/training/facebook/complete` crée la demande. L'e-mail et
+   l'identifiant ne viennent **jamais** du corps de la requête, seulement du cookie signé.
+4. Pas d'e-mail renvoyé par Facebook (compte créé avec un numéro, permission refusée) :
+   retour sur `/training` avec un message invitant à utiliser l'e-mail.
+
+#### Créer l'application Meta (à faire par vous)
+
+1. https://developers.facebook.com → **Mes applications → Créer une application**.
+2. Cas d'usage : **Authentifier les personnes et leur demander des données avec Facebook Login**
+   (type « Consommateur » / « Autre » selon l'assistant). Nommez-la, par exemple « DwaDZ Training ».
+3. **Paramètres de l'application → Général** :
+   * *Domaines de l'application* : `dzair-pharma.net` ;
+   * *URL de la politique de confidentialité* : `https://www.dzair-pharma.net/privacy`
+     (la page sera complétée en phase 5, voir « Confidentialité ») ;
+   * *Suppression des données utilisateur* : une URL d'instructions (la page de confidentialité
+     décrira la suppression sur demande) ;
+   * catégorie : Éducation.
+4. **Produits → Facebook Login → Paramètres** :
+   * *Connexion OAuth client* : **Oui** ; *Connexion OAuth web* : **Oui** ;
+   * *Forcer HTTPS* : **Oui** ;
+   * *URI de redirection OAuth valides* : exactement
+     `https://www.dzair-pharma.net/api/training/auth/facebook/callback`
+     (et la même sur le domaine nu `https://dzair-pharma.net/...` si vous l'utilisez ;
+     l'URI doit correspondre **au caractère près** à `NEXT_PUBLIC_APP_URL` + ce chemin).
+5. Autorisations : `public_profile` et `email` sont disponibles en accès standard,
+   **sans examen Meta**. En mode *Développement*, seuls les administrateurs, développeurs
+   et testeurs de l'application peuvent se connecter (Rôles → Rôles) : ajoutez-vous pour tester.
+6. Pour ouvrir au public : basculez l'application en mode **Actif (Live)** (interrupteur en haut
+   du tableau de bord ; exige l'URL de confidentialité et celle de suppression des données).
+7. Variables Vercel (Production **et** Preview) puis redéploiement :
+   `TRAINING_FACEBOOK_APP_ID` (identifiant de l'app) et `TRAINING_FACEBOOK_APP_SECRET`
+   (Paramètres → Général → Clé secrète). Sans elles, le bouton reste désactivé.
+8. Version du Graph API : `v23.0` par défaut. Meta retire les versions après ~2 ans :
+   vérifiez dans le tableau de bord et ajustez `TRAINING_FACEBOOK_GRAPH_VERSION` si besoin.
+
+Notes : la page Facebook (id 61584995326062) n'a aucun lien technique avec l'application ;
+suivre la page ne s'exige ni ne se vérifie. L'interface Meta change souvent : en cas d'écart
+avec les libellés ci-dessus, cherchez « Facebook Login » et « URI de redirection OAuth valides ».
+
+### Limites connues
+
+* Le test de bout en bout de Facebook (échange réel avec Meta) n'a pas pu être fait ici :
+  il demande une vraie application Meta. Le code est testé avec un `fetch` simulé
+  (réponses d'échange, profil, e-mail absent, panne réseau) et les routes ont été
+  exercées sur le serveur local (état invalide, refus, cookie falsifié, rôle invalide).
+* L'alignement du temps de réponse de « Recevoir un lien » (≈ 2 s) limite le sondage
+  des adresses ; un envoi d'e-mail plus lent que 1,9 s peut être interrompu sur
+  une plateforme serverless : l'utilisateur redemande un lien.
+* `purgeExpired()` (jetons et sessions périmés) existe mais n'est pas encore branchée sur un cron.

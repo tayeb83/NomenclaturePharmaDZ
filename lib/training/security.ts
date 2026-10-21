@@ -69,3 +69,56 @@ export function toCsv(header: string[], rows: unknown[][]): string {
   // BOM : Excel lit correctement l'UTF-8 (accents, arabe).
   return '﻿' + lines.join('\r\n') + '\r\n'
 }
+
+// ─── Sessions et cookies signés (phase 3) ───────────────────────────────────
+
+/** Durée d'une session de connexion. */
+export const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000
+
+/**
+ * Nom du cookie de session. En production le préfixe `__Host-` oblige le
+ * navigateur à n'accepter le cookie que Secure, sans Domain, sur Path=/ :
+ * un sous-domaine ne peut pas l'écraser.
+ */
+export function sessionCookieName(isProd: boolean): string {
+  return isProd ? '__Host-tr_session' : 'tr_session'
+}
+
+export function sessionCookieOptions(isProd: boolean, maxAgeSeconds = SESSION_TTL_MS / 1000) {
+  return { httpOnly: true, secure: isProd, sameSite: 'lax' as const, path: '/', maxAge: maxAgeSeconds }
+}
+
+/** Charge utile signée (HMAC-SHA256) à durée de vie courte : état OAuth, profil Facebook en attente. */
+export function signPayload(payload: Record<string, unknown>, secret: string, ttlMs: number, now = Date.now()): string {
+  const body = Buffer.from(JSON.stringify({ ...payload, exp: now + ttlMs })).toString('base64url')
+  const mac = crypto.createHmac('sha256', secret).update(body).digest('base64url')
+  return `${body}.${mac}`
+}
+
+export function verifyPayload<T extends Record<string, unknown>>(
+  value: string | undefined | null,
+  secret: string,
+  now = Date.now(),
+): (T & { exp: number }) | null {
+  if (!value) return null
+  const [body, mac, extra] = value.split('.')
+  if (!body || !mac || extra !== undefined) return null
+  const expected = crypto.createHmac('sha256', secret).update(body).digest('base64url')
+  const a = Buffer.from(mac)
+  const b = Buffer.from(expected)
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null
+  try {
+    const parsed = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'))
+    if (typeof parsed?.exp !== 'number' || parsed.exp < now) return null
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+/** Comparaison en temps constant de deux chaînes (état OAuth). */
+export function safeEqual(a: string, b: string): boolean {
+  const x = Buffer.from(a)
+  const y = Buffer.from(b)
+  return x.length === y.length && crypto.timingSafeEqual(x, y)
+}
