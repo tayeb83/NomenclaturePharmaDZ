@@ -212,6 +212,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           <Link href="/admin/acces" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
             📊 NAQESS
           </Link>
+          <Link href="/admin/training" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
+            Training (accès QCM)
+          </Link>
           <Link href="/admin/monographies" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
             🧬 Monographies DCI
           </Link>
