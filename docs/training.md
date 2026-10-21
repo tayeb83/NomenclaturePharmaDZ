@@ -86,3 +86,59 @@ python scripts/generate_questions.py sync --full      # après l'import de la no
   mesure : à recalibrer avec les taux de réussite réels.
 * Sur la vraie base, les types dépendent de la qualité des champs : motifs de
   retrait très répétitifs ⇒ peu de questions `retrait_motif`.
+
+## Phase 2 — page produit, demande d'accès, validation admin
+
+### Routes
+
+| Route | Rôle |
+|---|---|
+| `/training` | Page produit + formulaire « Accès gratuit sur inscription » (FR/AR) |
+| `/training/attente` | « Demande envoyée » : frise reçue → validation → e-mail d'ouverture, lien Facebook |
+| `/admin/training` | Compteurs, liste, Valider / Refuser / Remettre en attente / Renvoyer le lien, recherche, export CSV |
+| `POST /api/training/request` | Crée la demande `pending` (réponse identique que l'e-mail existe ou non) |
+| `/api/admin/training/requests` (+ `/[id]`, `/export`) | API admin (session admin existante + contrôle d'origine) |
+
+### Fichiers
+
+`lib/training/` (`validation.ts`, `security.ts`, `service.ts`, `mail.ts`, `copy.ts`, `index.ts`),
+`components/training/`, `app/training/`, `app/admin/training/`, `app/api/training/`,
+`app/api/admin/training/`, `tests/training/`. Seules modifications de l'existant :
+lien « Training QCM » dans le menu « Plus » (`Nav.tsx`), lien dans `/admin`
+(`AdminClient.tsx`), `allowImportingTsExtensions` dans `tsconfig.json`
+(imports `.ts` du module, testables sans outil de build), script `test:training`,
+variables dans `env.local.example`, `.gitignore`.
+
+### Configuration
+
+* `ADMIN_EMAILS` : destinataires des notifications (séparés par des virgules).
+  L'accès à `/admin/training` utilise la session admin existante (`ADMIN_PASSWORD`).
+* E-mails : Brevo, sinon Gmail, comme le reste du site. En développement sans
+  fournisseur, les messages sont déposés dans `.training-outbox/` (ignoré par git) ;
+  rien n'est écrit dans les journaux, un lien de connexion est un secret.
+* `TRAINING_FACEBOOK_APP_ID` / `_SECRET` : tant qu'ils sont absents, le bouton
+  Facebook est affiché désactivé (phase 3).
+
+### Lancer en local
+
+```bash
+psql "$DATABASE_URL" -f sql/23_training.sql
+ADMIN_PASSWORD=... ADMIN_SESSION_SECRET=... ADMIN_EMAILS=vous@exemple.dz npm run dev
+# http://localhost:3000/training  puis  /admin  →  /admin/training
+TEST_DATABASE_URL=postgresql://user:pass@localhost:5432/dwa_test npm run test:training
+```
+
+### Sécurité de cette phase
+
+* CSRF : `Origin`/`Referer` doit être notre site (POST public et actions admin).
+* Rate limiting : 6 demandes/h/IP et 3/h/e-mail ; champ piège anti-robot.
+* Jeton de connexion : 32 octets, stocké haché (SHA-256), usage unique, 15 min ;
+  refuser ou remettre en attente invalide les liens encore actifs.
+* Texte saisi : échappé dans les e-mails ; export CSV protégé contre l'injection de formule.
+* Le lien envoyé à la validation pointe vers `/api/training/auth/verify`,
+  **livré en phase 3** : d'ici là le lien est émis mais la route de connexion n'existe pas.
+
+### À valider
+
+* Traductions arabes de `lib/training/copy.ts` (`AR_VALIDATED = false` affiche
+  une mention « en cours de validation » sur les pages arabes).
