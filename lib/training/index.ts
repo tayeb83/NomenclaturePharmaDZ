@@ -1,5 +1,7 @@
 import { query } from '../db'
 import { createTrainingService } from './service.ts'
+import { createExamService } from './exam.ts'
+import { createQuestionsAdmin } from './questions.ts'
 import { sendMail } from './mail.ts'
 
 export const APP_URL_FALLBACK = 'https://www.dzair-pharma.net'
@@ -16,7 +18,11 @@ export function adminEmails(): string[] {
     .filter(e => e.includes('@'))
 }
 
-const g = globalThis as unknown as { _trainingService?: ReturnType<typeof createTrainingService> }
+const g = globalThis as unknown as {
+  _trainingService?: ReturnType<typeof createTrainingService>
+  _trainingExam?: ReturnType<typeof createExamService>
+  _trainingQuestions?: ReturnType<typeof createQuestionsAdmin>
+}
 
 export function getTraining() {
   if (!g._trainingService) {
@@ -31,4 +37,14 @@ export function getTraining() {
  */
 export function trainingSecret(): string | null {
   return process.env.TRAINING_SESSION_SECRET || process.env.ADMIN_SESSION_SECRET || process.env.API_SECRET_KEY || null
+}
+
+export function getExam() {
+  if (!g._trainingExam) g._trainingExam = createExamService({ query })
+  return g._trainingExam
+}
+
+export function getQuestionsAdmin() {
+  if (!g._trainingQuestions) g._trainingQuestions = createQuestionsAdmin({ query })
+  return g._trainingQuestions
 }

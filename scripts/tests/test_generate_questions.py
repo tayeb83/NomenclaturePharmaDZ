@@ -252,6 +252,25 @@ class SyncTests(unittest.TestCase):
         self.assertTrue([r for r in rows.values() if r["stale"]])
         self.assertTrue(all(r["status"] == "published" for r in rows.values()))
 
+    def test_hand_edited_draft_is_never_overwritten(self):
+        _, qs = self.run_sync(self.data)
+        ds = gq.Nomenclature(self.data)
+        # une question dont le contenu CHANGERA après la modification de la nomenclature
+        target = next(q for q in qs if q["type"] == "dci_from_brand" and ds.resolve(q["source_ref"])["dci"] == "PARACETAMOL")
+        cur = self.conn.cursor()
+        cur.execute("UPDATE training_questions SET stem='Retouché par un relecteur', manually_edited=TRUE WHERE question_key=%s", (target["question_key"],))
+        self.conn.commit()
+        changed = copy.deepcopy(self.data)
+        changed["version"] = "V2"
+        for r in changed["enregistrements"]:
+            if r["dci"] == "PARACETAMOL":
+                r["dci"] = "PARACETAMOL BASE"
+        self.run_sync(changed)
+        row = self.rows()[target["question_key"]]
+        self.assertEqual(row["stem"], "Retouché par un relecteur")
+        self.assertEqual(row["status"], "draft")
+        self.assertTrue(row["stale"], "la modification de la source est signalée, pas appliquée")
+
     def test_sample_run_does_not_flag_unlisted_questions(self):
         self.run_sync(self.data)
         ds = gq.Nomenclature(self.data)

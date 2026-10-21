@@ -82,7 +82,10 @@ export function TrainingAdminClient() {
           <h1>Training — demandes d’accès</h1>
           <Link href="/admin">← Administration</Link>
         </div>
-        <a className="tr-act" href={exportHref} download>Exporter en CSV</a>
+        <div className="tr-acts">
+          <Link className="tr-act" href="/admin/training/questions" style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>Relecture des questions</Link>
+          <a className="tr-act" href={exportHref} download style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>Exporter en CSV</a>
+        </div>
       </div>
 
       <div className="tr-counters" aria-label="Compteurs">
