@@ -169,9 +169,13 @@ export default async function AtcCodePage({ params }: { params: { code: string }
                         </td>
                         <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
                           {row.nb_produits > 0 ? (
-                            <span className="badge badge-blue" style={{ fontSize: 11.5 }}>
+                            <Link
+                              href={`/dci/${encodeURIComponent(row.dci.toLowerCase())}`}
+                              className="badge badge-blue"
+                              style={{ fontSize: 11.5, textDecoration: 'none' }}
+                            >
                               {row.nb_produits} {pickLang(lang, { fr: 'enreg.', ar: 'مسجل' })}
-                            </span>
+                            </Link>
                           ) : (
                             <span style={{ color: '#94a3b8', fontSize: 12 }}>—</span>
                           )}
