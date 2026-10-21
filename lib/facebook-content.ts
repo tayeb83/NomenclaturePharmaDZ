@@ -19,8 +19,33 @@
 import { query, queryOne } from './db'
 import { getStats, getLastRetraits } from './queries'
 import type { Retrait } from './db-types'
+import type { IconKind } from './garde-ornaments'
 
 export type Rubrique = 'classe' | 'algerie' | 'retrait' | 'nouveaute'
+
+/**
+ * Contenu structuré de l'image jointe au post (voir lib/social-visual.tsx).
+ * Le texte de la légende reste libre et éditable ; l'image, elle, est
+ * dessinée depuis ces données.
+ */
+export type PostVisual = {
+  icon: IconKind | 'emblem'
+  /** Rubrique, en grand dans l'en-tête */
+  kicker: string
+  /** Sujet : classe, médicament, périmètre… */
+  headline: string
+  subtitle?: string
+  /** Chiffres clés affichés en grand (1 à 4) */
+  stats?: { value: string; label: string }[]
+  /** Puces (exemples de médicaments, laboratoires…) */
+  tags?: string[]
+  tagsLabel?: string
+  /** Encadré de texte (motif d'un retrait…) */
+  note?: { label: string; text: string }
+  accent?: 'teal' | 'red'
+  /** Texte du bouton d'appel à l'action */
+  cta: string
+}
 
 export type PostCandidate = {
   rubrique: Rubrique
@@ -31,6 +56,8 @@ export type PostCandidate = {
   lien: string | null
   /** Clé de déduplication (rubrique:sujet) */
   dedupKey: string
+  /** Données de l'image jointe */
+  visuel?: PostVisual
 }
 
 export type SocialPost = {
@@ -45,6 +72,8 @@ export type SocialPost = {
   fb_post_id: string | null
   error: string | null
   dedup_key: string | null
+  /** Absent tant que sql/22_social_visuel.sql n'est pas appliqué. */
+  visuel?: PostVisual | null
   created_at: string
   updated_at: string
 }
@@ -142,23 +171,29 @@ export async function genClasseTherapeutique(): Promise<PostCandidate | null> {
   const lien = `${appUrl()}/classes-therapeutiques/${c.code}`
   const exemples = (c.exemples || []).filter(Boolean)
 
+  // Accroche en question, puis la réponse chiffrée : on a envie de lire la suite.
   const lignes: string[] = []
-  lignes.push(`💊 ${capitalize(label)} disponibles en Algérie`)
+  lignes.push(`💊 Combien de médicaments de la classe « ${label} » sont enregistrés en Algérie ?`)
   lignes.push('')
   lignes.push(
-    `On dénombre ${c.nb_produits} médicament${plural(c.nb_produits)} enregistré${plural(
-      c.nb_produits
-    )} dans cette classe (${c.nb_dci} substance${plural(c.nb_dci)} active${plural(c.nb_dci)}).`
+    `👉 ${fmtNum(c.nb_produits)} ! Répartis sur ${fmtNum(c.nb_dci)} substance${plural(c.nb_dci)} active${plural(c.nb_dci)}.`
   )
   if (c.nb_algerie > 0) {
-    lignes.push(`🇩🇿 Dont ${c.nb_algerie} fabriqué${plural(c.nb_algerie)} en Algérie.`)
+    lignes.push(`🇩🇿 Dont ${fmtNum(c.nb_algerie)} fabriqué${plural(c.nb_algerie)} en Algérie.`)
   }
   if (exemples.length) {
-    lignes.push('')
-    lignes.push(`Par exemple : ${exemples.join(', ')}…`)
+    lignes.push(`✨ Par exemple : ${exemples.join(', ')}…`)
   }
   lignes.push('')
-  lignes.push('👉 Liste complète et détails sur DwaDZ :')
+  lignes.push('🔎 La liste complète, avec laboratoires et détails :')
+  lignes.push('')
+  lignes.push(hashtags('Médicaments', 'Algérie', 'Pharmacie', hashtagOf(label), 'DwaDZ'))
+
+  const stats = [
+    { value: fmtNum(c.nb_produits), label: `médicament${plural(c.nb_produits)} enregistré${plural(c.nb_produits)}` },
+    { value: fmtNum(c.nb_dci), label: `substance${plural(c.nb_dci)} active${plural(c.nb_dci)}` },
+  ]
+  if (c.nb_algerie > 0) stats.push({ value: fmtNum(c.nb_algerie), label: `fabriqué${plural(c.nb_algerie)} en Algérie` })
 
   return {
     rubrique: 'classe',
@@ -166,6 +201,16 @@ export async function genClasseTherapeutique(): Promise<PostCandidate | null> {
     corps: lignes.join('\n'),
     lien,
     dedupKey: `classe:${c.code}`,
+    visuel: {
+      icon: 'pill',
+      kicker: 'Classe thérapeutique',
+      headline: capitalize(label),
+      subtitle: `disponibles en Algérie · ATC ${c.code}`,
+      stats,
+      tags: exemples,
+      tagsLabel: 'Par exemple',
+      cta: 'Voir la liste complète',
+    },
   }
 }
 
@@ -212,19 +257,24 @@ export async function genFabriqueEnAlgerie(): Promise<PostCandidate | null> {
   const part = c.nb_produits > 0 ? Math.round((c.nb_algerie / c.nb_produits) * 100) : 0
 
   const lignes: string[] = []
-  lignes.push(`🇩🇿 ${capitalize(label)} : la production algérienne`)
+  lignes.push(`🇩🇿 Made in Algeria : et si on parlait de production locale ?`)
   lignes.push('')
   lignes.push(
-    `${c.nb_algerie} médicament${plural(c.nb_algerie)} de cette classe ${
+    `Dans la classe « ${label} », ${fmtNum(c.nb_algerie)} médicament${plural(c.nb_algerie)} ${
       c.nb_algerie > 1 ? 'sont fabriqués' : 'est fabriqué'
-    } en Algérie${part ? ` (soit ${part}% de l'offre)` : ''}.`
+    } en Algérie${part ? ` — soit ${part}% de l'offre` : ''} 💪`
   )
   if (labos.length) {
-    lignes.push('')
-    lignes.push(`Laboratoires locaux concernés : ${labos.join(', ')}…`)
+    lignes.push(`🏭 Laboratoires locaux : ${labos.join(', ')}…`)
   }
   lignes.push('')
-  lignes.push('👉 Le détail des médicaments fabriqués localement sur DwaDZ :')
+  lignes.push('🔎 Le détail des médicaments fabriqués localement :')
+  lignes.push('')
+  lignes.push(hashtags('FabriquéEnAlgérie', 'MadeInAlgeria', 'Pharmacie', hashtagOf(label), 'DwaDZ'))
+
+  const stats = [{ value: fmtNum(c.nb_algerie), label: `médicament${plural(c.nb_algerie)} produit${plural(c.nb_algerie)} localement` }]
+  if (part) stats.push({ value: `${part}%`, label: "de l'offre de la classe" })
+  stats.push({ value: fmtNum(c.nb_produits), label: `médicament${plural(c.nb_produits)} au total` })
 
   return {
     rubrique: 'algerie',
@@ -232,6 +282,16 @@ export async function genFabriqueEnAlgerie(): Promise<PostCandidate | null> {
     corps: lignes.join('\n'),
     lien,
     dedupKey: `algerie:${c.code}`,
+    visuel: {
+      icon: 'emblem',
+      kicker: 'Fabriqué en Algérie',
+      headline: capitalize(label),
+      subtitle: `la production algérienne · ATC ${c.code}`,
+      stats,
+      tags: labos,
+      tagsLabel: 'Laboratoires locaux',
+      cta: 'Voir les médicaments locaux',
+    },
   }
 }
 
@@ -252,15 +312,17 @@ export async function genAlerteRetraits(): Promise<PostCandidate | null> {
   const nom = [r.nom_marque, r.dosage].filter(Boolean).join(' ')
 
   const lignes: string[] = []
-  lignes.push('⚠️ Retrait du marché')
+  lignes.push('⚠️ ALERTE — Retrait du marché')
   lignes.push('')
-  lignes.push(`Le médicament ${nom} (${r.dci})${r.labo ? ` — ${r.labo}` : ''} a été retiré de la vente.`)
+  lignes.push(`💊 ${nom} (${r.dci})${r.labo ? ` — ${r.labo}` : ''}`)
   if (r.motif_retrait) {
-    lignes.push('')
-    lignes.push(`Motif : ${r.motif_retrait}`)
+    lignes.push(`📌 Motif : ${r.motif_retrait}`)
   }
   lignes.push('')
-  lignes.push('Vérifiez votre armoire à pharmacie. 👉 Tous les retraits sur DwaDZ :')
+  lignes.push('🔁 Pharmaciens, patients : vérifiez votre stock et partagez l\'info autour de vous.')
+  lignes.push('👉 Tous les retraits recensés :')
+  lignes.push('')
+  lignes.push(hashtags('Retrait', 'Pharmacovigilance', 'Algérie', 'Pharmacie', 'DwaDZ'))
 
   return {
     rubrique: 'retrait',
@@ -268,6 +330,17 @@ export async function genAlerteRetraits(): Promise<PostCandidate | null> {
     corps: lignes.join('\n'),
     lien,
     dedupKey: `retrait:${retraitKey(r)}`,
+    visuel: {
+      icon: 'alert',
+      kicker: 'Retrait du marché',
+      headline: nom,
+      subtitle: `${r.dci}${r.labo ? ` · ${r.labo}` : ''}`,
+      note: r.motif_retrait
+        ? { label: 'Motif du retrait', text: r.motif_retrait }
+        : { label: 'À savoir', text: 'Vérifiez votre armoire à pharmacie et votre stock.' },
+      accent: 'red',
+      cta: 'Tous les retraits',
+    },
   }
 }
 
@@ -294,16 +367,17 @@ export async function genNouveautesChiffres(): Promise<PostCandidate | null> {
 
   if (!used.has(variantNew) && stats.total_nouveautes > 0) {
     const lien = `${appUrl()}/nouveautes`
+    const n = stats.total_nouveautes
     const lignes = [
-      '🆕 Les nouveautés de la nomenclature',
+      '🆕 Du nouveau dans la nomenclature algérienne !',
       '',
-      `${stats.total_nouveautes} nouveau${plural(stats.total_nouveautes, 'x')} médicament${plural(
-        stats.total_nouveautes
-      )} ${stats.total_nouveautes > 1 ? 'ont été enregistrés' : 'a été enregistré'} récemment en Algérie${
-        stats.last_version ? ` (version ${stats.last_version})` : ''
-      }.`,
+      `${fmtNum(n)} nouveau${plural(n, 'x')} médicament${plural(n)} ${
+        n > 1 ? 'ont été enregistrés' : 'a été enregistré'
+      } récemment${stats.last_version ? ` (version ${stats.last_version})` : ''} 💊`,
       '',
-      '👉 Découvrez-les sur DwaDZ :',
+      '👀 Découvrez lesquels :',
+      '',
+      hashtags('Nouveautés', 'Médicaments', 'Algérie', 'Pharmacie', 'DwaDZ'),
     ]
     return {
       rubrique: 'nouveaute',
@@ -311,6 +385,14 @@ export async function genNouveautesChiffres(): Promise<PostCandidate | null> {
       corps: lignes.join('\n'),
       lien,
       dedupKey: variantNew,
+      visuel: {
+        icon: 'sparkle',
+        kicker: 'Nouveautés',
+        headline: 'Nomenclature algérienne',
+        subtitle: stats.last_version ? `version ${stats.last_version}` : 'derniers enregistrements',
+        stats: [{ value: fmtNum(n), label: `nouveau${plural(n, 'x')} médicament${plural(n)} enregistré${plural(n)}` }],
+        cta: 'Découvrir les nouveautés',
+      },
     }
   }
 
@@ -321,14 +403,16 @@ export async function genNouveautesChiffres(): Promise<PostCandidate | null> {
         ? Math.round((stats.fabriques_algerie / stats.total_enregistrements) * 100)
         : 0
     const lignes = [
-      '📊 La nomenclature pharmaceutique algérienne en un coup d’œil',
+      '📊 La pharmacie algérienne en chiffres : ça donne le tournis !',
       '',
-      `• ${stats.total_enregistrements} médicaments enregistrés`,
-      `• ${stats.dci_uniques} substances actives (DCI)`,
-      `• ${stats.fabriques_algerie} fabriqués en Algérie 🇩🇿${pct ? ` (${pct}%)` : ''}`,
-      `• ${stats.total_retraits} retraits recensés`,
+      `💊 ${fmtNum(stats.total_enregistrements)} médicaments enregistrés`,
+      `🧪 ${fmtNum(stats.dci_uniques)} substances actives (DCI)`,
+      `🇩🇿 ${fmtNum(stats.fabriques_algerie)} fabriqués en Algérie${pct ? ` (${pct}%)` : ''}`,
+      `⚠️ ${fmtNum(stats.total_retraits)} retraits recensés`,
       '',
-      '👉 Explorez toute la base sur DwaDZ :',
+      '🔎 Explorez toute la base :',
+      '',
+      hashtags('Médicaments', 'Algérie', 'Pharmacie', 'Nomenclature', 'DwaDZ'),
     ]
     return {
       rubrique: 'nouveaute',
@@ -336,6 +420,19 @@ export async function genNouveautesChiffres(): Promise<PostCandidate | null> {
       corps: lignes.join('\n'),
       lien,
       dedupKey: variantStats,
+      visuel: {
+        icon: 'chart',
+        kicker: 'Chiffres clés',
+        headline: 'Nomenclature algérienne',
+        subtitle: 'la base en un coup d’œil',
+        stats: [
+          { value: fmtNum(stats.total_enregistrements), label: 'médicaments enregistrés' },
+          { value: fmtNum(stats.dci_uniques), label: 'substances actives' },
+          { value: fmtNum(stats.fabriques_algerie), label: `fabriqués en Algérie${pct ? ` (${pct}%)` : ''}` },
+          { value: fmtNum(stats.total_retraits), label: 'retraits recensés' },
+        ],
+        cta: 'Explorer la base',
+      },
     }
   }
 
@@ -383,22 +480,38 @@ export async function enqueueCandidate(
   candidate: PostCandidate,
   scheduledFor: Date
 ): Promise<SocialPost | null> {
-  return queryOne<SocialPost>(
-    `
-    INSERT INTO social_content_queue (rubrique, titre, corps, lien, scheduled_for, dedup_key)
-    VALUES ($1, $2, $3, $4, $5, $6)
-    ON CONFLICT (dedup_key) DO NOTHING
-    RETURNING *
-    `,
-    [
-      candidate.rubrique,
-      candidate.titre,
-      candidate.corps,
-      candidate.lien,
-      scheduledFor.toISOString(),
-      candidate.dedupKey,
-    ]
-  )
+  const base = [
+    candidate.rubrique,
+    candidate.titre,
+    candidate.corps,
+    candidate.lien,
+    scheduledFor.toISOString(),
+    candidate.dedupKey,
+  ]
+  try {
+    return await queryOne<SocialPost>(
+      `
+      INSERT INTO social_content_queue (rubrique, titre, corps, lien, scheduled_for, dedup_key, visuel)
+      VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)
+      ON CONFLICT (dedup_key) DO NOTHING
+      RETURNING *
+      `,
+      [...base, candidate.visuel ? JSON.stringify(candidate.visuel) : null]
+    )
+  } catch (err: any) {
+    // Colonne `visuel` absente (migration 22 pas encore appliquée) : on
+    // enregistre le brouillon sans ; l'image sera déduite du texte.
+    if (err?.code !== '42703') throw err
+    return queryOne<SocialPost>(
+      `
+      INSERT INTO social_content_queue (rubrique, titre, corps, lien, scheduled_for, dedup_key)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      ON CONFLICT (dedup_key) DO NOTHING
+      RETURNING *
+      `,
+      base
+    )
+  }
 }
 
 /** Nombre de posts encore « en attente » (brouillon ou approuvé, non publiés). */
@@ -480,16 +593,41 @@ export async function markError(id: number, error: string): Promise<void> {
   )
 }
 
-/** Compose le message final Facebook (corps + lien recalculé sur le domaine courant). */
+/**
+ * Compose le message final Facebook : corps + lien recalculé sur le domaine
+ * courant. Si le corps se termine par un paragraphe de hashtags, le lien se
+ * place avant lui (appel à l'action → lien → hashtags).
+ */
 export function composeMessage(post: Pick<SocialPost, 'corps' | 'lien'>): string {
   const lien = normalizeLien(post.lien)
-  return lien ? `${post.corps}\n${lien}` : post.corps
+  if (!lien) return post.corps
+  const m = post.corps.match(/^([\s\S]*?)\n\n((?:#\S+\s*)+)$/)
+  return m ? `${m[1]}\n${lien}\n\n${m[2].trim()}` : `${post.corps}\n${lien}`
 }
 
 // ─── Utilitaires de formatage ────────────────────────────────────────────────
 
 function plural(n: number, suffix = 's'): string {
   return n > 1 ? suffix : ''
+}
+
+/** 12 345 → « 12 345 » (espace insécable : présent dans les polices des visuels). */
+function fmtNum(n: number): string {
+  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0')
+}
+
+/** « Antidépresseurs et normothymiques » → « #AntidépresseursEtNormothymiques » */
+function hashtagOf(label: string): string {
+  return label
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(Boolean)
+    .map(capitalize)
+    .join('')
+    .slice(0, 30)
+}
+
+function hashtags(...tags: string[]): string {
+  return tags.filter(Boolean).map((t) => `#${t}`).join(' ')
 }
 
 function capitalize(s: string): string {

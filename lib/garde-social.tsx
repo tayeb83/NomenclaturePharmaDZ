@@ -699,7 +699,7 @@ const ROW_TIERS = [
   { name: 30, sub: 20, badge: 18, pad: 3, head: 24 },
 ] as const
 const ROW_LIST_HEIGHT = 815
-const DIVIDER_HEIGHT = 12
+export const DIVIDER_HEIGHT = 12
 
 type ImageSection =
   | { kind: 'commune'; label: string }
@@ -761,7 +761,7 @@ const IMAGE_STRINGS = {
   },
 } as const
 
-function truncate(s: string, max: number): string {
+export function truncate(s: string, max: number): string {
   return s.length > max ? s.slice(0, max - 1).trimEnd() + '…' : s
 }
 
@@ -792,22 +792,22 @@ function fitToWidth(text: string, fontSize: number, maxPx: number): string {
 
 // ─── Ornements (calculés une fois) ────────────────────────────
 
-const CONTENT_WIDTH = IMAGE_WIDTH - PAGE_PAD_X * 2
+export const CONTENT_WIDTH = IMAGE_WIDTH - PAGE_PAD_X * 2
 // Largeur utile à l'intérieur de la carte : bordure (3) + marge (12) +
 // filet (1.5) + marge interne (34) de chaque côté.
-const CARD_INNER_WIDTH = CONTENT_WIDTH - 2 * (3 + 12 + 2 + 34)
+export const CARD_INNER_WIDTH = CONTENT_WIDTH - 2 * (3 + 12 + 2 + 34)
 const ORNAMENT_BACKGROUND = backgroundUri(IMAGE_WIDTH, IMAGE_HEIGHT)
 const ORNAMENT_NICHE = nicheUri(1.25)
-const ORNAMENT_STAR_BRASS = starUri(CASBAH.brass)
+export const ORNAMENT_STAR_BRASS = starUri(CASBAH.brass)
 const ORNAMENT_STAR_TEAL = starUri(CASBAH.teal)
 const ORNAMENT_HEADER_BAND = bandUri(CONTENT_WIDTH, 22)
 const ORNAMENT_CARD_BAND = bandUri(CONTENT_WIDTH - 6, 18)
 const ORNAMENT_RULE = ornamentRuleUri(CONTENT_WIDTH, CASBAH.brassLight)
-const ORNAMENT_DIVIDER = ornamentRuleUri(CARD_INNER_WIDTH, CASBAH.brass, 5, 0.45)
+export const ORNAMENT_DIVIDER = ornamentRuleUri(CARD_INNER_WIDTH, CASBAH.brass, 5, 0.45)
 
 // Emblème des pharmacies algériennes (public/emblem-pharma-dz.svg), inline :
 // il remplace le blason quand la wilaya n'en a pas enregistré.
-const EMBLEM_URI = svgDataUri(
+export const EMBLEM_URI = svgDataUri(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">' +
   '<path d="M30 4.5A20 20 0 1 0 30 43.5A24 24 0 0 1 30 4.5Z" fill="#d92128"/>' +
   '<path d="M22 21h23c-1 5-5.5 8-11.5 8S23 26 22 21z" fill="#0b9248"/>' +
@@ -829,7 +829,7 @@ const EMBLEM_URI = svgDataUri(
  * Centré, l'écart est divisé par deux et invisible, et la composition
  * symétrique va bien avec le décor (arc, zellige).
  */
-async function imageChrome(locale: Locale) {
+export async function imageChrome(locale: Locale) {
   const ar = locale === 'ar'
   const [fonts, logo] = await Promise.all([loadFonts(), loadLogo()])
   return {
@@ -851,10 +851,10 @@ async function imageChrome(locale: Locale) {
   }
 }
 
-type ImageChrome = Awaited<ReturnType<typeof imageChrome>>
+export type ImageChrome = Awaited<ReturnType<typeof imageChrome>>
 
 /** Page : fond marine zellige, remplissant tout le cadre. */
-function Page({ chrome, children }: { chrome: ImageChrome; children: React.ReactNode }) {
+export function Page({ chrome, children }: { chrome: ImageChrome; children: React.ReactNode }) {
   return (
     <div style={{
       width: '100%', height: '100%', display: 'flex', flexDirection: 'column',
@@ -891,7 +891,7 @@ function TextPieces({ chrome, parts, noWrap }: {
  * le blason de la wilaya (ou l'emblème des pharmacies), titre, périmètre,
  * période, puis bandeau de zellige.
  */
-function ImageHeader({
+export function ImageHeader({
   chrome, wilayaLogo, title, scope, subtitle, badge, noWrap,
 }: {
   chrome: ImageChrome
@@ -966,12 +966,12 @@ function ImageHeader({
 }
 
 /** Pied de page : filet orné, adresse du site, petit liseré aux couleurs du drapeau. */
-function ImageFooter({ chrome }: { chrome: ImageChrome }) {
+export function ImageFooter({ chrome, path }: { chrome: ImageChrome; path?: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 12 }}>
       <img src={ORNAMENT_RULE} width={CONTENT_WIDTH} height={22} alt="" />
       <div style={{ display: 'flex', fontFamily: chrome.displayFamily, fontSize: 34, lineHeight: 1.1, fontWeight: 700, color: CASBAH.brassLight, marginTop: 4 }}>
-        {chrome.appHost}{chrome.t.path}
+        {chrome.appHost}{path ?? chrome.t.path}
       </div>
       <div style={{ display: 'flex', width: 150, height: 6, borderRadius: 999, overflow: 'hidden', marginTop: 8 }}>
         <div style={{ display: 'flex', width: '34%', height: '100%', backgroundColor: ALGERIA_GREEN }} />
@@ -988,7 +988,7 @@ function ImageFooter({ chrome }: { chrome: ImageChrome }) {
  * plutôt que de repousser le pied de page. `centered` centre la liste
  * verticalement (communes n'ayant qu'une ou deux gardes).
  */
-function ListCard({ children, centered, padding = '14px 34px' }: {
+export function ListCard({ children, centered, padding = '14px 34px' }: {
   children: React.ReactNode
   centered?: boolean
   padding?: string

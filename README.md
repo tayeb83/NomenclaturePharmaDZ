@@ -314,6 +314,16 @@ générer). Quatre rubriques alimentées automatiquement depuis la base :
 La rotation évite de reproposer un sujet déjà couvert (clé `dedup_key`).
 Génération manuelle possible depuis l'admin (« Générer un brouillon »).
 
+**Image et légende.** Chaque post part avec un visuel « Casbah » (même style
+que les gardes : zellige, arc outrepassé, laiton) — chiffres clés en grand,
+exemples, motif d'un retrait, bouton d'appel à l'action — généré par
+`lib/social-visual.tsx` à partir des données du brouillon (colonne `visuel`,
+migration `sql/22_social_visuel.sql` ; sans elle, l'image est déduite du
+texte). La légende suit le schéma accroche → chiffre → appel à l'action →
+lien → hashtags. L'aperçu de l'image s'affiche dans `/admin/social` ; en cas
+d'échec de l'image, le post part en texte + aperçu de lien.
+`SOCIAL_POST_IMAGES=0` désactive les images.
+
 ```json
 { "path": "/api/cron/social-prepare", "schedule": "0 3 * * *" }
 { "path": "/api/cron/social-publish", "schedule": "0 8 * * *" }

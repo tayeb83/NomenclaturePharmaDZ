@@ -155,8 +155,9 @@ export function SocialClient() {
           <Link href="/admin" style={{ color: '#64748b', fontSize: 13, textDecoration: 'none' }}>← Admin</Link>
         </div>
         <p style={{ color: '#64748b', fontSize: 14, marginTop: 0 }}>
-          Le site prépare des posts thématiques sur la nomenclature. Relisez, ajustez et validez —
-          les posts approuvés partent automatiquement sur la Page Facebook à leur date.
+          Le site prépare des posts thématiques sur la nomenclature : une image soignée, une
+          légende accrocheuse et le lien vers le site. Relisez, ajustez et validez — les posts
+          approuvés partent automatiquement sur la Page Facebook à leur date.
         </p>
 
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '16px 0' }}>
@@ -372,6 +373,17 @@ function PostCard({
         </>
       ) : (
         <>
+          {p.statut !== 'publie' && (
+            // Aperçu de l'image qui sera publiée avec le post (rendu à la demande).
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={`/api/admin/social/${p.id}/image`}
+              alt="Aperçu de l’image du post"
+              loading="lazy"
+              onError={(e) => { e.currentTarget.style.display = 'none' }}
+              style={{ display: 'block', width: '100%', maxWidth: 320, borderRadius: 10, border: '1px solid #e2e8f0', marginBottom: 12 }}
+            />
+          )}
           <div style={{ whiteSpace: 'pre-wrap', fontSize: 14, lineHeight: 1.5, color: '#1e293b' }}>{p.corps}</div>
           {p.lien && <a href={p.lien} target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: 6, fontSize: 13, color: '#2563eb', wordBreak: 'break-all' }}>{p.lien}</a>}
 
