@@ -20,6 +20,9 @@ import { query, queryOne } from '@/lib/db'
 import { postFacebookPhoto, postToFacebook } from '@/lib/social'
 import { getWilayaLogoDataUri } from '@/lib/garde-wilaya-logo'
 import { slugify } from '@/lib/slug'
+import {
+  CASBAH, backgroundUri, bandUri, nicheUri, ornamentRuleUri, starUri, svgDataUri,
+} from '@/lib/garde-ornaments'
 
 // ─── DONNÉES ──────────────────────────────────────────────────
 
@@ -387,6 +390,23 @@ function formatDateAr(isoDate: string): string {
   }).format(new Date(`${isoDate}T12:00:00Z`))
 }
 
+/**
+ * Même date en deux morceaux (« الثلاثاء، » puis « 20 أكتوبر 2026 ») pour les
+ * visuels : voir IMAGE_STRINGS — satori ne sait pas ordonner seul un jour de
+ * semaine arabe suivi de chiffres.
+ */
+function formatDateArPieces(isoDate: string): string[] {
+  const parts = new Intl.DateTimeFormat('ar-DZ', {
+    timeZone: 'Africa/Algiers', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    numberingSystem: 'latn',
+  }).formatToParts(new Date(`${isoDate}T12:00:00Z`))
+  const weekday = parts.find(p => p.type === 'weekday')?.value
+  const tail = parts
+    .filter(p => p.type === 'day' || p.type === 'month' || p.type === 'year' || (p.type === 'literal' && p.value === ' '))
+    .map(p => p.value).join('').trim()
+  return weekday && tail ? [`${weekday}،`, tail] : [formatDateAr(isoDate)]
+}
+
 // Domaine de repli si NEXT_PUBLIC_APP_URL n'est pas défini. En production
 // c'est la variable d'environnement qui prime (voir Vercel).
 const DEFAULT_APP_URL = 'https://dzair-pharma.net'
@@ -620,17 +640,22 @@ async function loadFonts(): Promise<LoadedFont[] | null> {
   if (fontsCache !== undefined) return fontsCache
   try {
     const dir = path.join(process.cwd(), 'assets', 'fonts')
-    const [latin, latinBold, arabic, arabicBold] = await Promise.all([
+    const [latin, latinBold, arabic, arabicBold, amiri, amiriBold] = await Promise.all([
       readFile(path.join(dir, 'NotoSans-Regular.ttf')),
       readFile(path.join(dir, 'NotoSans-Bold.ttf')),
       readFile(path.join(dir, 'Tajawal-Regular.ttf')),
       readFile(path.join(dir, 'Tajawal-Bold.ttf')),
+      readFile(path.join(dir, 'Amiri-Regular.ttf')),
+      readFile(path.join(dir, 'Amiri-Bold.ttf')),
     ])
     fontsCache = [
       { name: 'Noto Sans', data: latin, weight: 400, style: 'normal' },
       { name: 'Noto Sans', data: latinBold, weight: 700, style: 'normal' },
       { name: 'Tajawal', data: arabic, weight: 400, style: 'normal' },
       { name: 'Tajawal', data: arabicBold, weight: 700, style: 'normal' },
+      // Police d'affichage du site (titres, noms) — calligraphie naskh.
+      { name: 'Amiri', data: amiri, weight: 400, style: 'normal' },
+      { name: 'Amiri', data: amiriBold, weight: 700, style: 'normal' },
     ]
   } catch (err: any) {
     console.error('[garde-social] Polices introuvables, repli sans arabe:', err?.message || err)
@@ -651,16 +676,30 @@ function imageSafeText(text: string, arabicOk: boolean, fallback: string): strin
 
 const IMAGE_WIDTH = 1080
 const IMAGE_HEIGHT = 1350
+const PAGE_PAD_X = 48
 
-// Vert et rouge du drapeau algérien — le liseré et les accents des visuels
-// reprennent ces couleurs (le blanc vient du fond de la carte).
+// Vert et rouge du drapeau algérien — gardés pour le petit liseré du pied de
+// page ; le reste du visuel suit la palette du site (marine, laiton, zellige).
 const ALGERIA_GREEN = '#006233'
 const ALGERIA_RED = '#D21034'
-// Hauteur disponible dans la carte blanche, exprimée en « unités ligne » :
+// Hauteur disponible dans le cadre de la liste, exprimée en « unités ligne » :
 // une officine ≈ 1 unité, un en-tête de commune ≈ 0.6 — au-delà, le
 // contenu déborderait du cadre 1080×1350 (le reste passe en « + N autres »).
 const IMAGE_ROW_BUDGET = 8
 const COMMUNE_HEADER_COST = 0.6
+const NAME_MAX_CHARS = 36
+// Paliers de taille des lignes (du plus grand au plus serré) et hauteur utile
+// de la liste dans la carte (1350 px − en-tête, pied de page, bandeaux, marges).
+const ROW_TIERS = [
+  { name: 56, sub: 31, badge: 28, pad: 32, head: 34 },
+  { name: 48, sub: 28, badge: 25, pad: 22, head: 32 },
+  { name: 42, sub: 26, badge: 23, pad: 16, head: 30 },
+  { name: 36, sub: 23, badge: 21, pad: 11, head: 28 },
+  { name: 33, sub: 21, badge: 19, pad: 6, head: 26 },
+  { name: 30, sub: 20, badge: 18, pad: 3, head: 24 },
+] as const
+const ROW_LIST_HEIGHT = 815
+const DIVIDER_HEIGHT = 12
 
 type ImageSection =
   | { kind: 'commune'; label: string }
@@ -690,13 +729,13 @@ function buildImageSections(day: GardeWilayaDay, locale: Locale): { sections: Im
   return { sections, remaining: day.total - listed }
 }
 
-function shiftBadge(shifts: string[], locale: Locale): { label: string; bg: string; fg: string } {
+function shiftBadge(shifts: string[], locale: Locale): { label: string; bg: string; fg: string; border: string } {
   const hasNuit = shifts.includes('nuit')
   const hasJour = shifts.some(s => s !== 'nuit')
   const ar = locale === 'ar'
-  if (hasNuit && hasJour) return { label: ar ? '24/24' : '24h/24', bg: '#dcfce7', fg: '#166534' }
-  if (hasNuit) return { label: ar ? 'ليلية' : 'Nuit', bg: '#e0e7ff', fg: '#3730a3' }
-  return { label: ar ? 'نهارية' : 'Jour', bg: '#fef9c3', fg: '#854d0e' }
+  if (hasNuit && hasJour) return { label: ar ? '24/24' : '24h/24', bg: CASBAH.teal, fg: '#ffffff', border: CASBAH.teal }
+  if (hasNuit) return { label: ar ? 'ليلية' : 'Nuit', bg: CASBAH.navy, fg: CASBAH.brassLight, border: CASBAH.brass }
+  return { label: ar ? 'نهارية' : 'Jour', bg: '#f8ebc8', fg: CASBAH.brassDark, border: CASBAH.brass }
 }
 
 // Libellés localisés de l'image.
@@ -704,16 +743,19 @@ const IMAGE_STRINGS = {
   fr: {
     title: 'Pharmacies de garde',
     monthTitle: 'Planning des gardes',
-    more: (n: number) => `+ ${n} autres officines — liste complète sur le site`,
-    moreDays: (n: number) => `+ ${n} autres jours — planning complet sur le site`,
+    more: (n: number) => [`+ ${n} autres officines — liste complète sur le site`],
+    moreDays: (n: number) => [`+ ${n} autres jours — planning complet sur le site`],
     upcoming: 'À venir',
     path: '/pharmacie-de-garde',
   },
   ar: {
     title: 'صيدليات المناوبة',
     monthTitle: 'برنامج المناوبة',
-    more: (n: number) => `+ ${n} صيدلية أخرى — القائمة الكاملة على الموقع`,
-    moreDays: (n: number) => `+ ${n} يوم آخر — البرنامج الكامل على الموقع`,
+    // En morceaux : satori n'applique pas l'algorithme bidi sur toute la phrase,
+    // un mélange chiffres + arabe sortirait dans le désordre. Chaque morceau
+    // est posé séparément, dans l'ordre de lecture (de droite à gauche).
+    more: (n: number) => [`+ ${n}`, 'صيدلية أخرى', '—', 'القائمة الكاملة على الموقع'],
+    moreDays: (n: number) => [`+ ${n}`, 'يوم آخر', '—', 'البرنامج الكامل على الموقع'],
     upcoming: 'قادم',
     path: '/ar/pharmacie-de-garde',
   },
@@ -724,10 +766,68 @@ function truncate(s: string, max: number): string {
 }
 
 /**
+ * Largeur approximative d'un texte en px (satori ne la donne pas) : capitales
+ * et chiffres ≈ 0.70 em, bas de casse ≈ 0.56, fines ≈ 0.30, espace ≈ 0.27,
+ * arabe ≈ 0.50.
+ */
+function approxTextWidth(text: string, fontSize: number): number {
+  let em = 0
+  for (const ch of text) {
+    if (ch === ' ' || ch === '\u00a0') em += 0.27
+    else if (/[A-ZÀ-ÖØ-Þ0-9@%&]/.test(ch)) em += 0.7
+    else if (/[iljI.,;:'|!·]/.test(ch)) em += 0.3
+    else if (ch.charCodeAt(0) > 0x600) em += 0.5
+    else em += 0.56
+  }
+  return em * fontSize
+}
+
+/** Coupe le texte (avec « … ») pour qu'il tienne sur une ligne de `maxPx`. */
+function fitToWidth(text: string, fontSize: number, maxPx: number): string {
+  if (approxTextWidth(text, fontSize) <= maxPx) return text
+  let out = text
+  while (out.length > 1 && approxTextWidth(out + '…', fontSize) > maxPx) out = out.slice(0, -1)
+  return out.trimEnd() + '…'
+}
+
+// ─── Ornements (calculés une fois) ────────────────────────────
+
+const CONTENT_WIDTH = IMAGE_WIDTH - PAGE_PAD_X * 2
+// Largeur utile à l'intérieur de la carte : bordure (3) + marge (12) +
+// filet (1.5) + marge interne (34) de chaque côté.
+const CARD_INNER_WIDTH = CONTENT_WIDTH - 2 * (3 + 12 + 2 + 34)
+const ORNAMENT_BACKGROUND = backgroundUri(IMAGE_WIDTH, IMAGE_HEIGHT)
+const ORNAMENT_NICHE = nicheUri(1.25)
+const ORNAMENT_STAR_BRASS = starUri(CASBAH.brass)
+const ORNAMENT_STAR_TEAL = starUri(CASBAH.teal)
+const ORNAMENT_HEADER_BAND = bandUri(CONTENT_WIDTH, 22)
+const ORNAMENT_CARD_BAND = bandUri(CONTENT_WIDTH - 6, 18)
+const ORNAMENT_RULE = ornamentRuleUri(CONTENT_WIDTH, CASBAH.brassLight)
+const ORNAMENT_DIVIDER = ornamentRuleUri(CARD_INNER_WIDTH, CASBAH.brass, 5, 0.45)
+
+// Emblème des pharmacies algériennes (public/emblem-pharma-dz.svg), inline :
+// il remplace le blason quand la wilaya n'en a pas enregistré.
+const EMBLEM_URI = svgDataUri(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">' +
+  '<path d="M30 4.5A20 20 0 1 0 30 43.5A24 24 0 0 1 30 4.5Z" fill="#d92128"/>' +
+  '<path d="M22 21h23c-1 5-5.5 8-11.5 8S23 26 22 21z" fill="#0b9248"/>' +
+  '<path d="M32.5 28h2v10h-2zM28 39.5c2-1.2 3-1.5 5.5-1.5s3.5.3 5.5 1.5z" fill="#0b9248"/>' +
+  '<path d="M40 9.5C40 5.5 33 5.5 33 9.5S40 13.5 40 17.5S34 20 34 21" fill="none" stroke="#0b9248" stroke-width="2" stroke-linecap="round"/>' +
+  '</svg>'
+)
+
+/**
  * Réglages de mise en page communs aux visuels (sens de lecture, polices,
  * hôte affiché). On n'utilise PAS `direction: rtl` (satori « justifie »
  * alors les mots arabes, créant de gros trous) : le sens RTL des glyphes
- * est géré par la police, l'alignement visuel via flexDirection + justify.
+ * est géré par la police, l'ordre des éléments via flexDirection.
+ *
+ * Les textes sont CENTRÉS plutôt qu'alignés sur un bord : en arabe, satori
+ * mesure chaque ligne avec les formes isolées des lettres alors qu'il les
+ * dessine avec les formes liées — la boîte est donc trop large (ou trop
+ * étroite) de façon imprévisible, et un alignement à droite sort irrégulier.
+ * Centré, l'écart est divisé par deux et invisible, et la composition
+ * symétrique va bien avec le décor (arc, zellige).
  */
 async function imageChrome(locale: Locale) {
   const ar = locale === 'ar'
@@ -740,29 +840,56 @@ async function imageChrome(locale: Locale) {
     t: IMAGE_STRINGS[locale],
     appHost: (process.env.NEXT_PUBLIC_APP_URL || DEFAULT_APP_URL).replace(/^https?:\/\//, '').replace(/\/+$/, ''),
     rowDir: (ar ? 'row-reverse' : 'row') as 'row' | 'row-reverse',
-    startAlign: (ar ? 'flex-end' : 'flex-start') as 'flex-end' | 'flex-start',
     fontFamily: fonts
       ? (ar ? '"Tajawal", "Noto Sans", sans-serif' : '"Noto Sans", "Tajawal", sans-serif')
+      : 'sans-serif',
+    // Titres et noms d'officines : Amiri (latin seul, voir loadFonts), comme
+    // le site ; l'arabe retombe sur Tajawal.
+    displayFamily: fonts
+      ? '"Amiri", "Tajawal", "Noto Sans", serif'
       : 'sans-serif',
   }
 }
 
 type ImageChrome = Awaited<ReturnType<typeof imageChrome>>
 
-/** Liseré vert-blanc-rouge : le visuel est identifiable au premier coup d'œil. */
-function FlagStripe({ marginTop = 0 }: { marginTop?: number }) {
+/** Page : fond marine zellige, remplissant tout le cadre. */
+function Page({ chrome, children }: { chrome: ImageChrome; children: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', width: '100%', height: 9, borderRadius: 999, overflow: 'hidden', marginTop }}>
-      <div style={{ display: 'flex', width: '34%', height: '100%', backgroundColor: ALGERIA_GREEN }} />
-      <div style={{ display: 'flex', width: '33%', height: '100%', backgroundColor: '#ffffff' }} />
-      <div style={{ display: 'flex', width: '33%', height: '100%', backgroundColor: ALGERIA_RED }} />
+    <div style={{
+      width: '100%', height: '100%', display: 'flex', flexDirection: 'column',
+      backgroundColor: CASBAH.navyDeep, padding: `34px ${PAGE_PAD_X}px 30px`,
+      fontFamily: chrome.fontFamily, position: 'relative',
+    }}>
+      <img
+        src={ORNAMENT_BACKGROUND} width={IMAGE_WIDTH} height={IMAGE_HEIGHT} alt=""
+        style={{ position: 'absolute', top: 0, left: 0 }}
+      />
+      {children}
+    </div>
+  )
+}
+
+/** Texte posé en morceaux, dans l'ordre de lecture (voir IMAGE_STRINGS). */
+function TextPieces({ chrome, parts, noWrap }: {
+  chrome: ImageChrome
+  parts: readonly string[]
+  noWrap: (s: string) => string
+}) {
+  const gap = chrome.ar ? { marginRight: 10 } : { marginLeft: 10 }
+  return (
+    <div style={{ display: 'flex', flexDirection: chrome.rowDir, alignItems: 'center', justifyContent: 'center' }}>
+      {parts.map((part, i) => (
+        <div key={i} style={{ display: 'flex', ...(i > 0 ? gap : {}) }}>{noWrap(part)}</div>
+      ))}
     </div>
   )
 }
 
 /**
- * En-tête commun aux visuels : logo DwaDZ, logo de la wilaya quand il est
- * enregistré (admin → /admin/garde/publication), titre, périmètre, période.
+ * En-tête commun aux visuels : logo DwaDZ, niche en arc outrepassé abritant
+ * le blason de la wilaya (ou l'emblème des pharmacies), titre, périmètre,
+ * période, puis bandeau de zellige.
  */
 function ImageHeader({
   chrome, wilayaLogo, title, scope, subtitle, badge, noWrap,
@@ -771,68 +898,117 @@ function ImageHeader({
   wilayaLogo: string | null
   title: string
   scope: string
-  subtitle: string
+  subtitle: readonly string[]
   badge?: string
   noWrap: (s: string) => string
 }) {
-  const { ar, logo, appHost, rowDir, startAlign } = chrome
-  const logoGap = ar ? { marginLeft: 16 } : { marginRight: 16 }
-  const subtitleGap = ar ? { marginRight: 22 } : { marginLeft: 22 }
+  const { ar, logo, appHost, rowDir, displayFamily } = chrome
+  const logoGap = ar ? { marginLeft: 14 } : { marginRight: 14 }
+  const nicheGap = ar ? { marginLeft: 30 } : { marginRight: 30 }
+  const badgeGap = ar ? { marginRight: 18 } : { marginLeft: 18 }
+  const { medallion } = ORNAMENT_NICHE
+  const crest = wilayaLogo ? Math.round(medallion.r * 1.6) : Math.round(medallion.r * 1.34)
+  const scopeText = truncate(scope, 38)
+  const scopeSize = scopeText.length > 26 ? 36 : 44
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', marginBottom: 22 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', marginBottom: 20 }}>
       <div style={{ display: 'flex', flexDirection: rowDir, alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', flexDirection: rowDir, alignItems: 'center' }}>
-          {logo && <img src={logo} width={54} height={54} style={logoGap} alt="" />}
-          <div style={{ display: 'flex', fontSize: 32, fontWeight: 700, color: '#7dd3fc' }}>DwaDZ</div>
+          {logo && <img src={logo} width={50} height={50} style={logoGap} alt="" />}
+          <div style={{ display: 'flex', fontFamily: displayFamily, fontSize: 38, lineHeight: 1.1, fontWeight: 700, color: CASBAH.brassLight }}>DwaDZ</div>
         </div>
-        <div style={{ display: 'flex', fontSize: 23, color: '#94a3b8' }}>{appHost}</div>
+        <div style={{ display: 'flex', fontSize: 23, color: '#a9b8d4' }}>{appHost}</div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: rowDir, alignItems: 'center', marginTop: 14 }}>
-        {wilayaLogo && (
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            width: 112, height: 112, borderRadius: 20, backgroundColor: '#ffffff',
-            padding: 8, border: `3px solid ${ALGERIA_GREEN}`,
-            ...(ar ? { marginLeft: 22 } : { marginRight: 22 }),
-          }}>
-            <img src={wilayaLogo} width={92} height={92} style={{ objectFit: 'contain' }} alt="" />
-          </div>
-        )}
-        <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-          <div style={{ display: 'flex', flexDirection: rowDir, alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', fontSize: 46, fontWeight: 800, color: '#ffffff' }}>{noWrap(title)}</div>
+      <div style={{ display: 'flex', flexDirection: rowDir, alignItems: 'center', marginTop: 18, marginBottom: 18 }}>
+        <div style={{
+          display: 'flex', position: 'relative', flexShrink: 0,
+          width: ORNAMENT_NICHE.width, height: ORNAMENT_NICHE.height, ...nicheGap,
+        }}>
+          <img src={ORNAMENT_NICHE.uri} width={ORNAMENT_NICHE.width} height={ORNAMENT_NICHE.height} alt="" style={{ position: 'absolute', top: 0, left: 0 }} />
+          <img
+            src={wilayaLogo || EMBLEM_URI} width={crest} height={crest} alt=""
+            style={{
+              position: 'absolute', objectFit: 'contain',
+              left: Math.round(medallion.cx - crest / 2), top: Math.round(medallion.cy - crest / 2),
+            }}
+          />
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, alignItems: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: rowDir, alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', fontFamily: displayFamily, fontSize: 64, fontWeight: 700, color: '#fff7e0', lineHeight: 1.05 }}>
+              {noWrap(title)}
+            </div>
             {badge && (
               <div style={{
-                display: 'flex', fontSize: 22, fontWeight: 700, color: '#ffffff',
-                backgroundColor: ALGERIA_RED, borderRadius: 999, padding: '5px 18px',
+                display: 'flex', fontSize: 22, fontWeight: 700, color: CASBAH.navy, lineHeight: 1.3,
+                backgroundColor: CASBAH.brassLight, border: `2px solid ${CASBAH.brass}`,
+                borderRadius: 999, padding: '3px 18px', ...badgeGap,
               }}>
                 {noWrap(badge)}
               </div>
             )}
           </div>
-          <div style={{ display: 'flex', flexDirection: rowDir, alignItems: 'center', justifyContent: startAlign, marginTop: 8 }}>
-            <div style={{ display: 'flex', fontSize: 36, fontWeight: 700, color: '#38bdf8' }}>{noWrap(scope)}</div>
-            <div style={{ display: 'flex', fontSize: 25, color: '#cbd5e1', ...subtitleGap }}>{noWrap(subtitle)}</div>
+          <div style={{ display: 'flex', fontFamily: displayFamily, fontSize: scopeSize, lineHeight: 1.1, fontWeight: 700, color: CASBAH.brassLight, marginTop: 4 }}>
+            {noWrap(scopeText)}
+          </div>
+          <div style={{ display: 'flex', fontSize: 26, color: '#c9d6ea', marginTop: 8 }}>
+            <TextPieces chrome={chrome} parts={subtitle} noWrap={noWrap} />
           </div>
         </div>
       </div>
 
-      <FlagStripe marginTop={16} />
+      <img src={ORNAMENT_HEADER_BAND} width={CONTENT_WIDTH} height={22} alt="" />
     </div>
   )
 }
 
+/** Pied de page : filet orné, adresse du site, petit liseré aux couleurs du drapeau. */
 function ImageFooter({ chrome }: { chrome: ImageChrome }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', marginTop: 18 }}>
-      <FlagStripe />
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 12 }}>
-        <div style={{ display: 'flex', fontSize: 26, fontWeight: 700, color: '#7dd3fc' }}>
-          {chrome.appHost}{chrome.t.path}
-        </div>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 12 }}>
+      <img src={ORNAMENT_RULE} width={CONTENT_WIDTH} height={22} alt="" />
+      <div style={{ display: 'flex', fontFamily: chrome.displayFamily, fontSize: 34, lineHeight: 1.1, fontWeight: 700, color: CASBAH.brassLight, marginTop: 4 }}>
+        {chrome.appHost}{chrome.t.path}
       </div>
+      <div style={{ display: 'flex', width: 150, height: 6, borderRadius: 999, overflow: 'hidden', marginTop: 8 }}>
+        <div style={{ display: 'flex', width: '34%', height: '100%', backgroundColor: ALGERIA_GREEN }} />
+        <div style={{ display: 'flex', width: '33%', height: '100%', backgroundColor: '#ffffff' }} />
+        <div style={{ display: 'flex', width: '33%', height: '100%', backgroundColor: ALGERIA_RED }} />
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Carte de contenu : blanc chaux, double filet laiton, bandeaux de zellige
+ * en haut et en bas. Elle prend la place restante et rogne son contenu
+ * plutôt que de repousser le pied de page. `centered` centre la liste
+ * verticalement (communes n'ayant qu'une ou deux gardes).
+ */
+function ListCard({ children, centered, padding = '14px 34px' }: {
+  children: React.ReactNode
+  centered?: boolean
+  padding?: string
+}) {
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', flexGrow: 1, flexBasis: 0, minHeight: 0,
+      backgroundColor: CASBAH.cream, border: `3px solid ${CASBAH.brass}`,
+      borderRadius: 18, overflow: 'hidden',
+    }}>
+      <img src={ORNAMENT_CARD_BAND} width={CONTENT_WIDTH - 6} height={18} alt="" />
+      <div style={{
+        display: 'flex', flexDirection: 'column', flexGrow: 1, flexBasis: 0, minHeight: 0, overflow: 'hidden',
+        margin: '10px 12px', padding, borderRadius: 10,
+        border: `1.5px solid rgba(185, 132, 37, 0.5)`,
+        justifyContent: centered ? 'center' : 'flex-start',
+      }}>
+        {children}
+      </div>
+      <img src={ORNAMENT_CARD_BAND} width={CONTENT_WIDTH - 6} height={18} alt="" />
     </div>
   )
 }
@@ -859,7 +1035,7 @@ function dayScopeLabel(day: GardeWilayaDay, ar: boolean): string {
 /**
  * Image portrait 1080×1350 (format adapté au fil Facebook) listant les
  * officines de garde d'une wilaya — ou d'une commune précise —, en français
- * (LTR) ou en arabe (RTL).
+ * (LTR) ou en arabe (RTL). Style « Casbah » : marine, laiton, zellige.
  */
 export async function buildGardeImageResponse(
   day: GardeWilayaDay,
@@ -868,94 +1044,126 @@ export async function buildGardeImageResponse(
 ): Promise<ImageResponse> {
   const { sections, remaining } = buildImageSections(day, locale)
   const chrome = await imageChrome(locale)
-  const { ar, fonts, arabicOk, t, rowDir, startAlign } = chrome
+  const { ar, fonts, arabicOk, t, rowDir, displayFamily } = chrome
   const wilayaLogo = await getWilayaLogoDataUri(day.wilaya_code)
-  const dateStr = ar ? formatDateAr(day.date) : formatDateFr(day.date)
-  // Peu d'officines (cas courant d'une commune) : on agrandit les lignes
-  // plutôt que de laisser une grande carte blanche à moitié vide.
+  const dateParts = ar ? formatDateArPieces(day.date) : [formatDateFr(day.date)]
+  // Taille des lignes : le plus grand palier dont la hauteur estimée tient
+  // dans le cadre. Peu d'officines (cas courant d'une commune) → grandes
+  // lignes plutôt qu'un cadre à moitié vide ; beaucoup, ou beaucoup
+  // d'en-têtes de commune → paliers plus serrés.
   const rows = sections.filter(s => s.kind === 'pharmacy').length
-  const size = rows <= 3
-    ? { name: 40, sub: 28, badge: 24, pad: 24 }
-    : rows <= 5
-      ? { name: 35, sub: 26, badge: 22, pad: 18 }
-      : { name: 31, sub: 24, badge: 21, pad: 14 }
+  const headers = sections.length - rows
+  const estimateHeight = (tr: (typeof ROW_TIERS)[number]) =>
+    rows * (2 * tr.pad + 1.2 * tr.name + 3 + 1.36 * tr.sub)
+    + (rows - 1 + (remaining > 0 ? 1 : 0)) * DIVIDER_HEIGHT
+    + headers * 1.15 * tr.head + Math.max(0, headers - 1) * 10
+    + (remaining > 0 ? 10 + 1.36 * 24 : 0)
+  const tier = ROW_TIERS.find(tr => estimateHeight(tr) <= ROW_LIST_HEIGHT) ?? ROW_TIERS[ROW_TIERS.length - 1]
+  // Le nom le plus long ne doit pas déborder de la ligne (à côté du badge) :
+  // on réduit la taille des noms plutôt que de les tronquer.
+  const nameOf = (ph: GardePharmacyDay) => truncate(
+    imageSafeText(ar ? ph.name_ar : ph.name, arabicOk, ar ? 'صيدلية' : 'Pharmacie (voir légende)'),
+    NAME_MAX_CHARS
+  )
+  const longestName = Math.max(1, ...sections.flatMap(s => s.kind === 'pharmacy' ? [nameOf(s.pharmacy).length] : []))
+  const nameFit = Math.floor((CARD_INNER_WIDTH - 200) / (longestName * 0.6))
+  const size = { ...tier, name: Math.max(28, Math.min(tier.name, nameFit)) }
+  // Ligne « adresse · téléphone » sur une seule ligne : si elle est trop
+  // longue, on coupe l'adresse, jamais le numéro.
+  const subTextOf = (ph: GardePharmacyDay) => {
+    const address = imageSafeText(ar ? ph.address_ar || '' : ph.address || '', arabicOk, '')
+    const phone = ph.phone || ''
+    const maxPx = CARD_INNER_WIDTH - 30
+    if (!address) return phone
+    if (!phone) return fitToWidth(address, size.sub, maxPx)
+    const tail = `  ·  ${phone}`
+    return fitToWidth(address, size.sub, maxPx - approxTextWidth(tail, size.sub)) + tail
+  }
   // satori insère un espace anormalement large entre deux « mots » de texte
   // (il les découpe en segments) — flagrant en arabe. Remplacer l'espace
   // ordinaire par un insécable garde le texte en un seul segment et rétablit
   // l'espacement naturel de la police.
   const noWrap = (s: string) => ar ? s.replace(/ /g, ' ') : s
+  const badgeGap = ar ? { marginRight: 18 } : { marginLeft: 18 }
+  const starGap = ar ? { marginLeft: 14 } : { marginRight: 14 }
 
   return new ImageResponse(
     (
-      <div style={{
-        width: '100%', height: '100%', display: 'flex', flexDirection: 'column',
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)',
-        padding: '40px 48px',
-        fontFamily: chrome.fontFamily,
-      }}>
+      <Page chrome={chrome}>
         <ImageHeader
           chrome={chrome}
           wilayaLogo={wilayaLogo}
           title={t.title}
           scope={dayScopeLabel(day, ar)}
-          subtitle={dateStr}
+          subtitle={dateParts}
           badge={opts.upcoming ? t.upcoming : undefined}
           noWrap={noWrap}
         />
 
-        {/* Liste — centrée verticalement quand la commune n'a qu'une garde ou
-            deux, pour éviter une grande carte blanche à moitié vide. */}
-        <div style={{
-          display: 'flex', flexDirection: 'column', flexGrow: 1,
-          justifyContent: sections.length <= 4 ? 'center' : 'flex-start',
-          backgroundColor: '#ffffff', borderRadius: 24, padding: '28px 36px', overflow: 'hidden',
-        }}>
-          {sections.map((section, i) => section.kind === 'commune' ? (
-            <div key={i} style={{
-              display: 'flex', justifyContent: startAlign, fontSize: 26, fontWeight: 700, color: '#0284c7',
-              textTransform: 'uppercase', letterSpacing: 1,
-              marginTop: i === 0 ? 0 : 18, paddingBottom: 6,
-              borderBottom: '2px solid #e2e8f0',
-            }}>
-              {noWrap(truncate(section.label, 40))}
-            </div>
-          ) : (
-            <div key={i} style={{
-              display: 'flex', flexDirection: 'column',
-              padding: `${size.pad}px 0`, borderBottom: '1px solid #f1f5f9',
-            }}>
-              <div style={{ display: 'flex', flexDirection: rowDir, alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', fontSize: size.name, fontWeight: 700, color: '#0f172a' }}>
-                  {noWrap(truncate(imageSafeText(ar ? section.pharmacy.name_ar : section.pharmacy.name, arabicOk, ar ? 'صيدلية' : 'Pharmacie (voir légende)'), rows <= 3 ? 32 : 42))}
-                </div>
-                <div style={{
-                  display: 'flex', fontSize: size.badge, fontWeight: 700,
-                  backgroundColor: shiftBadge(section.pharmacy.shifts, locale).bg,
-                  color: shiftBadge(section.pharmacy.shifts, locale).fg,
-                  borderRadius: 999, padding: '4px 16px',
+        <ListCard centered={sections.length <= 4}>
+          {sections.map((section, i) => {
+            if (section.kind === 'commune') {
+              return (
+                <div key={i} style={{
+                  display: 'flex', flexDirection: rowDir, alignItems: 'center',
+                  marginTop: i === 0 ? 0 : 10,
                 }}>
-                  {shiftBadge(section.pharmacy.shifts, locale).label}
+                  <div style={{ display: 'flex', flexGrow: 1, height: 2, backgroundColor: 'rgba(30, 142, 138, 0.35)' }} />
+                  <div style={{
+                    display: 'flex', fontFamily: displayFamily, fontSize: size.head, lineHeight: 1.15, fontWeight: 700,
+                    color: CASBAH.teal, textTransform: 'uppercase', margin: '0 18px',
+                  }}>
+                    {noWrap(truncate(section.label, 36))}
+                  </div>
+                  <div style={{ display: 'flex', flexGrow: 1, height: 2, backgroundColor: 'rgba(30, 142, 138, 0.35)' }} />
                 </div>
+              )
+            }
+            const badge = shiftBadge(section.pharmacy.shifts, locale)
+            const isLast = i === sections.length - 1 && remaining === 0
+            const sub = subTextOf(section.pharmacy)
+            return (
+              <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: `${size.pad}px 0` }}>
+                  <div style={{ display: 'flex', flexDirection: rowDir, alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{
+                      display: 'flex', fontFamily: displayFamily, fontSize: size.name, lineHeight: 1.12,
+                      fontWeight: 700, color: CASBAH.ink,
+                    }}>
+                      {noWrap(nameOf(section.pharmacy))}
+                    </div>
+                    <div style={{
+                      display: 'flex', fontSize: size.badge, lineHeight: 1.35, fontWeight: 700,
+                      backgroundColor: badge.bg, color: badge.fg, border: `2px solid ${badge.border}`,
+                      borderRadius: 999, padding: '1px 16px', ...badgeGap,
+                    }}>
+                      {badge.label}
+                    </div>
+                  </div>
+                  {sub && (
+                    <div style={{ display: 'flex', fontSize: size.sub, lineHeight: 1.25, color: CASBAH.muted, marginTop: 3, whiteSpace: 'nowrap' }}>
+                      {noWrap(sub)}
+                    </div>
+                  )}
+                </div>
+                {!isLast && <img src={ORNAMENT_DIVIDER} width={CARD_INNER_WIDTH} height={DIVIDER_HEIGHT} alt="" />}
               </div>
-              {((ar ? section.pharmacy.address_ar : section.pharmacy.address) || section.pharmacy.phone) && (
-                <div style={{ display: 'flex', justifyContent: startAlign, fontSize: size.sub, color: '#64748b', marginTop: 6 }}>
-                  {noWrap(truncate(imageSafeText(
-                    [ar ? section.pharmacy.address_ar : section.pharmacy.address, section.pharmacy.phone].filter(Boolean).join('  ·  '),
-                    arabicOk, section.pharmacy.phone || ''
-                  ), 70))}
-                </div>
-              )}
-            </div>
-          ))}
+            )
+          })}
           {remaining > 0 && (
-            <div style={{ display: 'flex', justifyContent: startAlign, fontSize: 26, fontWeight: 700, color: '#0284c7', marginTop: 18 }}>
-              {noWrap(t.more(remaining))}
+            <div style={{
+              display: 'flex', flexDirection: rowDir, alignItems: 'center', justifyContent: 'center',
+              fontSize: 24, fontWeight: 700, color: CASBAH.brassDark, marginTop: 10,
+            }}>
+              <img src={ORNAMENT_STAR_TEAL} width={20} height={20} style={starGap} alt="" />
+              <TextPieces chrome={chrome} parts={t.more(remaining)} noWrap={noWrap} />
+              <img src={ORNAMENT_STAR_TEAL} width={20} height={20} style={ar ? { marginRight: 14 } : { marginLeft: 14 }} alt="" />
             </div>
           )}
-        </div>
+        </ListCard>
 
         <ImageFooter chrome={chrome} />
-      </div>
+      </Page>
     ),
     { width: IMAGE_WIDTH, height: IMAGE_HEIGHT, ...(fonts ? { fonts } : {}) }
   )
@@ -974,20 +1182,40 @@ export async function renderGardeImagePng(
 
 const MONTH_MAX_ROWS = 31
 
-// Hauteur utile de la carte blanche du visuel mensuel (1350 px moins
-// l'en-tête, le pied de page et les marges) : les lignes s'y ajustent pour
-// qu'un mois de 31 jours tienne sans déborder du cadre.
-const MONTH_CARD_INNER_HEIGHT = 940
+// Hauteur utile du cadre de liste du visuel mensuel (1350 px moins
+// l'en-tête, le pied de page, les bandeaux et les marges).
+const MONTH_CARD_INNER_HEIGHT = 800
 const MONTH_DAY_COLUMN_WIDTH = 150
+// Deux colonnes (1–16 | 17–31) quand les libellés tiennent dans une demi-largeur :
+// la police gagne ~60 % en taille, indispensable pour rester lisible dans un fil.
+const MONTH_HALF_WIDTH = Math.floor((CARD_INNER_WIDTH - 40 - 31) / 2)
+const MONTH_HALF_DAY_WIDTH = 116
+const MONTH_FS_MIN = 15
+const MONTH_FS_MAX = 28
 
-function monthRowMetrics(rowCount: number) {
-  const rowHeight = Math.floor(MONTH_CARD_INNER_HEIGHT / Math.max(rowCount, 1))
-  // satori rend une ligne de texte à ~1.25 × la taille de police.
-  const fontSize = Math.max(16, Math.min(30, Math.floor((rowHeight - 8) / 1.25)))
-  const padding = Math.max(2, Math.min(12, Math.floor((rowHeight - fontSize * 1.25) / 2)))
-  // Largeur disponible pour les noms d'officines, en caractères.
-  const maxChars = Math.floor((IMAGE_WIDTH - 96 - 60 - MONTH_DAY_COLUMN_WIDTH) / (fontSize * 0.52))
-  return { fontSize, dayFontSize: Math.max(14, fontSize - 4), padding, maxChars }
+/** « nuit » / « 24h/24 » sans parenthèses (les parenthèses se mirent mal en arabe). */
+function monthShiftLabel(shifts: string[], locale: Locale): { text: string; color: string } | null {
+  const hasNuit = shifts.includes('nuit')
+  const hasJour = shifts.some(s => s !== 'nuit')
+  const ar = locale === 'ar'
+  if (hasNuit && hasJour) return { text: ar ? '24/24' : '24h/24', color: CASBAH.teal }
+  if (hasNuit) return { text: ar ? 'ليلية' : 'nuit', color: CASBAH.brassDark }
+  return null
+}
+
+type MonthEntry = { name: string; shift: ReturnType<typeof monthShiftLabel> }
+
+function monthEntries(day: GardeMonthDay, locale: Locale, arabicOk: boolean): MonthEntry[] {
+  const ar = locale === 'ar'
+  return day.communes.flatMap(c => c.pharmacies).map(ph => ({
+    name: imageSafeText(ar ? ph.name_ar : ph.name, arabicOk, ar ? 'صيدلية' : 'Pharmacie'),
+    shift: monthShiftLabel(ph.shifts, locale),
+  }))
+}
+
+/** Longueur approximative (en caractères) du libellé d'un jour, suffixes compris. */
+function monthEntriesLength(entries: MonthEntry[]): number {
+  return entries.reduce((sum, e, i) => sum + e.name.length + (e.shift ? e.shift.text.length + 1 : 0) + (i ? 3 : 0), 0)
 }
 
 /**
@@ -1001,80 +1229,115 @@ export async function buildGardeMonthImageResponse(
   locale: Locale = 'fr'
 ): Promise<ImageResponse> {
   const chrome = await imageChrome(locale)
-  const { ar, fonts, arabicOk, t, rowDir, startAlign } = chrome
+  const { ar, fonts, arabicOk, t, rowDir } = chrome
   const noWrap = (s: string) => ar ? s.replace(/ /g, ' ') : s
   const wilayaLogo = await getWilayaLogoDataUri(month.wilaya_code)
 
   const days = month.days.slice(0, MONTH_MAX_ROWS)
   const remainingDays = month.days.length - days.length
-  const metrics = monthRowMetrics(days.length + (remainingDays > 0 ? 1 : 0))
+  const entries = days.map(d => monthEntries(d, locale, arabicOk))
+  const maxLen = Math.max(1, ...entries.map(monthEntriesLength))
+
+  // Taille de police : on part de la place disponible par ligne, bornée par
+  // la largeur du plus long libellé (en caractères ≈ 0.56 × corps).
+  const charW = 0.56
+  const twoColumns = days.length > 12
+    && Math.floor((MONTH_HALF_WIDTH - MONTH_HALF_DAY_WIDTH - 12) / (maxLen * charW)) >= 19
+  const perColumn = twoColumns ? Math.ceil(days.length / 2) : days.length
+  const rowsTotal = perColumn + (!twoColumns && remainingDays > 0 ? 1 : 0)
+  const rowHeight = Math.floor(MONTH_CARD_INNER_HEIGHT / rowsTotal)
+  // satori rend une ligne de texte à ~1.38 × la taille de police (Noto Sans).
+  const byHeight = Math.floor((rowHeight - 4) / 1.38)
+  const labelWidth = twoColumns
+    ? MONTH_HALF_WIDTH - MONTH_HALF_DAY_WIDTH - 12
+    : CARD_INNER_WIDTH - 40 - MONTH_DAY_COLUMN_WIDTH - 12
+  const byWidth = Math.floor(labelWidth / (maxLen * charW))
+  const fontSize = Math.max(MONTH_FS_MIN, Math.min(MONTH_FS_MAX, byHeight, byWidth))
+  const dayFontSize = Math.max(14, fontSize - 3)
+  const dayWidth = twoColumns ? MONTH_HALF_DAY_WIDTH : MONTH_DAY_COLUMN_WIDTH
+  const sepGap = ar ? { marginRight: 8 } : { marginLeft: 8 }
+  const shiftGap = ar ? { marginRight: 8 } : { marginLeft: 8 }
 
   const scope = scopeLabel(
     ar ? month.wilaya_name_ar : month.wilaya_name_fr,
     ar ? month.commune_name_ar : month.commune_name_fr
   )
 
+  const renderRow = (day: GardeMonthDay, entry: MonthEntry[], isLast: boolean) => {
+    // Le vendredi, jour de garde le plus consulté, est mis en avant.
+    const isFriday = new Date(`${day.date}T12:00:00Z`).getUTCDay() === 5
+    return (
+      <div key={day.date} style={{
+        display: 'flex', flexDirection: rowDir, alignItems: 'center', height: rowHeight,
+        borderBottom: isLast ? 'none' : '1px dashed rgba(185, 132, 37, 0.4)',
+        backgroundColor: isFriday ? CASBAH.tealLight : 'transparent',
+        borderRadius: isFriday ? 6 : 0,
+      }}>
+        <div style={{
+          display: 'flex', justifyContent: 'center', width: dayWidth, flexShrink: 0,
+          fontSize: dayFontSize, fontWeight: 700,
+          color: isFriday ? CASBAH.teal : CASBAH.brassDark,
+        }}>
+          {noWrap(formatDayShort(day.date, locale))}
+        </div>
+        <div style={{
+          display: 'flex', flexDirection: rowDir, alignItems: 'center', justifyContent: 'center', flexGrow: 1,
+          fontSize, fontWeight: isFriday ? 700 : 400, color: CASBAH.ink,
+        }}>
+          {entry.map((e, j) => (
+            <div key={j} style={{ display: 'flex', flexDirection: rowDir, alignItems: 'center', ...(j ? sepGap : {}) }}>
+              {j > 0 && <div style={{ display: 'flex', color: CASBAH.brass, ...(ar ? { marginLeft: 8 } : { marginRight: 8 }) }}>·</div>}
+              <div style={{ display: 'flex' }}>{noWrap(truncate(e.name, Math.max(12, Math.floor(labelWidth / (fontSize * charW)))))}</div>
+              {e.shift && (
+                <div style={{
+                  display: 'flex', fontSize: Math.round(fontSize * 0.78), fontWeight: 700, color: e.shift.color, ...shiftGap,
+                }}>
+                  {e.shift.text}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  const columns = twoColumns
+    ? [days.slice(0, perColumn).map((d, i) => ({ d, e: entries[i] })), days.slice(perColumn).map((d, i) => ({ d, e: entries[perColumn + i] }))]
+    : [days.map((d, i) => ({ d, e: entries[i] }))]
+
   return new ImageResponse(
     (
-      <div style={{
-        width: '100%', height: '100%', display: 'flex', flexDirection: 'column',
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)',
-        padding: '40px 48px',
-        fontFamily: chrome.fontFamily,
-      }}>
+      <Page chrome={chrome}>
         <ImageHeader
           chrome={chrome}
           wilayaLogo={wilayaLogo}
           title={t.monthTitle}
           scope={scope}
-          subtitle={ar ? formatMonthAr(month.month) : formatMonthFr(month.month)}
+          subtitle={[ar ? formatMonthAr(month.month) : formatMonthFr(month.month)]}
           noWrap={noWrap}
         />
 
-        <div style={{
-          display: 'flex', flexDirection: 'column', flexGrow: 1,
-          backgroundColor: '#ffffff', borderRadius: 24, padding: '20px 30px', overflow: 'hidden',
-        }}>
-          {days.map((day, i) => {
-            const names = day.communes.flatMap(c => c.pharmacies)
-            const label = names
-              .map(ph => `${imageSafeText(ar ? ph.name_ar : ph.name, arabicOk, ar ? 'صيدلية' : 'Pharmacie')}${shiftSuffix(ph.shifts, locale)}`)
-              .join(' · ')
-            // Le vendredi, jour de garde le plus consulté, est mis en avant.
-            const isFriday = new Date(`${day.date}T12:00:00Z`).getUTCDay() === 5
-            return (
-              <div key={day.date} style={{
-                display: 'flex', flexDirection: rowDir, alignItems: 'center',
-                padding: `${metrics.padding}px 0`,
-                borderBottom: i === days.length - 1 ? 'none' : '1px solid #f1f5f9',
-                backgroundColor: isFriday ? '#f0fdf4' : 'transparent',
-              }}>
-                <div style={{
-                  display: 'flex', justifyContent: 'center',
-                  width: MONTH_DAY_COLUMN_WIDTH, flexShrink: 0,
-                  fontSize: metrics.dayFontSize, fontWeight: 700,
-                  color: isFriday ? ALGERIA_GREEN : '#334155',
-                }}>
-                  {noWrap(formatDayShort(day.date, locale))}
-                </div>
-                <div style={{
-                  display: 'flex', justifyContent: startAlign, flexGrow: 1,
-                  fontSize: metrics.fontSize, fontWeight: isFriday ? 700 : 400, color: '#0f172a',
-                }}>
-                  {noWrap(truncate(label, metrics.maxChars))}
-                </div>
+        <ListCard padding="10px 20px">
+          <div style={{ display: 'flex', flexDirection: rowDir, flexGrow: 1 }}>
+            {columns.map((col, ci) => (
+              <div key={ci} style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, flexBasis: 0 }}>
+                {col.map(({ d, e }, i) => renderRow(d, e, i === col.length - 1))}
               </div>
-            )
-          })}
+            )).flatMap((col, ci) => ci === 0 || !twoColumns ? [col] : [
+              <div key={`sep${ci}`} style={{ display: 'flex', width: 1, backgroundColor: 'rgba(185, 132, 37, 0.45)', margin: '6px 15px' }} />,
+              col,
+            ])}
+          </div>
           {remainingDays > 0 && (
-            <div style={{ display: 'flex', justifyContent: startAlign, fontSize: 24, fontWeight: 700, color: '#0284c7', marginTop: 12 }}>
-              {noWrap(t.moreDays(remainingDays))}
+            <div style={{ display: 'flex', justifyContent: 'center', fontSize: 23, fontWeight: 700, color: CASBAH.brassDark, marginTop: 8 }}>
+              <TextPieces chrome={chrome} parts={t.moreDays(remainingDays)} noWrap={noWrap} />
             </div>
           )}
-        </div>
+        </ListCard>
 
         <ImageFooter chrome={chrome} />
-      </div>
+      </Page>
     ),
     { width: IMAGE_WIDTH, height: IMAGE_HEIGHT, ...(fonts ? { fonts } : {}) }
   )
