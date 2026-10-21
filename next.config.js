@@ -21,6 +21,10 @@ const nextConfig = {
       '/api/garde/social-image': ['./assets/fonts/**', './assets/dwadz-logo.png'],
       '/api/cron/garde-daily': ['./assets/fonts/**', './assets/dwadz-logo.png'],
       '/api/publish': ['./assets/fonts/**', './assets/dwadz-logo.png'],
+      // Visuels des publications thématiques (lib/social-visual.tsx).
+      '/api/cron/social-publish': ['./assets/fonts/**', './assets/dwadz-logo.png'],
+      '/api/admin/social/*': ['./assets/fonts/**', './assets/dwadz-logo.png'],
+      '/api/admin/social/*/image': ['./assets/fonts/**', './assets/dwadz-logo.png'],
     },
   },
 }

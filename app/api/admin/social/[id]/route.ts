@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkAdminAuth } from '@/lib/admin-auth'
-import { postToFacebook } from '@/lib/social'
+import { publishPostToFacebook } from '@/lib/social-publish'
 import {
   getPost,
   updatePost,
-  composeMessage,
   markPublished,
   markError,
 } from '@/lib/facebook-content'
@@ -48,8 +47,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     if (body.action === 'publish') {
       // Applique d'abord les éventuelles éditions, puis publie.
       const merged = { ...post, ...edits }
-      const message = composeMessage(merged)
-      const res = await postToFacebook(message)
+      const res = await publishPostToFacebook(merged)
       if (!res.success) {
         await markError(id, res.error || 'Échec de publication')
         return NextResponse.json({ error: res.error || 'Échec de publication' }, { status: 502 })

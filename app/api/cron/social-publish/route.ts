@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
-import { postToFacebook } from '@/lib/social'
+import { publishPostToFacebook } from '@/lib/social-publish'
 import {
   getNextDuePost,
-  composeMessage,
   markPublished,
   markError,
 } from '@/lib/facebook-content'
@@ -36,8 +35,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ published: false, message: 'Aucun post approuvé à échéance' })
     }
 
-    const message = composeMessage(post)
-    const res = await postToFacebook(message)
+    const res = await publishPostToFacebook(post)
 
     if (!res.success) {
       await markError(post.id, res.error || 'Échec de publication')

@@ -150,3 +150,30 @@ export function ornamentRuleUri(width: number, color: string = CASBAH.brass, sta
     `</svg>`
   )
 }
+
+export type IconKind = 'pill' | 'alert' | 'sparkle' | 'chart'
+
+/**
+ * Pictogrammes posés dans le médaillon de la niche des visuels éditoriaux
+ * (publications thématiques). Dessinés à la main plutôt qu'en emoji : satori
+ * ne rend pas les emoji sans les télécharger.
+ */
+export function iconUri(kind: IconKind): string {
+  const body: Record<IconKind, string> = {
+    pill:
+      `<g transform="rotate(-40 48 48)"><rect x="14" y="30" width="68" height="36" rx="18" fill="${CASBAH.teal}"/>` +
+      `<path d="M48 30h16a18 18 0 0 1 0 36H48z" fill="${CASBAH.brass}"/>` +
+      `<rect x="22" y="36" width="22" height="6" rx="3" fill="#fff" fill-opacity=".55"/></g>`,
+    alert:
+      `<path d="M48 10 90 82H6z" fill="#dc2626" stroke="#dc2626" stroke-width="6" stroke-linejoin="round"/>` +
+      `<rect x="44" y="34" width="8" height="26" rx="4" fill="#fff"/><circle cx="48" cy="70" r="5" fill="#fff"/>`,
+    sparkle:
+      `<path d="M48 6 58 38 90 48 58 58 48 90 38 58 6 48 38 38z" fill="${CASBAH.brass}"/>` +
+      `<path d="M48 22 53 43 74 48 53 53 48 74 43 53 22 48 43 43z" fill="#fff" fill-opacity=".6"/>`,
+    chart:
+      `<rect x="12" y="52" width="18" height="32" rx="3" fill="${CASBAH.teal}"/>` +
+      `<rect x="39" y="30" width="18" height="54" rx="3" fill="${CASBAH.blue}"/>` +
+      `<rect x="66" y="10" width="18" height="74" rx="3" fill="${CASBAH.brass}"/>`,
+  }
+  return svgDataUri(`<svg ${SVG_NS} width="96" height="96" viewBox="0 0 96 96">${body[kind]}</svg>`)
+}
