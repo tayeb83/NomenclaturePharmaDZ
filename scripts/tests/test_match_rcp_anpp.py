@@ -173,6 +173,27 @@ class Dosages(unittest.TestCase):
         # sans la coupe, 25, 50 et 75 mg (posologie) et 50 mg (excipient) feraient de faux dosages
         self.assertEqual(m.strengths(m.dosage_zone(self.RCP_TEXT)), {(10.0, "mg")})
 
+    def test_formats_de_la_vraie_nomenclature(self):
+        # relevés dans le CSV de rapprochement : fractions sans unité, espaces de milliers, MUI
+        self.assertEqual(m.fiche_strengths("0,0005"), {(0.05, "%")})
+        self.assertEqual(m.fiche_strengths("0,01"), {(1.0, "%")})
+        self.assertEqual(m.fiche_strengths("0.025"), {(2.5, "%")})
+        self.assertEqual(m.fiche_strengths("1 500 000UI"), {(1_500_000.0, "ui")})
+        self.assertEqual(m.strengths("Spiramycine 1.5 MUI"), {(1_500_000.0, "ui")})
+        self.assertEqual(m.strengths("0.05 %"), {(0.05, "%")})
+        self.assertEqual(m.fiche_strengths("200 U CEIP/ML"), set())  # unité non reconnue : dosage inconnu
+
+    def test_pommades_departagees_par_le_pourcentage(self):
+        kept, statut = m.narrow_by_dosage(self.fiches("0,005", "0,01"), m.strengths("CROPINE 0.5 % ; 5 mg ; 1 ml"))
+        self.assertEqual(([f.id for f in kept], statut), (["1"], "resolu"))
+
+    def test_spiramycine_ui_et_mui(self):
+        kept, _ = m.narrow_by_dosage(self.fiches("1 500 000UI", "3 000 000UI"), m.strengths("1.5 MUI"))
+        self.assertEqual([f.id for f in kept], ["1"])
+
+    def test_un_nombre_a_trois_chiffres_nest_pas_un_separateur_de_milliers(self):
+        self.assertEqual(m.strengths("B/30 10 mg"), {(10.0, "mg")})
+
     def fiches(self, *dosages):
         return m.load_nomenclature([{"id": i + 1, "dci": "X", "nom_marque": "B", "labo": "L", "dosage": d}
                                     for i, d in enumerate(dosages)])
