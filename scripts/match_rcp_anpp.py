@@ -352,25 +352,45 @@ def run(entries: list[dict], fiches: list[Fiche]) -> list[tuple[dict, Result]]:
 
 # ─── Dosages lus dans les PDF ────────────────────────────────────────────────
 
+_NUM = r"(?:\d{1,3}(?:[ \u00a0]\d{3})+(?:[.,]\d+)?|\d+(?:[.,]\d+)?)"  # 1 500 000 ou 0,5
 _STRENGTH = re.compile(
-    r"(\d+(?:[.,]\d+)?(?:\s*[/+]\s*\d+(?:[.,]\d+)?)*)\s*(mg|g|mcg|µg|μg|ug|mui|ui|iu|ml|%)(?![^\W\d_])",
+    rf"({_NUM}(?:\s*[/+]\s*{_NUM})*)\s*(mg|g|mcg|µg|μg|ug|mui|ui|iu|ml|%)(?![^\W\d_])",
     re.IGNORECASE,
 )
 _TO_BASE = {"g": ("mg", 1000.0), "mg": ("mg", 1.0), "mcg": ("mcg", 1.0), "µg": ("mcg", 1.0),
             "μg": ("mcg", 1.0), "ug": ("mcg", 1.0), "ui": ("ui", 1.0), "iu": ("ui", 1.0),
-            "mui": ("mui", 1.0), "ml": ("ml", 1.0), "%": ("%", 1.0)}
+            "mui": ("ui", 1_000_000.0), "ml": ("ml", 1.0), "%": ("%", 1.0)}
+_FRACTION = re.compile(r"\s*(0[.,]\d+)\s*")
+
+
+def _num(text: str) -> float:
+    return float(re.sub(r"\s", "", text).replace(",", "."))
 
 
 def strengths(text: str | None) -> set[tuple[float, str]]:
     """
     Dosages d'un texte, ramenés à une unité commune.
-    « 5/160 mg » → {(5, mg), (160, mg)} ; « 0,5 g » → {(500, mg)} ; « 10mg/5ml » → {(10, mg), (5, ml)}.
+    « 5/160 mg » → {(5, mg), (160, mg)} ; « 0,5 g » → {(500, mg)} ; « 10mg/5ml » → {(10, mg), (5, ml)} ;
+    « 1 500 000 UI » et « 1,5 MUI » → {(1500000, ui)}.
     """
     out: set[tuple[float, str]] = set()
     for nums, unit in _STRENGTH.findall(text or ""):
         base, mult = _TO_BASE[unit.lower()]
         for n in re.split(r"\s*[/+]\s*", nums):
-            out.add((round(float(n.replace(",", ".")) * mult, 4), base))
+            out.add((round(_num(n) * mult, 4), base))
+    return out
+
+
+def fiche_strengths(dosage: str | None) -> set[tuple[float, str]]:
+    """
+    Dosages d'une fiche de nomenclature. Les crèmes, pommades et sirops y sont
+    souvent notés en fraction sans unité (« 0,01 » pour 1 %, « 0,0005 » pour 0,05 %) :
+    on les lit comme des pourcentages, comme dans les RCP.
+    """
+    out = strengths(dosage)
+    for part in re.split(r"[|;]", dosage or ""):
+        if _FRACTION.fullmatch(part):
+            out.add((round(_num(part) * 100, 4), "%"))
     return out
 
 
@@ -391,7 +411,7 @@ def narrow_by_dosage(fiches: list[Fiche], pdf_strengths: set[tuple[float, str]])
     départage « 5/160 » de « 5/80 » et tolère « 10,84 mg exprimé en 10 mg ».
     """
     def frac(f: Fiche) -> float:
-        own = strengths(f.dosage)
+        own = fiche_strengths(f.dosage)
         return len(own & pdf_strengths) / len(own) if own else -1.0  # -1 : dosage inconnu
 
     scores = [(f, frac(f)) for f in fiches]
