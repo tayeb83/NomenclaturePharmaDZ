@@ -22,8 +22,10 @@ import { GlossarySection } from '@/components/ui/GlossarySection'
 import { BackButton } from '@/components/ui/BackButton'
 import { MedicamentInsights } from '@/components/drug/MedicamentInsights'
 import { MonographieSection } from '@/components/drug/MonographieSection'
+import { RcpSection } from '@/components/drug/RcpSection'
 import { getPublishedMonographie, hasContent } from '@/lib/monographies'
 import { getPpa, formatPpa } from '@/lib/ppa'
+import { getRcpForFiche, RCP_PORTAL_URL } from '@/lib/rcp'
 import { AdInContent } from '@/components/ads/AdBanner'
 import { AccesSignalement } from '@/components/acces/AccesSignalement'
 
@@ -222,13 +224,15 @@ export async function MedicamentDetail(
   const isNonRenouv = med.source === 'non_renouvele'
 
   const familleSlug = med.source === 'enregistrement' ? marqueSlug(med.nom_marque) : ''
-  const [alternatifs, atcHierarchy, famille, insights, monographieRaw, ppa] = await Promise.all([
+  const [alternatifs, atcHierarchy, famille, insights, monographieRaw, ppa, rcps] = await Promise.all([
     getCachedAlternatifsDCI(med.dci, 10),
     getCachedAtcHierarchyByDci(med.dci),
     familleSlug ? getCachedMedicamentsByMarque(familleSlug) : Promise.resolve([]),
     med.source === 'enregistrement' ? getCachedMedicamentInsights(med) : Promise.resolve(null),
     med.dci ? getPublishedMonographie(med.dci, lang) : Promise.resolve(null),
     getPpa(med.n_enreg, med.code).catch(() => null),
+    // RCP publié par l'ANPP : rattaché aux seules fiches de la nomenclature en vigueur
+    med.source === 'enregistrement' ? getRcpForFiche(med.n_enreg, med.code).catch(() => []) : Promise.resolve([]),
   ])
   const monographie = hasContent(monographieRaw) ? monographieRaw : null
   // Page « famille de marque » : proposée seulement si elle regroupe plusieurs
@@ -559,6 +563,17 @@ export async function MedicamentDetail(
                     {pickLang(lang, { fr: `Voir les génériques (${autres.length})`, ar: `عرض الأدوية الجنيسة (${autres.length})` })}
                   </a>
                 )}
+                {!isRetrait && !isNonRenouv && (
+                  rcps.length > 0 ? (
+                    <a className="fiche-btn" href="#rcp">
+                      {pickLang(lang, { fr: 'Voir le RCP officiel', ar: 'عرض RCP الرسمي' })}
+                    </a>
+                  ) : (
+                    <a className="fiche-btn fiche-btn-outline" href={RCP_PORTAL_URL} target="_blank" rel="noopener noreferrer">
+                      {pickLang(lang, { fr: 'Chercher le RCP (ANPP)', ar: 'البحث عن RCP (ANPP)' })}
+                    </a>
+                  )
+                )}
                 <a className="fiche-btn fiche-btn-outline" href={googleBoxSearchHref(med)} target="_blank" rel="noopener noreferrer">
                   {pickLang(lang, { fr: 'Voir la boîte (Google)', ar: 'صورة العلبة (Google)' })}
                 </a>
@@ -577,6 +592,9 @@ export async function MedicamentDetail(
           )}
 
           {/* ─── Monographie de la DCI (contenu saisi et relu) ──── */}
+          {/* ─── RCP officiel (ANPP) : lien vers le PDF du portail ─── */}
+          <RcpSection rcps={rcps} lang={lang} />
+
           {monographie && <MonographieSection m={monographie} dci={med.dci} lang={lang} />}
 
           {/* ─── Analyse propre à la fiche ───────────────────── */}
