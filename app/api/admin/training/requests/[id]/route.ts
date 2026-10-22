@@ -26,6 +26,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       if (!res) return NextResponse.json({ error: 'Utilisateur introuvable ou non validé' }, { status: 404 })
       return NextResponse.json({ user: res.user, mailSent: res.mailSent })
     }
+    if (action === 'delete') {
+      // Suppression à la demande de la personne (droit à l'effacement) : définitive.
+      if (body?.confirm !== true) return NextResponse.json({ error: 'confirmation requise' }, { status: 400 })
+      const ok = await svc.deleteUser(id, 'admin')
+      return ok ? NextResponse.json({ deleted: true }) : NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 })
+    }
     if (!(action in ACTIONS)) return NextResponse.json({ error: 'action invalide' }, { status: 400 })
     const res = await svc.setStatus(id, ACTIONS[action as keyof typeof ACTIONS])
     if (!res) return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 })

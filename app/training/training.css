@@ -256,3 +256,31 @@ a.tr-btn { text-decoration: none; }
 .tr-opt-edit input[type="text"] { flex: 1; min-height: 44px; padding: 8px 12px; border: 1.5px solid var(--slate-500); border-radius: 8px; font: inherit; }
 .tr-opt-edit input[type="radio"] { width: 24px; height: 24px; margin-top: 10px; }
 .tr-opt-edit strong { width: 20px; padding-top: 10px; }
+
+/* ─── Phase 5 : quiz rapide, flashcards, compte ────────────────────────────── */
+.tr-quiz { padding-top: 16px; }
+.tr-quiz-bar { height: 6px; background: var(--slate-200); border-radius: 999px; margin-bottom: 14px; overflow: hidden; }
+.tr-quiz-bar span { display: block; height: 100%; background: var(--blue); transition: width .2s; }
+.tr-quiz-options { display: grid; gap: 10px; }
+.tr-quiz-opt { display: flex; gap: 12px; align-items: center; text-align: start; min-height: 56px; padding: 12px 14px; font: inherit; border: 2px solid var(--slate-500); border-radius: 12px; background: #fff; color: var(--slate-900); cursor: pointer; width: 100%; }
+.tr-quiz-opt:disabled { cursor: default; }
+.tr-quiz-opt.is-good { border-color: var(--green); background: #f0fdf4; }
+.tr-quiz-opt.is-bad { border-color: var(--red); background: #fef2f2; }
+.tr-quiz-opt:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+.tr-quiz-feedback { margin-top: 16px; padding: 14px 16px; border-radius: 12px; border: 1.5px solid; }
+.tr-quiz-feedback:focus { outline: none; }
+.tr-quiz-feedback.is-ok { background: var(--green-light); border-color: var(--green); color: #064e3b; }
+.tr-quiz-feedback.is-ko { background: var(--red-light); border-color: var(--red); color: #7f1d1d; }
+.tr-quiz-feedback .tr-btn { margin-top: 10px; }
+.tr-quiz-feedback .tr-link { display: inline-flex; align-items: center; min-height: 44px; color: inherit; }
+.tr-quiz-verdict { display: inline-flex; align-items: center; gap: 8px; font-size: 1.1rem; }
+.tr-flash { display: grid; gap: 12px; }
+.tr-flash-q { font-size: 1.25rem; font-weight: 700; color: var(--navy); margin: 0; }
+.tr-flash-a { border-top: 1px dashed var(--slate-400); padding-top: 12px; }
+.tr-flash-a h2, .tr-flash-a h3 { font-size: 1rem !important; margin: 10px 0 4px !important; }
+.tr-flash-tools { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; margin-top: 12px; }
+.tr-links-row { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin: 16px 0; }
+.tr-danger { border-color: var(--red) !important; color: #b91c1c !important; }
+.tr-account { margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--slate-200); }
+.tr-bar { display: inline-block; width: 120px; height: 8px; background: var(--slate-200); border-radius: 999px; overflow: hidden; vertical-align: middle; }
+.tr-bar span { display: block; height: 100%; background: var(--red); }

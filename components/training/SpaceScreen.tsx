@@ -12,13 +12,14 @@ export type SpaceAttempt = { id: number; name: string; mode: 'tuteur' | 'examen'
 const COUNTS = [10, 20, 50, 100]
 
 export function SpaceScreen({
-  email, role, available, attempts, mockCodes,
+  email, role, available, attempts, mockCodes, flashCount,
 }: {
   email: string
   role: 'etudiant' | 'enseignant' | 'pharmacien'
   available: number
   attempts: SpaceAttempt[]
   mockCodes: string[]
+  flashCount: number
 }) {
   const { lang } = useLanguage()
   const c = getCopy(lang)
@@ -29,6 +30,17 @@ export function SpaceScreen({
   const [count, setCount] = useState(Math.min(20, Math.max(available, 1)))
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleteError, setDeleteError] = useState(false)
+
+  async function deleteAccount() {
+    setDeleteError(false)
+    const res = await fetch('/api/training/account', {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ confirm: true }),
+    }).catch(() => null)
+    if (res?.ok) { router.push('/training'); router.refresh(); return }
+    setDeleteError(true)
+  }
 
   async function start(body: Record<string, unknown>, key: string) {
     if (busy) return
@@ -56,6 +68,11 @@ export function SpaceScreen({
     <div className="tr-wrap tr-narrow">
       <h1 className="tr-wait-title">{c.space.title}</h1>
       <p>{c.space.welcome} <strong dir="ltr">{email}</strong> ({c.form.roles[role]})</p>
+
+      <div className="tr-links-row">
+        <Link className="tr-btn tr-btn-outline" href="/training/quiz">{c.spaceLinks.quiz}</Link>
+        <Link className="tr-btn tr-btn-outline" href="/training/flashcards">{c.spaceLinks.flash} ({flashCount})</Link>
+      </div>
 
       {available === 0 ? (
         <p className="tr-flash warn" role="status">{t.empty}</p>
@@ -128,6 +145,26 @@ export function SpaceScreen({
       </section>
 
       <LogoutButton />
+
+      <section className="tr-account" aria-labelledby={`${uid}-acc`}>
+        <h2 id={`${uid}-acc`}>{c.account.title}</h2>
+        <p className="tr-muted">{c.account.text} <Link className="tr-link" href="/privacy#training">{c.account.privacy}</Link></p>
+        <button type="button" className="tr-btn tr-btn-outline tr-danger" onClick={() => setConfirmDelete(true)}>{c.account.delete}</button>
+      </section>
+
+      {confirmDelete && (
+        <div className="tr-modal" role="presentation">
+          <div className="tr-modal-card" role="alertdialog" aria-modal="true" aria-labelledby={`${uid}-dt`} aria-describedby={`${uid}-dd`}>
+            <h2 id={`${uid}-dt`}>{c.account.confirmTitle}</h2>
+            <p id={`${uid}-dd`}>{c.account.confirmText}</p>
+            <div className="tr-error" role="alert">{deleteError ? c.account.error : ''}</div>
+            <div className="tr-modal-actions">
+              <button type="button" className="tr-btn tr-btn-outline" autoFocus onClick={() => setConfirmDelete(false)}>{c.account.cancel}</button>
+              <button type="button" className="tr-btn tr-btn-outline tr-danger" onClick={deleteAccount}>{c.account.confirm}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

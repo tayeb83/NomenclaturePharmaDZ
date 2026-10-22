@@ -33,6 +33,10 @@ export type TrainingUserRow = {
   last_login_at: string | null
 }
 
+/** Durées de conservation (mois). Propositions à confirmer ; elles doivent correspondre à /privacy. */
+export type RetentionConfig = { unvalidatedMonths: number; inactiveMonths: number; eventMonths: number }
+export const DEFAULT_RETENTION: RetentionConfig = { unvalidatedMonths: 12, inactiveMonths: 24, eventMonths: 24 }
+
 export type RequestFilters = { status?: TrainingStatus | 'all'; q?: string }
 
 const ROLE_LABEL: Record<TrainingRole, string> = {
@@ -287,7 +291,43 @@ export function createTrainingService(deps: TrainingDeps) {
     await query('DELETE FROM training_sessions WHERE expires_at < NOW()')
   }
 
-  return { requestLoginLink, consumeLoginToken, createSession, getSessionUser, destroySession, purgeExpired, submitRequest, listRequests, counts, setStatus, resendAccess, exportRequestsCsv, issueLoginToken }
+  /**
+   * Suppression d'un compte et de ses données (demande de l'utilisateur ou de
+   * l'équipe). Cascade : jetons, sessions, tentatives, réponses, flashcards.
+   * Les événements restent mais perdent leur lien avec la personne (user_id NULL).
+   */
+  async function deleteUser(id: number | string, by: 'self' | 'admin'): Promise<boolean> {
+    const rows = await query<{ id: string }>('DELETE FROM training_users WHERE id = $1 RETURNING id', [id])
+    if (rows.length === 0) return false
+    await logEvent(null, 'account_deleted', { by })
+    return true
+  }
+
+  /**
+   * Conservation limitée : applique les durées annoncées dans la politique de
+   * confidentialité. À appeler chaque jour (cron).
+   */
+  async function purgeRetention(cfg: Partial<RetentionConfig> = {}): Promise<Record<string, number>> {
+    const c = { ...DEFAULT_RETENTION, ...cfg }
+    await purgeExpired()
+    const unvalidated = await query(
+      `DELETE FROM training_users WHERE status IN ('pending', 'rejected')
+         AND COALESCE(status_changed_at, created_at) < NOW() - make_interval(months => $1) RETURNING id`,
+      [c.unvalidatedMonths],
+    )
+    const inactive = await query(
+      `DELETE FROM training_users WHERE status = 'approved'
+         AND COALESCE(last_login_at, approved_at, created_at) < NOW() - make_interval(months => $1) RETURNING id`,
+      [c.inactiveMonths],
+    )
+    const events = await query(
+      'DELETE FROM events WHERE created_at < NOW() - make_interval(months => $1) RETURNING id',
+      [c.eventMonths],
+    )
+    return { unvalidated: unvalidated.length, inactive: inactive.length, events: events.length }
+  }
+
+  return { deleteUser, purgeRetention, requestLoginLink, consumeLoginToken, createSession, getSessionUser, destroySession, purgeExpired, submitRequest, listRequests, counts, setStatus, resendAccess, exportRequestsCsv, issueLoginToken }
 }
 
 export type TrainingService = ReturnType<typeof createTrainingService>

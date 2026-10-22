@@ -202,9 +202,9 @@ directement et ne prouve pas qu'un compte suit la page ; la validation reste man
 3. **Paramètres de l'application → Général** :
    * *Domaines de l'application* : `dzair-pharma.net` ;
    * *URL de la politique de confidentialité* : `https://www.dzair-pharma.net/privacy`
-     (la page sera complétée en phase 5, voir « Confidentialité ») ;
-   * *Suppression des données utilisateur* : une URL d'instructions (la page de confidentialité
-     décrira la suppression sur demande) ;
+     (contient une section « Dzair-Pharma Training ») ;
+   * *Suppression des données utilisateur* : une URL d'instructions → `https://www.dzair-pharma.net/privacy#training`
+     (la section décrit la suppression en libre-service et sur demande) ;
    * catégorie : Éducation.
 4. **Produits → Facebook Login → Paramètres** :
    * *Connexion OAuth client* : **Oui** ; *Connexion OAuth web* : **Oui** ;
@@ -303,3 +303,85 @@ Migration à appliquer : `psql "$DATABASE_URL" -f sql/25_training_exam.sql`
   hors ligne.
 * Le build complet (`next build`) de ce dépôt exige la base de production (pages de garde
   prérendues) : ici seuls la compilation et le contrôle de types ont pu être vérifiés.
+
+## Phase 5 — suivi, exports, confidentialité, quiz mobile, flashcards
+
+Aucune nouvelle migration. Variables : `CRON_SECRET` (déjà utilisée par les autres crons) protège
+`/api/cron/training-purge`.
+
+### Écrans et routes
+
+| Route | Rôle |
+|---|---|
+| `/admin/training/stats` | Utilisateurs actifs (7/30/90 j), tentatives, score moyen, par mode, questions / types / classes ATC les plus manquées, exports CSV |
+| `/api/admin/training/export?kind=users\|attempts` | Export CSV (admin uniquement) : utilisateurs avec agrégats, tentatives |
+| `/training/quiz` | Quiz rapide (10 questions), une par écran, un appui valide et corrige sur place ; enregistré comme série en mode tuteur |
+| `/training/flashcards` | Révision : question, « Afficher la réponse », précédente / suivante, mélanger, retirer |
+| `/training/espace` | Liens quiz et flashcards, « Supprimer mon compte et mes données » (confirmation) |
+| `DELETE /api/training/account` | Suppression en libre-service (cascade : jetons, sessions, tentatives, réponses, flashcards) |
+| `/privacy#training` | Section « Dzair-Pharma Training » de la politique de confidentialité |
+| `/api/cron/training-purge` | Cron quotidien (03:30 UTC) : conservation limitée, jetons et sessions expirés |
+
+Dans `/admin/training` : bouton **Supprimer** par utilisateur (droit à l'effacement), liens vers le suivi et la relecture.
+
+### Suivi : ce qui est mesuré, et ce qui ne l'est pas
+
+* Taux d'erreur calculés sur les réponses **données et corrigées** (les questions laissées sans réponse
+  ne comptent pas). Classements de questions et de classes ATC : **au moins 5 réponses**.
+* « Actifs » = utilisateurs ayant un événement de connexion, de début ou fin de série ou de réponse sur la période.
+* Les événements ne contiennent jamais d'e-mail ni le contenu des réponses ; en examen ils ne révèlent pas la justesse.
+
+### Confidentialité et conservation
+
+Durées appliquées par le cron et annoncées dans `/privacy#training` (**propositions à confirmer** ;
+à modifier ensemble dans `DEFAULT_RETENTION` de `lib/training/service.ts` et dans la page) :
+
+| Donnée | Durée |
+|---|---|
+| Demandes non validées ou refusées | 12 mois |
+| Comptes validés sans connexion | 24 mois |
+| Événements d'usage | 24 mois |
+| Jetons de connexion / sessions expirés | supprimés quotidiennement |
+
+Suppression : en libre-service (espace) ou par l'admin ; événements conservés mais détachés de la personne
+(`user_id` NULL, événement `account_deleted` sans donnée personnelle).
+
+**À vérifier juridiquement (non fait ici)** : conformité à la loi algérienne n° 18-07 sur la protection des
+personnes physiques dans le traitement des données à caractère personnel — notamment le régime de
+déclaration / autorisation auprès de l'autorité nationale (ANPDP), le consentement, la base légale du
+traitement, l'hébergement et le transfert des données hors d'Algérie (hébergeur, fournisseur d'e-mail,
+Facebook), le délai de conservation et les mentions d'information. Les textes ci-dessus décrivent le
+fonctionnement réel du module ; ils ne valent pas avis juridique.
+
+### PWA
+
+* `public/sw.js` : le cache passe en `pharmaveille-v2` (purge d'éventuelles pages `/training` déjà mises en
+  cache) et **les pages `/training` ne sont jamais mises en cache** (corrections, examens, session).
+  Observation hors périmètre : ce service worker met en cache toute page HTML visitée, **y compris `/admin`** ;
+  à envisager séparément.
+* `public/manifest.json` : raccourcis « Training : quiz rapide » et « Training : flashcards ».
+
+### Non-régression du site existant
+
+`npm run test:regression` compare, URL par URL (API de recherche avec plusieurs paramètres, `/recherche`,
+`/alertes`, `/retraits`, `/medicaments`, `/substitution`, `/classes-therapeutiques`, `/outils`, `/a-propos`,
+`/contact`, 404), un serveur **avec** le module à un serveur de **référence** (le commit `90eff2f`, avant
+tout le module) lancés sur la même base : statut identique, JSON identique, HTML identique (hors build id
+et menu), et le menu ne gagne que le lien Training. Résultat sur la base de test : 17/17.
+
+```bash
+# référence : git worktree add ../baseline 90eff2f && ln -s $PWD/node_modules ../baseline/ && (cd ../baseline && PORT=3001 npx next dev -p 3001)
+SITE_URL=http://localhost:3000 BASELINE_URL=http://localhost:3001 REGRESSION_QUERY=PARACETAMOL npm run test:regression
+```
+
+### Fichiers existants modifiés par tout le module (depuis `90eff2f`)
+
+`components/layout/Nav.tsx` (lien), `app/admin/AdminClient.tsx` (liens), `app/privacy/page.tsx` (section 10 et mise à jour),
+`public/sw.js`, `public/manifest.json`, `vercel.json` (1 cron), `package.json` (scripts de test),
+`tsconfig.json` (`allowImportingTsExtensions`), `env.local.example`, `.gitignore`.
+
+### Limites connues
+
+* Quiz et flashcards nécessitent une connexion (pas de mode hors ligne) ; la révision n'a pas de répétition espacée.
+* Les pages d'administration existantes sont rendues dans un `<html>` imbriqué (layout admin) : avertissement
+  d'hydratation en développement, antérieur au module.
