@@ -486,7 +486,7 @@ def write_outputs(results: list[tuple[dict, Result]], out: Path, duplicates: int
         w.writerow(["rcp_id", "statut", "score", "nom_commercial", "dci_anpp", "laboratoire_anpp", "pdf",
                     "marque_trouvee", "dci_concordance", "labo_concordance", "nb_fiches", "ids_nomenclature",
                     "marques_nomenclature", "dci_nomenclature", "labos_nomenclature", "remarque",
-                    "autres_rcp_sur_ces_fiches", "dosage", "dosages_dans_le_pdf", "nb_fiches_avant_dosage"])
+                    "autres_rcp_sur_ces_fiches", "dosage", "dosages_dans_le_pdf", "dosages_nomenclature", "nb_fiches_avant_dosage"])
         order = {s: i for i, s in enumerate(STATUTS)}
         # Plusieurs PDF pour une même marque (un par dosage ?) tombent sur les mêmes fiches :
         # le rattachement est alors sûr pour la marque, pas pour le dosage.
@@ -500,7 +500,7 @@ def write_outputs(results: list[tuple[dict, Result]], out: Path, duplicates: int
                 rcp_id(e), r.statut, r.score, e.get("nomCommercial"), e.get("dci"), e.get("laboratoire"), e.get("pdf"),
                 r.brand, r.dci, r.labo, len(fs), ";".join(f.id for f in fs[:30]),
                 uniq(f.nom_marque for f in fs[:30]), uniq(f.dci for f in fs[:30]), uniq(f.labo for f in fs[:30]), r.note,
-                shared(r), r.dosage, r.dosages_pdf, r.nb_fiches_marque or "",
+                shared(r), r.dosage, r.dosages_pdf, uniq(f.dosage for f in fs[:30]), r.nb_fiches_marque or "",
             ])
 
     # Tables d'équivalence tirées des rapprochements sûrs, à valider à la main.
