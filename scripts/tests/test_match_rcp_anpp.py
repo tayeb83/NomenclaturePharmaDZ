@@ -152,6 +152,86 @@ class Rapprochement(unittest.TestCase):
         self.assertEqual(r.brand, "proche")
 
 
+class Dosages(unittest.TestCase):
+    RCP_TEXT = (
+        "RÉSUMÉ DES CARACTÉRISTIQUES DU PRODUIT\nBIOTRETANE, DCI : Acitrétine, gélule 10mg, B/30\n"
+        "2.1. Description générale :\nBIOTRETANE 10mg\nAcitrétine ........ 10 mg\nPour une gélule\n"
+        "2.2.Formule centésimale :\nExcipients : Sucre, glucose. Excipient à effet notoire : lactose 50 mg\n"
+        "3. FORME PHARMACEUTIQUE\nBIOTRETANE 10mg : Gélule à corps blanc, B/30\n"
+        "4. DONNEES CLINIQUES :\n4.2 Posologie : 25 à 50 mg par jour, jusqu'à 75 mg"
+    )
+
+    def test_lecture_des_dosages(self):
+        self.assertEqual(m.strengths("10 MG"), {(10.0, "mg")})
+        self.assertEqual(m.strengths("5/160 MG"), {(5.0, "mg"), (160.0, "mg")})
+        self.assertEqual(m.strengths("0,5 g"), {(500.0, "mg")})
+        self.assertEqual(m.strengths("10mg/5ml"), {(10.0, "mg"), (5.0, "ml")})
+        self.assertEqual(m.strengths("200 µg"), {(200.0, "mcg")})
+        self.assertEqual(m.strengths("boîte de 30 gélules"), set())
+
+    def test_zone_sans_posologie_ni_excipients(self):
+        # sans la coupe, 25, 50 et 75 mg (posologie) et 50 mg (excipient) feraient de faux dosages
+        self.assertEqual(m.strengths(m.dosage_zone(self.RCP_TEXT)), {(10.0, "mg")})
+
+    def fiches(self, *dosages):
+        return m.load_nomenclature([{"id": i + 1, "dci": "X", "nom_marque": "B", "labo": "L", "dosage": d}
+                                    for i, d in enumerate(dosages)])
+
+    def test_un_pdf_un_dosage(self):
+        kept, statut = m.narrow_by_dosage(self.fiches("10 MG", "25 MG", "50 MG"), {(10.0, "mg")})
+        self.assertEqual(([f.id for f in kept], statut), (["1"], "resolu"))
+
+    def test_pdf_multi_dosages(self):
+        kept, statut = m.narrow_by_dosage(self.fiches("10 MG", "25 MG"), {(10.0, "mg"), (25.0, "mg")})
+        self.assertEqual(([f.id for f in kept], statut), (["1", "2"], "tous"))
+
+    def test_association_departagee(self):
+        kept, _ = m.narrow_by_dosage(self.fiches("5/80 MG", "5/160 MG"), {(5.0, "mg"), (160.0, "mg")})
+        self.assertEqual([f.id for f in kept], ["2"])
+
+    def test_sel_exprime_en_base(self):
+        kept, _ = m.narrow_by_dosage(self.fiches("10,84 MG EXPRIME EN 10 MG", "20 MG"), {(10.0, "mg")})
+        self.assertEqual([f.id for f in kept], ["1"])
+
+    def test_aucune_concordance_garde_tout(self):
+        kept, statut = m.narrow_by_dosage(self.fiches("10 MG", "25 MG"), {(100.0, "mg")})
+        self.assertEqual((len(kept), statut), (2, "aucun"))
+
+    def test_dosage_inconnu_jamais_ecarte(self):
+        kept, statut = m.narrow_by_dosage(self.fiches("10 MG", "", "25 MG"), {(10.0, "mg")})
+        self.assertEqual(([f.id for f in kept], statut), (["1", "2"], "resolu"))
+
+    def test_resolution_depuis_un_dossier_de_pdf(self):
+        nomenclature = [{"id": 1, "dci": "ATORVASTATINE", "nom_marque": "ATOSTINE", "labo": "LDM", "dosage": "10 MG"},
+                        {"id": 2, "dci": "ATORVASTATINE", "nom_marque": "ATOSTINE", "labo": "LDM", "dosage": "20 MG"}]
+        uuid_a, uuid_b = "a" * 8 + "-1111-2222-3333-" + "a" * 12, "b" * 8 + "-1111-2222-3333-" + "b" * 12
+        entries = [rcp("ATOSTINE", "ATORVASTATINE", "LDM", pdf=f"https://rcp.anpp.dz/storage/rcp-pdfs/x/{u}.pdf")
+                   for u in (uuid_a, uuid_b)]
+        texts = {uuid_a: "ATOSTINE 10 mg\n4. DONNEES CLINIQUES", uuid_b: "ATOSTINE 20 mg\n4. DONNEES CLINIQUES"}
+        results = m.run(entries, m.load_nomenclature(nomenclature))
+        with tempfile.TemporaryDirectory() as tmp:
+            for u in texts:
+                (Path(tmp) / f"{u}.pdf").write_bytes(b"%PDF-fake")
+            real = m.pdf_text
+            m.pdf_text = lambda path, pages=3: texts[Path(path).stem]
+            try:
+                errors = m.resolve_dosages(results, Path(tmp), download=False)
+            finally:
+                m.pdf_text = real
+            self.assertEqual(errors, [])
+            self.assertEqual([[f.id for f in r.fiches] for _, r in results], [["1"], ["2"]])
+            self.assertEqual({r.dosage for _, r in results}, {"resolu"})
+            summary = m.write_outputs(results, Path(tmp) / "out", 0)
+            self.assertEqual(summary["rattaches_avec_dosage_ambigu"], 0)
+            self.assertEqual(summary["dosage_resolu"], 2)
+
+    def test_pdf_absent(self):
+        results = m.run([rcp("CIFLOX", "CIPROFLOXACINE", "BIOPHARM")], m.load_nomenclature(NOMENCLATURE))
+        with tempfile.TemporaryDirectory() as tmp:
+            m.resolve_dosages(results, Path(tmp), download=False)
+        self.assertEqual(results[0][1].dosage, "pdf_non_lu")
+
+
 class Fichiers(unittest.TestCase):
     def test_doublons_fusionnes(self):
         a = rcp("ATOSTINE", "ATORVASTATINE", "LDM", pdf="https://rcp.anpp.dz/storage/rcp-pdfs/x/same.pdf")
