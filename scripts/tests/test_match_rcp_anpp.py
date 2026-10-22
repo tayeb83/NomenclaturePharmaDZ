@@ -224,6 +224,10 @@ class Dosages(unittest.TestCase):
             summary = m.write_outputs(results, Path(tmp) / "out", 0)
             self.assertEqual(summary["rattaches_avec_dosage_ambigu"], 0)
             self.assertEqual(summary["dosage_resolu"], 2)
+            with (Path(tmp) / "out" / "rapprochement.csv").open(encoding="utf-8-sig") as fh:
+                rows = list(csv.DictReader(fh))
+            self.assertEqual(sorted((r["dosages_dans_le_pdf"], r["dosages_nomenclature"]) for r in rows),
+                             [("10 mg", "10 MG"), ("20 mg", "20 MG")])
 
     def test_pdf_absent(self):
         results = m.run([rcp("CIFLOX", "CIPROFLOXACINE", "BIOPHARM")], m.load_nomenclature(NOMENCLATURE))
