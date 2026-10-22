@@ -162,6 +162,22 @@ class Fichiers(unittest.TestCase):
         e = rcp("X", "Y", "Z", pdf="https://rcp.anpp.dz/storage/rcp-pdfs/biopharm-spa/6aa32dae-306d-4feb-85a1-fa181acf992f.pdf")
         self.assertEqual(m.rcp_id(e), "6aa32dae-306d-4feb-85a1-fa181acf992f")
 
+    def test_pdf_multiples_sur_les_memes_fiches_sont_signales(self):
+        # Deux PDF distincts pour ATOSTINE (un par dosage ?) : les deux tombent sur les fiches 2 et 3.
+        with tempfile.TemporaryDirectory() as tmp:
+            entries = [rcp("ATOSTINE", "ATORVASTATINE", "LDM", pdf="https://rcp.anpp.dz/storage/rcp-pdfs/x/a.pdf"),
+                       rcp("ATOSTINE", "ATORVASTATINE", "LDM", pdf="https://rcp.anpp.dz/storage/rcp-pdfs/x/b.pdf"),
+                       rcp("CIFLOX", "CIPROFLOXACINE", "BIOPHARM")]
+            results = m.run(entries, m.load_nomenclature(NOMENCLATURE))
+            summary = m.write_outputs(results, Path(tmp), 0)
+            self.assertEqual(summary["rattaches_avec_dosage_ambigu"], 2)
+            with (Path(tmp) / "rapprochement.csv").open(encoding="utf-8-sig") as fh:
+                by_nom = {}
+                for r in csv.DictReader(fh):
+                    by_nom.setdefault(r["nom_commercial"], []).append(r["autres_rcp_sur_ces_fiches"])
+            self.assertEqual(by_nom["ATOSTINE"], ["1", "1"])
+            self.assertEqual(by_nom["CIFLOX"], ["0"])
+
     def test_bout_en_bout(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp = Path(tmp)
