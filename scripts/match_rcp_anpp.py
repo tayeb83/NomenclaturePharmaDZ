@@ -27,6 +27,12 @@ Usage :
     # ou depuis le JSON de test du dépôt
     python scripts/match_rcp_anpp.py resultats.json --json scripts/fixtures/nomenclature_synthetique.json
 
+Dosages : une marque a souvent un PDF par dosage. Avec --download (ou un dossier
+de PDF déjà téléchargés, --pdf-dir), le script lit les dosages dans le début du
+RCP (titre, composition) et ne garde que les fiches de ce dosage :
+    python scripts/match_rcp_anpp.py resultats.json --db --download
+Il faut pdfplumber, pypdf ou pdftotext (poppler) pour lire les PDF.
+
 Sorties dans --out (défaut : rcp_rapprochement/) :
     rapprochement.csv        une ligne par RCP
     equivalences_dci.csv     libellé ANPP → libellé nomenclature (à valider)
@@ -45,7 +51,10 @@ import os
 import re
 import subprocess
 import sys
+import time
 import unicodedata
+import urllib.error
+import urllib.request
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -268,6 +277,9 @@ class Result:
     labo: str = ""
     fiches: list[Fiche] = field(default_factory=list)
     note: str = ""
+    dosage: str = ""          # resolu | tous | aucun | pdf_non_lu | ""
+    dosages_pdf: str = ""
+    nb_fiches_marque: int = 0
 
 
 def match_one(entry: dict, index: Index) -> Result:
@@ -338,6 +350,127 @@ def run(entries: list[dict], fiches: list[Fiche]) -> list[tuple[dict, Result]]:
     return [(e, match_one(e, index)) for e in entries]
 
 
+# ─── Dosages lus dans les PDF ────────────────────────────────────────────────
+
+_STRENGTH = re.compile(
+    r"(\d+(?:[.,]\d+)?(?:\s*[/+]\s*\d+(?:[.,]\d+)?)*)\s*(mg|g|mcg|µg|μg|ug|mui|ui|iu|ml|%)(?![^\W\d_])",
+    re.IGNORECASE,
+)
+_TO_BASE = {"g": ("mg", 1000.0), "mg": ("mg", 1.0), "mcg": ("mcg", 1.0), "µg": ("mcg", 1.0),
+            "μg": ("mcg", 1.0), "ug": ("mcg", 1.0), "ui": ("ui", 1.0), "iu": ("ui", 1.0),
+            "mui": ("mui", 1.0), "ml": ("ml", 1.0), "%": ("%", 1.0)}
+
+
+def strengths(text: str | None) -> set[tuple[float, str]]:
+    """
+    Dosages d'un texte, ramenés à une unité commune.
+    « 5/160 mg » → {(5, mg), (160, mg)} ; « 0,5 g » → {(500, mg)} ; « 10mg/5ml » → {(10, mg), (5, ml)}.
+    """
+    out: set[tuple[float, str]] = set()
+    for nums, unit in _STRENGTH.findall(text or ""):
+        base, mult = _TO_BASE[unit.lower()]
+        for n in re.split(r"\s*[/+]\s*", nums):
+            out.add((round(float(n.replace(",", ".")) * mult, 4), base))
+    return out
+
+
+def dosage_zone(text: str) -> str:
+    """Début du RCP (titre, composition, forme), sans les excipients ni les données cliniques."""
+    cut = re.search(r"\b4\.?\s*DONN[ÉE]ES\s+CLINIQUES", text, re.IGNORECASE)
+    zone = text[: cut.start()] if cut else text[:6000]
+    return re.sub(r"Excipients?\b.*?(?=\n\s*3\.?\s*FORME\s+PHARMACEUTIQUE)", " ", zone, flags=re.IGNORECASE | re.DOTALL)
+
+
+def narrow_by_dosage(fiches: list[Fiche], pdf_strengths: set[tuple[float, str]]) -> tuple[list[Fiche], str]:
+    """
+    Garde les fiches dont le dosage figure dans le PDF.
+      resolu  des fiches ont été écartées
+      tous    le PDF couvre toutes les fiches (RCP multi-dosages, ou une seule fiche)
+      aucun   aucune fiche ne concorde : on garde tout et on signale
+    Le score d'une fiche est la part de ses valeurs retrouvées dans le PDF, ce qui
+    départage « 5/160 » de « 5/80 » et tolère « 10,84 mg exprimé en 10 mg ».
+    """
+    def frac(f: Fiche) -> float:
+        own = strengths(f.dosage)
+        return len(own & pdf_strengths) / len(own) if own else -1.0  # -1 : dosage inconnu
+
+    scores = [(f, frac(f)) for f in fiches]
+    best = max((sc for _, sc in scores), default=0)
+    if best <= 0:
+        return fiches, "aucun"
+    kept = [f for f, sc in scores if sc == best or sc < 0]  # dosage inconnu : on ne l'écarte pas
+    return kept, ("tous" if len(kept) == len(fiches) else "resolu")
+
+
+def pdf_text(path: Path, pages: int = 3) -> str:
+    """Texte des premières pages (pdfplumber, sinon pypdf, sinon pdftotext)."""
+    try:
+        import pdfplumber  # type: ignore
+        with pdfplumber.open(path) as pdf:
+            return "\n".join((p.extract_text() or "") for p in pdf.pages[:pages])
+    except ImportError:
+        pass
+    try:
+        from pypdf import PdfReader  # type: ignore
+        return "\n".join((p.extract_text() or "") for p in PdfReader(str(path)).pages[:pages])
+    except ImportError:
+        pass
+    res = subprocess.run(["pdftotext", "-layout", "-f", "1", "-l", str(pages), str(path), "-"],
+                         capture_output=True, text=True)
+    if res.returncode != 0:
+        raise RuntimeError("Aucun lecteur PDF : installez pdfplumber (pip install pdfplumber), pypdf ou poppler.")
+    return res.stdout
+
+
+def fetch_pdf(url: str, dest: Path, timeout: int = 40) -> str | None:
+    """Télécharge un PDF s'il manque. Renvoie un message d'erreur, ou None."""
+    if dest.exists() and dest.stat().st_size > 0:
+        return None
+    req = urllib.request.Request(url, headers={"User-Agent": "DwaDZ-rapprochement-RCP/1.0"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = resp.read()
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        return str(exc)
+    if not data.startswith(b"%PDF"):
+        return "la réponse n'est pas un PDF"
+    tmp = dest.with_suffix(".part")
+    tmp.write_bytes(data)
+    tmp.replace(dest)
+    time.sleep(0.3)  # un seul document à la fois, sans charger le portail
+    return None
+
+
+def resolve_dosages(results: list[tuple[dict, Result]], pdf_dir: Path, download: bool) -> list[str]:
+    """Affecte chaque PDF au bon dosage. Renvoie les erreurs de téléchargement ou de lecture."""
+    errors: list[str] = []
+    pdf_dir.mkdir(parents=True, exist_ok=True)
+    for e, r in results:
+        if r.statut not in ("auto", "probable") or not r.fiches:
+            continue
+        r.nb_fiches_marque = len(r.fiches)
+        dest = pdf_dir / f"{rcp_id(e) or fold(e.get('nomCommercial'))}.pdf"
+        if download and e.get("pdf"):
+            err = fetch_pdf(e["pdf"], dest)
+            if err:
+                errors.append(f"{e.get('nomCommercial')}: {err}")
+        if not dest.exists():
+            r.dosage = "pdf_non_lu"
+            continue
+        try:
+            found = strengths(dosage_zone(pdf_text(dest)))
+        except Exception as exc:  # PDF corrompu, scanné, lecteur absent
+            errors.append(f"{e.get('nomCommercial')}: lecture impossible ({exc})")
+            r.dosage = "pdf_non_lu"
+            continue
+        r.dosages_pdf = " ; ".join(f"{v:g} {u}" for v, u in sorted(found, key=lambda t: (t[1], t[0])))
+        if not found:
+            r.dosage = "aucun"
+            continue
+        r.fiches, r.dosage = narrow_by_dosage(r.fiches, found)
+    return errors
+
+
 # ─── Sorties ─────────────────────────────────────────────────────────────────
 
 
@@ -353,7 +486,7 @@ def write_outputs(results: list[tuple[dict, Result]], out: Path, duplicates: int
         w.writerow(["rcp_id", "statut", "score", "nom_commercial", "dci_anpp", "laboratoire_anpp", "pdf",
                     "marque_trouvee", "dci_concordance", "labo_concordance", "nb_fiches", "ids_nomenclature",
                     "marques_nomenclature", "dci_nomenclature", "labos_nomenclature", "remarque",
-                    "autres_rcp_sur_ces_fiches"])
+                    "autres_rcp_sur_ces_fiches", "dosage", "dosages_dans_le_pdf", "nb_fiches_avant_dosage"])
         order = {s: i for i, s in enumerate(STATUTS)}
         # Plusieurs PDF pour une même marque (un par dosage ?) tombent sur les mêmes fiches :
         # le rattachement est alors sûr pour la marque, pas pour le dosage.
@@ -367,7 +500,7 @@ def write_outputs(results: list[tuple[dict, Result]], out: Path, duplicates: int
                 rcp_id(e), r.statut, r.score, e.get("nomCommercial"), e.get("dci"), e.get("laboratoire"), e.get("pdf"),
                 r.brand, r.dci, r.labo, len(fs), ";".join(f.id for f in fs[:30]),
                 uniq(f.nom_marque for f in fs[:30]), uniq(f.dci for f in fs[:30]), uniq(f.labo for f in fs[:30]), r.note,
-                shared(r),
+                shared(r), r.dosage, r.dosages_pdf, r.nb_fiches_marque or "",
             ])
 
     # Tables d'équivalence tirées des rapprochements sûrs, à valider à la main.
@@ -397,6 +530,7 @@ def write_outputs(results: list[tuple[dict, Result]], out: Path, duplicates: int
         "rattachables_a_une_fiche": counts["auto"] + counts["probable"],
         "rattachables_a_une_substance": counts["dci_seulement"],
         "rattaches_avec_dosage_ambigu": sum(1 for _, r in results if shared(r) > 0),
+        **{f"dosage_{k}": sum(1 for _, r in results if r.dosage == k) for k in ("resolu", "tous", "aucun", "pdf_non_lu")},
     }
     (out / "resume.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
     return summary
@@ -410,6 +544,8 @@ def main(argv: list[str] | None = None) -> int:
     src.add_argument("--csv", type=Path, help="export CSV de la nomenclature")
     src.add_argument("--json", type=Path, help="JSON de nomenclature (format scripts/fixtures)")
     ap.add_argument("--out", type=Path, default=Path("rcp_rapprochement"))
+    ap.add_argument("--pdf-dir", type=Path, help="dossier des PDF (défaut : <out>/pdfs)")
+    ap.add_argument("--download", action="store_true", help="télécharge les PDF manquants depuis rcp.anpp.dz")
     args = ap.parse_args(argv)
 
     entries, dup = dedupe_rcp(json.loads(args.resultats.read_text(encoding="utf-8")))
@@ -418,11 +554,21 @@ def main(argv: list[str] | None = None) -> int:
     if not fiches:
         raise SystemExit("Nomenclature vide : rien à rapprocher.")
 
-    summary = write_outputs(run(entries, fiches), args.out, dup)
+    results = run(entries, fiches)
+    pdf_dir = args.pdf_dir or args.out / "pdfs"
+    if args.download or (pdf_dir.is_dir() and any(pdf_dir.glob("*.pdf"))):
+        for err in resolve_dosages(results, pdf_dir, args.download):
+            print(f"  ! {err}", file=sys.stderr)
+    else:
+        print("Dosages non vérifiés : ajoutez --download ou --pdf-dir pour lire les PDF.")
+    summary = write_outputs(results, args.out, dup)
     print(f"{summary['rcp_total']} RCP ({dup} doublons ignorés) rapprochés de {len(fiches)} fiches de nomenclature")
     for s in STATUTS:
         n = summary[s]
         print(f"  {s:<14} {n:>4}  {100 * n / max(1, summary['rcp_total']):5.1f} %")
+    if summary["dosage_resolu"] + summary["dosage_tous"] + summary["dosage_aucun"] + summary["dosage_pdf_non_lu"]:
+        print(f"Dosages : {summary['dosage_resolu']} affectés à un dosage précis, {summary['dosage_tous']} couvrant tous les "
+              f"dosages de la marque, {summary['dosage_aucun']} à relire, {summary['dosage_pdf_non_lu']} PDF non lus")
     print(f"Détail : {args.out / 'rapprochement.csv'}")
     return 0
 
