@@ -352,8 +352,14 @@ def write_outputs(results: list[tuple[dict, Result]], out: Path, duplicates: int
         w = csv.writer(fh)
         w.writerow(["rcp_id", "statut", "score", "nom_commercial", "dci_anpp", "laboratoire_anpp", "pdf",
                     "marque_trouvee", "dci_concordance", "labo_concordance", "nb_fiches", "ids_nomenclature",
-                    "marques_nomenclature", "dci_nomenclature", "labos_nomenclature", "remarque"])
+                    "marques_nomenclature", "dci_nomenclature", "labos_nomenclature", "remarque",
+                    "autres_rcp_sur_ces_fiches"])
         order = {s: i for i, s in enumerate(STATUTS)}
+        # Plusieurs PDF pour une même marque (un par dosage ?) tombent sur les mêmes fiches :
+        # le rattachement est alors sûr pour la marque, pas pour le dosage.
+        per_fiche = Counter(f.id for _, r in results if r.statut in ("auto", "probable") for f in r.fiches)
+        shared = lambda r: (max((per_fiche[f.id] for f in r.fiches), default=1) - 1  # noqa: E731
+                            if r.statut in ("auto", "probable") else 0)
         for e, r in sorted(results, key=lambda t: (order[t[1].statut], t[0].get("nomCommercial", ""))):
             fs = r.fiches
             uniq = lambda xs: " | ".join(sorted({x for x in xs if x}))  # noqa: E731
@@ -361,6 +367,7 @@ def write_outputs(results: list[tuple[dict, Result]], out: Path, duplicates: int
                 rcp_id(e), r.statut, r.score, e.get("nomCommercial"), e.get("dci"), e.get("laboratoire"), e.get("pdf"),
                 r.brand, r.dci, r.labo, len(fs), ";".join(f.id for f in fs[:30]),
                 uniq(f.nom_marque for f in fs[:30]), uniq(f.dci for f in fs[:30]), uniq(f.labo for f in fs[:30]), r.note,
+                shared(r),
             ])
 
     # Tables d'équivalence tirées des rapprochements sûrs, à valider à la main.
@@ -389,6 +396,7 @@ def write_outputs(results: list[tuple[dict, Result]], out: Path, duplicates: int
         **{s: counts.get(s, 0) for s in STATUTS},
         "rattachables_a_une_fiche": counts["auto"] + counts["probable"],
         "rattachables_a_une_substance": counts["dci_seulement"],
+        "rattaches_avec_dosage_ambigu": sum(1 for _, r in results if shared(r) > 0),
     }
     (out / "resume.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
     return summary
