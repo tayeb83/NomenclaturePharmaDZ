@@ -417,8 +417,30 @@ export function createExamService(deps: ExamDeps) {
     return true
   }
 
+  /**
+   * Flashcards de l'utilisateur. Seules celles dont la correction lui est
+   * lisible sont renvoyées (elles ne peuvent être ajoutées qu'à ce titre) :
+   * la réponse n'est donc jamais une information nouvelle pour lui.
+   */
+  async function listFlashcards(userId: number | string) {
+    const rows = await query<any>(
+      `SELECT q.id, q.type, q.stem, q.options, q.correct_index, q.explanation
+         FROM training_flashcards f JOIN training_questions q ON q.id = f.question_id
+        WHERE f.user_id = $1
+          AND EXISTS (SELECT 1 FROM answers a JOIN attempts t ON t.id = a.attempt_id
+                       WHERE t.user_id = $1 AND a.question_id = q.id
+                         AND (t.finished_at IS NOT NULL OR (t.mode = 'tuteur' AND a.is_correct IS NOT NULL)))
+        ORDER BY f.created_at DESC, q.id DESC LIMIT 500`,
+      [userId],
+    )
+    return rows.map(r => ({
+      id: int(r.id), type: r.type as string, stem: r.stem as string, options: r.options as string[],
+      correct_index: int(r.correct_index), explanation: r.explanation as Explanation,
+    }))
+  }
+
   return {
-    publishedCount, startAttempt, getOverview, viewQuestion, saveAnswer, finishAttempt,
+    listFlashcards, publishedCount, startAttempt, getOverview, viewQuestion, saveAnswer, finishAttempt,
     getResults, listAttempts, getCorrection, setFlashcard,
   }
 }

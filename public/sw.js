@@ -3,7 +3,8 @@
  * Stratégie : Network First avec fallback cache pour les pages, Cache First pour les assets statiques.
  */
 
-const CACHE_NAME = 'pharmaveille-v1'
+// v2 : purge les pages /training mises en cache par une version antérieure du service worker.
+const CACHE_NAME = 'pharmaveille-v2'
 const STATIC_ASSETS = [
   '/',
   '/recherche',
@@ -73,6 +74,10 @@ self.addEventListener('fetch', (event) => {
 
   // API → Network Only (données dynamiques, pas de cache)
   if (url.pathname.startsWith('/api/')) return
+
+  // Training : pages personnelles (examens, corrections, connexion) — jamais mises en cache,
+  // pour qu'aucune correction ni page de session ne reste lisible hors ligne ou sur un appareil partagé.
+  if (url.pathname.startsWith('/training')) return
 
   // Pages HTML → Network First avec fallback cache
   event.respondWith(

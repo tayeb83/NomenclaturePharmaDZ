@@ -25,6 +25,20 @@
   ],
   "shortcuts": [
     {
+      "name": "Training : quiz rapide",
+      "short_name": "Quiz",
+      "description": "10 questions de QCM avec correction immédiate",
+      "url": "/training/quiz",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Training : flashcards",
+      "short_name": "Flashcards",
+      "description": "Réviser vos flashcards",
+      "url": "/training/flashcards",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
       "name": "Recherche médicament",
       "short_name": "Recherche",
       "description": "Rechercher un médicament en Algérie",

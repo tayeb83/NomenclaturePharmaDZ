@@ -2,6 +2,7 @@ import { query } from '../db'
 import { createTrainingService } from './service.ts'
 import { createExamService } from './exam.ts'
 import { createQuestionsAdmin } from './questions.ts'
+import { createStatsService } from './stats.ts'
 import { sendMail } from './mail.ts'
 
 export const APP_URL_FALLBACK = 'https://www.dzair-pharma.net'
@@ -22,6 +23,7 @@ const g = globalThis as unknown as {
   _trainingService?: ReturnType<typeof createTrainingService>
   _trainingExam?: ReturnType<typeof createExamService>
   _trainingQuestions?: ReturnType<typeof createQuestionsAdmin>
+  _trainingStats?: ReturnType<typeof createStatsService>
 }
 
 export function getTraining() {
@@ -47,4 +49,9 @@ export function getExam() {
 export function getQuestionsAdmin() {
   if (!g._trainingQuestions) g._trainingQuestions = createQuestionsAdmin({ query })
   return g._trainingQuestions
+}
+
+export function getStats() {
+  if (!g._trainingStats) g._trainingStats = createStatsService({ query })
+  return g._trainingStats
 }

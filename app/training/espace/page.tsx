@@ -11,6 +11,6 @@ export const metadata: Metadata = { title: 'Mon espace — Training', robots: { 
 export default async function TrainingSpacePage() {
   const user = await requireTrainingUserPage()
   const exam = getExam()
-  const [available, attempts] = await Promise.all([exam.publishedCount(), exam.listAttempts(user.id, 8)])
-  return <SpaceScreen email={user.email} role={user.role} available={available} attempts={attempts} mockCodes={Object.keys(MOCK_EXAMS)} />
+  const [available, attempts, flashcards] = await Promise.all([exam.publishedCount(), exam.listAttempts(user.id, 8), exam.listFlashcards(user.id)])
+  return <SpaceScreen email={user.email} role={user.role} available={available} attempts={attempts} mockCodes={Object.keys(MOCK_EXAMS)} flashCount={flashcards.length} />
 }

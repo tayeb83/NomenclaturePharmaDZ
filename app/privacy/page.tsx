@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   },
 }
 
-const sections = [
+const sections: { id?: string; title: string; content: React.ReactNode }[] = [
   {
     title: '1. Données collectées ou utilisées',
     content: (
@@ -121,7 +121,7 @@ const sections = [
         </p>
         <p>
           Le site utilise aussi des cookies techniques strictement nécessaires (langue d’affichage, session
-          d’administration) et une mesure d’audience interne, qui ne servent pas au ciblage publicitaire.
+          d’administration, session de connexion de l’espace Training) et une mesure d’audience interne, qui ne servent pas au ciblage publicitaire.
         </p>
       </>
     ),
@@ -181,7 +181,72 @@ const sections = [
     ),
   },
   {
-    title: '10. Contact',
+    id: 'training',
+    title: '10. Dzair-Pharma Training (QCM et examens blancs)',
+    content: (
+      <>
+        <p>
+          Cette section s’applique uniquement à l’espace d’entraînement « Dzair-Pharma Training », accessible sur
+          demande, sans mot de passe.
+        </p>
+
+        <h3>Données traitées</h3>
+        <ul>
+          <li>votre adresse e-mail, votre profil (étudiant(e), enseignant(e) ou pharmacien(ne)) et, si vous le
+            souhaitez, votre faculté ;</li>
+          <li>si vous choisissez « Continuer avec Facebook » : l’identifiant Facebook et l’adresse e-mail que
+            Facebook nous transmet — rien d’autre (ni liste d’amis, ni publications) ;</li>
+          <li>votre progression : séries et examens commencés, réponses données, temps passé, résultats,
+            flashcards ;</li>
+          <li>des événements d’usage (connexion, début et fin de série, question répondue) qui servent à
+            compter l’usage, sans contenu de vos réponses.</li>
+        </ul>
+
+        <h3>Finalités</h3>
+        <ul>
+          <li>sauvegarder votre progression et vous permettre de la retrouver ;</li>
+          <li>mesurer l’usage du service (nombre d’utilisateurs, scores moyens, questions les plus difficiles),
+            sous forme agrégée ;</li>
+          <li>valider les demandes d’accès (examinées manuellement par l’équipe) et vous envoyer vos liens de
+            connexion par e-mail.</li>
+        </ul>
+        <p>Ces données ne sont ni vendues ni utilisées pour de la publicité ciblée.</p>
+
+        <h3>Connexion et cookies</h3>
+        <p>
+          La connexion se fait par un lien envoyé par e-mail, à usage unique et valable 15 minutes. Un cookie de
+          session strictement nécessaire (sans suivi publicitaire) vous maintient connecté(e) pendant 14 jours au
+          plus ; vous pouvez vous déconnecter à tout moment.
+        </p>
+
+        <h3>Destinataires</h3>
+        <p>
+          Les données sont accessibles à l’équipe DwaDZ. Elles sont hébergées chez notre hébergeur et notre
+          fournisseur de base de données, et l’envoi des e-mails passe par un service d’envoi (Brevo ou Gmail).
+          Facebook n’intervient que si vous choisissez ce mode de demande.
+        </p>
+
+        <h3>Durée de conservation</h3>
+        <ul>
+          <li>demandes d’accès non validées ou refusées : supprimées au bout de 12 mois ;</li>
+          <li>comptes validés restés sans connexion pendant 24 mois : supprimés ;</li>
+          <li>événements d’usage : supprimés au bout de 24 mois ;</li>
+          <li>liens de connexion et sessions expirés : supprimés automatiquement.</li>
+        </ul>
+
+        <h3>Suppression de vos données</h3>
+        <p>
+          Vous pouvez supprimer vous-même votre compte et toutes vos données Training depuis votre espace
+          (« Supprimer mon compte et mes données »), ou en faire la demande à l’adresse{' '}
+          <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. La suppression est définitive : progression,
+          flashcards et résultats sont effacés. Si vous vous êtes connecté(e) avec Facebook, vous pouvez en plus
+          retirer l’application « DwaDZ Training » dans les paramètres de votre compte Facebook.
+        </p>
+      </>
+    ),
+  },
+  {
+    title: '11. Contact',
     content: (
       <p>
         Pour toute question concernant cette politique de confidentialité ou le fonctionnement de l’application :{' '}
@@ -198,7 +263,7 @@ export default function PrivacyPage() {
         <section className="mb-4">
           <span className="badge bg-primary-subtle text-primary-emphasis mb-3">Confidentialité</span>
           <h1 className="mb-3">Politique de confidentialité — DwaDZ</h1>
-          <p className="text-muted mb-2">Dernière mise à jour : 17 juillet 2026</p>
+          <p className="text-muted mb-2">Dernière mise à jour : 22 octobre 2026</p>
           <p className="lead text-muted">
             DwaDZ est une application de consultation d’informations pharmaceutiques en Algérie. Elle permet
             notamment de rechercher des médicaments, consulter des informations associées et, lorsque la
@@ -212,7 +277,7 @@ export default function PrivacyPage() {
 
         <div className="d-grid gap-3">
           {sections.map((section) => (
-            <section key={section.title} className="card shadow-sm border-0">
+            <section key={section.title} id={section.id} className="card shadow-sm border-0">
               <div className="card-body p-4 privacy-content">
                 <h2 className="h4 mb-3">{section.title}</h2>
                 {section.content}

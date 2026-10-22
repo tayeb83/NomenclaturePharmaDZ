@@ -45,14 +45,15 @@ export function TrainingAdminClient() {
     return () => clearTimeout(t)
   }, [load, q])
 
-  async function act(id: number, action: 'approve' | 'reject' | 'pending' | 'resend') {
+  async function act(id: number, action: 'approve' | 'reject' | 'pending' | 'resend' | 'delete') {
+    if (action === 'delete' && !window.confirm('Supprimer définitivement ce compte et toutes ses données (progression, flashcards, résultats) ? Cette action est irréversible.')) return
     setBusyId(id)
     setFlash(null)
     try {
       const res = await fetch(`/api/admin/training/requests/${id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action, confirm: action === 'delete' ? true : undefined }),
       })
       const json = await res.json().catch(() => ({}))
       if (!res.ok) { setFlash({ text: json?.error || 'Action impossible', warn: true }); return }
@@ -83,6 +84,7 @@ export function TrainingAdminClient() {
           <Link href="/admin">← Administration</Link>
         </div>
         <div className="tr-acts">
+          <Link className="tr-act" href="/admin/training/stats" style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>Suivi d’usage</Link>
           <Link className="tr-act" href="/admin/training/questions" style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>Relecture des questions</Link>
           <a className="tr-act" href={exportHref} download style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>Exporter en CSV</a>
         </div>
@@ -139,6 +141,7 @@ export function TrainingAdminClient() {
                     {r.status !== 'pending' && (
                       <button type="button" className="tr-act" disabled={busyId === r.id} onClick={() => act(r.id, 'pending')}>Remettre en attente</button>
                     )}
+                    <button type="button" className="tr-act no" disabled={busyId === r.id} onClick={() => act(r.id, 'delete')}>Supprimer</button>
                     {r.status === 'approved' && (
                       <button type="button" className="tr-act" disabled={busyId === r.id} onClick={() => act(r.id, 'resend')}>Renvoyer le lien</button>
                     )}
