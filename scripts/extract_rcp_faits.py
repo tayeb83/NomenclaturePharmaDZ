@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Propose des FAITS COURTS tirés des RCP (PDF du portail ANPP) : doses chiffrées
-(rubrique 4.2) et substances en interaction ou contre-indiquées (rubriques 4.3
-et 4.5), chacun avec sa rubrique et sa page. Ce sont des brouillons : rien n'est
+Propose des FAITS COURTS tirés des RCP (PDF du portail ANPP), chacun avec sa
+rubrique et sa page : doses chiffrées (4.2), contre-indications (4.3, en
+libellés courts), substances en interaction (4.3, 4.5), grossesse et allaitement
+(4.6, en un statut : contre-indiqué, déconseillé…). Ce sont des brouillons : rien n'est
 publié avant relecture dans l'admin (/admin/rcp).
 
 Un fait ne recopie pas le RCP : « 25–30 mg par jour », « Méthotrexate ». La phrase
@@ -281,6 +282,101 @@ def extract_doses(lines: list[tuple[int, str]]) -> list[dict]:
     return list(out.values())
 
 
+# ─── Contre-indications (libellés courts) et grossesse / allaitement ─────────
+
+_BULLET_ONLY = re.compile(r"^\s*[•·●▪■\-–—*]\s*$")
+_BULLET_START = re.compile(r"^\s*[•·●▪■\-–—*]\s+(\S.*)$")
+_INTRO = re.compile(r"(contre[-\s]?indiqu[ée]e?s?\s+(?:dans|en cas|chez)|dans\s+les\s+cas\s+suivants|:\s*$)", re.I)
+_CUT_CONDITION = re.compile(r"\s*(?:[:;,(]|\s(?:sauf|sans|en cas|chez|lors|mentionn)\b)")
+
+
+def split_items(lines: list[tuple[int, str]]) -> list[tuple[int, str]]:
+    """Éléments d'une liste (puces seules, tirets, ou phrases qui se suivent), avec la page du premier mot."""
+    items: list[tuple[int, str]] = []
+    cur: list[str] = []
+    page0 = 1
+
+    def flush() -> None:
+        if cur:
+            items.append((page0, re.sub(r"\s+", " ", " ".join(cur)).strip()))
+            cur.clear()
+
+    for page, line in lines:
+        if _BULLET_ONLY.match(line):
+            continue  # la puce est souvent extraite seule, à côté de la 2e ligne de l'élément : on ne s'y fie pas
+        m = _BULLET_START.match(line)
+        if m:
+            flush()
+            page0, line = page, m.group(1)
+        elif cur and line.strip()[:1].isupper() and (
+                cur[-1].rstrip().endswith((".", ";", ":")) or cur[0].lower().startswith("association")):
+            flush()  # « Association avec X : risque… » n'a pas toujours de point final : une majuscule ouvre l'élément suivant
+        if not cur:
+            page0 = page
+        cur.append(line.strip())
+    flush()
+    return [(p, t) for p, t in items if t]
+
+
+def short_condition(item: str) -> str:
+    """Nom court de la situation contre-indiquée : « Insuffisance hépatique sévère », « Hypersensibilité à la substance active »."""
+    first = _CUT_CONDITION.split(item.strip().rstrip("."), maxsplit=1)[0].strip(" .;,")
+    words = first.split()
+    label = " ".join(words[:8]) if len(words) > 8 else first
+    return label[:1].upper() + label[1:]
+
+
+def extract_contre_indications(sections: dict[str, list[tuple[int, str]]]) -> list[dict]:
+    out: dict[str, dict] = {}
+    for page, item in split_items(sections.get("4.3", [])):
+        if _ASSOC.match(item) or _INTRO.search(item) or len(item) < 4:
+            continue  # les associations sont des interactions ; les phrases d'introduction ne sont pas des situations
+        label = short_condition(item)
+        key = fold(label)
+        if len(key) >= 4 and key not in out:
+            out[key] = {"type": "contre_indication", "section": "4.3", "page": page, "libelle": label,
+                        "nom_brut": label, "contexte": item[:300]}
+    return list(out.values())
+
+
+_HEAD_GROSSESSE = re.compile(r"^\s*(grossesse|allaitement)\s*:?\s*(.*)$", re.I)
+_LEVELS = [
+    ("contre_indiquee", re.compile(r"contre[-\s]?ind(?:iqu|ic)", re.I)),  # contre-indiqué, contre-indication
+    ("deconseillee", re.compile(r"d[ée]conseill|[àa]\s+[ée]viter|ne\s+(?:doit|devrait)\s+pas\s+[êe]tre\s+utilis", re.I)),
+    ("precaution", re.compile(r"prudence|que\s+si\s+n[ée]cessaire|uniquement\s+si|b[ée]n[ée]fice", re.I)),
+]
+
+
+def extract_grossesse(sections: dict[str, list[tuple[int, str]]]) -> list[dict]:
+    """Un statut pour la grossesse et un pour l'allaitement. Plusieurs niveaux dans le texte : « non précisé », à trancher à la relecture."""
+    segments: dict[str, tuple[int, list[str]]] = {}
+    current: str | None = None
+    for page, line in sections.get("4.6", []):
+        m = _HEAD_GROSSESSE.match(line)
+        if m and (not m.group(2) or line.strip().lower().startswith(m.group(1).lower() + " :")):
+            current = m.group(1).lower()
+            segments.setdefault(current, (page, []))
+            if m.group(2):
+                segments[current][1].append(m.group(2))
+            continue
+        stripped = line.strip()
+        if current and len(stripped) <= 60 and stripped[:1].isupper() and not stripped.endswith((".", ",", ";", ":")):
+            current = None  # autre intertitre (Fertilité, Femmes en âge de procréer…)
+            continue
+        if current:
+            segments[current][1].append(stripped)
+
+    out = []
+    for name, (page, texts) in segments.items():
+        text = re.sub(r"\s+", " ", " ".join(texts))[:600]
+        lead = " ".join(re.split(r"(?<=[.!?])\s+", text)[:2])  # la phrase de principe est dans les deux premières
+        found = [lvl for lvl, rx in _LEVELS if rx.search(lead)]
+        gravite = found[0] if len(found) == 1 else "non_precisee"
+        out.append({"type": "grossesse", "section": "4.6", "page": page, "libelle": name.capitalize(),
+                    "gravite": gravite, "nom_brut": name, "contexte": text[:300]})
+    return out
+
+
 # ─── Orchestration ───────────────────────────────────────────────────────────
 
 
@@ -288,7 +384,8 @@ def extract_rcp(pages: list[str]) -> dict:
     sections = split_sections(body_lines(pages))
     return {
         "version_texte": extract_version(pages),
-        "faits": extract_interactions(sections) + extract_doses(sections.get("4.2", [])),
+        "faits": (extract_doses(sections.get("4.2", [])) + extract_contre_indications(sections)
+                  + extract_grossesse(sections) + extract_interactions(sections)),
     }
 
 
@@ -310,7 +407,8 @@ def main(argv: list[str] | None = None) -> int:
 
     n = lambda t: sum(1 for r in results for f in r["faits"] if f["type"] == t)  # noqa: E731
     vides = [r["rcp_id"] for r in results if not r["faits"]]
-    print(f"{len(results)} RCP lus : {n('interaction')} interactions, {n('dose')} doses ({len(vides)} RCP sans aucun fait)")
+    print(f"{len(results)} RCP lus : {n('dose')} doses, {n('contre_indication')} contre-indications, "
+          f"{n('grossesse')} statuts grossesse/allaitement, {n('interaction')} interactions ({len(vides)} RCP sans aucun fait)")
     print(f"Version du texte trouvée pour {sum(1 for r in results if r['version_texte'])} RCP")
     for e in errors:
         print(f"  ! {e}", file=sys.stderr)

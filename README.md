@@ -615,7 +615,7 @@ Pour enrichir la synonymie, insérer dans `search_synonyms` (`term`, `term_norm`
 ## RCP de l'ANPP (rcp.anpp.dz)
 
 Chaque fiche peut afficher un lien vers le **RCP officiel** publié par l'ANPP, et des
-**faits courts relus** (doses chiffrées, associations contre-indiquées) avec leur rubrique,
+**faits courts relus** (doses chiffrées, contre-indications, grossesse et allaitement, associations) avec leur rubrique,
 leur page et la source. DwaDZ ne copie aucun RCP : seule l'adresse du PDF est conservée.
 
 ```bash

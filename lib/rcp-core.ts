@@ -12,11 +12,12 @@ export const RCP_PORTAL_URL = 'https://rcp.anpp.dz/'
 const RCP_HOST = 'rcp.anpp.dz'
 
 export type Gravite = 'contre_indiquee' | 'deconseillee' | 'precaution' | 'a_prendre_en_compte' | 'non_precisee'
+export type FaitType = 'dose' | 'interaction' | 'contre_indication' | 'grossesse'
 export type Population = 'adulte' | 'enfant' | 'personne_agee' | 'non_precisee'
 
 export type RcpFait = {
   id: number
-  type: 'dose' | 'interaction'
+  type: FaitType
   section: string
   page: number
   libelle: string
@@ -59,13 +60,17 @@ const GRAVITE_RANK: Record<Gravite, number> = {
 }
 const POPULATION_RANK: Record<Population, number> = { adulte: 0, enfant: 1, personne_agee: 2, non_precisee: 3 }
 
+const TYPE_RANK: Record<FaitType, number> = { dose: 0, contre_indication: 1, grossesse: 2, interaction: 3 }
+
 export function sortFaits(faits: RcpFait[]): RcpFait[] {
   return [...faits].sort((a, b) => {
-    if (a.type !== b.type) return a.type === 'dose' ? -1 : 1
+    if (a.type !== b.type) return TYPE_RANK[a.type] - TYPE_RANK[b.type]
     if (a.type === 'dose') {
       const pa = POPULATION_RANK[a.population ?? 'non_precisee'], pb = POPULATION_RANK[b.population ?? 'non_precisee']
       return pa - pb || a.libelle.localeCompare(b.libelle, 'fr', { numeric: true })
     }
+    if (a.type === 'contre_indication') return a.id - b.id // ordre du RCP
+    if (a.type === 'grossesse') return a.libelle === b.libelle ? 0 : a.libelle === 'Grossesse' ? -1 : 1
     const ga = GRAVITE_RANK[a.gravite ?? 'non_precisee'], gb = GRAVITE_RANK[b.gravite ?? 'non_precisee']
     return ga - gb || a.libelle.localeCompare(b.libelle, 'fr')
   })

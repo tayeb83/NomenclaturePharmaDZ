@@ -218,7 +218,10 @@ export function RcpAdminClient() {
                             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                               <span style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{STATUS_LABEL[f.status]}</span>
                               <span style={{ fontSize: 12, color: '#64748b' }}>
-                                {f.type === 'dose' ? `dose · ${f.population ?? ''}` : `interaction · ${GRAVITE_LABEL[f.gravite ?? 'non_precisee']}`}
+                                {f.type === 'dose' ? `dose · ${f.population ?? ''}`
+                                  : f.type === 'contre_indication' ? 'contre-indication'
+                                  : f.type === 'grossesse' ? `grossesse/allaitement · ${GRAVITE_LABEL[f.gravite ?? 'non_precisee']}`
+                                  : `interaction · ${GRAVITE_LABEL[f.gravite ?? 'non_precisee']}`}
                                 {f.cible ? ` · → ${f.cible_type} ${f.cible}` : ''}
                               </span>
                               <a href={`${doc.pdf_url}#page=${f.page}`} target="_blank" rel="noopener noreferrer" style={{ color: '#0284c7', fontSize: 12.5, marginLeft: 'auto' }}>RCP {f.section} · p.{f.page} ↗</a>

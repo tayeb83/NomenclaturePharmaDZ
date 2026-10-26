@@ -33,6 +33,18 @@ const fait = (o: Partial<RcpFait>): RcpFait => ({
   id: 1, type: 'interaction', section: '4.3', page: 3, libelle: 'X', gravite: null, cible_type: null, cible: null, population: null, ...o,
 })
 
+test('tri : doses, contre-indications, grossesse, interactions', () => {
+  const sorted = sortFaits([
+    fait({ id: 1, type: 'interaction', libelle: 'Alcool', gravite: 'contre_indiquee' }),
+    fait({ id: 2, type: 'grossesse', libelle: 'Allaitement', gravite: 'contre_indiquee' }),
+    fait({ id: 3, type: 'grossesse', libelle: 'Grossesse', gravite: 'contre_indiquee' }),
+    fait({ id: 5, type: 'contre_indication', libelle: 'Hyperlipidémie' }),
+    fait({ id: 4, type: 'contre_indication', libelle: 'Insuffisance hépatique sévère' }),
+    fait({ id: 6, type: 'dose', libelle: '25 mg par jour', population: 'adulte' }),
+  ])
+  assert.deepEqual(sorted.map(f => f.id), [6, 4, 5, 3, 2, 1])
+})
+
 test('tri : doses avant interactions, adulte avant enfant, plus grave d\'abord', () => {
   const sorted = sortFaits([
     fait({ id: 1, libelle: 'Zinc', gravite: 'precaution' }),
@@ -221,4 +233,23 @@ test('admin : interrupteurs et liste des documents', { skip }, async () => {
   const d = docs.find(x => x.rcp_id === ID(1))!
   assert.deepEqual([d.nb_brouillon, d.nb_publie, d.nb_fiches], [1, 1, 2])
   assert.equal(admin.isUuid('pas-un-uuid'), false)
+})
+
+test('sql/27 se rejoue sur une table créée avant les contre-indications et la grossesse', { skip }, async () => {
+  await pool.query(`ALTER TABLE rcp_faits DROP CONSTRAINT rcp_faits_type_check`)
+  await pool.query(`ALTER TABLE rcp_faits ADD CONSTRAINT rcp_faits_type_check CHECK (type IN ('dose', 'interaction'))`)
+  await assert.rejects(addFait(1, { type: 'grossesse', libelle: 'Grossesse', status: 'brouillon' }))
+  await pool.query(readFileSync(new URL('../../sql/27_rcp_faits.sql', import.meta.url), 'utf8'))
+  await addFait(1, { type: 'contre_indication', libelle: 'Hyperlipidémie', status: 'brouillon' })
+  await addFait(1, { type: 'grossesse', libelle: 'Grossesse', gravite: 'contre_indiquee', status: 'brouillon' })
+  assert.equal((await one('SELECT count(*)::int AS n FROM rcp_faits'))[0].n, 2)
+  await assert.rejects(addFait(1, { type: 'inconnu', libelle: 'X', status: 'brouillon' }))
+})
+
+test('les contre-indications et la grossesse publiées s\'affichent avec les autres faits', { skip }, async () => {
+  await addFait(1, { type: 'contre_indication', libelle: 'Hyperlipidémie' })
+  await addFait(1, { type: 'grossesse', libelle: 'Grossesse', gravite: 'contre_indiquee' })
+  await addFait(1, { type: 'contre_indication', libelle: 'Non relu', status: 'brouillon' })
+  const out = await fetchRcpForFiche(run, '001/A', 'C2')
+  assert.deepEqual(out[0].faits.map(f => [f.type, f.libelle]), [['contre_indication', 'Hyperlipidémie'], ['grossesse', 'Grossesse']])
 })
