@@ -23,7 +23,7 @@ export type AdminDocument = {
 
 export type AdminFait = {
   id: number
-  type: 'dose' | 'interaction'
+  type: 'dose' | 'interaction' | 'contre_indication' | 'grossesse'
   section: string
   page: number
   libelle: string
@@ -88,7 +88,7 @@ export function listFaits(rcpId: string): Promise<AdminFait[]> {
   return query<AdminFait>(
     `SELECT id, type, section, page, libelle, gravite, population, cible_type, cible, contexte, status, reviewed_by, reviewed_at
      FROM rcp_faits WHERE rcp_id = $1
-     ORDER BY type DESC, section, page, id`,
+     ORDER BY CASE type WHEN 'dose' THEN 0 WHEN 'contre_indication' THEN 1 WHEN 'grossesse' THEN 2 ELSE 3 END, section, page, id`,
     [rcpId]
   )
 }

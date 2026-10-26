@@ -31,8 +31,10 @@ function Faits({ rcp, lang }: { rcp: RcpLink; lang: Lang }) {
   // `?? []` : une fiche déjà en cache avant l'ajout des faits n'a pas ce champ
   const faits = rcp.faits ?? []
   const doses = faits.filter(f => f.type === 'dose')
+  const ci = faits.filter(f => f.type === 'contre_indication')
+  const gro = faits.filter(f => f.type === 'grossesse')
   const inter = faits.filter(f => f.type === 'interaction')
-  if (doses.length + inter.length === 0) return null
+  if (doses.length + ci.length + gro.length + inter.length === 0) return null
 
   const source = pickLang(lang, {
     fr: `Source : RCP de ${rcp.laboratoire_anpp ?? rcp.nom_commercial}${rcp.version_texte ? `, version ${rcp.version_texte}` : ''}, publié sur rcp.anpp.dz.`,
@@ -54,6 +56,42 @@ function Faits({ rcp, lang }: { rcp: RcpLink; lang: Lang }) {
                 <PageLink pdfUrl={rcp.pdf_url} f={f} lang={lang} />
               </li>
             ))}
+          </ul>
+        </div>
+      )}
+      {ci.length > 0 && (
+        <div>
+          <h3 style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', margin: '0 0 6px' }}>
+            {pickLang(lang, { fr: 'Contre-indications citées', ar: 'موانع الاستعمال المذكورة' })}
+          </h3>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 4 }}>
+            {ci.map(f => (
+              <li key={f.id} style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 10px', alignItems: 'baseline', fontSize: 14 }}>
+                <strong style={{ color: '#0f172a' }}>{f.libelle}</strong>
+                <PageLink pdfUrl={rcp.pdf_url} f={f} lang={lang} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {gro.length > 0 && (
+        <div>
+          <h3 style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', margin: '0 0 6px' }}>
+            {pickLang(lang, { fr: 'Grossesse et allaitement', ar: 'الحمل والرضاعة' })}
+          </h3>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 5 }}>
+            {gro.map(f => {
+              const g = GRAVITE[f.gravite ?? 'non_precisee']
+              return (
+                <li key={f.id} style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 10px', alignItems: 'baseline', fontSize: 14 }}>
+                  <span style={{ ...small, minWidth: 88 }}>{f.libelle === 'Allaitement' ? pickLang(lang, { fr: 'Allaitement', ar: 'الرضاعة' }) : pickLang(lang, { fr: 'Grossesse', ar: 'الحمل' })}</span>
+                  <span style={{ background: g.bg, color: g.color, borderRadius: 5, padding: '0 7px', fontSize: 12, fontWeight: 700 }}>
+                    {f.gravite === 'non_precisee' || !f.gravite ? pickLang(lang, { fr: 'Voir le RCP', ar: 'راجع RCP' }) : g[lang]}
+                  </span>
+                  <PageLink pdfUrl={rcp.pdf_url} f={f} lang={lang} />
+                </li>
+              )
+            })}
           </ul>
         </div>
       )}
@@ -98,7 +136,7 @@ function Faits({ rcp, lang }: { rcp: RcpLink; lang: Lang }) {
 /**
  * RCP officiel(s) de la fiche. Le document s'ouvre sur le portail de l'ANPP :
  * DwaDZ n'en garde aucune copie, et dit d'où il vient. Les faits courts
- * (doses, associations) ne s'affichent qu'une fois relus.
+ * (doses, contre-indications, grossesse, associations) ne s'affichent qu'une fois relus.
  */
 export function RcpSection({ rcps, lang }: { rcps: RcpLink[]; lang: Lang }) {
   if (rcps.length === 0) return null

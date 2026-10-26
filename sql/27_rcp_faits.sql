@@ -1,9 +1,11 @@
 -- ============================================================
--- DwaDZ — Faits courts tirés des RCP (doses chiffrées, associations
--- contre-indiquées), relus avant publication, et interrupteurs d'urgence.
+-- DwaDZ — Faits courts tirés des RCP (doses chiffrées, contre-indications,
+-- grossesse et allaitement, associations), relus avant publication, et
+-- interrupteurs d'urgence.
 --
 -- Rien n'est copié : un fait est une information courte (« 25–30 mg par jour »,
--- « Méthotrexate ») avec sa rubrique, sa page et le lien vers le PDF de l'ANPP.
+-- « Méthotrexate », « Insuffisance hépatique sévère », « Allaitement : contre-indiqué »)
+-- avec sa rubrique, sa page et le lien vers le PDF de l'ANPP.
 -- La phrase d'origine (contexte) sert seulement à la relecture dans l'admin ;
 -- elle n'est jamais affichée au public.
 --
@@ -32,7 +34,7 @@ ON CONFLICT (cle) DO NOTHING;
 CREATE TABLE IF NOT EXISTS rcp_faits (
   id           BIGSERIAL PRIMARY KEY,
   rcp_id       UUID NOT NULL REFERENCES rcp_documents (rcp_id) ON DELETE CASCADE,
-  type         VARCHAR(12) NOT NULL CHECK (type IN ('dose', 'interaction')),
+  type         VARCHAR(18) NOT NULL CHECK (type IN ('dose', 'interaction', 'contre_indication', 'grossesse')),
   section      VARCHAR(8) NOT NULL,                 -- rubrique du RCP : 4.2, 4.3, 4.5
   page         SMALLINT NOT NULL CHECK (page > 0),  -- page du PDF
   libelle      TEXT NOT NULL,                       -- court, modifiable à la relecture
@@ -58,3 +60,9 @@ CREATE TABLE IF NOT EXISTS rcp_faits (
 );
 
 CREATE INDEX IF NOT EXISTS idx_rcp_faits_publies ON rcp_faits (rcp_id) WHERE status = 'publie';
+
+-- Mise à niveau d'une table créée avant l'ajout des contre-indications et de la grossesse.
+ALTER TABLE rcp_faits ALTER COLUMN type TYPE VARCHAR(18);
+ALTER TABLE rcp_faits DROP CONSTRAINT IF EXISTS rcp_faits_type_check;
+ALTER TABLE rcp_faits ADD CONSTRAINT rcp_faits_type_check
+  CHECK (type IN ('dose', 'interaction', 'contre_indication', 'grossesse'));
