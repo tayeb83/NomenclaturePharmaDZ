@@ -221,6 +221,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           <Link href="/admin/monographies" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
             🧬 Monographies DCI
           </Link>
+          <Link href="/admin/rcp" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
+            📄 RCP (ANPP)
+          </Link>
           <Link href="/admin/social" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
             📣 Publications Facebook
           </Link>

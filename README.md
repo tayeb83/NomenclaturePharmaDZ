@@ -612,6 +612,29 @@ Pour enrichir la synonymie, insérer dans `search_synonyms` (`term`, `term_norm`
 
 ---
 
+## RCP de l'ANPP (rcp.anpp.dz)
+
+Chaque fiche peut afficher un lien vers le **RCP officiel** publié par l'ANPP, et des
+**faits courts relus** (doses chiffrées, associations contre-indiquées) avec leur rubrique,
+leur page et la source. DwaDZ ne copie aucun RCP : seule l'adresse du PDF est conservée.
+
+```bash
+# 1. Rapprocher la liste du portail de la nomenclature (essai : rien n'est écrit en base)
+DATABASE_URL=... python scripts/match_rcp_anpp.py resultats.json --db --download
+# 2. Importer les rattachements (sql/26 d'abord) ; sans --apply : essai à blanc
+psql "$DATABASE_URL" -f sql/26_rcp_anpp.sql
+DATABASE_URL=... python scripts/import_rcp_links.py rcp_rapprochement/rapprochement.csv --apply
+# 3. Proposer des faits (brouillons) puis les importer (sql/27 d'abord)
+python scripts/extract_rcp_faits.py rcp_rapprochement/pdfs --out rcp_rapprochement/faits_brouillon.json
+psql "$DATABASE_URL" -f sql/27_rcp_faits.sql
+DATABASE_URL=... python scripts/import_rcp_faits.py rcp_rapprochement/faits_brouillon.json --apply
+```
+
+Un fait ne s'affiche qu'après relecture dans **/admin/rcp** (relecteur obligatoire, contrôlé aussi par
+la base). La même page porte les **interrupteurs d'urgence** : couper les faits, couper tout le bloc RCP,
+ou retirer un laboratoire ou un document, avec effet immédiat. Tests : `npm run test:rcp`
+(avec `TEST_DATABASE_URL` pour la partie base) et `python3 -m unittest discover -s scripts/tests`.
+
 ## Navigation par classe thérapeutique (ATC)
 
 Pages `/classes-therapeutiques` (les 14 groupes anatomiques) et `/classes-therapeutiques/[code]` (drill-down niveau 1 → 5, avec fil d'Ariane, sous-classes et DCI de la nomenclature mappées). Les codes ATC des fiches médicaments sont cliquables vers ces pages.

@@ -30,7 +30,7 @@ export function getRcpForFiche(nEnreg: string | null, code: string | null): Prom
       if (!(await hasRcpTables())) return []
       return fetchRcpForFiche(query, nEnreg, key)
     },
-    ['rcp', nEnreg, key],
+    ['rcp', 'v2', nEnreg, key], // v2 : la forme des données a changé (faits) ; évite de relire d'anciennes entrées de cache
     { revalidate: 86_400, tags: [RCP_TAG] }
   )()
 }
