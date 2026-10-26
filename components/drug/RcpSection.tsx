@@ -27,6 +27,55 @@ function PageLink({ pdfUrl, f, lang }: { pdfUrl: string; f: RcpFait; lang: Lang 
   )
 }
 
+/** Bloc thématique : pastille d'icône, titre, compteur, liseré de couleur. */
+function Bloc({ icon, title, count, accent, children }: { icon: string; title: string; count: number; accent: string; children: React.ReactNode }) {
+  return (
+    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderInlineStart: `4px solid ${accent}`, borderRadius: 10, padding: '10px 14px' }}>
+      <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700, color: '#0f172a', margin: '0 0 8px' }}>
+        <span aria-hidden="true">{icon}</span>
+        <span>{title}</span>
+        <span style={{ background: '#e2e8f0', color: '#475569', borderRadius: 999, padding: '0 8px', fontSize: 11.5, fontWeight: 700 }}>{count}</span>
+      </h3>
+      {children}
+    </div>
+  )
+}
+
+const chip: React.CSSProperties = {
+  background: 'white', border: '1px solid #cbd5e1', borderRadius: 999, padding: '2px 10px',
+  fontSize: 13.5, fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap',
+}
+const row: React.CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '6px 10px', alignItems: 'baseline', fontSize: 14 }
+
+/** Doses : regroupées par population puis par page, un seul lien de page par groupe (au lieu d'un par valeur). */
+function Doses({ doses, pdfUrl, lang }: { doses: RcpFait[]; pdfUrl: string; lang: Lang }) {
+  const groups: { key: string; population: Population; first: RcpFait; items: RcpFait[] }[] = []
+  for (const f of doses) {
+    const population = f.population ?? 'non_precisee'
+    const key = `${population}|${f.section}|${f.page}`
+    const g = groups.find(x => x.key === key)
+    if (g) g.items.push(f)
+    else groups.push({ key, population, first: f, items: [f] })
+  }
+  return (
+    <div style={{ display: 'grid', gap: 10 }}>
+      {groups.map(g => (
+        <div key={g.key} style={{ display: 'grid', gap: 6 }}>
+          <div style={{ ...row, justifyContent: 'space-between' }}>
+            {g.population !== 'non_precisee' ? (
+              <span style={{ ...small, fontWeight: 700 }}>{POPULATION[g.population][lang]}</span>
+            ) : <span />}
+            <PageLink pdfUrl={pdfUrl} f={g.first} lang={lang} />
+          </div>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {g.items.map(f => <li key={f.id} style={chip}>{f.libelle}</li>)}
+          </ul>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function Faits({ rcp, lang }: { rcp: RcpLink; lang: Lang }) {
   // `?? []` : une fiche déjà en cache avant l'ajout des faits n'a pas ce champ
   const faits = rcp.faits ?? []
@@ -42,83 +91,67 @@ function Faits({ rcp, lang }: { rcp: RcpLink; lang: Lang }) {
   })
 
   return (
-    <div style={{ flexBasis: '100%', borderTop: '1px solid #e2e8f0', paddingTop: 10, display: 'grid', gap: 12 }}>
+    <div style={{ flexBasis: '100%', borderTop: '1px solid #e2e8f0', paddingTop: 12, display: 'grid', gap: 10 }}>
       {doses.length > 0 && (
-        <div>
-          <h3 style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', margin: '0 0 6px' }}>
-            {pickLang(lang, { fr: 'Posologie indiquée dans le RCP', ar: 'الجرعات المذكورة في RCP' })}
-          </h3>
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 4 }}>
-            {doses.map(f => (
-              <li key={f.id} style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 10px', alignItems: 'baseline', fontSize: 14 }}>
-                <span style={{ ...small, minWidth: 88 }}>{POPULATION[f.population ?? 'non_precisee'][lang]}</span>
-                <strong style={{ color: '#0f172a' }}>{f.libelle}</strong>
-                <PageLink pdfUrl={rcp.pdf_url} f={f} lang={lang} />
-              </li>
-            ))}
-          </ul>
-        </div>
+        <Bloc icon="💊" accent="#2563eb" count={doses.length} title={pickLang(lang, { fr: 'Posologie indiquée dans le RCP', ar: 'الجرعات المذكورة في RCP' })}>
+          <Doses doses={doses} pdfUrl={rcp.pdf_url} lang={lang} />
+        </Bloc>
       )}
       {ci.length > 0 && (
-        <div>
-          <h3 style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', margin: '0 0 6px' }}>
-            {pickLang(lang, { fr: 'Contre-indications citées', ar: 'موانع الاستعمال المذكورة' })}
-          </h3>
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 4 }}>
+        <Bloc icon="⛔" accent="#dc2626" count={ci.length} title={pickLang(lang, { fr: 'Contre-indications citées', ar: 'موانع الاستعمال المذكورة' })}>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 6 }}>
             {ci.map(f => (
-              <li key={f.id} style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 10px', alignItems: 'baseline', fontSize: 14 }}>
-                <strong style={{ color: '#0f172a' }}>{f.libelle}</strong>
+              <li key={f.id} style={{ ...row, justifyContent: 'space-between', flexWrap: 'nowrap' }}>
+                <span style={{ color: '#0f172a', fontWeight: 600, minWidth: 0 }}>{f.libelle}</span>
                 <PageLink pdfUrl={rcp.pdf_url} f={f} lang={lang} />
               </li>
             ))}
           </ul>
-        </div>
+        </Bloc>
       )}
       {gro.length > 0 && (
-        <div>
-          <h3 style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', margin: '0 0 6px' }}>
-            {pickLang(lang, { fr: 'Grossesse et allaitement', ar: 'الحمل والرضاعة' })}
-          </h3>
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 5 }}>
+        <Bloc icon="🤰" accent="#db2777" count={gro.length} title={pickLang(lang, { fr: 'Grossesse et allaitement', ar: 'الحمل والرضاعة' })}>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 6 }}>
             {gro.map(f => {
               const g = GRAVITE[f.gravite ?? 'non_precisee']
               return (
-                <li key={f.id} style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 10px', alignItems: 'baseline', fontSize: 14 }}>
-                  <span style={{ ...small, minWidth: 88 }}>{f.libelle === 'Allaitement' ? pickLang(lang, { fr: 'Allaitement', ar: 'الرضاعة' }) : pickLang(lang, { fr: 'Grossesse', ar: 'الحمل' })}</span>
-                  <span style={{ background: g.bg, color: g.color, borderRadius: 5, padding: '0 7px', fontSize: 12, fontWeight: 700 }}>
-                    {f.gravite === 'non_precisee' || !f.gravite ? pickLang(lang, { fr: 'Voir le RCP', ar: 'راجع RCP' }) : g[lang]}
+                <li key={f.id} style={{ ...row, justifyContent: 'space-between' }}>
+                  <span style={{ display: 'flex', gap: 10, alignItems: 'baseline', flexWrap: 'wrap' }}>
+                    <span style={{ fontWeight: 600, color: '#0f172a', minWidth: 88 }}>{f.libelle === 'Allaitement' ? pickLang(lang, { fr: 'Allaitement', ar: 'الرضاعة' }) : pickLang(lang, { fr: 'Grossesse', ar: 'الحمل' })}</span>
+                    <span style={{ background: g.bg, color: g.color, borderRadius: 5, padding: '0 7px', fontSize: 12, fontWeight: 700 }}>
+                      {f.gravite === 'non_precisee' || !f.gravite ? pickLang(lang, { fr: 'Voir le RCP', ar: 'راجع RCP' }) : g[lang]}
+                    </span>
                   </span>
                   <PageLink pdfUrl={rcp.pdf_url} f={f} lang={lang} />
                 </li>
               )
             })}
           </ul>
-        </div>
+        </Bloc>
       )}
       {inter.length > 0 && (
-        <div>
-          <h3 style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a', margin: '0 0 6px' }}>
-            {pickLang(lang, { fr: 'Associations et interactions citées', ar: 'الارتباطات والتداخلات المذكورة' })}
-          </h3>
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 5 }}>
+        <Bloc icon="⚠️" accent="#d97706" count={inter.length} title={pickLang(lang, { fr: 'Associations et interactions citées', ar: 'الارتباطات والتداخلات المذكورة' })}>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 6 }}>
             {inter.map(f => {
               const g = GRAVITE[f.gravite ?? 'non_precisee']
               const href = f.cible_type === 'dci' && f.cible ? `/dci/${encodeURIComponent(f.cible.toLowerCase())}`
                 : f.cible_type === 'classe' && f.cible ? `/classes-therapeutiques/${encodeURIComponent(f.cible)}` : null
               return (
-                <li key={f.id} style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 10px', alignItems: 'baseline', fontSize: 14 }}>
-                  <span style={{ background: g.bg, color: g.color, borderRadius: 5, padding: '0 7px', fontSize: 12, fontWeight: 700, minWidth: 88, textAlign: 'center' }}>
-                    {g[lang]}
+                <li key={f.id} style={{ ...row, justifyContent: 'space-between' }}>
+                  <span style={{ display: 'flex', gap: 10, alignItems: 'baseline', flexWrap: 'wrap' }}>
+                    <span style={{ background: g.bg, color: g.color, borderRadius: 5, padding: '0 7px', fontSize: 12, fontWeight: 700, minWidth: 88, textAlign: 'center' }}>
+                      {g[lang]}
+                    </span>
+                    {href ? <Link href={href} style={{ ...link, fontWeight: 700 }}>{f.libelle}</Link> : <strong style={{ color: '#0f172a' }}>{f.libelle}</strong>}
                   </span>
-                  {href ? <Link href={href} style={{ ...link, fontWeight: 700 }}>{f.libelle}</Link> : <strong style={{ color: '#0f172a' }}>{f.libelle}</strong>}
                   <PageLink pdfUrl={rcp.pdf_url} f={f} lang={lang} />
                 </li>
               )
             })}
           </ul>
-        </div>
+        </Bloc>
       )}
-      <p style={{ ...small, margin: 0, lineHeight: 1.6 }}>
+      <p style={{ ...small, margin: 0, lineHeight: 1.6, background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, padding: '8px 12px' }}>
         {source}{' '}
         <a href={rcp.pdf_url} target="_blank" rel="noopener noreferrer" style={link}>
           {pickLang(lang, { fr: 'Ouvrir le PDF', ar: 'فتح PDF' })}
@@ -156,12 +189,12 @@ export function RcpSection({ rcps, lang }: { rcps: RcpLink[]; lang: Lang }) {
           <div
             key={r.rcp_id}
             style={{
-              background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 10, padding: '12px 16px',
+              background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 12, padding: '14px 18px', boxShadow: '0 1px 2px rgba(15,23,42,.04)',
               display: 'flex', flexWrap: 'wrap', gap: '8px 16px', alignItems: 'center',
             }}
           >
             <div style={{ flex: '1 1 240px', minWidth: 0 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>{r.nom_commercial}</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: '#0f172a' }}>{r.nom_commercial}</div>
               <div style={{ fontSize: 13, color: '#64748b', marginTop: 2 }}>
                 {[r.laboratoire_anpp, r.version_texte && pickLang(lang, { fr: `version ${r.version_texte}`, ar: `النسخة ${r.version_texte}` })].filter(Boolean).join(' · ')}
               </div>
