@@ -58,14 +58,14 @@ const rubriques = (fs: RcpFait[]) => {
 
 /** Pastille d'entité : ● substance de la base (lien), ◆ classe ATC (lien), tirets si absente de la base. */
 function Entite({ f }: { f: RcpFait }) {
-  const classe = f.cible_type === 'classe' && f.cible
+  const classe = f.cible_type === 'classe' && f.cible ? f.cible : f.dci_lien ? null : f.classe_lien?.code
   const dci = !classe && f.dci_lien
   const base: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, padding: '0 8px', borderRadius: 6, fontWeight: 700, fontSize: 14, textDecoration: 'none' }
   if (dci) {
     return <Link href={`/dci/${encodeURIComponent(dci.toLowerCase())}`} title={dci} style={{ ...base, background: '#e4edf7', color: BLUE }}><span aria-hidden="true" style={{ fontSize: 9 }}>●</span>{f.libelle}</Link>
   }
   if (classe) {
-    return <Link href={`/classes-therapeutiques/${encodeURIComponent(f.cible!)}`} title={f.cible!} style={{ ...base, background: '#d9f0ee', color: TEAL }}><span aria-hidden="true" style={{ fontSize: 9 }}>◆</span>{f.libelle}</Link>
+    return <Link href={`/classes-therapeutiques/${encodeURIComponent(classe)}`} title={f.classe_lien?.label ?? classe} style={{ ...base, background: '#d9f0ee', color: TEAL }}><span aria-hidden="true" style={{ fontSize: 9 }}>◆</span>{f.libelle}</Link>
   }
   return <span style={{ ...base, border: '1px dashed #cbd5e1', color: '#475569', fontWeight: 600 }}>{f.libelle}</span>
 }
@@ -308,6 +308,11 @@ export function InteractionsEntrantes({ items, dci, lang }: { items: Interaction
                 <span style={badge(g)}>{g[lang]}</span>
               </span>
               <span style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                {list.some(it => it.via_classe) && (
+                  <span style={{ ...small, fontStyle: 'italic' }}>
+                    {pickLang(lang, { fr: `via la classe ${list.find(it => it.via_classe)!.via_classe}`, ar: `عبر الصنف ${list.find(it => it.via_classe)!.via_classe}` })}
+                  </span>
+                )}
                 {list.map(it => (
                   <a key={it.id} href={pdfPageUrl(it.pdf_url, it.page)} target="_blank" rel="noopener noreferrer" style={{ ...small, color: BLUE, textDecoration: 'none' }}>
                     {pickLang(lang, { fr: `RCP ${it.nom_commercial} · ${it.section} · p.${it.page} ↗`, ar: `RCP ${it.nom_commercial} · ${it.section} · ص.${it.page} ↗` })}

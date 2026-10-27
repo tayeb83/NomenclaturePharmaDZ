@@ -9,6 +9,7 @@ import { test, before, after, beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import pg from 'pg'
+import { buildMatchIndex, resolveCible } from '../../lib/rcp-match.ts'
 import { fetchRcpForFiche, isOfficialRcpUrl, pdfPageUrl, resolveDciLiens, sortFaits, type QueryFn, type RcpFait } from '../../lib/rcp-core.ts'
 
 const PORTAL = 'https://rcp.anpp.dz/storage/rcp-pdfs/biopharm-spa/6aa32dae-306d-4feb-85a1-fa181acf992f.pdf'
@@ -29,23 +30,65 @@ test('lien vers une page précise du PDF', () => {
   assert.equal(pdfPageUrl(PORTAL, 2.5), PORTAL)
 })
 
-test('une interaction citant une substance de la base reçoit le lien vers sa DCI', async () => {
+const INDEX = buildMatchIndex({
+  dcis: [
+    { dci: 'METHOTREXATE', n: 12 }, { dci: 'METFORMINE CHLORHYDRATE', n: 40 }, { dci: 'METFORMINE', n: 3 },
+    { dci: 'ATORVASTATINE CALCIQUE TRIHYDRATE EXPRIME EN ATORVASTATINE', n: 30 }, { dci: 'ACIDE ACETYLSALICYLIQUE', n: 9 },
+    { dci: 'AMOXICILLINE + ACIDE CLAVULANIQUE', n: 20 }, { dci: 'AMOXICILLINE', n: 25 }, { dci: 'ACIDE FOLIQUE', n: 4 },
+    { dci: 'DOXYCYCLINE', n: 6 }, { dci: 'ACITRETINE', n: 2 },
+  ],
+  atc: [
+    { code: 'J01', niveau: 2, label_fr: 'antibactériens à usage systémique', label_en: null },
+    { code: 'J01AA', niveau: 4, label_fr: 'tétracyclines', label_en: 'tetracyclines' },
+    { code: 'D05BB', niveau: 4, label_fr: 'rétinoïdes pour le traitement du psoriasis', label_en: 'retinoids for treatment of psoriasis' },
+  ],
+})
+const cibler = (libelle: string, cible_type: 'dci' | 'classe' | null = null, cible: string | null = null) =>
+  resolveCible(INDEX, { libelle, cible_type, cible })
+
+test('rapprochement : accents, casse, pluriel, sels et libellés parasites', () => {
+  assert.equal(cibler('Méthotrexate').dci, 'METHOTREXATE')
+  assert.equal(cibler('méthotrexate à des doses supérieures à 20 mg/semaine').dci, 'METHOTREXATE')
+  assert.equal(cibler('Atorvastatine').dci, 'ATORVASTATINE CALCIQUE TRIHYDRATE EXPRIME EN ATORVASTATINE')
+  assert.equal(cibler('Chlorhydrate de metformine').dci, 'METFORMINE') // le sel est écarté, le nom exact prime
+  assert.equal(cibler('Metformine chlorhydrate').dci, 'METFORMINE CHLORHYDRATE')
+  assert.equal(cibler('Metformine').dci, 'METFORMINE')
+  assert.equal(cibler('Amoxicilline et acide clavulanique').dci, 'AMOXICILLINE + ACIDE CLAVULANIQUE')
+  assert.equal(cibler('Aspirine (acide acétylsalicylique)').dci, 'ACIDE ACETYLSALICYLIQUE')
+  assert.equal(cibler('Aspirine').dci, 'ACIDE ACETYLSALICYLIQUE') // synonyme usuel
+  assert.equal(cibler('Sels de doxycycline').dci, 'DOXYCYCLINE')
+})
+
+test('rapprochement : prudent, jamais sur un mot générique', () => {
+  assert.equal(cibler('Acide valproique').dci, null) // « acide » seul n'est pas une substance
+  assert.equal(cibler('Alcool').dci, null)
+  assert.equal(cibler('Vitamine A').dci, null) // pas de rétinol dans cet index
+  assert.deepEqual(cibler('Alcool'), { dci: null, groupe: null, classe: null })
+})
+
+test('rapprochement : deux graphies d\'une substance partagent le groupe', () => {
+  assert.equal(cibler('Metformine').groupe, cibler('Chlorhydrate de metformine').groupe)
+  assert.notEqual(cibler('Amoxicilline').groupe, cibler('Amoxicilline et acide clavulanique').groupe)
+})
+
+test('rapprochement : classes ATC (libellé de la classification ou appellation usuelle)', () => {
+  assert.equal(cibler('Tétracyclines').classe?.code, 'J01AA')
+  assert.equal(cibler('Cyclines').classe?.code, 'J01AA')
+  assert.equal(cibler('Autres rétinoïdes').classe?.code, 'D05BB')
+  assert.equal(cibler('Macrolides').classe, null) // J01FA absent de l'index : pas de lien inventé
+  assert.deepEqual(cibler('Cyclines', 'classe', 'J01AA').classe, { code: 'J01AA', label: 'tétracyclines' })
+  assert.equal(cibler('Doxycycline').classe, null) // une substance prime sur une classe
+})
+
+test('les interactions reçoivent le lien vers la DCI ou la classe, les autres faits restent intacts', () => {
   const rcp = { rcp_id: 'r', nom_commercial: 'X', pdf_url: PORTAL, laboratoire_anpp: null, version_texte: null, statut: 'auto' as const, dosage: null,
     faits: [
-      { ...fait({ id: 1, libelle: 'Méthotrexate' }), cible_type: 'dci' as const, cible: 'METHOTREXATE' },
-      fait({ id: 2, libelle: 'Alcool' }),
-      { ...fait({ id: 3, libelle: 'Cyclines' }), cible_type: 'classe' as const, cible: 'J01AA' },
+      fait({ id: 1, libelle: 'Méthotrexate' }), fait({ id: 2, libelle: 'Alcool' }), fait({ id: 3, libelle: 'Cyclines' }),
       fait({ id: 4, type: 'dose', libelle: '1 g' }),
     ] }
-  let appels = 0
-  const run = (async (_sql: string, params?: unknown[]) => {
-    appels++
-    assert.deepEqual(params, [['METHOTREXATE', 'ALCOOL']]) // la classe ne part pas à la recherche d'une DCI
-    return [{ dci: 'METHOTREXATE' }]
-  }) as QueryFn
-  const [r] = await resolveDciLiens(run, [rcp])
-  assert.equal(appels, 1)
+  const [r] = resolveDciLiens([rcp], INDEX)
   assert.deepEqual(r.faits.map(f => f.dci_lien), ['METHOTREXATE', null, null, undefined])
+  assert.equal(r.faits[2].classe_lien?.code, 'J01AA')
 })
 
 const fait = (o: Partial<RcpFait>): RcpFait => ({
