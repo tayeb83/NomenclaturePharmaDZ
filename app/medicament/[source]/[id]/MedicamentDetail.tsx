@@ -23,13 +23,12 @@ import { BackButton } from '@/components/ui/BackButton'
 import { MedicamentInsights } from '@/components/drug/MedicamentInsights'
 import { MonographieSection } from '@/components/drug/MonographieSection'
 import { InteractionsEntrantes, RcpSection } from '@/components/drug/RcpSection'
-import { InteractionsAnsmSection } from '@/components/drug/InteractionsAnsmSection'
+import { InteractionsAnsmSection, InteractionsBandeau } from '@/components/drug/InteractionsAnsmSection'
 import { getPublishedMonographie, hasContent } from '@/lib/monographies'
 import { getPpa, formatPpa } from '@/lib/ppa'
 import { getInteractionsVers, getRcpForFiche, RCP_PORTAL_URL } from '@/lib/rcp'
 import { getInteractionsAnsm } from '@/lib/interactions'
 import { AdInContent } from '@/components/ads/AdBanner'
-import { AccesSignalement } from '@/components/acces/AccesSignalement'
 
 const TYPE_LABELS: Record<string, { fr: string; ar: string }> = {
   GE: { fr: 'Générique', ar: 'جنيس' }, 'Gé': { fr: 'Générique', ar: 'جنيس' }, RE: { fr: 'Référence étrangère', ar: 'مرجعي أجنبي' },
@@ -423,6 +422,9 @@ export async function MedicamentDetail(
             </div>
           )}
 
+          {/* Interactions : le bandeau en tête de fiche renvoie au détail juste sous l'essentiel */}
+          {interactionsAnsm && <InteractionsBandeau fiche={interactionsAnsm} lang={lang} />}
+
           <div className="fiche-layout">
             <div className="fiche-main">
               {/* ─── Identification ──────────────────────────── */}
@@ -592,20 +594,15 @@ export async function MedicamentDetail(
             </aside>
           </div>
 
+          {/* ─── Interactions médicamenteuses (Thesaurus ANSM), en avant : avant la pub et les RCP ─── */}
+          {interactionsAnsm && <InteractionsAnsmSection fiche={interactionsAnsm} lang={lang} />}
+
           {/* Pub juste après l'essentiel de la fiche : c'est là que le
               visiteur venu de Google a encore les yeux. Celle du bas de page
               n'était presque jamais vue. */}
           <AdInContent />
 
-          {/* ─── NAQESS : signalement anonyme d'accès au médicament ── */}
-          {!isRetrait && (
-            <AccesSignalement lang={lang} medSource={med.source} medId={med.id} medName={med.nom_marque} dci={med.dci || null} />
-          )}
-
           {/* ─── Monographie de la DCI (contenu saisi et relu) ──── */}
-          {/* ─── Interactions médicamenteuses (Thesaurus ANSM) ───── */}
-          {interactionsAnsm && <InteractionsAnsmSection fiche={interactionsAnsm} lang={lang} />}
-
           {/* ─── RCP officiel (ANPP) : lien vers le PDF du portail ─── */}
           <RcpSection rcps={rcps} lang={lang} />
           {med.dci && <InteractionsEntrantes items={interactionsVers} dci={med.dci} lang={lang} />}

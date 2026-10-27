@@ -1,8 +1,8 @@
 /**
  * Mesure le rapprochement entre les DCI de la nomenclature et le Thesaurus ANSM, sans rien écrire.
  *
- *   DATABASE_URL=... node scripts/check_ansm_couverture.ts                 # DCI de la table enregistrements
- *   node scripts/check_ansm_couverture.ts --fixture scripts/fixtures/nomenclature_synthetique.json
+ *   DATABASE_URL=... npx tsx scripts/check_ansm_couverture.mts                 # DCI de la table enregistrements
+ *   npx tsx scripts/check_ansm_couverture.mts --fixture scripts/fixtures/nomenclature_synthetique.json
  *
  * Affiche le nombre de fiches reliées et, pour revue, les DCI les plus fréquentes qui ne le sont pas
  * (la plupart n'ont tout simplement pas d'interaction dans le thésaurus : à vous de repérer les écarts de nom).

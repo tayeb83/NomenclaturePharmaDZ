@@ -35,7 +35,18 @@ par wilaya et commune. Interface bilingue **français / arabe** (RTL).
   `python scripts/extract_ansm_interactions.py data/ansm/<thesaurus>.pdf data/ansm/interactions_fr.json`
   (déjà fait pour la version de septembre 2023) et
   `DATABASE_URL=... python scripts/import_ansm_interactions.py data/ansm/interactions_fr.json --apply`.
-- Contrôle du rapprochement avec votre nomenclature : `DATABASE_URL=... node scripts/check_ansm_couverture.ts`.
+- Arabe : les traductions sont dans `data/ansm/interactions_ar.json`, indexées par le texte
+  français (une phrase traduite sert à toutes les lignes qui la portent). Application :
+  `DATABASE_URL=... python scripts/import_ansm_traductions_ar.py data/ansm/interactions_ar.json --apply`.
+  Elles sont publiées en « brouillon » (mention « ترجمة قيد المراجعة ») ; une ligne relue se marque
+  `UPDATE interactions_ansm SET ar_statut = 'relu' WHERE …` et n'est plus jamais écrasée.
+- Relecture : `python scripts/export_relecture_ar.py` produit `data/ansm/relecture_ar.xlsx` (textes distincts classés par
+  nombre d'interactions concernées, onglet « Vocabulaire » pour les termes récurrents). On y met le statut ou une
+  correction, puis `python scripts/import_relecture_ar.py data/ansm/relecture_ar.xlsx --apply` et l'import des
+  traductions marquent « relu » les interactions dont le risque et la conduite à tenir sont relus.
+- Après un import, les fiches se rafraîchissent seules sous 24 h ; pour aller plus vite, session admin
+  puis `POST /api/admin/interactions`.
+- Contrôle du rapprochement avec votre nomenclature : `DATABASE_URL=... npx tsx scripts/check_ansm_couverture.mts`.
 - Tests : `npm run test:interactions`.
 
 ### 📊 NAQESS — accès aux médicaments (participatif)

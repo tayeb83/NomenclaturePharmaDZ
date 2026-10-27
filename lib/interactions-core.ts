@@ -13,6 +13,9 @@
 import { buildMatchIndex, foldNom, resolveCible, type MatchIndex } from './rcp-match.ts'
 import type { Lang } from './i18n.ts'
 
+/** Le PDF du thésaurus, tel que publié par l'ANSM. */
+export const ANSM_THESAURUS_URL = 'https://ansm.sante.fr/uploads/2024/06/07/20230915-thesaurus-interactions-medicamenteuses-septembre-2023.pdf'
+
 export type Niveau = 'contre_indication' | 'deconseillee' | 'precaution_emploi' | 'a_prendre_en_compte'
 
 /** Du plus grave au moins grave : l'ordre d'affichage. */
@@ -115,11 +118,15 @@ export type InteractionItem = {
   /** tous les niveaux d'une ligne composée (« CI - ASDEC »), sinon un seul */
   niveaux: Niveau[]
   partenaire: string
+  /** nom français d'origine, renseigné seulement quand `partenaire` est sa traduction arabe */
+  partenaire_origine: string | null
   partenaire_est_classe: boolean
   risque: string
   conduite: string
   /** langue réelle des textes affichés : l'arabe retombe sur le français tant qu'il n'est pas traduit */
   langue: Lang
+  /** traduction arabe relue ; false tant qu'elle est en brouillon ; null si le texte est en français */
+  relue: boolean | null
   page: number
   /** titre du thésaurus sous lequel la ligne est écrite */
   substance: string
@@ -134,11 +141,13 @@ export function toItem(row: InteractionRow, lang: Lang, directs: ReadonlySet<str
     id: row.id,
     niveau: row.niveau,
     niveaux: row.niveaux?.length ? row.niveaux : [row.niveau],
-    partenaire: (ar && row.partenaire_ar) || row.partenaire,
+    partenaire: (lang === 'ar' && row.partenaire_ar) || row.partenaire,
+    partenaire_origine: lang === 'ar' && row.partenaire_ar ? row.partenaire : null,
     partenaire_est_classe: row.partenaire_est_classe,
     risque: ar ? row.risque_ar! : row.risque_fr,
     conduite: ar ? row.conduite_ar ?? '' : row.conduite_fr,
     langue: ar ? 'ar' : 'fr',
+    relue: ar ? row.ar_statut === 'relu' : null,
     page: row.page,
     substance: row.substance,
     via_classe: directs.has(row.substance) ? null : row.substance,

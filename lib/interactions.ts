@@ -19,17 +19,16 @@ export * from './interactions-core'
 
 export const INTERACTIONS_TAG = 'interactions-ansm'
 
-/** Le PDF du thésaurus, tel que publié par l'ANSM. */
-export const ANSM_THESAURUS_URL = 'https://ansm.sante.fr/uploads/2024/06/07/20230915-thesaurus-interactions-medicamenteuses-septembre-2023.pdf'
-
 /** Au-delà, la liste des membres d'une classe est tronquée à l'affichage. */
 const MEMBRES_MAX = 60
 
 export type InteractionPartenaire = {
   /** DCI de la nomenclature DwaDZ quand le partenaire y est retrouvé (page /dci/…) */
   dci: string | null
-  /** membres connus d'une classe partenaire */
-  membres: string[]
+  /** faux quand la nomenclature a été consultée et ne contient pas la substance ; null si inconnu ou si c'est une classe */
+  en_nomenclature: boolean | null
+  /** membres connus d'une classe partenaire, avec leur DCI de la nomenclature quand ils y figurent */
+  membres: { nom: string; dci: string | null }[]
   membres_total: number
 }
 
@@ -44,6 +43,8 @@ export type InteractionsFiche = {
   version: string
   /** vrai si au moins un texte s'affiche en français sur une page arabe */
   repli_fr: boolean
+  /** noms arabes des substances et classes citées (titre du thésaurus → arabe), pour la page arabe */
+  noms_ar: Record<string, string>
 }
 
 let tableExists: boolean | undefined
@@ -67,6 +68,17 @@ async function getThesaurusIndex(): Promise<ThesaurusIndex> {
   const index = buildThesaurusIndex(titres.map(t => t.substance), liens)
   thesaurusMemo = { at: Date.now(), index }
   return index
+}
+
+// Noms arabes déjà traduits pour les partenaires : ils servent aussi quand ces mêmes noms apparaissent comme titres.
+let nomsArMemo: { at: number; noms: Map<string, string> } | undefined
+async function getNomsAr(): Promise<Map<string, string>> {
+  if (nomsArMemo && Date.now() - nomsArMemo.at < 3_600_000) return nomsArMemo.noms
+  const rows = await query<{ partenaire: string; partenaire_ar: string }>(
+    `SELECT DISTINCT partenaire, partenaire_ar FROM interactions_ansm WHERE partenaire_ar IS NOT NULL`
+  )
+  nomsArMemo = { at: Date.now(), noms: new Map(rows.map(r => [r.partenaire, r.partenaire_ar])) }
+  return nomsArMemo.noms
 }
 
 let nomenclatureMemo: { at: number; index: MatchIndex } | undefined
@@ -96,14 +108,36 @@ async function fetchInteractionsFiche(dci: string, lang: Lang): Promise<Interact
 
   // un lien vers la page /dci n'est proposé que si la nomenclature DwaDZ contient la substance
   const nomenclature = await getNomenclatureIndex().catch(() => null)
+  const dciDe = (libelle: string): string | null =>
+    (nomenclature && resolveCible(nomenclature, { libelle, cible_type: null, cible: null }).dci) || null
+  const parClasse = new Map<string, InteractionPartenaire>() // les cartes d'une même classe la partagent
   const partenaires: Record<number, InteractionPartenaire> = {}
   for (const it of items) {
+    // `partenaire` peut être la traduction arabe : l'index du thésaurus raisonne sur le nom d'origine
+    const nom = it.partenaire_origine ?? it.partenaire
     if (it.partenaire_est_classe) {
-      const membres = membresDeClasse(t, it.partenaire)
-      partenaires[it.id] = { dci: null, membres: membres.slice(0, MEMBRES_MAX), membres_total: membres.length }
+      let p = parClasse.get(nom)
+      if (!p) {
+        const membres = membresDeClasse(t, nom)
+        p = {
+          dci: null, en_nomenclature: null, membres_total: membres.length,
+          membres: membres.slice(0, MEMBRES_MAX).map(m => ({ nom: m, dci: dciDe(m) })),
+        }
+        parClasse.set(nom, p)
+      }
+      partenaires[it.id] = p
     } else {
-      const lien = nomenclature && resolveCible(nomenclature, { libelle: it.partenaire, cible_type: null, cible: null }).dci
-      partenaires[it.id] = { dci: lien || null, membres: [], membres_total: 0 }
+      const dci = dciDe(nom)
+      partenaires[it.id] = { dci, en_nomenclature: nomenclature ? !!dci : null, membres: [], membres_total: 0 }
+    }
+  }
+
+  const nomsAr: Record<string, string> = {}
+  if (lang === 'ar') {
+    const noms = await getNomsAr().catch(() => new Map<string, string>())
+    for (const n of [...titres, ...classes, ...items.map(i => i.via_classe).filter((x): x is string => !!x)]) {
+      const ar = noms.get(n)
+      if (ar) nomsAr[n] = ar
     }
   }
 
@@ -114,6 +148,7 @@ async function fetchInteractionsFiche(dci: string, lang: Lang): Promise<Interact
     classes,
     version: rows[0].source_version,
     repli_fr: lang === 'ar' && items.some(i => i.langue === 'fr'),
+    noms_ar: nomsAr,
   }
 }
 
@@ -123,7 +158,7 @@ export function getInteractionsAnsm(dci: string | null, lang: Lang): Promise<Int
   if (!key) return Promise.resolve(null)
   return unstable_cache(
     () => fetchInteractionsFiche(key, lang),
-    ['interactions-ansm', 'v1', key, lang],
+    ['interactions-ansm', 'v2', key, lang],
     { revalidate: 86_400, tags: [INTERACTIONS_TAG] }
   )()
 }
