@@ -6,7 +6,7 @@
 
 import { unstable_cache } from 'next/cache'
 import { query, queryOne } from './db'
-import { fetchRcpForFiche, type RcpLink } from './rcp-core'
+import { fetchInteractionsVers, fetchRcpForFiche, resolveDciLiens, type InteractionEntrante, type RcpLink } from './rcp-core'
 
 export * from './rcp-core'
 
@@ -28,9 +28,23 @@ export function getRcpForFiche(nEnreg: string | null, code: string | null): Prom
   return unstable_cache(
     async () => {
       if (!(await hasRcpTables())) return []
-      return fetchRcpForFiche(query, nEnreg, key)
+      return resolveDciLiens(query, await fetchRcpForFiche(query, nEnreg, key))
     },
-    ['rcp', 'v2', nEnreg, key], // v2 : la forme des données a changé (faits) ; évite de relire d'anciennes entrées de cache
+    ['rcp', 'v3', nEnreg, key], // v3 : liens vers les DCI des interactions ; évite de relire d'anciennes entrées de cache
+    { revalidate: 86_400, tags: [RCP_TAG] }
+  )()
+}
+
+/** Interactions citées par les RCP d'autres substances, pour la page d'une DCI ou d'une fiche. */
+export function getInteractionsVers(dci: string | null): Promise<InteractionEntrante[]> {
+  const key = (dci ?? '').trim().toUpperCase()
+  if (!key) return Promise.resolve([])
+  return unstable_cache(
+    async () => {
+      if (!(await hasRcpTables())) return []
+      return fetchInteractionsVers(query, key).catch(() => [])
+    },
+    ['rcp-vers', 'v1', key],
     { revalidate: 86_400, tags: [RCP_TAG] }
   )()
 }

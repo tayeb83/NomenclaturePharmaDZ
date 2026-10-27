@@ -9,7 +9,7 @@ import { test, before, after, beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import pg from 'pg'
-import { fetchRcpForFiche, isOfficialRcpUrl, pdfPageUrl, sortFaits, type QueryFn, type RcpFait } from '../../lib/rcp-core.ts'
+import { fetchRcpForFiche, isOfficialRcpUrl, pdfPageUrl, resolveDciLiens, sortFaits, type QueryFn, type RcpFait } from '../../lib/rcp-core.ts'
 
 const PORTAL = 'https://rcp.anpp.dz/storage/rcp-pdfs/biopharm-spa/6aa32dae-306d-4feb-85a1-fa181acf992f.pdf'
 
@@ -27,6 +27,25 @@ test('lien vers une page précise du PDF', () => {
   assert.equal(pdfPageUrl(PORTAL, 3), `${PORTAL}#page=3`)
   assert.equal(pdfPageUrl(PORTAL, 0), PORTAL)
   assert.equal(pdfPageUrl(PORTAL, 2.5), PORTAL)
+})
+
+test('une interaction citant une substance de la base reçoit le lien vers sa DCI', async () => {
+  const rcp = { rcp_id: 'r', nom_commercial: 'X', pdf_url: PORTAL, laboratoire_anpp: null, version_texte: null, statut: 'auto' as const, dosage: null,
+    faits: [
+      { ...fait({ id: 1, libelle: 'Méthotrexate' }), cible_type: 'dci' as const, cible: 'METHOTREXATE' },
+      fait({ id: 2, libelle: 'Alcool' }),
+      { ...fait({ id: 3, libelle: 'Cyclines' }), cible_type: 'classe' as const, cible: 'J01AA' },
+      fait({ id: 4, type: 'dose', libelle: '1 g' }),
+    ] }
+  let appels = 0
+  const run = (async (_sql: string, params?: unknown[]) => {
+    appels++
+    assert.deepEqual(params, [['METHOTREXATE', 'ALCOOL']]) // la classe ne part pas à la recherche d'une DCI
+    return [{ dci: 'METHOTREXATE' }]
+  }) as QueryFn
+  const [r] = await resolveDciLiens(run, [rcp])
+  assert.equal(appels, 1)
+  assert.deepEqual(r.faits.map(f => f.dci_lien), ['METHOTREXATE', null, null, undefined])
 })
 
 const fait = (o: Partial<RcpFait>): RcpFait => ({

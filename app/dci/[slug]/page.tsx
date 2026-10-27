@@ -10,6 +10,8 @@ import { medicalPageJsonLd } from '@/lib/schema'
 import { groupByMarque } from '@/lib/dci-groups'
 import { MarqueBlocks } from '@/components/MarqueBlocks'
 import { AdInContent } from '@/components/ads/AdBanner'
+import { InteractionsEntrantes } from '@/components/drug/RcpSection'
+import { getInteractionsVers } from '@/lib/rcp'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
@@ -67,6 +69,8 @@ export default async function DciPage({ params }: { params: { slug: string } }) 
 
   const meds = await getCachedMedicamentsByDci(dci, 300)
   if (!meds.length) notFound()
+
+  const interactionsVers = await getInteractionsVers(dci).catch(() => [])
 
   const locaux = meds.filter(m => m.statut === 'F')
   const importes = meds.filter(m => m.statut !== 'F')
@@ -183,6 +187,8 @@ export default async function DciPage({ params }: { params: { slug: string } }) 
           </p>
 
           <MarqueBlocks marques={marques} lang={lang} />
+
+          <InteractionsEntrantes items={interactionsVers} dci={dci} lang={lang} />
 
           {/* Navigation */}
           <div style={{ marginTop: 40, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
