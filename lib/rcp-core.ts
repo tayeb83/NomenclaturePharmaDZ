@@ -8,6 +8,9 @@
  * leur page.
  */
 
+import { buildMatchIndex, groupeDe, resolveCible, type MatchIndex, type MatchInput } from './rcp-match.ts'
+export { buildMatchIndex, type MatchIndex, type MatchInput }
+
 export const RCP_PORTAL_URL = 'https://rcp.anpp.dz/'
 const RCP_HOST = 'rcp.anpp.dz'
 
@@ -27,6 +30,8 @@ export type RcpFait = {
   population: Population | null
   /** Interactions : DCI de la nomenclature correspondant à la cible, si elle existe (lien vers sa page). */
   dci_lien?: string | null
+  /** Interactions : classe ATC reconnue pour une cible qui n'est pas une substance de la base. */
+  classe_lien?: { code: string; label: string } | null
 }
 
 export type RcpLink = {
@@ -149,25 +154,29 @@ export async function fetchRcpForFiche(
 }
 
 
+/** Données du rapprochement : DCI de la nomenclature (avec leur nombre de fiches) et classes ATC. */
+export async function loadMatchIndex(run: QueryFn): Promise<MatchIndex> {
+  const dcis = await run<{ dci: string; n: number }>(
+    `SELECT btrim(dci) AS dci, COUNT(*)::int AS n FROM enregistrements WHERE dci IS NOT NULL AND btrim(dci) <> '' GROUP BY btrim(dci)`,
+  ).catch(() => [])
+  const atc = await run<MatchInput['atc'][number]>(
+    `SELECT code, niveau, label_fr, label_en FROM atc_codes WHERE niveau BETWEEN 2 AND 4`,
+  ).catch(() => [])
+  return buildMatchIndex({ dcis, atc })
+}
+
 /**
- * Pour chaque interaction citée, retrouve la DCI de la nomenclature qui porte ce nom
- * (comparaison en majuscules). Une cible « classe » garde son lien ATC. La DCI est
- * rendue telle qu'écrite dans la base : c'est elle qui fait l'adresse /dci/….
+ * Pour chaque interaction citée, retrouve la DCI de la nomenclature (accents, pluriel, sels,
+ * synonymes usuels) ou, à défaut, la classe ATC. Les liens permettent la navigation dans les deux sens.
  */
-export async function resolveDciLiens(run: QueryFn, rcps: RcpLink[]): Promise<RcpLink[]> {
-  const cand = (f: RcpFait) => (f.cible_type === 'classe' ? '' : (f.cible || f.libelle).trim().toUpperCase())
-  const noms = new Set<string>()
-  for (const r of rcps) for (const f of r.faits ?? []) if (f.type === 'interaction') { const c = cand(f); if (c) noms.add(c) }
-  if (!noms.size) return rcps
-  // Un échec de ce rattachement ne doit pas faire disparaître le RCP : sans lien, les interactions restent lisibles.
-  const rows = await run<{ dci: string }>(
-    `SELECT DISTINCT dci FROM enregistrements WHERE UPPER(btrim(dci)) = ANY($1::text[])`,
-    [[...noms]],
-  ).catch(() => [] as { dci: string }[])
-  const parNom = new Map(rows.map(r => [r.dci.trim().toUpperCase(), r.dci.trim()]))
+export function resolveDciLiens(rcps: RcpLink[], index: MatchIndex): RcpLink[] {
   return rcps.map(r => ({
     ...r,
-    faits: (r.faits ?? []).map(f => (f.type === 'interaction' ? { ...f, dci_lien: parNom.get(cand(f)) ?? null } : f)),
+    faits: (r.faits ?? []).map(f => {
+      if (f.type !== 'interaction') return f
+      const c = resolveCible(index, f)
+      return { ...f, dci_lien: c.dci, classe_lien: c.classe }
+    }),
   }))
 }
 
@@ -183,28 +192,46 @@ export type InteractionEntrante = {
   pdf_url: string
   /** Substance de ce médicament (DCI de la nomenclature, majuscules). */
   source_dci: string
+  /** Renseigné quand le RCP cite la classe de la substance, pas la substance elle-même. */
+  via_classe?: string | null
 }
 
-/**
- * Interactions publiées dans les RCP d'AUTRES substances qui citent celle-ci, même si
- * elle n'a elle-même aucun RCP : l'association se lit des deux côtés.
- */
-export const RCP_INTERACTIONS_VERS_SQL = `
-  SELECT f.id, f.rcp_id, f.section, f.page, f.gravite, d.nom_commercial, d.laboratoire_anpp, d.pdf_url, rd.dci AS source_dci
+/** Interactions publiées, avec le médicament et la substance qui les citent. */
+export const RCP_INTERACTIONS_PUBLIEES_SQL = `
+  SELECT f.id, f.rcp_id, f.section, f.page, f.gravite, f.libelle, f.cible_type, f.cible,
+         d.nom_commercial, d.laboratoire_anpp, d.pdf_url, rd.dci AS source_dci
   FROM rcp_faits f
   JOIN rcp_documents d USING (rcp_id)
   JOIN rcp_dci rd USING (rcp_id)
-  WHERE f.type = 'interaction' AND f.status = 'publie'
-    AND NOT d.retire AND NOT d.faits_masques
-    AND rd.dci <> $1
-    AND ((f.cible_type = 'dci' AND UPPER(btrim(f.cible)) = $1) OR (f.cible_type IS NULL AND UPPER(btrim(f.libelle)) = $1))
-  ORDER BY rd.dci, d.nom_commercial, f.page
-  LIMIT 200
+  WHERE f.type = 'interaction' AND f.status = 'publie' AND NOT d.retire AND NOT d.faits_masques
+  LIMIT 20000
 `
 
-export async function fetchInteractionsVers(run: QueryFn, dci: string): Promise<InteractionEntrante[]> {
+/**
+ * Interactions citées par les RCP d'AUTRES substances et qui visent celle-ci, même si elle n'a
+ * elle-même aucun RCP : directement, ou par sa classe ATC (« Tétracyclines » pour la doxycycline).
+ */
+export async function fetchInteractionsVers(run: QueryFn, dci: string, index: MatchIndex): Promise<InteractionEntrante[]> {
   const reglages = await fetchReglages(run)
   if (!reglages.liens || !reglages.faits || !reglages.tablesFaits) return []
-  const rows = await run<InteractionEntrante>(RCP_INTERACTIONS_VERS_SQL, [dci.trim().toUpperCase()])
-  return rows.filter(r => isOfficialRcpUrl(r.pdf_url)).map(r => ({ ...r, page: Number(r.page) }))
+  const cle = dci.trim().toUpperCase()
+  const groupe = groupeDe(cle)
+  const codes = (await run<{ code_atc: string }>(
+    `SELECT code_atc FROM dci_atc_mapping WHERE UPPER(btrim(dci)) = $1`, [cle],
+  ).catch(() => [])).map(r => r.code_atc)
+
+  type Row = InteractionEntrante & { libelle: string; cible_type: 'dci' | 'classe' | null; cible: string | null }
+  const out: InteractionEntrante[] = []
+  for (const r of await run<Row>(RCP_INTERACTIONS_PUBLIEES_SQL)) {
+    if (!isOfficialRcpUrl(r.pdf_url)) continue
+    if (groupeDe(r.source_dci) === groupe) continue // la substance elle-même
+    const c = resolveCible(index, r)
+    let via: string | null = null
+    if (c.dci && groupeDe(c.dci) === groupe) via = null
+    else if (!c.dci && c.classe && codes.some(code => code.startsWith(c.classe!.code))) via = c.classe.label
+    else continue
+    const { libelle: _l, cible_type: _t, cible: _c, ...rest } = r
+    out.push({ ...rest, page: Number(r.page), via_classe: via })
+  }
+  return out.sort((a, b) => a.source_dci.localeCompare(b.source_dci, 'fr') || a.page - b.page).slice(0, 200)
 }
