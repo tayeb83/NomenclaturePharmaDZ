@@ -896,7 +896,7 @@ export const ARTICLES: Article[] = [
     lang: 'fr',
     audience: 'etudiant',
     title: 'Comparateur de médicaments : comprendre où et à quel niveau se produit une interaction',
-    subtitle: 'Guide pas à pas de l’outil, avec des exemples (amiodarone, ibuprofène, amoxicilline…)',
+    subtitle: 'Guide pas à pas de l’outil, avec des exemples (amiodarone, amoxicilline, morphine…)',
     description:
       'Comment utiliser le comparateur DwaDZ par nom de marque ou par substance, lire le schéma d’une interaction du Thesaurus ANSM (substance, classe, gravité) et trouver les partenaires d’un médicament. Exemples commentés.',
     seoTitle: 'Comparateur de médicaments DwaDZ : lire une interaction médicamenteuse (Thesaurus ANSM)',
@@ -973,15 +973,20 @@ export const ARTICLES: Article[] = [
         type: 'paragraph',
         text: 'Choisissez « amiodarone » d’un côté et « simvastatine » de l’autre (ou leurs marques). Le thésaurus traite directement le couple : précaution d’emploi. Le risque est une augmentation des effets indésirables musculaires de la simvastatine, de type rhabdomyolyse ; la conduite à tenir est de ne pas dépasser 20 mg/j de simvastatine, ou d’utiliser une autre statine non concernée. Le bloc « Comprendre l’interaction » liste aussi les classes de chaque substance (antiarythmiques, statines, substrats à risque du CYP3A4…), sans qu’elles soient ici à l’origine du lien.',
       },
-      { type: 'h3', title: 'Exemple 2 : ibuprofène + warfarine (classe ↔ classe)' },
+      { type: 'h3', title: 'Exemple 2 : amoxicilline + méthotrexate (substance ↔ classe)' },
       {
         type: 'paragraph',
-        text: 'Ni l’ibuprofène ni la warfarine n’ont de ligne à leur nom dans ce cas : le thésaurus raisonne par classe. L’outil montre que l’ibuprofène relève de la classe des anti-inflammatoires non stéroïdiens, la warfarine de celle des anticoagulants oraux, et que l’interaction (association déconseillée) vient du rapprochement de ces deux classes. Conséquence pédagogique : ce qui est vrai pour la classe vaut pour tous ses membres, et c’est ce qu’on cherche à retenir.',
+        text: 'Choisissez « AMOXICILLINE TRIHYDRATE EXPRIMÉ EN AMOXICILLINE » d’un côté (8 médicaments dans la nomenclature) et « MÉTHOTREXATE » de l’autre (3 médicaments). Le thésaurus n’écrit pas de ligne au nom de l’amoxicilline : la ligne est écrite pour la classe des pénicillines, dont elle est membre, et vise le méthotrexate nommément. L’outil l’indique : « Substance ↔ classe ». Résultat : association déconseillée, car les pénicillines inhibent la sécrétion tubulaire rénale du méthotrexate et augmentent sa toxicité hématologique. À noter : une DCI écrite « sel exprimé en base » donne deux écritures (le sel et la base), toutes deux rattachées à la classe, car on ne sait pas laquelle le thésaurus emploie.',
       },
-      { type: 'h3', title: 'Exemple 3 : amoxicilline + acide clavulanique contre méthotrexate (association, via une classe)' },
+      { type: 'h3', title: 'Exemple 3 : morphine + aripiprazole (classe ↔ classe, et ligne composée)' },
       {
         type: 'paragraph',
-        text: 'Une marque peut contenir plusieurs substances. Ici, seule l’amoxicilline est concernée, à travers la classe des pénicillines : l’acide clavulanique reste atténué dans le schéma. La matrice « substance par substance » le confirme : une case colorée pour amoxicilline × méthotrexate, une case vide pour acide clavulanique × méthotrexate. L’interaction est classée association déconseillée.',
+        text: 'Morphine sulfate (4 médicaments) et aripiprazole (32 médicaments) sont deux membres de la classe des médicaments sédatifs (43 substances). Aucune des deux n’est citée : c’est le rapprochement de la classe avec elle-même qui crée l’interaction, d’où l’étiquette « Classe ↔ classe ». Le risque : majoration de la dépression centrale ; l’altération de la vigilance peut rendre dangereuses la conduite de véhicules et l’utilisation de machines.',
+      },
+      {
+        type: 'callout',
+        variant: 'warning',
+        text: 'Attention à la lecture : cette ligne du thésaurus est composée. Elle regroupe plusieurs niveaux, et la carte affiche le plus grave (contre-indication) à côté des autres. La « conduite à tenir » dit lequel s’applique : pour deux médicaments sédatifs entre eux, c’est « à prendre en compte » ; la contre-indication ne concerne que l’oxybate de sodium avec les opiacés ou les barbituriques, et l’oxybate avec les autres sédatifs est déconseillé. Toujours lire la conduite à tenir, pas seulement l’étiquette.',
       },
       { type: 'h2', title: '4. Un seul médicament choisi : trouver ses partenaires' },
       {
@@ -1029,7 +1034,7 @@ export const ARTICLES: Article[] = [
     lang: 'ar',
     audience: 'etudiant',
     title: 'مقارنة الأدوية: فهم موضع التداخل الدوائي ومستواه',
-    subtitle: 'دليل خطوة بخطوة لاستعمال الأداة، مع أمثلة (أميودارون، إيبوبروفين، أموكسيسيلين…)',
+    subtitle: 'دليل خطوة بخطوة لاستعمال الأداة، مع أمثلة (أميودارون، أموكسيسيلين، مورفين…)',
     description:
       'كيف تستعمل مقارنة DwaDZ بالاسم التجاري أو بالمادة الفعالة، وكيف تقرأ مخطط التداخل في دليل ANSM (المادة، الصنف، الخطورة)، وكيف تجد الأدوية المتداخلة مع دواء ما. أمثلة مشروحة.',
     seoTitle: 'مقارنة الأدوية DwaDZ: قراءة التداخل الدوائي (دليل ANSM)',
@@ -1106,15 +1111,20 @@ export const ARTICLES: Article[] = [
         type: 'paragraph',
         text: 'اختر «أميودارون» في جهة و«سيمفاستاتين» في الأخرى (أو اسميهما التجاريين). يعالج الدليل الزوج مباشرة: احتياطات الاستعمال. الخطر هو زيادة الآثار العضلية غير المرغوبة للسيمفاستاتين من نوع انحلال العضلات المخطّطة، والسلوك الواجب اتباعه هو عدم تجاوز 20 ملغ/يوم من السيمفاستاتين، أو استعمال ستاتين آخر غير معني. ويسرد مربع «فهم التداخل» أيضًا أصناف كل مادة (مضادات اضطراب النظم، الستاتينات، ركائز الـCYP3A4 عالية الخطورة…) دون أن تكون هنا أصل الرابط.',
       },
-      { type: 'h3', title: 'المثال 2: إيبوبروفين + وارفارين (صنف ↔ صنف)' },
+      { type: 'h3', title: 'المثال 2: أموكسيسيلين + ميثوتريكسات (مادة ↔ صنف)' },
       {
         type: 'paragraph',
-        text: 'لا يوجد في هذه الحالة سطر باسم الإيبوبروفين ولا باسم الوارفارين: يعمل الدليل بالأصناف. وتُظهر الأداة أن الإيبوبروفين ينتمي إلى صنف مضادات الالتهاب غير الستيرويدية، والوارفارين إلى صنف مضادات التخثر الفموية، وأن التداخل (جمع غير موصى به) ناتج عن مطابقة هذين الصنفين. والفائدة التعليمية: ما يصح على الصنف يصح على كل أفراده، وهذا ما نريد حفظه.',
+        text: 'اختر «AMOXICILLINE TRIHYDRATE EXPRIMÉ EN AMOXICILLINE» في جهة (8 أدوية في التسمية) و«MÉTHOTREXATE» في الأخرى (3 أدوية). لا يكتب الدليل سطرًا باسم الأموكسيسيلين: السطر مكتوب لصنف البنسيلينات الذي تنتمي إليه، ويستهدف الميثوتريكسات بالاسم. وتبيّن الأداة ذلك: «مادة ↔ صنف». والنتيجة: جمع غير موصى به، لأن البنسيلينات تثبّط الإفراز الأنبوبي الكلوي للميثوتريكسات وتزيد سميته الدموية. ملاحظة: عندما يُكتب الاسم الدولي «ملح معبَّر عنه بالقاعدة» تظهر كتابتان (الملح والقاعدة) وتُربط كلتاهما بالصنف، لأننا لا نعرف أيهما يستعمل الدليل.',
       },
-      { type: 'h3', title: 'المثال 3: أموكسيسيلين + حمض الكلافولانيك مقابل ميثوتريكسات (تركيبة، عبر صنف)' },
+      { type: 'h3', title: 'المثال 3: مورفين + أريبيبرازول (صنف ↔ صنف، وسطر مركّب)' },
       {
         type: 'paragraph',
-        text: 'قد يحتوي الاسم التجاري الواحد على عدة مواد. هنا لا تُعنى إلا الأموكسيسيلين، عبر صنف البنسيلينات، بينما يظل حمض الكلافولانيك باهتًا في المخطط. وتؤكد ذلك مصفوفة «مادة مقابل مادة»: خانة ملونة لأموكسيسيلين × ميثوتريكسات، وخانة فارغة لحمض الكلافولانيك × ميثوتريكسات. ويصنَّف التداخل جمعًا غير موصى به.',
+        text: 'كبريتات المورفين (4 أدوية) والأريبيبرازول (32 دواءً) عضوان في صنف الأدوية المهدّئة (43 مادة). لا تُذكر أي منهما بالاسم: مطابقة الصنف مع نفسه هي التي تُنشئ التداخل، ومن هنا علامة «صنف ↔ صنف». الخطر: زيادة تثبيط الجهاز العصبي المركزي؛ واضطراب اليقظة قد يجعل قيادة المركبات واستعمال الآلات خطيرين.',
+      },
+      {
+        type: 'callout',
+        variant: 'warning',
+        text: 'انتبه عند القراءة: هذا السطر في الدليل مركّب. فهو يجمع عدة مستويات، وتعرض البطاقة الأشد خطورة (مضاد استطباب) إلى جانب الباقي. و«السلوك الواجب اتباعه» هو الذي يحدد ما ينطبق: بين دواءين مهدّئين يكون المستوى «يؤخذ بعين الاعتبار»؛ أما مضاد الاستطباب فيخص أوكسيبات الصوديوم مع الأفيونيات أو الباربيتورات، وأوكسيبات الصوديوم مع المهدّئات الأخرى جمعٌ غير موصى به. اقرأ دائمًا السلوك الواجب اتباعه، لا العلامة وحدها.',
       },
       { type: 'h2', title: '4. اختيار دواء واحد: العثور على شركائه' },
       {
