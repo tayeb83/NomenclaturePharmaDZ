@@ -134,7 +134,8 @@ body {
   border-bottom: 1px solid var(--brass);
   padding: 44px 0 40px; position: relative; overflow: hidden;
 }
-.hero.home-hero { padding-bottom: 62px; }
+.hero.home-hero { padding-bottom: 62px; overflow: visible; }
+.home-hero .hero-content { z-index: 5; } /* au-dessus du bandeau de chiffres : la liste d'autocomplétion le recouvre */
 .hero-grid {
   display: grid; grid-template-columns: minmax(0, 1fr) auto;
   align-items: center; gap: 28px;
@@ -214,8 +215,9 @@ body {
 }
 .hero-eyebrow::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex: none; }
 .hero-lead { margin-bottom: 20px !important; }
+.home-search-wrap { max-width: 620px; }
 .home-search {
-  display: flex; gap: 8px; max-width: 620px; padding: 6px;
+  position: relative; display: flex; gap: 8px; max-width: 620px; padding: 6px;
   background: white; border: 2px solid var(--blue); border-radius: 14px;
   box-shadow: 0 8px 24px rgba(18,35,63,.14);
 }
@@ -229,6 +231,21 @@ body {
   padding: 0 22px; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
 }
 .home-search button:hover { background: var(--navy); }
+.home-advanced-link { display: inline-block; margin-top: 10px; font-size: 13.5px; font-weight: 700; color: var(--blue); text-decoration: none; }
+.home-advanced-link:hover { text-decoration: underline; }
+
+/* ─── AUTOCOMPLÉTION ─────────────────────────────────────── */
+.sg-list {
+  position: absolute; inset-inline: 0; top: calc(100% + 6px); z-index: 120; list-style: none; margin: 0; padding: 6px;
+  background: white; border: 1.5px solid var(--slate-200); border-radius: 12px; box-shadow: var(--shadow-lg);
+  max-height: 340px; overflow-y: auto; text-align: start;
+}
+.sg-head { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--brass); padding: 8px 10px 4px; }
+.sg-item { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 8px 10px; border-radius: 8px; cursor: pointer; }
+.sg-item.active { background: var(--blue-light); }
+.sg-label { font-weight: 700; color: var(--navy); font-size: 14.5px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sg-sub { font-size: 12px; color: var(--slate-500); flex: none; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 .home-search-chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; max-width: 620px; }
 .home-search-chips > span { font-size: 12.5px; color: var(--slate-600); }
 .home-chip {

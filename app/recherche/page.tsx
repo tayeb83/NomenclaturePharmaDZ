@@ -86,7 +86,7 @@ function parseAdvanced(advancedRaw: string | undefined): AdvancedSearchCondition
 export default async function RecherchePage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; scope?: string; labo?: string; substance?: string; activeOnly?: string; advanced?: string; algerieOnly?: string }>
+  searchParams: Promise<{ q?: string; scope?: string; labo?: string; substance?: string; activeOnly?: string; advanced?: string; algerieOnly?: string; avancee?: string }>
 }) {
   const resolvedSearchParams = await searchParams
   const query = resolvedSearchParams.q || ''
@@ -138,6 +138,7 @@ export default async function RecherchePage({
             initialActiveOnly={Boolean(filters.activeOnly)}
             initialAdvanced={advanced}
             initialAlgerieOnly={algerieOnly}
+            initialAdvancedOpen={resolvedSearchParams.avancee === '1'}
           />
         </div>
       </div>

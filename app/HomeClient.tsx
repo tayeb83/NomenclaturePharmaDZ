@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { DrugCard } from '@/components/drug/DrugCard'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 import { AdHorizontal } from '@/components/ads/AdBanner'
+import { SearchBox } from '@/components/search/SearchBox'
 import { getFeaturedArticles } from '@/lib/articles'
 import type { PopularPage, PopularSearch } from '@/lib/queries'
 
@@ -130,14 +131,7 @@ export function HomeClient({
                   )}
             </p>
 
-            <form className="home-search" action="/recherche" method="get" role="search">
-              <input
-                type="search" name="q" required autoComplete="off" enterKeyHint="search"
-                aria-label={t('Rechercher un médicament', 'البحث عن دواء')}
-                placeholder={t('Nom, substance active ou laboratoire…', 'الاسم أو المادة الفعالة أو المخبر…')}
-              />
-              <button type="submit">{t('Rechercher', 'بحث')}</button>
-            </form>
+            <SearchBox />
 
             {popularSearches.length > 0 && (
               <div className="home-search-chips">

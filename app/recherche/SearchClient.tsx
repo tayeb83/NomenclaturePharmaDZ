@@ -6,6 +6,8 @@ import type { SearchResult } from '@/lib/db-types'
 import { DrugCard } from '@/components/drug/DrugCard'
 import { AdInContent } from '@/components/ads/AdBanner'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
+import { SuggestionList } from '@/components/search/SuggestionList'
+import { useSuggestions } from '@/components/search/useSuggestions'
 
 type AdvancedSearchCondition = {
   field: string
@@ -97,6 +99,7 @@ export function SearchClient({
   initialActiveOnly,
   initialAdvanced,
   initialAlgerieOnly,
+  initialAdvancedOpen = false,
   basePath = '/recherche',
 }: {
   initialQuery: string
@@ -108,6 +111,8 @@ export function SearchClient({
   initialActiveOnly: boolean
   initialAdvanced: AdvancedSearchCondition[]
   initialAlgerieOnly: boolean
+  /** Panneau « Recherche avancée » ouvert d'emblée (lien ?avancee=1, ou filtres déjà posés). */
+  initialAdvancedOpen?: boolean
   basePath?: string
 }) {
   const { lang } = useLanguage()
@@ -151,6 +156,7 @@ export function SearchClient({
   const router = useRouter()
   const [, startTransition] = useTransition()
   const inputRef = useRef<HTMLInputElement>(null)
+  const [advancedOpen, setAdvancedOpen] = useState(initialAdvancedOpen || hasAdvancedFilters(initialAdvanced))
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -348,6 +354,8 @@ export function SearchClient({
     URL.revokeObjectURL(url)
   }
 
+  const sg = useSuggestions(query, s => handleInput(s.label))
+
   return (
     <>
       <div className="search-bar">
@@ -356,11 +364,23 @@ export function SearchClient({
           ref={inputRef}
           type="text"
           value={query}
-          onChange={e => handleInput(e.target.value)}
+          onChange={e => { handleInput(e.target.value); sg.setOpen(true) }}
+          onKeyDown={e => { sg.onKeyDown(e) }}
+          onFocus={() => sg.items.length > 0 && sg.setOpen(true)}
+          onBlur={() => sg.setOpen(false)}
+          role="combobox"
+          aria-expanded={sg.open}
+          aria-controls="search-sg"
+          aria-autocomplete="list"
+          aria-activedescendant={sg.active >= 0 ? `search-sg-${sg.active}` : undefined}
+          autoComplete="off"
           placeholder={lang === 'ar' ? 'بحث شامل: DCI، الاسم التجاري، الشكل، الجرعة، المخبر...' : 'Recherche simple sur tout: DCI, marque, forme, dosage, labo...'}
           autoFocus
         />
         <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#475569', fontFamily: 'monospace', background: '#f1f5f9', padding: '2px 6px', borderRadius: 4, pointerEvents: 'none', userSelect: 'none' }}>/</span>
+        {sg.open && sg.items.length > 0 && (
+          <SuggestionList id="search-sg" items={sg.items} active={sg.active} lang={lang} onPick={sg.pick} onHover={sg.setActive} />
+        )}
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
@@ -396,7 +416,7 @@ export function SearchClient({
         </button>
       </div>
 
-      <details style={{ marginBottom: 16, border: '1px solid #e2e8f0', borderRadius: 10, padding: 12, background: '#f8fafc' }}>
+      <details open={advancedOpen} onToggle={e => setAdvancedOpen((e.currentTarget as HTMLDetailsElement).open)} style={{ marginBottom: 16, border: '1px solid #e2e8f0', borderRadius: 10, padding: 12, background: '#f8fafc' }}>
         <summary style={{ cursor: 'pointer', fontWeight: 700, color: '#334155' }}>{lang === 'ar' ? 'بحث متقدم (منطقي)' : 'Recherche avancée (booléenne)'}</summary>
         <div style={{ marginTop: 12, display: 'grid', gap: 10 }}>
           {advanced.map((condition, index) => {
