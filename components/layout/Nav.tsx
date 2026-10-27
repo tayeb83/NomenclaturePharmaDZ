@@ -64,6 +64,7 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
         id: 'plus',
         label: fr ? 'Plus' : 'المزيد',
         links: [
+          { href: '/specialites', label: fr ? '🗂️ Spécialités' : '🗂️ التخصصات' },
           { href: '/substitution', label: fr ? '♻️ Substitution générique' : '♻️ الاستبدال الجنيس' },
           { href: '/pharmacies', label: fr ? '📍 Annuaire des pharmacies' : '📍 دليل الصيدليات' },
           { href: '/training', label: fr ? 'Training QCM' : 'تدريب QCM' },

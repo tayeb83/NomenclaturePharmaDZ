@@ -64,6 +64,28 @@ par wilaya et commune. Interface bilingue **français / arabe** (RTL).
   `psql "$DATABASE_URL" -f sql/17_annuaire.sql` (l'annuaire fonctionne aussi
   sans, avec les valeurs par défaut).
 
+### 🗂️ Spécialités (dentisterie, …)
+- `/specialites` et `/specialites/<slug>` : une spécialité regroupe des **classes
+  ATC** (ou des substances isolées) pour retrouver vite « les médicaments du
+  dentiste ». Chaque classe renvoie vers `/classes-therapeutiques/<code>`.
+- **Aucune donnée médicale n'est saisie** : seuls le titre, la présentation
+  (FR/AR) et la liste de codes sont éditables ; les compteurs (substances,
+  fiches) sont calculés à partir de la nomenclature. La page rappelle que c'est
+  un repère de navigation, pas une recommandation de prescription.
+- **Admin** (`/admin/specialites`) : créer une spécialité, éditer titre et
+  présentation FR/AR, **ajouter ou retirer une classe ATC ou une substance**
+  (avec suggestions ; un code ou une DCI inexistants sont refusés) et saisir le
+  libellé arabe de chaque classe (la table ATC n'existe qu'en FR/EN).
+- À activer avec `psql "$DATABASE_URL" -f sql/28_specialites.sql`. Sans la
+  migration, le site sert une Dentisterie par défaut en lecture seule.
+
+### ⬅️ Bouton « Retour »
+`components/layout/BackBar.tsx` + `lib/nav-history.ts` : l'historique des pages
+vues **sur le site** est gardé dans l'onglet (sessionStorage). « Retour » revient
+à la page précédente du site, ou à la page parente logique (fiche → recherche,
+commune → wilaya) quand le visiteur arrive de Google ou de Facebook : il ne quitte
+plus DwaDZ. `BackButton` utilise la même logique.
+
 ### 📲 Application web (PWA)
 Le site s'installe comme une application (bannière « Installer DwaDZ », ou
 « Ajouter à l'écran d'accueil ») et fonctionne hors-ligne. Guide

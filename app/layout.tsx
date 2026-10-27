@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { Nav } from '@/components/layout/Nav'
 import { Footer } from '@/components/layout/Footer'
+import { BackBar } from '@/components/layout/BackBar'
 import { LanguageProvider } from '@/components/i18n/LanguageProvider'
 import { PWAManager } from '@/components/pwa/PWAManager'
 import { PageVisitTracker } from '@/components/analytics/PageVisitTracker'
@@ -144,6 +145,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body suppressHydrationWarning>
         <LanguageProvider initialLang={initialLang}>
           <Nav currentVersion={currentVersion} isAdmin={isAdmin} />
+          <BackBar />
           <main className="main-content">
             {children}
           </main>

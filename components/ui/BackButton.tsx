@@ -1,7 +1,8 @@
 'use client'
 
 import React from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { goBack } from '@/lib/nav-history'
 
 export function BackButton({
   label = '← Retour',
@@ -15,13 +16,11 @@ export function BackButton({
   style?: React.CSSProperties
 }) {
   const router = useRouter()
+  const pathname = usePathname() || '/'
 
   function handleClick() {
-    if (typeof window !== 'undefined' && window.history.length > 1) {
-      router.back()
-    } else {
-      router.push(fallbackHref)
-    }
+    // Historique interne au site : ne fait jamais quitter DwaDZ (voir lib/nav-history.ts).
+    goBack(router, pathname, fallbackHref === '/' ? undefined : fallbackHref)
   }
 
   const defaultStyle: React.CSSProperties = {
