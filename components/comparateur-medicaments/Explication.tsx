@@ -72,6 +72,11 @@ export function EnteteLien({ it, a, b, lang }: { it: InteractionItem; a: CoteCom
         <span style={{ background: 'white', border: `1px solid ${C.creamEdge}`, borderRadius: 999, padding: '0 9px', fontSize: 12.5, fontWeight: 700, color: C.brassDark, marginInlineEnd: 8 }}>{t.portee[l.portee]}</span>
         {phraseLien(it, lang)}
       </p>
+      {it.niveaux.length > 1 && (
+        <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.6, color: C.brassDark, borderInlineStart: `3px solid ${C.brass}`, paddingInlineStart: 10 }}>
+          {t.ligneComposee}
+        </p>
+      )}
     </div>
   )
 }
