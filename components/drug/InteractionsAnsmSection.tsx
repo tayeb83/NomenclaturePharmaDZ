@@ -195,6 +195,12 @@ export function InteractionsAnsmSection({ fiche, lang }: { fiche: InteractionsFi
   const [niveau, setNiveau] = useState<Niveau | 'tous'>('tous')
   const [recherche, setRecherche] = useState('')
   const [tri, setTri] = useState<Tri>('gravite')
+  // chaque gravité se plie et se déplie ; « à prendre en compte » démarre plié
+  const [ouverts, setOuverts] = useState<Record<Niveau, boolean>>({
+    contre_indication: true, deconseillee: true, precaution_emploi: true, a_prendre_en_compte: false,
+  })
+  const basculer = (k: Niveau) => setOuverts(o => ({ ...o, [k]: !o[k] }))
+  const toutDeplier = (ouvert: boolean) => setOuverts({ contre_indication: ouvert, deconseillee: ouvert, precaution_emploi: ouvert, a_prendre_en_compte: ouvert })
 
   const q = plier(recherche.trim())
   // les compteurs suivent la recherche : on voit tout de suite quelle gravité reste concernée
@@ -258,7 +264,7 @@ export function InteractionsAnsmSection({ fiche, lang }: { fiche: InteractionsFi
               {t(lang, 'Toutes', 'الكل')} <span style={{ fontFamily: MONO, fontSize: 12, opacity: .85 }}>{parRecherche.length}</span>
             </button>
             {NIVEAUX.filter(n => comptes[n] > 0 || niveau === n).map(n => (
-              <button key={n} type="button" aria-pressed={niveau === n} onClick={() => setNiveau(niveau === n ? 'tous' : n)} style={puce(niveau === n, NIVEAU[n].solid)}>
+              <button key={n} type="button" aria-pressed={niveau === n} onClick={() => { setNiveau(niveau === n ? 'tous' : n); if (niveau !== n) setOuverts(o => ({ ...o, [n]: true })) }} style={puce(niveau === n, NIVEAU[n].solid)}>
                 <span aria-hidden="true" style={{ color: niveau === n ? 'white' : NIVEAU[n].solid, fontSize: 13 }}>{NIVEAU[n].icon}</span>
                 {NIVEAU[n][lang]} <span style={{ fontFamily: MONO, fontSize: 12, opacity: .85 }}>{comptes[n]}</span>
               </button>
@@ -271,6 +277,12 @@ export function InteractionsAnsmSection({ fiche, lang }: { fiche: InteractionsFi
               aria-label={t(lang, 'Chercher une substance ou une classe', 'ابحث عن مادة أو صنف')}
               style={{ flex: '1 1 260px', minWidth: 0, font: 'inherit', fontSize: 15, padding: '7px 12px', border: '1.5px solid #cbd5e1', borderRadius: 8, background: 'white' }}
             />
+            {tri === 'gravite' && (
+              <span style={{ display: 'inline-flex', gap: 6 }}>
+                <button type="button" onClick={() => toutDeplier(true)} style={{ ...puce(false, C.navy), fontSize: 13.5, padding: '4px 11px' }}>{t(lang, 'Tout déplier', 'فتح الكل')}</button>
+                <button type="button" onClick={() => toutDeplier(false)} style={{ ...puce(false, C.navy), fontSize: 13.5, padding: '4px 11px' }}>{t(lang, 'Tout plier', 'طيّ الكل')}</button>
+              </span>
+            )}
             <label style={{ ...small, display: 'inline-flex', gap: 6, alignItems: 'center' }}>
               {t(lang, 'Tri', 'الترتيب')}
               <select id="interactions-tri" value={tri} onChange={e => setTri(e.target.value as Tri)} style={{ font: 'inherit', fontSize: 14.5, padding: '6px 8px', border: '1.5px solid #cbd5e1', borderRadius: 8, background: 'white' }}>
@@ -301,42 +313,46 @@ export function InteractionsAnsmSection({ fiche, lang }: { fiche: InteractionsFi
             <div style={{ display: 'grid', gap: 22 }}>
               {grouperParNiveau(visibles).map(({ niveau: k, items }) => {
                 const n = NIVEAU[k]
-                // « à prendre en compte » reste replié, sauf si on l'a demandé (filtre) ou cherché
-                const replie = k === 'a_prendre_en_compte' && !filtre
-                // les précautions d'emploi nombreuses se replient ; jamais en cours de filtre
+                // une recherche en cours déplie tout : on ne cache pas ce qu'on vient de chercher
+                const ouvert = ouverts[k] || q !== ''
+                // les précautions d'emploi nombreuses se replient derrière « Voir les autres » ; jamais en cours de filtre
                 const coupe = k === 'precaution_emploi' && !filtre && items.length > VISIBLES + 2
                 const debut = coupe ? items.slice(0, VISIBLES) : items
                 const reste = items.slice(debut.length)
-                const titre = (
-                  <>
-                    <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: '50%', background: n.solid, color: 'white', fontSize: 14, flex: 'none' }}>{n.icon}</span>
-                    <span>{n[lang]}</span>
-                    <span style={{ fontFamily: MONO, fontSize: 12, border: `1px solid ${n.line}`, background: 'white', borderRadius: 999, padding: '0 8px' }}>{items.length}</span>
-                  </>
-                )
-                const head: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 10, fontFamily: DISPLAY, fontSize: 22, fontWeight: 700, color: n.color, margin: 0 }
-                if (replie) {
-                  return (
-                    <details key={k} style={{ display: 'grid', gap: 10 }}>
-                      <summary style={{ ...head, cursor: 'pointer', fontSize: 19 }}>{titre}</summary>
-                      <p style={{ ...small, margin: '0 0 10px' }}>
-                        {t(lang, 'Pas de conduite imposée : à garder à l\'esprit lors de l\'association.', 'لا يُفرض سلوك محدد، يكفي أخذه بعين الاعتبار عند الجمع.')}
-                      </p>
-                      {liste(items)}
-                    </details>
-                  )
-                }
+                const idCorps = `interactions-${k}`
                 return (
                   <div key={k} style={{ display: 'grid', gap: 10 }}>
-                    <h3 style={head}>{titre}</h3>
-                    {liste(debut)}
-                    {reste.length > 0 && (
-                      <details>
-                        <summary style={{ cursor: 'pointer', color: C.blue, fontSize: 14.5 }}>
-                          {t(lang, `Voir les ${reste.length} autres`, `عرض ${reste.length} أخرى`)}
-                        </summary>
-                        <div style={{ marginTop: 10 }}>{liste(reste)}</div>
-                      </details>
+                    <h3 style={{ margin: 0 }}>
+                      <button
+                        type="button" onClick={() => basculer(k)} aria-expanded={ouvert} aria-controls={idCorps}
+                        style={{ all: 'unset', boxSizing: 'border-box', width: '100%', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, fontFamily: DISPLAY, fontSize: 22, fontWeight: 700, color: n.color, padding: '4px 0', borderBottom: `1px solid ${n.line}` }}
+                      >
+                        <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: '50%', background: n.solid, color: 'white', fontSize: 14, flex: 'none' }}>{n.icon}</span>
+                        <span>{n[lang]}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 12, border: `1px solid ${n.line}`, background: 'white', borderRadius: 999, padding: '0 8px' }}>{items.length}</span>
+                        <span aria-hidden="true" style={{ marginInlineStart: 'auto', fontSize: 14, transform: ouvert ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }}>▾</span>
+                        <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
+                          {ouvert ? t(lang, 'Plier', 'طيّ') : t(lang, 'Déplier', 'فتح')}
+                        </span>
+                      </button>
+                    </h3>
+                    {ouvert && (
+                      <div id={idCorps} style={{ display: 'grid', gap: 10 }}>
+                        {k === 'a_prendre_en_compte' && (
+                          <p style={{ ...small, margin: 0 }}>
+                            {t(lang, 'Pas de conduite imposée : à garder à l\'esprit lors de l\'association.', 'لا يُفرض سلوك محدد، يكفي أخذه بعين الاعتبار عند الجمع.')}
+                          </p>
+                        )}
+                        {liste(debut)}
+                        {reste.length > 0 && (
+                          <details>
+                            <summary style={{ cursor: 'pointer', color: C.blue, fontSize: 14.5 }}>
+                              {t(lang, `Voir les ${reste.length} autres`, `عرض ${reste.length} أخرى`)}
+                            </summary>
+                            <div style={{ marginTop: 10 }}>{liste(reste)}</div>
+                          </details>
+                        )}
+                      </div>
                     )}
                   </div>
                 )
