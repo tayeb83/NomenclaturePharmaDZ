@@ -148,8 +148,8 @@ export function OutilsClient({
               </div>
               <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>
                 {t(
-                  'Deux médicaments côte à côte : substance, forme, dosage, laboratoire, prix et interactions entre les deux selon le Thesaurus ANSM.',
-                  'دواءان جنبًا إلى جنب: المادة الفعالة والشكل والجرعة والمخبر والثمن والتداخلات بينهما حسب دليل ANSM.'
+                  'Par nom de marque ou par substance : fiches côte à côte, et interactions du Thesaurus ANSM expliquées (quelle substance, quelle classe, quelle gravité).',
+                  'بالاسم التجاري أو بالمادة الفعالة: بطاقتان جنبًا إلى جنب، وتداخلات دليل ANSM مشروحة (أي مادة، أي صنف، أي درجة خطورة).'
                 )}
               </div>
               <div style={previewStyle}>

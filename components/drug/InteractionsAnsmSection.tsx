@@ -15,7 +15,7 @@ import type { InteractionsFiche } from '@/lib/interactions'
  * par la teinte, par une forme (⊗ ▲ ◆ ○) et par le libellé : marine profond pour la contre-indication,
  * bleu, laiton, puis vert-de-gris pour ce qui est simplement à prendre en compte.
  */
-const NIVEAU: Record<Niveau, { fr: string; ar: string; court: { fr: string; ar: string }; color: string; bg: string; line: string; solid: string; icon: string }> = {
+export const NIVEAU: Record<Niveau, { fr: string; ar: string; court: { fr: string; ar: string }; color: string; bg: string; line: string; solid: string; icon: string }> = {
   contre_indication: { fr: 'Contre-indication', ar: 'مضاد استطباب (ممنوع الجمع)', court: { fr: 'contre-indication', ar: 'مضاد استطباب' }, color: C.navyDeep, bg: '#e6ebf4', line: '#aab8d3', solid: C.navyDeep, icon: '⊗' },
   deconseillee: { fr: 'Association déconseillée', ar: 'جمع غير موصى به', court: { fr: 'déconseillée', ar: 'غير موصى به' }, color: C.blueDeep, bg: '#e4edf7', line: '#a9c3e6', solid: C.blue, icon: '▲' },
   precaution_emploi: { fr: 'Précaution d\'emploi', ar: 'احتياطات الاستعمال', court: { fr: 'précaution', ar: 'احتياطات' }, color: C.brassDark, bg: '#f8ebc8', line: '#e3c98a', solid: C.brass, icon: '◆' },
@@ -67,7 +67,7 @@ function Tag({ children }: { children: React.ReactNode }) {
   )
 }
 
-function Carte({ it, fiche, lang, montrerNiveau }: { it: InteractionItem; fiche: InteractionsFiche; lang: Lang; montrerNiveau: boolean }) {
+function Carte({ it, fiche, lang, montrerNiveau, entete }: { it: InteractionItem; fiche: InteractionsFiche; lang: Lang; montrerNiveau: boolean; entete?: (it: InteractionItem) => React.ReactNode }) {
   const n = NIVEAU[it.niveau]
   const p = fiche.partenaires[it.id]
   // un texte français sur une page arabe garde sa direction d'origine
@@ -102,6 +102,8 @@ function Carte({ it, fiche, lang, montrerNiveau }: { it: InteractionItem; fiche:
           </span>
         )}
       </header>
+
+      {entete?.(it)}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))' }}>
         <div style={{ padding: '11px 14px', display: 'grid', gap: 4, alignContent: 'start', minWidth: 0 }}>
@@ -191,9 +193,11 @@ type Tri = 'gravite' | 'alpha'
  * gravité, recherche par substance et tri. Les textes sont ceux de l'ANSM (français) ou leur traduction
  * arabe ; seules les lignes écrites pour la substance de la fiche et pour ses classes s'affichent.
  */
-export function InteractionsAnsmSection({ fiche, lang, titre, intro, id = 'interactions' }: {
+export function InteractionsAnsmSection({ fiche, lang, titre, intro, id = 'interactions', entete }: {
   fiche: InteractionsFiche
   lang: Lang
+  /** bloc ajouté sous l'en-tête de chaque carte (comparateur : où se situe l'interaction) */
+  entete?: (it: InteractionItem) => React.ReactNode
   /** remplace le titre et le chapeau (comparateur : « entre ces deux médicaments ») */
   titre?: string
   intro?: string
@@ -227,7 +231,7 @@ export function InteractionsAnsmSection({ fiche, lang, titre, intro, id = 'inter
 
   const liste = (l: InteractionItem[], montrerNiveau = false) => (
     <div style={{ display: 'grid', gap: 10 }}>
-      {l.map(it => <Carte key={it.id} it={it} fiche={fiche} lang={lang} montrerNiveau={montrerNiveau} />)}
+      {l.map(it => <Carte key={it.id} it={it} fiche={fiche} lang={lang} montrerNiveau={montrerNiveau} entete={entete} />)}
     </div>
   )
 

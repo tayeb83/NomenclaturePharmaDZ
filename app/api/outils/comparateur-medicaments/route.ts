@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getClientIp, rateLimit } from '@/lib/rate-limit'
 import { requireTrainingUserApi } from '@/lib/training/auth'
-import { comparer, parseRef } from '@/lib/comparateur-medicaments'
+import { comparer, parseCote } from '@/lib/comparateur-medicaments'
 
 export const dynamic = 'force-dynamic'
 
 /**
- * Comparaison de deux fiches : /api/outils/comparateur-medicaments?a=enregistrement:12&b=enregistrement:34&lang=ar
+ * Comparaison de deux côtés, chacun une marque ou une substance :
+ *   /api/outils/comparateur-medicaments?a=enregistrement:12&b=dci:AMIODARONE&lang=ar
  * Réservée aux comptes validés (mêmes comptes que Training) : sans session, 401.
  */
 export async function GET(req: NextRequest) {
@@ -18,9 +19,9 @@ export async function GET(req: NextRequest) {
   if ('response' in auth) return auth.response
 
   const p = req.nextUrl.searchParams
-  const a = parseRef(p.get('a'))
-  const b = parseRef(p.get('b'))
-  if (!a || !b) return NextResponse.json({ error: 'Deux médicaments sont nécessaires.' }, { status: 400 })
+  const a = parseCote(p.get('a'))
+  const b = parseCote(p.get('b'))
+  if (!a || !b) return NextResponse.json({ error: 'Deux médicaments ou substances sont nécessaires.' }, { status: 400 })
 
   try {
     const res = await comparer(a, b, p.get('lang') === 'ar' ? 'ar' : 'fr')

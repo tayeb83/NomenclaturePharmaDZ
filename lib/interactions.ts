@@ -11,8 +11,9 @@ import type { Lang } from './i18n'
 import { loadMatchIndex, type MatchIndex } from './rcp-core'
 import { resolveCible } from './rcp-match'
 import {
-  buildThesaurusIndex, fusionnerSens, interactionsVisant, membresDeClasse, resoudreDci, toItem, trierItems,
-  type ClasseLien, type InteractionItem, type InteractionRow, type ThesaurusIndex,
+  buildThesaurusIndex, cle, composantsDeDci, fusionnerSens, interactionsVisantDetail, membresDeClasse, NIVEAU_RANG, resoudreDci,
+  substancesDeDci, substancesVisees, toItem, trierItems,
+  type ClasseLien, type Composant, type InteractionItem, type InteractionRow, type Niveau, type ThesaurusIndex,
 } from './interactions-core'
 
 export * from './interactions-core'
@@ -169,11 +170,13 @@ async function fetchInteractionsEntre(dciA: string, dciB: string, lang: Lang): P
   const [a, b] = await Promise.all([getInteractionsAnsm(dciA, lang), getInteractionsAnsm(dciB, lang)])
   if (!a && !b) return null
   const t = await getThesaurusIndex()
+  const compA = composantsDeDci(t, dciA)
+  const compB = composantsDeDci(t, dciB)
   const resA = resoudreDci(t, dciA)
   const resB = resoudreDci(t, dciB)
   const items = fusionnerSens(
-    a ? interactionsVisant(t, a.items, resB) : [],
-    b ? interactionsVisant(t, b.items, resA) : [],
+    a ? interactionsVisantDetail(t, a.items, compA, compB, 'a') : [],
+    b ? interactionsVisantDetail(t, b.items, compB, compA, 'b') : [],
   )
   const partenaires: Record<number, InteractionPartenaire> = {}
   for (const it of items) {
@@ -202,7 +205,101 @@ export function getInteractionsEntre(dciA: string | null, dciB: string | null, l
   if (!a || !b || a === b) return Promise.resolve(null)
   return unstable_cache(
     () => fetchInteractionsEntre(a, b, lang),
-    ['interactions-ansm-entre', 'v1', a, b, lang],
+    ['interactions-ansm-entre', 'v2', a, b, lang],
     { revalidate: 86_400, tags: [INTERACTIONS_TAG] }
   )()
+}
+
+/**
+ * Substances d'une DCI et ce que le thésaurus en connaît (titre, classes). Sans la base du thésaurus,
+ * les substances sont listées sans titre : le comparateur dit alors qu'il ne peut pas conclure.
+ */
+export async function getComposants(dci: string | null): Promise<Composant[]> {
+  const key = cleDci(dci)
+  if (!key) return []
+  if (!(await hasTables().catch(() => false))) return substancesDeDci(key).map(nom => ({ nom, titre: null, classes: [] }))
+  return composantsDeDci(await getThesaurusIndex(), key)
+}
+
+export type PartenaireSuggere = {
+  nom: string
+  /** nom français d'origine, quand `nom` est la traduction arabe */
+  nom_origine: string | null
+  est_classe: boolean
+  /** gravité la plus forte parmi les lignes qui visent ce partenaire */
+  niveau: Niveau
+  niveaux: Niveau[]
+  /** substances du médicament choisi concernées */
+  via: string[]
+  via_classe: string | null
+  /** extrait du risque, pour comprendre d'un coup d'œil */
+  risque: string
+  langue: Lang
+  dci: string | null
+  en_nomenclature: boolean | null
+  membres: { nom: string; dci: string | null }[]
+  membres_total: number
+  lignes: number
+}
+
+export type PartenairesFiche = {
+  composants: Composant[]
+  partenaires: PartenaireSuggere[]
+  version: string | null
+}
+
+async function fetchPartenaires(dci: string, lang: Lang): Promise<PartenairesFiche> {
+  const [fiche, composants] = await Promise.all([getInteractionsAnsm(dci, lang), getComposants(dci)])
+  if (!fiche) return { composants, partenaires: [], version: null }
+  const groupes = new Map<string, PartenaireSuggere>()
+  for (const it of fiche.items) {
+    const nom = it.partenaire_origine ?? it.partenaire
+    const k = `${it.partenaire_est_classe ? 'c' : 's'}:${cle(nom)}`
+    const via = substancesVisees(composants, it.substance, !!it.via_classe)
+    const p = fiche.partenaires[it.id]
+    const g = groupes.get(k)
+    if (!g) {
+      groupes.set(k, {
+        nom: it.partenaire, nom_origine: it.partenaire_origine, est_classe: it.partenaire_est_classe,
+        niveau: it.niveau, niveaux: [it.niveau], via, via_classe: it.via_classe, risque: it.risque, langue: it.langue,
+        dci: p?.dci ?? null, en_nomenclature: p?.en_nomenclature ?? null, membres: p?.membres ?? [], membres_total: p?.membres_total ?? 0, lignes: 1,
+      })
+      continue
+    }
+    g.lignes++
+    g.via = [...new Set([...g.via, ...via])]
+    if (!g.niveaux.includes(it.niveau)) g.niveaux.push(it.niveau)
+    // les items arrivent triés par gravité : le premier est le plus grave, on le garde
+    if (NIVEAU_RANG[it.niveau] < NIVEAU_RANG[g.niveau]) Object.assign(g, { niveau: it.niveau, risque: it.risque, langue: it.langue })
+  }
+  const partenaires = [...groupes.values()]
+    .sort((x, y) => NIVEAU_RANG[x.niveau] - NIVEAU_RANG[y.niveau] || x.nom.localeCompare(y.nom, lang === 'ar' ? 'ar' : 'fr'))
+  return { composants, partenaires, version: fiche.version }
+}
+
+/** Tous les partenaires d'interaction d'un médicament (par sa DCI), regroupés par partenaire. */
+export function getPartenairesAnsm(dci: string | null, lang: Lang): Promise<PartenairesFiche> {
+  const key = cleDci(dci)
+  if (!key) return Promise.resolve({ composants: [], partenaires: [], version: null })
+  return unstable_cache(
+    () => fetchPartenaires(key, lang),
+    ['interactions-ansm-partenaires', 'v1', key, lang],
+    { revalidate: 86_400, tags: [INTERACTIONS_TAG] }
+  )()
+}
+
+/** Titres du thésaurus (substances ou classes) dont le nom contient la saisie. */
+export async function chercherTitresThesaurus(saisie: string, limite = 8): Promise<{ nom: string; classe: boolean }[]> {
+  const k = cle(saisie)
+  if (k.length < 2 || !(await hasTables().catch(() => false))) return []
+  const rows = await query<{ nom: string; classe: boolean }>(
+    `SELECT DISTINCT i.substance AS nom,
+            EXISTS (SELECT 1 FROM interactions_ansm_classes c WHERE c.classe_key = i.substance_key) AS classe
+       FROM interactions_ansm i
+      WHERE i.substance_key LIKE '%' || $1 || '%'
+      ORDER BY (i.substance_key LIKE $1 || '%') DESC, i.substance
+      LIMIT ${Math.max(1, Math.min(20, limite))}`,
+    [k.replace(/[\\%_]/g, m => `\\${m}`)]
+  )
+  return rows
 }
