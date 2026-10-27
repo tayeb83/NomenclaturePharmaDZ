@@ -242,6 +242,12 @@ export default async function sitemap({ id }: { id: number | string }): Promise<
       priority: 0.3,
     },
     {
+      url: `${APP_URL}/specialites`,
+      lastModified: catalogueDate,
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
+    {
       url: `${APP_URL}/classes-therapeutiques`,
       lastModified: catalogueDate,
       changeFrequency: 'monthly',

@@ -6,6 +6,7 @@ import {
   getPopularPages,
   getPopularSearches,
 } from '@/lib/queries'
+import { listSpecialites } from '@/lib/specialites'
 import { HomeClient } from './HomeClient'
 import type { Metadata } from 'next'
 
@@ -38,13 +39,15 @@ export const metadata: Metadata = {
 }
 
 export default async function HomePage() {
-  const [stats, nouveautes, retraits, lastVersionDate, popularPages, popularSearches] = await Promise.all([
+  const [stats, nouveautes, retraits, lastVersionDate, popularPages, popularSearches, specialites] = await Promise.all([
     getStats(),
     getLatestNouveautes(3),
     getLastRetraits(3),
     getLastVersionDate(),
     getPopularPages(10, 30),
     getPopularSearches(10, 30),
+    // Une base sans la migration des spécialités ne doit pas casser l'accueil.
+    listSpecialites().catch(() => []),
   ])
 
   // ItemList : le classement est aussi exposé aux moteurs, qui peuvent alors
@@ -77,6 +80,7 @@ export default async function HomePage() {
         lastVersionDate={lastVersionDate}
         popularPages={popularPages}
         popularSearches={popularSearches}
+        specialites={specialites.map(({ slug, titre_fr, titre_ar, nb_classes, nb_dci, nb_produits }) => ({ slug, titre_fr, titre_ar, nb_classes, nb_dci, nb_produits }))}
       />
     </>
   )

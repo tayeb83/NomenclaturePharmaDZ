@@ -4,8 +4,18 @@ import Link from 'next/link'
 import { DrugCard } from '@/components/drug/DrugCard'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 import { AdHorizontal } from '@/components/ads/AdBanner'
+import { SearchBox } from '@/components/search/SearchBox'
 import { getFeaturedArticles } from '@/lib/articles'
 import type { PopularPage, PopularSearch } from '@/lib/queries'
+
+export type HomeSpecialite = {
+  slug: string
+  titre_fr: string
+  titre_ar: string | null
+  nb_classes: number
+  nb_dci: number
+  nb_produits: number
+}
 
 // Remplacez ces IDs par vos vrais slots AdSense (disponibles dans Google AdSense > Annonces > Par bloc)
 const AD_SLOT_HOME_TOP = process.env.NEXT_PUBLIC_AD_SLOT_HOME_TOP || '1234567890'
@@ -67,6 +77,7 @@ export function HomeClient({
   lastVersionDate,
   popularPages = [],
   popularSearches = [],
+  specialites = [],
 }: {
   stats: Stats | null
   nouveautes: any[]
@@ -74,127 +85,102 @@ export function HomeClient({
   lastVersionDate: string | null
   popularPages?: PopularPage[]
   popularSearches?: PopularSearch[]
+  specialites?: HomeSpecialite[]
 }) {
   const { lang } = useLanguage()
   const t = (fr: string, ar: string) => lang === 'ar' ? ar : fr
   const formattedDate = formatDate(lastVersionDate)
+  const num = (v: number | null | undefined) => (v == null ? '—' : v.toLocaleString('fr'))
+  const arrow = lang === 'ar' ? '←' : '→'
 
   const featuredArticles = getFeaturedArticles(lang, 3)
 
   const services = [
-    {
-      href: '/substitution',
-      icon: '♻️',
-      title: t('Trouver un générique', 'البحث عن بديل جنيس'),
-      text: t('Trouvez une alternative générique à un médicament.', 'اعثر على بديل جنيس لدواء ما.'),
-    },
-    {
-      href: '/alertes',
-      icon: '🚨',
-      title: t('Consulter les alertes', 'الاطلاع على التنبيهات'),
-      text: t('Retraits et AMM non renouvelées.', 'الأدوية المسحوبة وغير المجددة.'),
-    },
-    {
-      href: '/pharmacies',
-      icon: '📍',
-      title: t('Annuaire des pharmacies', 'دليل الصيدليات'),
-      text: t('Toutes les pharmacies par wilaya et commune.', 'كل الصيدليات حسب الولاية والبلدية.'),
-    },
-    {
-      href: '/diff',
-      icon: '🆕',
-      title: t('Nouveaux médicaments', 'أدوية جديدة'),
-      text: t('Les derniers médicaments enregistrés.', 'آخر الأدوية المسجلة.'),
-    },
+    { href: '/pharmacie-de-garde', icon: '🌙', tone: 't-teal', title: t('Pharmacie de garde', 'صيدلية المناوبة'), text: t('Ouverte maintenant, cette nuit ou vendredi.', 'مفتوحة الآن أو هذه الليلة أو يوم الجمعة.') },
+    { href: '/substitution', icon: '♻️', tone: 't-green', title: t('Trouver un générique', 'البحث عن بديل جنيس'), text: t('Une alternative à un médicament, avec les prix.', 'بديل لدواء ما، مع الأسعار.') },
+    { href: '/specialites', icon: '🗂️', tone: 't-brass', title: t('Par spécialité', 'حسب التخصص'), text: t('Dentisterie et autres : les classes utiles.', 'طب الأسنان وغيره: الأصناف المفيدة.') },
+    { href: '/training', icon: '✍️', tone: '', title: t('S\'entraîner (QCM)', 'التدرّب (QCM)'), text: t('Pour les étudiants, en français et en arabe.', 'للطلبة، بالفرنسية والعربية.') },
+    { href: '/alertes', icon: '🚨', tone: 't-red', title: t('Alertes et retraits', 'التنبيهات والسحب'), text: t('Retraits et AMM non renouvelées.', 'الأدوية المسحوبة وغير المجددة.') },
+    { href: '/classes-therapeutiques', icon: '🧬', tone: '', title: t('Classes ATC', 'الأصناف العلاجية'), text: t('Naviguer de la classe à la substance.', 'من الصنف إلى المادة الفعالة.') },
+    { href: '/pharmacies', icon: '📍', tone: 't-teal', title: t('Annuaire des pharmacies', 'دليل الصيدليات'), text: t('Par wilaya et commune.', 'حسب الولاية والبلدية.') },
+    { href: '/diff', icon: '🆕', tone: 't-green', title: t('Nouveaux médicaments', 'أدوية جديدة'), text: t('Les derniers enregistrements.', 'آخر التسجيلات.') },
   ]
 
   return (
     <>
-      <section className="hero">
+      <section className="hero home-hero">
         <div className="container hero-grid">
           <div className="hero-content">
+            <span className="hero-eyebrow">
+              {formattedDate
+                ? t(`Nomenclature officielle · mise à jour du ${formattedDate}`, `التسمية الرسمية · آخر تحديث ${formattedDate}`)
+                : t('Nomenclature officielle des médicaments', 'التسمية الرسمية للأدوية')}
+            </span>
             <h1>
               {t('Trouvez un médicament ou une pharmacie de garde en Algérie', 'ابحث عن دواء أو صيدلية مناوبة في الجزائر')}
             </h1>
-            <p>
-              {t(
-                'Accédez rapidement aux pharmacies ouvertes et aux informations sur les médicaments disponibles en Algérie.',
-                'اعثر بسرعة على الصيدليات المناوبة ومعلومات الأدوية المتوفرة في الجزائر.',
-              )}
+            <p className="hero-lead">
+              {stats?.total_enregistrements
+                ? t(
+                    `${num(stats.total_enregistrements)} médicaments, leurs prix, les alertes de retrait et les pharmacies ouvertes, en français et en arabe.`,
+                    `${num(stats.total_enregistrements)} دواءً وأسعارها وتنبيهات السحب والصيدليات المفتوحة، بالفرنسية والعربية.`,
+                  )
+                : t(
+                    'Les médicaments, leurs prix, les alertes de retrait et les pharmacies ouvertes, en français et en arabe.',
+                    'الأدوية وأسعارها وتنبيهات السحب والصيدليات المفتوحة، بالفرنسية والعربية.',
+                  )}
             </p>
+
+            <SearchBox />
+
+            {popularSearches.length > 0 && (
+              <div className="home-search-chips">
+                <span>{t('Souvent recherchés :', 'الأكثر بحثًا:')}</span>
+                {popularSearches.slice(0, 5).map(search => (
+                  <Link key={search.query} href={`/recherche?q=${encodeURIComponent(search.query)}`} className="home-chip">
+                    {search.query}
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            <div className="home-hero-cta">
+              <Link href="/garde" className="home-action-btn solid">📍 {t('Pharmacie de garde près de moi', 'صيدلية مناوبة قربي')}</Link>
+              <Link href="/pharmacie-de-garde" className="home-action-btn outline">🏘️ {t('Choisir une commune', 'اختيار البلدية')}</Link>
+            </div>
           </div>
           <HeroNiche />
         </div>
       </section>
 
-      {/* Présentation courte, VISIBLE. Elle était auparavant masquée (1 px,
-          opacité 0) : Google traite le texte caché comme du spam, ce qui
-          pénalise le classement et peut bloquer la validation AdSense. */}
-      <div className="container" style={{ maxWidth: 900, margin: '16px auto 0', fontSize: 14, color: 'var(--slate-600)', lineHeight: 1.6 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--navy)', margin: '0 0 6px' }}>{t('Pharma DZ : votre guide médicaments en Algérie', 'Pharma DZ: دليلك لأدوية الجزائر')}</h2>
-        <p>
-          {lang === 'ar' ? (
-            <>إذا كنت تبحث عن <strong>Pharma DZ</strong> أو <strong>صيدلية الجزائر</strong> أو <strong>أدوية الجزائر</strong>، يوفر لك DwaDZ البحث السريع في التسمية الرسمية مع صفحات مخصصة لـ <Link href="/recherche">الأدوية</Link> و<Link href="/alertes">التنبيهات</Link> و<Link href="/substitution">البدائل الجنيسة</Link>.</>
-          ) : (
-            <>Si vous cherchez <strong>Pharma DZ</strong>, <strong>pharmacie Algérie</strong> ou <strong>médicaments Algérie</strong>, DwaDZ centralise la nomenclature officielle avec des pages dédiées à la <Link href="/recherche">recherche de médicaments</Link>, aux <Link href="/alertes">alertes</Link> et à la <Link href="/substitution">substitution générique</Link>.</>
-          )}
-        </p>
-      </div>
-
-      {/* Deux actions principales : pharmacie de garde + recherche de médicament */}
       <div className="container">
-        <div className="home-actions">
-          <div className="home-action-card primary">
-            <div className="home-action-icon">🏥</div>
-            <div className="home-action-title">{t('Pharmacie de garde', 'صيدليات المناوبة')}</div>
-            <p className="home-action-text">
-              {t(
-                'Trouvez une pharmacie ouverte maintenant, cette nuit ou vendredi.',
-                'اعثر على صيدلية مناوبة الآن أو هذه الليلة أو يوم الجمعة.',
-              )}
-            </p>
-            <div className="home-action-buttons">
-              <Link href="/garde" className="home-action-btn solid">
-                📍 {t('Autour de moi', 'بالقرب مني')}
-              </Link>
-              <Link href="/pharmacie-de-garde" className="home-action-btn outline">
-                🏘️ {t('Choisir une commune', 'اختيار البلدية')}
-              </Link>
-            </div>
-          </div>
-
-          <div className="home-action-card secondary">
-            <div className="home-action-icon">🔍</div>
-            <div className="home-action-title">{t('Rechercher un médicament', 'البحث عن دواء')}</div>
-            <p className="home-action-text">
-              {t(
-                'Recherchez par nom commercial, substance active ou laboratoire.',
-                'ابحث بالاسم التجاري أو المادة الفعالة أو المخبر.',
-              )}
-            </p>
-            <div className="home-action-buttons">
-              <Link href="/recherche" className="home-action-btn solid">
-                🔍 {t('Rechercher', 'ابحث')}
-              </Link>
-            </div>
-          </div>
+        <div className="home-strip">
+          <Link href="/medicaments" className="home-strip-item">
+            <span className="home-strip-value">{num(stats?.total_enregistrements)}</span>
+            <span className="home-strip-label">{t('Médicaments enregistrés', 'أدوية مسجلة')}</span>
+          </Link>
+          <Link href="/diff" className="home-strip-item">
+            <span className="home-strip-value">{num(stats?.total_nouveautes)}</span>
+            <span className="home-strip-label">{t('Nouveautés de la version', 'مستجدات الإصدار')}</span>
+          </Link>
+          <Link href="/retraits" className="home-strip-item">
+            <span className="home-strip-value">{num(stats?.total_retraits)}</span>
+            <span className="home-strip-label">{t('Médicaments retirés', 'أدوية مسحوبة')}</span>
+          </Link>
         </div>
-      </div>
-
-      <div className="container">
-        <AdHorizontal slot={AD_SLOT_HOME_TOP} />
       </div>
 
       <div className="page-body" style={{ paddingTop: 0 }}>
         <div className="container">
 
-          {/* Services utiles */}
-          <section style={{ marginBottom: 36 }}>
-            <div className="section-title">⚡ {t('Services utiles', 'خدمات مفيدة')}</div>
+          <section className="home-block">
+            <div className="home-block-head">
+              <div className="section-title">{t('Que cherchez-vous ?', 'عمَّ تبحث؟')}</div>
+            </div>
             <div className="home-services-grid">
               {services.map(s => (
-                <Link key={s.href} href={s.href} className="home-service-card">
-                  <div className="home-service-icon">{s.icon}</div>
+                <Link key={s.href} href={s.href} className={`home-service-card ${s.tone}`}>
+                  <div className="home-service-icon" aria-hidden="true">{s.icon}</div>
                   <div className="home-service-title">{s.title}</div>
                   <div className="home-service-text">{s.text}</div>
                 </Link>
@@ -202,9 +188,35 @@ export function HomeClient({
             </div>
           </section>
 
+          {specialites.length > 0 && (
+            <section className="home-block">
+              <div className="home-spec">
+                <div className="home-block-head">
+                  <div>
+                    <div className="section-title">{t('Les médicaments de votre spécialité', 'أدوية تخصصك')}</div>
+                    <div className="section-sub">{t('Médecins, dentistes, étudiants : retrouvez vos classes en un clic.', 'أطباء وأطباء أسنان وطلبة: اعثروا على أصنافكم بنقرة واحدة.')}</div>
+                  </div>
+                  <Link href="/specialites" className="home-more">{t('Toutes les spécialités', 'كل التخصصات')} {arrow}</Link>
+                </div>
+                <div className="home-spec-grid">
+                  {specialites.slice(0, 4).map(sp => (
+                    <Link key={sp.slug} href={`/specialites/${sp.slug}`} className="home-spec-card">
+                      <b>{lang === 'ar' && sp.titre_ar ? sp.titre_ar : sp.titre_fr}</b>
+                      <span>
+                        {sp.nb_classes} {t(sp.nb_classes > 1 ? 'classes' : 'classe', 'أصناف')} · {sp.nb_produits.toLocaleString('fr')} {t('fiches', 'بطاقة')}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+
+          <AdHorizontal slot={AD_SLOT_HOME_TOP} />
+
           {/* Index des pages les plus consultées — alimenté par le trafic réel */}
           {popularPages.length > 0 && (
-            <section style={{ marginBottom: 36 }}>
+            <section className="home-block">
               <div className="section-title">
                 🔥 {t(
                   `Top ${popularPages.length} des pages les plus recherchées`,
@@ -254,7 +266,7 @@ export function HomeClient({
           )}
 
           {/* Nouveautés + Retraits */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
+          <section className="home-block home-two-cols">
             <div>
               <div className="section-title">
                 🆕 {t(
@@ -271,12 +283,7 @@ export function HomeClient({
               {nouveautes.map(d => (
                 <DrugCard key={d.id} drug={{ ...d, source: 'enregistrement', similarity_score: 1 } as any} type="enregistrement" />
               ))}
-              <Link
-                href="/diff"
-                style={{ display: 'block', textAlign: 'center', padding: '12px', background: '#f0fdf4', borderRadius: 8, color: '#16a34a', fontWeight: 700, textDecoration: 'none', marginTop: 8 }}
-              >
-                {t('Voir tout →', '← عرض الكل')}
-              </Link>
+              <Link href="/diff" className="home-all-link green">{t('Voir tout', 'عرض الكل')} {arrow}</Link>
             </div>
 
             <div>
@@ -287,84 +294,41 @@ export function HomeClient({
               {retraits.map(d => (
                 <DrugCard key={d.id} drug={{ ...d, source: 'retrait', similarity_score: 1 } as any} type="retrait" />
               ))}
-              <Link
-                href="/alertes"
-                style={{ display: 'block', textAlign: 'center', padding: '12px', background: '#fef2f2', borderRadius: 8, color: '#dc2626', fontWeight: 700, textDecoration: 'none', marginTop: 8 }}
-              >
-                {t('Voir tout →', '← عرض الكل')}
-              </Link>
+              <Link href="/alertes" className="home-all-link red">{t('Voir tout', 'عرض الكل')} {arrow}</Link>
             </div>
-          </div>
+          </section>
 
-          <section style={{ marginTop: 36 }}>
-            <div className="section-title">📰 {t('Articles & dossiers', 'مقالات ودراسات')}</div>
-            <div className="section-sub">
-              {t(
-                'Guides pratiques et actualités pharmaceutiques en Algérie.',
-                'أدلة عملية وأخبار صيدلانية في الجزائر.'
-              )}
+          <section className="home-block">
+            <div className="home-block-head">
+              <div>
+                <div className="section-title">📰 {t('Articles & dossiers', 'مقالات ودراسات')}</div>
+                <div className="section-sub">
+                  {t('Guides pratiques et actualités pharmaceutiques en Algérie.', 'أدلة عملية وأخبار صيدلانية في الجزائر.')}
+                </div>
+              </div>
+              <Link href="/articles" className="home-more">{t('Voir tous les articles', 'عرض كل المقالات')} {arrow}</Link>
             </div>
-            <div className="home-articles-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 14, marginTop: 14 }}>
+            <div className="home-articles-grid">
               {featuredArticles.map(article => (
-                <Link
-                  key={article.slug}
-                  href={`/articles/${article.slug}`}
-                  style={{
-                    textDecoration: 'none',
-                    background: 'white',
-                    border: '1.5px solid #e2e8f0',
-                    borderRadius: 14,
-                    padding: '16px 18px',
-                    display: 'block',
-                  }}
-                >
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
-                    <span style={{ background: '#dbeafe', color: '#0369a1', borderRadius: 999, padding: '3px 10px', fontSize: 11, fontWeight: 700 }}>
+                <Link key={article.slug} href={`/articles/${article.slug}`} className="home-article">
+                  <div className="home-article-meta">
+                    <span className="home-article-tag">
                       {article.audience === 'professionnel' ? t('Professionnel', 'مهني') : t('Étudiant', 'طالب')}
                     </span>
-                    <span style={{ color: '#64748b', fontSize: 11.5 }}>{article.readingTime} {lang === 'ar' ? 'دقائق' : 'min'}</span>
+                    <span className="home-article-time">{article.readingTime} {lang === 'ar' ? 'دقائق' : 'min'}</span>
                   </div>
-                  <div style={{ fontWeight: 800, color: '#0f172a', lineHeight: 1.5, marginBottom: 8, direction: article.lang === 'ar' ? 'rtl' : 'ltr' }}>
-                    {article.title}
-                  </div>
-                  <div style={{ fontSize: 13, color: '#64748b', lineHeight: 1.6, direction: article.lang === 'ar' ? 'rtl' : 'ltr' }}>
-                    {article.description}
-                  </div>
+                  <div className="home-article-title" dir={article.lang === 'ar' ? 'rtl' : 'ltr'}>{article.title}</div>
+                  <div className="home-article-desc" dir={article.lang === 'ar' ? 'rtl' : 'ltr'}>{article.description}</div>
                 </Link>
               ))}
-            </div>
-            <div style={{ marginTop: 14 }}>
-              <Link
-                href="/articles"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none', padding: '10px 16px', borderRadius: 10, background: '#eff6ff', color: '#0369a1', fontWeight: 700 }}
-              >
-                📰 {t('Voir tous les articles', 'عرض كل المقالات')}
-              </Link>
             </div>
           </section>
 
           <AdHorizontal slot={AD_SLOT_HOME_MIDDLE} />
 
-          {/* Les données DwaDZ — statistiques secondaires */}
-          <section style={{ marginTop: 36 }}>
+          <section className="home-block">
             <div className="home-data-section">
-              <div className="section-title" style={{ marginBottom: 0 }}>{t('Les données DwaDZ', 'بيانات DwaDZ')}</div>
-              <div className="home-data-grid">
-                <Link href="/medicaments" className="home-data-item" style={{ textDecoration: 'none' }}>
-                  <div className="home-data-value">{stats?.total_enregistrements?.toLocaleString('fr') || '—'}</div>
-                  <div className="home-data-label">{t('Enregistrements actifs', 'التسجيلات النشطة')}</div>
-                </Link>
-                <Link href="/diff" className="home-data-item" style={{ textDecoration: 'none' }}>
-                  <div className="home-data-value">{stats?.total_nouveautes != null ? stats.total_nouveautes.toLocaleString('fr') : '—'}</div>
-                  <div className="home-data-label">{t('Nouveautés', 'جديد')}</div>
-                </Link>
-                <Link href="/retraits" className="home-data-item" style={{ textDecoration: 'none' }}>
-                  <div className="home-data-value">{stats?.total_retraits?.toLocaleString('fr') || '—'}</div>
-                  <div className="home-data-label">{t('Médicaments retirés', 'أدوية مسحوبة')}</div>
-                </Link>
-              </div>
-
-              <div className="home-trust">
+              <div className="home-trust" style={{ marginTop: 0 }}>
                 <div className="home-trust-title">{t('Des données utiles et actualisées', 'بيانات مفيدة ومحدّثة')}</div>
                 <p className="home-trust-text">
                   {t(
@@ -380,16 +344,21 @@ export function HomeClient({
               </div>
             </div>
           </section>
+
+          {/* Présentation courte, VISIBLE : le texte masqué est traité comme du spam par Google
+              (classement, validation AdSense). */}
+          <section className="home-about">
+            <h2>{t('Pharma DZ : votre guide médicaments en Algérie', 'Pharma DZ: دليلك لأدوية الجزائر')}</h2>
+            <p>
+              {lang === 'ar' ? (
+                <>إذا كنت تبحث عن <strong>Pharma DZ</strong> أو <strong>صيدلية الجزائر</strong> أو <strong>أدوية الجزائر</strong>، يوفر لك DwaDZ البحث السريع في التسمية الرسمية مع صفحات مخصصة لـ <Link href="/recherche">الأدوية</Link> و<Link href="/alertes">التنبيهات</Link> و<Link href="/substitution">البدائل الجنيسة</Link>.</>
+              ) : (
+                <>Si vous cherchez <strong>Pharma DZ</strong>, <strong>pharmacie Algérie</strong> ou <strong>médicaments Algérie</strong>, DwaDZ centralise la nomenclature officielle avec des pages dédiées à la <Link href="/recherche">recherche de médicaments</Link>, aux <Link href="/alertes">alertes</Link> et à la <Link href="/substitution">substitution générique</Link>.</>
+              )}
+            </p>
+          </section>
         </div>
       </div>
-
-      <style jsx>{`
-        @media (max-width: 900px) {
-          .home-articles-grid {
-            grid-template-columns: 1fr !important;
-          }
-        }
-      `}</style>
     </>
   )
 }
