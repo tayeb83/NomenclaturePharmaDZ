@@ -25,6 +25,8 @@ export type RcpFait = {
   cible_type: 'dci' | 'classe' | null
   cible: string | null
   population: Population | null
+  /** Interactions : DCI de la nomenclature correspondant à la cible, si elle existe (lien vers sa page). */
+  dci_lien?: string | null
 }
 
 export type RcpLink = {
@@ -144,4 +146,65 @@ export async function fetchRcpForFiche(
     }
   }
   return docs.map(({ faits_masques: _m, ...d }) => ({ ...d, faits: sortFaits(byRcp.get(d.rcp_id) ?? []) }))
+}
+
+
+/**
+ * Pour chaque interaction citée, retrouve la DCI de la nomenclature qui porte ce nom
+ * (comparaison en majuscules). Une cible « classe » garde son lien ATC. La DCI est
+ * rendue telle qu'écrite dans la base : c'est elle qui fait l'adresse /dci/….
+ */
+export async function resolveDciLiens(run: QueryFn, rcps: RcpLink[]): Promise<RcpLink[]> {
+  const cand = (f: RcpFait) => (f.cible_type === 'classe' ? '' : (f.cible || f.libelle).trim().toUpperCase())
+  const noms = new Set<string>()
+  for (const r of rcps) for (const f of r.faits ?? []) if (f.type === 'interaction') { const c = cand(f); if (c) noms.add(c) }
+  if (!noms.size) return rcps
+  // Un échec de ce rattachement ne doit pas faire disparaître le RCP : sans lien, les interactions restent lisibles.
+  const rows = await run<{ dci: string }>(
+    `SELECT DISTINCT dci FROM enregistrements WHERE UPPER(btrim(dci)) = ANY($1::text[])`,
+    [[...noms]],
+  ).catch(() => [] as { dci: string }[])
+  const parNom = new Map(rows.map(r => [r.dci.trim().toUpperCase(), r.dci.trim()]))
+  return rcps.map(r => ({
+    ...r,
+    faits: (r.faits ?? []).map(f => (f.type === 'interaction' ? { ...f, dci_lien: parNom.get(cand(f)) ?? null } : f)),
+  }))
+}
+
+export type InteractionEntrante = {
+  id: number
+  rcp_id: string
+  section: string
+  page: number
+  gravite: Gravite | null
+  /** Médicament dont le RCP cite la substance. */
+  nom_commercial: string
+  laboratoire_anpp: string | null
+  pdf_url: string
+  /** Substance de ce médicament (DCI de la nomenclature, majuscules). */
+  source_dci: string
+}
+
+/**
+ * Interactions publiées dans les RCP d'AUTRES substances qui citent celle-ci, même si
+ * elle n'a elle-même aucun RCP : l'association se lit des deux côtés.
+ */
+export const RCP_INTERACTIONS_VERS_SQL = `
+  SELECT f.id, f.rcp_id, f.section, f.page, f.gravite, d.nom_commercial, d.laboratoire_anpp, d.pdf_url, rd.dci AS source_dci
+  FROM rcp_faits f
+  JOIN rcp_documents d USING (rcp_id)
+  JOIN rcp_dci rd USING (rcp_id)
+  WHERE f.type = 'interaction' AND f.status = 'publie'
+    AND NOT d.retire AND NOT d.faits_masques
+    AND rd.dci <> $1
+    AND ((f.cible_type = 'dci' AND UPPER(btrim(f.cible)) = $1) OR (f.cible_type IS NULL AND UPPER(btrim(f.libelle)) = $1))
+  ORDER BY rd.dci, d.nom_commercial, f.page
+  LIMIT 200
+`
+
+export async function fetchInteractionsVers(run: QueryFn, dci: string): Promise<InteractionEntrante[]> {
+  const reglages = await fetchReglages(run)
+  if (!reglages.liens || !reglages.faits || !reglages.tablesFaits) return []
+  const rows = await run<InteractionEntrante>(RCP_INTERACTIONS_VERS_SQL, [dci.trim().toUpperCase()])
+  return rows.filter(r => isOfficialRcpUrl(r.pdf_url)).map(r => ({ ...r, page: Number(r.page) }))
 }
