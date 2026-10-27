@@ -49,6 +49,22 @@ par wilaya et commune. Interface bilingue **français / arabe** (RTL).
 - Contrôle du rapprochement avec votre nomenclature : `DATABASE_URL=... npx tsx scripts/check_ansm_couverture.mts`.
 - Tests : `npm run test:interactions`.
 
+### 🔗 Partage d'une fiche (Facebook, X, WhatsApp)
+- Barre de partage en haut de chaque fiche (FR/AR) : Facebook, X, WhatsApp, copie du lien et partage natif du téléphone.
+  Le message est prêt à poster (nom, substance, forme, dosage, laboratoire).
+- Aperçu « parlant » : `/partage/medicament/<source>/<id>` (`?lang=ar`) génère un visuel 1200×630 au style Casbah
+  (nom, substance, présentation, laboratoire, prix, nombre d'interactions). Il est servi hors `/api` exprès :
+  le middleware n'admet les robots d'aperçu (facebookexternalhit, Twitterbot, WhatsApp…) que sur les pages.
+- Tests : `node --test tests/partage/`.
+
+### ⚖️ Comparateur de deux médicaments (Outils, accès limité)
+- `/outils/comparateur-medicaments` : deux médicaments côte à côte (substance, forme, dosage, laboratoire, prix, ATC)
+  et interactions du Thesaurus ANSM **entre les deux**, dans les deux sens, avec les mêmes niveaux repliables.
+- Accès limité comme Training : demande d'accès par e-mail, validation à la main dans `/admin/training`
+  (colonne Source : « Comparateur »), lien de connexion à usage unique envoyé par e-mail. Un seul compte pour les deux.
+- À activer : `psql "$DATABASE_URL" -f sql/30_acces_origine.sql` (après `sql/23`, `24`, `25`).
+  Sans cette migration la demande Training continue de marcher ; la demande du comparateur la requiert.
+
 ### 📊 NAQESS — accès aux médicaments (participatif)
 - Sous chaque fiche : le visiteur signale anonymement « introuvable » / « prix
   inattendu » / « trouvé », sa wilaya et le nombre de pharmacies consultées

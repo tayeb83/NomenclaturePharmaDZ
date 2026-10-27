@@ -11,7 +11,7 @@ import type { Lang } from './i18n'
 import { loadMatchIndex, type MatchIndex } from './rcp-core'
 import { resolveCible } from './rcp-match'
 import {
-  buildThesaurusIndex, membresDeClasse, resoudreDci, toItem, trierItems,
+  buildThesaurusIndex, fusionnerSens, interactionsVisant, membresDeClasse, resoudreDci, toItem, trierItems,
   type ClasseLien, type InteractionItem, type InteractionRow, type ThesaurusIndex,
 } from './interactions-core'
 
@@ -159,6 +159,50 @@ export function getInteractionsAnsm(dci: string | null, lang: Lang): Promise<Int
   return unstable_cache(
     () => fetchInteractionsFiche(key, lang),
     ['interactions-ansm', 'v2', key, lang],
+    { revalidate: 86_400, tags: [INTERACTIONS_TAG] }
+  )()
+}
+
+const cleDci = (dci: string | null) => (dci ?? '').replace(/\s+/g, ' ').trim().toUpperCase()
+
+async function fetchInteractionsEntre(dciA: string, dciB: string, lang: Lang): Promise<InteractionsFiche | null> {
+  const [a, b] = await Promise.all([getInteractionsAnsm(dciA, lang), getInteractionsAnsm(dciB, lang)])
+  if (!a && !b) return null
+  const t = await getThesaurusIndex()
+  const resA = resoudreDci(t, dciA)
+  const resB = resoudreDci(t, dciB)
+  const items = fusionnerSens(
+    a ? interactionsVisant(t, a.items, resB) : [],
+    b ? interactionsVisant(t, b.items, resA) : [],
+  )
+  const partenaires: Record<number, InteractionPartenaire> = {}
+  for (const it of items) {
+    const p = a?.partenaires[it.id] ?? b?.partenaires[it.id]
+    if (p) partenaires[it.id] = p
+  }
+  return {
+    items,
+    partenaires,
+    substances: [...new Set([...resA.titres, ...resB.titres])],
+    classes: [...new Set([...resA.classes, ...resB.classes])],
+    version: (a ?? b)!.version,
+    repli_fr: items.some(i => i.langue === 'fr') && lang === 'ar',
+    noms_ar: { ...(b?.noms_ar ?? {}), ...(a?.noms_ar ?? {}) },
+  }
+}
+
+/**
+ * Interactions du thésaurus entre deux médicaments (par leur DCI), dans les deux sens.
+ * null : thésaurus indisponible ou aucune des deux substances n'y figure. Un tableau `items` vide
+ * veut dire « le thésaurus ne signale rien entre ces deux substances ».
+ */
+export function getInteractionsEntre(dciA: string | null, dciB: string | null, lang: Lang): Promise<InteractionsFiche | null> {
+  const a = cleDci(dciA)
+  const b = cleDci(dciB)
+  if (!a || !b || a === b) return Promise.resolve(null)
+  return unstable_cache(
+    () => fetchInteractionsEntre(a, b, lang),
+    ['interactions-ansm-entre', 'v1', a, b, lang],
     { revalidate: 86_400, tags: [INTERACTIONS_TAG] }
   )()
 }

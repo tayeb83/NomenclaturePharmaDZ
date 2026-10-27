@@ -182,3 +182,36 @@ export function membresDeClasse(t: ThesaurusIndex, partenaire: string): string[]
   const classe = classeDuPartenaire(t, partenaire)
   return classe ? [...(t.membresDe.get(cle(classe)) ?? [])].sort((a, b) => a.localeCompare(b, 'fr')) : []
 }
+
+/**
+ * Interactions d'une fiche A qui visent la fiche B : on garde les lignes dont le partenaire est une
+ * substance de B, une classe de B, ou « AUTRES X » quand B appartient à la classe X.
+ * `via` dit ce qui, côté B, est visé (la substance elle-même ou sa classe).
+ */
+export function interactionsVisant(t: ThesaurusIndex, items: InteractionItem[], cible: Resolution): InteractionItem[] {
+  const titres = new Set(cible.titres.map(cle))
+  const classes = new Set(cible.classes.map(cle))
+  return items.filter(it => {
+    const partenaire = it.partenaire_origine ?? it.partenaire
+    const k = cle(partenaire)
+    if (titres.has(k) || classes.has(k)) return true
+    const classe = classeDuPartenaire(t, partenaire)
+    return !!classe && (classes.has(cle(classe)) || titres.has(cle(classe)))
+  })
+}
+
+/**
+ * Interactions entre deux médicaments, dans les deux sens (le thésaurus écrit chaque paire sous
+ * l'une ou l'autre des substances). Deux lignes qui disent la même chose ne sont gardées qu'une fois.
+ */
+export function fusionnerSens(ab: InteractionItem[], ba: InteractionItem[]): InteractionItem[] {
+  const vus = new Set<string>()
+  const out: InteractionItem[] = []
+  for (const it of [...ab, ...ba]) {
+    const signature = `${it.niveau}|${it.risque.replace(/\s+/g, ' ').trim().toLowerCase()}`
+    if (vus.has(signature)) continue
+    vus.add(signature)
+    out.push(it)
+  }
+  return trierItems(out)
+}

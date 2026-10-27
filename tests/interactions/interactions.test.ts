@@ -7,7 +7,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import {
-  NIVEAUX, buildThesaurusIndex, cle, classeDuPartenaire, grouperParNiveau, membresDeClasse, resoudreDci,
+  NIVEAUX, buildThesaurusIndex, cle, classeDuPartenaire, fusionnerSens, grouperParNiveau, interactionsVisant, membresDeClasse, resoudreDci,
   substancesDeDci, toItem, trierItems, type ClasseLien, type InteractionRow,
 } from '../../lib/interactions-core.ts'
 
@@ -161,4 +161,43 @@ test('traductions arabes : chaque entrée vise un texte du thésaurus, garde ses
       assert.equal(trad.split('\n').length, texte.split('\n').length, `${k} : paragraphes : ${texte.slice(0, 60)}`)
     }
   }
+})
+
+// ─── Entre deux médicaments ──────────────────────────────────
+
+function itemsDe(dci: string) {
+  const { titres, classes } = resoudreDci(index, dci)
+  const directs = new Set(titres)
+  const noms = new Set([...titres, ...classes])
+  return data.interactions
+    .map((i, n) => ({ i, n }))
+    .filter(({ i }) => noms.has(i.substance))
+    .map(({ i, n }) => toItem({
+      id: n + 1, substance: i.substance, partenaire: i.partenaire, partenaire_est_classe: false, niveau: i.niveau as any,
+      niveaux: (i.niveaux as any) ?? null, risque_fr: i.risque, conduite_fr: i.conduite, risque_ar: null, conduite_ar: null,
+      partenaire_ar: null, ar_statut: 'absent', page: i.page, source_version: 'test',
+    }, 'fr', directs))
+}
+
+test('entre deux médicaments : la ligne de l\'amiodarone qui vise la simvastatine est retrouvée', () => {
+  const vers = interactionsVisant(index, itemsDe('AMIODARONE'), resoudreDci(index, 'SIMVASTATINE'))
+  assert.ok(vers.length >= 1)
+  assert.ok(vers.some(it => cle(it.partenaire).startsWith('simvastatine')), vers.map(v => v.partenaire).join(' | '))
+  // et rien qui ne vise pas la simvastatine ni sa classe
+  const toutes = itemsDe('AMIODARONE')
+  assert.ok(vers.length < toutes.length)
+})
+
+test('entre deux médicaments : deux substances sans lien ne donnent rien', () => {
+  const vers = interactionsVisant(index, itemsDe('AMIODARONE'), resoudreDci(index, 'PARACETAMOL'))
+  assert.ok(!vers.some(it => cle(it.partenaire) === 'paracetamol'))
+})
+
+test('entre deux médicaments : le sens inverse est fusionné sans doublon', () => {
+  const ab = interactionsVisant(index, itemsDe('AMIODARONE'), resoudreDci(index, 'SIMVASTATINE'))
+  const ba = interactionsVisant(index, itemsDe('SIMVASTATINE'), resoudreDci(index, 'AMIODARONE'))
+  const fusion = fusionnerSens(ab, ba)
+  assert.ok(fusion.length >= Math.max(ab.length, ba.length))
+  assert.ok(fusion.length <= ab.length + ba.length)
+  assert.equal(fusionnerSens(ab, ab).length, fusionnerSens(ab, []).length, 'la même ligne vue deux fois ne compte qu\'une fois')
 })

@@ -135,6 +135,44 @@ export function OutilsClient({
               </Link>
             </div>
 
+            {/* ─── Comparateur de deux médicaments (accès limité) ───────────────── */}
+            <div style={cardStyle}>
+              <div style={{ fontSize: 30, marginBottom: 10 }}>💊</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <div style={{ fontWeight: 800, fontSize: 17, color: '#0f172a' }}>
+                  {t('Comparateur de deux médicaments', 'مقارنة بين دواءين')}
+                </div>
+                <span style={{ fontSize: 11.5, fontWeight: 800, color: '#8a5f12', background: '#f8ebc8', border: '1px solid #e3c98a', borderRadius: 999, padding: '0 9px' }}>
+                  🔒 {t('Accès limité', 'ولوج محدود')}
+                </span>
+              </div>
+              <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>
+                {t(
+                  'Deux médicaments côte à côte : substance, forme, dosage, laboratoire, prix et interactions entre les deux selon le Thesaurus ANSM.',
+                  'دواءان جنبًا إلى جنب: المادة الفعالة والشكل والجرعة والمخبر والثمن والتداخلات بينهما حسب دليل ANSM.'
+                )}
+              </div>
+              <div style={previewStyle}>
+                <div style={previewLabelStyle}>{t('Aperçu', 'لمحة')}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 12 }}>
+                  <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: 8, padding: '7px 9px' }}>
+                    <div style={{ fontWeight: 800, color: '#12233f' }}>CORDARONE</div>
+                    <div style={{ color: '#64748b' }}>AMIODARONE</div>
+                  </div>
+                  <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: 8, padding: '7px 9px' }}>
+                    <div style={{ fontWeight: 800, color: '#12233f' }}>ZOCOR</div>
+                    <div style={{ color: '#64748b' }}>SIMVASTATINE</div>
+                  </div>
+                </div>
+                <div style={{ marginTop: 8, fontSize: 12, fontWeight: 700, color: '#8a5f12', background: '#f8ebc8', border: '1px solid #e3c98a', borderRadius: 8, padding: '6px 9px' }}>
+                  ◆ {t('Précaution d\'emploi', 'احتياطات الاستعمال')}
+                </div>
+              </div>
+              <Link href="/outils/comparateur-medicaments" style={ctaStyle}>
+                {t('Ouvrir le comparateur →', 'افتح المقارنة ←')}
+              </Link>
+            </div>
+
             {/* ─── Veille réglementaire ───────────────────── */}
             <div style={cardStyle}>
               <div style={{ fontSize: 30, marginBottom: 10 }}>📡</div>

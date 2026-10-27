@@ -1,3 +1,5 @@
+import ShareBar from '@/components/drug/ShareBar'
+import { shareMessage } from '@/lib/medicament-share'
 import { notFound, permanentRedirect } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -167,6 +169,7 @@ export async function buildMedicamentMetadata(
   const frUrl = `${APP_URL}${medicamentPath(params.source, params.id, med, 'fr')}`
   const arUrl = `${APP_URL}${medicamentPath(params.source, params.id, med, 'ar')}`
   const canonical = pickLang(lang, { fr: frUrl, ar: arUrl })
+  const shareImage = `${APP_URL}/partage/medicament/${params.source}/${params.id}${lang === 'ar' ? '?lang=ar' : ''}`
 
   // Les produits non renouvelés sont d'immenses séries de fiches quasi
   // identiques (même gamme, même laboratoire) que Google explore puis écarte
@@ -189,7 +192,9 @@ export async function buildMedicamentMetadata(
       siteName: 'DwaDZ',
       locale: pickLang(lang, { fr: 'fr_DZ', ar: 'ar_DZ' }),
       url: canonical,
+      images: [{ url: shareImage, width: 1200, height: 630, alt: med.nom_marque }],
     },
+    twitter: { card: 'summary_large_image', title, description, images: [shareImage] },
   }
 }
 
@@ -362,6 +367,12 @@ export async function MedicamentDetail(
               suit la langue de la ROUTE et non la préférence d'affichage —
               sinon la version française proposait un lien vers elle-même aux
               visiteurs dont le cookie est en arabe. */}
+          <ShareBar
+            url={canonicalUrl}
+            text={shareMessage(med, lang)}
+            title={medicamentDesignation(med)}
+            lang={lang}
+          />
           <p style={{ fontSize: 13, margin: '0 0 12px' }}>
             {routeLang === 'ar' ? (
               <Link href={medicamentPath(params.source, params.id, med, 'fr')} hrefLang="fr" style={{ color: 'var(--blue)' }}>

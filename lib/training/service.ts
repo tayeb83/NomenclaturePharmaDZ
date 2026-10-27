@@ -28,10 +28,22 @@ export type TrainingUserRow = {
   role: TrainingRole
   faculte: string | null
   status: TrainingStatus
+  /** formulaire qui a servi à la demande : 'training' ou un outil à accès limité */
+  origine?: Origine
   created_at: string
   approved_at: string | null
   last_login_at: string | null
 }
+
+export type Origine = 'training' | 'comparateur'
+
+/** Page où ramener la personne après connexion, selon l'origine de son compte. */
+export const SUITES: Record<Origine, { chemin: string; nom: string }> = {
+  training: { chemin: '/training/espace', nom: 'Dzair-Pharma Training' },
+  comparateur: { chemin: '/outils/comparateur-medicaments', nom: 'le comparateur de médicaments DwaDZ' },
+}
+
+export const isOrigine = (v: unknown): v is Origine => v === 'training' || v === 'comparateur'
 
 /** Durées de conservation (mois). Propositions à confirmer ; elles doivent correspondre à /privacy. */
 export type RetentionConfig = { unvalidatedMonths: number; inactiveMonths: number; eventMonths: number }
@@ -65,25 +77,37 @@ export function createTrainingService(deps: TrainingDeps) {
     faculte: string | null
     source?: 'email' | 'facebook'
     facebookId?: string | null
+    origine?: Origine
   }): Promise<{ created: boolean }> {
     const source = input.source ?? 'email'
-    const rows = await query<{ id: number }>(
-      `INSERT INTO training_users (email, source, facebook_id, role, faculte, status)
-       VALUES ($1, $2, $3, $4, $5, 'pending')
-       ON CONFLICT DO NOTHING
-       RETURNING id`,
-      [input.email, source, input.facebookId ?? null, input.role, input.faculte],
-    )
+    const origine = input.origine ?? 'training'
+    // La colonne `origine` (sql/30) n'est écrite que pour un outil : la demande Training reste
+    // possible tant que la migration n'est pas appliquée.
+    const rows = origine === 'training'
+      ? await query<{ id: number }>(
+        `INSERT INTO training_users (email, source, facebook_id, role, faculte, status)
+         VALUES ($1, $2, $3, $4, $5, 'pending')
+         ON CONFLICT DO NOTHING
+         RETURNING id`,
+        [input.email, source, input.facebookId ?? null, input.role, input.faculte],
+      )
+      : await query<{ id: number }>(
+        `INSERT INTO training_users (email, source, facebook_id, role, faculte, status, origine)
+         VALUES ($1, $2, $3, $4, $5, 'pending', $6)
+         ON CONFLICT DO NOTHING
+         RETURNING id`,
+        [input.email, source, input.facebookId ?? null, input.role, input.faculte, origine],
+      )
     if (rows.length === 0) return { created: false }
 
-    await logEvent(rows[0].id, 'signup_requested', { source, role: input.role })
-    await notifyAdmins(input.email, input.role, input.faculte, source).catch(err => {
+    await logEvent(rows[0].id, 'signup_requested', { source, role: input.role, origine })
+    await notifyAdmins(input.email, input.role, input.faculte, source, origine).catch(err => {
       console.error('[training] notification admin impossible :', (err as Error).message)
     })
     return { created: true }
   }
 
-  async function notifyAdmins(email: string, role: TrainingRole, faculte: string | null, source: string) {
+  async function notifyAdmins(email: string, role: TrainingRole, faculte: string | null, source: string, origine: Origine = 'training') {
     const admins = deps.adminEmails()
     if (admins.length === 0) {
       console.warn('[training] ADMIN_EMAILS non configuré : nouvelle demande d’accès non notifiée par e-mail.')
@@ -95,13 +119,16 @@ export function createTrainingService(deps: TrainingDeps) {
       `Profil : ${ROLE_LABEL[role]}`,
       `Faculté : ${faculte ?? '—'}`,
       `Source : ${source === 'facebook' ? 'Facebook' : 'E-mail'}`,
+      ...(origine === 'training' ? [] : [`Demande faite depuis : ${SUITES[origine].nom}`]),
     ]
-    const html = `<p>Nouvelle demande d'accès à Dzair-Pharma Training.</p>
+    const cible = origine === 'training' ? 'Dzair-Pharma Training' : SUITES[origine].nom
+    const html = `<p>Nouvelle demande d'accès à ${escapeHtml(cible)}.</p>
 <ul>${lines.map(l => `<li>${escapeHtml(l)}</li>`).join('')}</ul>
 <p><a href="${escapeHtml(adminUrl)}">Ouvrir l'administration</a></p>`
-    const text = `Nouvelle demande d'accès à Dzair-Pharma Training.\n${lines.join('\n')}\n${adminUrl}`
+    const text = `Nouvelle demande d'accès à ${cible}.\n${lines.join('\n')}\n${adminUrl}`
+    const subject = origine === 'training' ? 'Training : nouvelle demande d’accès' : 'Comparateur : nouvelle demande d’accès'
     for (const to of admins) {
-      await deps.sendMail({ to, subject: 'Training : nouvelle demande d’accès', html, text })
+      await deps.sendMail({ to, subject, html, text })
     }
   }
 
@@ -125,7 +152,9 @@ export function createTrainingService(deps: TrainingDeps) {
     const { clause, params } = filterSql(filters)
     params.push(Math.min(Math.max(limit, 1), 5000))
     return query<TrainingUserRow>(
-      `SELECT id, email, source, facebook_id, role, faculte, status, created_at, approved_at, last_login_at
+      // origine via to_jsonb : la liste reste lisible tant que sql/30 n'est pas appliqué
+      `SELECT id, email, source, facebook_id, role, faculte, status, created_at, approved_at, last_login_at,
+              COALESCE(to_jsonb(training_users)->>'origine', 'training') AS origine
        FROM training_users ${clause}
        ORDER BY created_at DESC, id DESC
        LIMIT $${params.length}`,
@@ -152,19 +181,28 @@ export function createTrainingService(deps: TrainingDeps) {
     return token
   }
 
-  async function sendAccessEmail(user: Pick<TrainingUserRow, 'id' | 'email'>): Promise<boolean> {
+  async function sendAccessEmail(user: Pick<TrainingUserRow, 'id' | 'email'>, suite: Origine = 'training'): Promise<boolean> {
     const token = await issueLoginToken(user.id)
     // Le lien ouvre une page de confirmation (bouton) et non l'API : les antivirus et
     // aperçus de messagerie « cliquent » les liens à l'avance et consommeraient un jeton à usage unique.
-    const link = `${deps.appUrl()}/training/connexion?token=${encodeURIComponent(token)}`
+    const params = new URLSearchParams({ token })
+    if (suite !== 'training') params.set('suite', suite)
+    const link = `${deps.appUrl()}/training/connexion?${params}`
     const minutes = LOGIN_TOKEN_TTL_MS / 60000
+    const nom = SUITES[suite].nom
+    const action = suite === 'training' ? 'Se connecter à Training' : 'Ouvrir le comparateur'
     const html = `<p>Bonjour,</p>
-<p>Votre accès à <strong>Dzair-Pharma Training</strong> est ouvert.</p>
-<p><a href="${escapeHtml(link)}">Se connecter à Training</a></p>
+<p>Votre accès à <strong>${escapeHtml(nom)}</strong> est ouvert.</p>
+<p><a href="${escapeHtml(link)}">${action}</a></p>
 <p>Ce lien est valable ${minutes} minutes et ne peut être utilisé qu'une seule fois. Si vous n'êtes pas à l'origine de cette demande, ignorez ce message.</p>`
-    const text = `Bonjour,\n\nVotre accès à Dzair-Pharma Training est ouvert.\nConnexion : ${link}\n\nCe lien est valable ${minutes} minutes et ne peut être utilisé qu'une seule fois. Si vous n'êtes pas à l'origine de cette demande, ignorez ce message.`
+    const text = `Bonjour,\n\nVotre accès à ${nom} est ouvert.\nConnexion : ${link}\n\nCe lien est valable ${minutes} minutes et ne peut être utilisé qu'une seule fois. Si vous n'êtes pas à l'origine de cette demande, ignorez ce message.`
     try {
-      const res = await deps.sendMail({ to: user.email, subject: 'Votre accès à Dzair-Pharma Training est ouvert', html, text })
+      const res = await deps.sendMail({
+        to: user.email,
+        subject: suite === 'training' ? 'Votre accès à Dzair-Pharma Training est ouvert' : 'Votre accès au comparateur de médicaments est ouvert',
+        html,
+        text,
+      })
       return res.success
     } catch {
       return false
@@ -202,14 +240,14 @@ export function createTrainingService(deps: TrainingDeps) {
       await query('DELETE FROM training_sessions WHERE user_id = $1', [id])
       return { user, mailSent: null }
     }
-    return { user, mailSent: await sendAccessEmail(user) }
+    return { user, mailSent: await sendAccessEmail(user, before.origine ?? 'training') }
   }
 
   /** Renvoie un lien à un utilisateur déjà validé (e-mail non reçu). */
   async function resendAccess(id: number): Promise<{ user: TrainingUserRow; mailSent: boolean } | null> {
     const user = (await query<TrainingUserRow>('SELECT * FROM training_users WHERE id = $1', [id]))[0]
     if (!user || user.status !== 'approved') return null
-    return { user, mailSent: await sendAccessEmail(user) }
+    return { user, mailSent: await sendAccessEmail(user, user.origine ?? 'training') }
   }
 
   async function exportRequestsCsv(filters: RequestFilters = {}): Promise<string> {
@@ -225,14 +263,14 @@ export function createTrainingService(deps: TrainingDeps) {
    * soit validée ou non : l'appelant ne peut rien en déduire. Seul un
    * utilisateur `approved` reçoit un message.
    */
-  async function requestLoginLink(email: string): Promise<void> {
+  async function requestLoginLink(email: string, suite: Origine = 'training'): Promise<void> {
     const user = (await query<TrainingUserRow>(
       "SELECT * FROM training_users WHERE lower(email) = lower($1) AND status = 'approved'",
       [email],
     ))[0]
     if (!user) return
     await logEvent(user.id, 'login_link_sent', {})
-    await sendAccessEmail(user)
+    await sendAccessEmail(user, suite)
   }
 
   /**

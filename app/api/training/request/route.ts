@@ -3,6 +3,7 @@ import { getClientIp, rateLimit } from '@/lib/rate-limit'
 import { getTraining } from '@/lib/training'
 import { allowedHostsFor, isSameOrigin } from '@/lib/training/security.ts'
 import { parseSignup } from '@/lib/training/validation.ts'
+import { isOrigine } from '@/lib/training/service.ts'
 
 export const dynamic = 'force-dynamic'
 
@@ -48,7 +49,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    await getTraining().submitRequest(parsed.value)
+    // seul un outil connu change l'origine ; toute autre valeur reste une demande Training
+    const origine = isOrigine((body as any)?.origine) ? (body as any).origine : 'training'
+    await getTraining().submitRequest({ ...parsed.value, origine })
     return NextResponse.json({ ok: true })
   } catch (err) {
     if ((err as { code?: string })?.code === '42P01') {

@@ -3,6 +3,7 @@ import { getClientIp, rateLimit } from '@/lib/rate-limit'
 import { getTraining } from '@/lib/training'
 import { padTo, rejectForeignOrigin, tooMany } from '@/lib/training/guard'
 import { normalizeEmail } from '@/lib/training/validation.ts'
+import { isOrigine } from '@/lib/training/service.ts'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
     // plus lent que cela peut être interrompu sur une plateforme serverless :
     // l'utilisateur redemande un lien, c'est le prix de l'absence de fuite.
     const work = getTraining()
-      .requestLoginLink(email)
+      .requestLoginLink(email, isOrigine(body?.suite) ? body.suite : 'training')
       .catch(err => {
         // Journal sans adresse ni jeton ; la réponse reste neutre.
         console.error('[api/training/auth/login]', (err as Error).message)

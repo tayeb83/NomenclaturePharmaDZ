@@ -52,12 +52,7 @@ export function getPpa(nEnreg: string | null, code: string | null): Promise<numb
   )()
 }
 
-export function formatPpa(ppa: number, lang: 'fr' | 'ar'): string {
-  const n = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
-    .format(ppa)
-    .replace(/[  ]/g, ' ')
-  return lang === 'ar' ? `${n} دج` : `${n} DA`
-}
+export { formatPpa } from './ppa-format'
 
 // ─── Administration ───────────────────────────────────────────
 

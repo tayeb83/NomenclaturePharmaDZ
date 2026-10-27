@@ -125,7 +125,7 @@ export function TrainingAdminClient() {
             {rows.map(r => (
               <tr key={r.id}>
                 <td>{r.email}</td>
-                <td>{SOURCE_LABEL[r.source] ?? r.source}</td>
+                <td>{SOURCE_LABEL[r.source] ?? r.source}{r.origine === 'comparateur' && <> · <strong>Comparateur</strong></>}</td>
                 <td>{ROLE_LABEL[r.role] ?? r.role}</td>
                 <td>{r.faculte ?? '—'}</td>
                 <td>{fmtDate(r.created_at)}</td>
