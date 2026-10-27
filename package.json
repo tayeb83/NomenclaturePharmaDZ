@@ -10,6 +10,7 @@
     "lint": "next lint",
     "test:training": "node --test --test-concurrency=1 \"tests/training/*.test.ts\"",
     "test:rcp": "node --test --test-concurrency=1 \"tests/rcp/*.test.ts\"",
+    "test:interactions": "node --test --test-concurrency=1 \"tests/interactions/*.test.ts\"",
     "test:regression": "node --test --test-concurrency=1 \"tests/regression/*.test.ts\""
   },
   "dependencies": {

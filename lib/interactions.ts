@@ -1,0 +1,129 @@
+/**
+ * DwaDZ — accès aux interactions du Thesaurus ANSM pour une fiche
+ * (voir lib/interactions-core.ts et sql/29_interactions_ansm.sql).
+ * Table absente (sql/29 non appliqué) ou aucune interaction pour la DCI : la fiche
+ * n'affiche simplement pas le bloc.
+ */
+
+import { unstable_cache } from 'next/cache'
+import { query, queryOne } from './db'
+import type { Lang } from './i18n'
+import { loadMatchIndex, type MatchIndex } from './rcp-core'
+import { resolveCible } from './rcp-match'
+import {
+  buildThesaurusIndex, membresDeClasse, resoudreDci, toItem, trierItems,
+  type ClasseLien, type InteractionItem, type InteractionRow, type ThesaurusIndex,
+} from './interactions-core'
+
+export * from './interactions-core'
+
+export const INTERACTIONS_TAG = 'interactions-ansm'
+
+/** Le PDF du thésaurus, tel que publié par l'ANSM. */
+export const ANSM_THESAURUS_URL = 'https://ansm.sante.fr/uploads/2024/06/07/20230915-thesaurus-interactions-medicamenteuses-septembre-2023.pdf'
+
+/** Au-delà, la liste des membres d'une classe est tronquée à l'affichage. */
+const MEMBRES_MAX = 60
+
+export type InteractionPartenaire = {
+  /** DCI de la nomenclature DwaDZ quand le partenaire y est retrouvé (page /dci/…) */
+  dci: string | null
+  /** membres connus d'une classe partenaire */
+  membres: string[]
+  membres_total: number
+}
+
+export type InteractionsFiche = {
+  items: InteractionItem[]
+  /** informations sur chaque partenaire, par id d'interaction */
+  partenaires: Record<number, InteractionPartenaire>
+  /** titres du thésaurus correspondant aux substances de la fiche */
+  substances: string[]
+  /** classes de ces substances dont les interactions s'ajoutent */
+  classes: string[]
+  version: string
+  /** vrai si au moins un texte s'affiche en français sur une page arabe */
+  repli_fr: boolean
+}
+
+let tableExists: boolean | undefined
+async function hasTables(): Promise<boolean> {
+  if (tableExists) return true
+  const row = await queryOne<{ exists: boolean }>(
+    `SELECT to_regclass('public.interactions_ansm') IS NOT NULL AND to_regclass('public.interactions_ansm_classes') IS NOT NULL AS "exists"`
+  )
+  tableExists = row?.exists ?? false
+  return tableExists
+}
+
+// Les index sont reconstruits au plus une fois par heure et par instance.
+let thesaurusMemo: { at: number; index: ThesaurusIndex } | undefined
+async function getThesaurusIndex(): Promise<ThesaurusIndex> {
+  if (thesaurusMemo && Date.now() - thesaurusMemo.at < 3_600_000) return thesaurusMemo.index
+  const [titres, liens] = await Promise.all([
+    query<{ substance: string }>(`SELECT DISTINCT substance FROM interactions_ansm`),
+    query<ClasseLien>(`SELECT DISTINCT classe, membre FROM interactions_ansm_classes`),
+  ])
+  const index = buildThesaurusIndex(titres.map(t => t.substance), liens)
+  thesaurusMemo = { at: Date.now(), index }
+  return index
+}
+
+let nomenclatureMemo: { at: number; index: MatchIndex } | undefined
+async function getNomenclatureIndex(): Promise<MatchIndex> {
+  if (nomenclatureMemo && Date.now() - nomenclatureMemo.at < 3_600_000) return nomenclatureMemo.index
+  const index = await loadMatchIndex(query)
+  nomenclatureMemo = { at: Date.now(), index }
+  return index
+}
+
+async function fetchInteractionsFiche(dci: string, lang: Lang): Promise<InteractionsFiche | null> {
+  if (!(await hasTables())) return null
+  const t = await getThesaurusIndex()
+  const { titres, classes } = resoudreDci(t, dci)
+  if (titres.length + classes.length === 0) return null
+
+  const rows = await query<InteractionRow>(
+    `SELECT id, substance, partenaire, partenaire_est_classe, niveau, niveaux, risque_fr, conduite_fr,
+            risque_ar, conduite_ar, partenaire_ar, ar_statut, page, source_version
+     FROM interactions_ansm WHERE substance = ANY($1::text[])`,
+    [[...titres, ...classes]]
+  )
+  if (rows.length === 0) return null
+
+  const directs = new Set(titres)
+  const items = trierItems(rows.map(r => toItem({ ...r, page: Number(r.page) }, lang, directs)))
+
+  // un lien vers la page /dci n'est proposé que si la nomenclature DwaDZ contient la substance
+  const nomenclature = await getNomenclatureIndex().catch(() => null)
+  const partenaires: Record<number, InteractionPartenaire> = {}
+  for (const it of items) {
+    if (it.partenaire_est_classe) {
+      const membres = membresDeClasse(t, it.partenaire)
+      partenaires[it.id] = { dci: null, membres: membres.slice(0, MEMBRES_MAX), membres_total: membres.length }
+    } else {
+      const lien = nomenclature && resolveCible(nomenclature, { libelle: it.partenaire, cible_type: null, cible: null }).dci
+      partenaires[it.id] = { dci: lien || null, membres: [], membres_total: 0 }
+    }
+  }
+
+  return {
+    items,
+    partenaires,
+    substances: titres,
+    classes,
+    version: rows[0].source_version,
+    repli_fr: lang === 'ar' && items.some(i => i.langue === 'fr'),
+  }
+}
+
+/** Interactions du thésaurus pour la DCI d'une fiche, dans la langue demandée (repli français), ou null. */
+export function getInteractionsAnsm(dci: string | null, lang: Lang): Promise<InteractionsFiche | null> {
+  const key = (dci ?? '').replace(/\s+/g, ' ').trim().toUpperCase()
+  if (!key) return Promise.resolve(null)
+  return unstable_cache(
+    () => fetchInteractionsFiche(key, lang),
+    ['interactions-ansm', 'v1', key, lang],
+    { revalidate: 86_400, tags: [INTERACTIONS_TAG] }
+  )()
+}

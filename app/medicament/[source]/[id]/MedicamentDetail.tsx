@@ -23,9 +23,11 @@ import { BackButton } from '@/components/ui/BackButton'
 import { MedicamentInsights } from '@/components/drug/MedicamentInsights'
 import { MonographieSection } from '@/components/drug/MonographieSection'
 import { InteractionsEntrantes, RcpSection } from '@/components/drug/RcpSection'
+import { InteractionsAnsmSection } from '@/components/drug/InteractionsAnsmSection'
 import { getPublishedMonographie, hasContent } from '@/lib/monographies'
 import { getPpa, formatPpa } from '@/lib/ppa'
 import { getInteractionsVers, getRcpForFiche, RCP_PORTAL_URL } from '@/lib/rcp'
+import { getInteractionsAnsm } from '@/lib/interactions'
 import { AdInContent } from '@/components/ads/AdBanner'
 import { AccesSignalement } from '@/components/acces/AccesSignalement'
 
@@ -224,7 +226,7 @@ export async function MedicamentDetail(
   const isNonRenouv = med.source === 'non_renouvele'
 
   const familleSlug = med.source === 'enregistrement' ? marqueSlug(med.nom_marque) : ''
-  const [alternatifs, atcHierarchy, famille, insights, monographieRaw, ppa, rcps, interactionsVers] = await Promise.all([
+  const [alternatifs, atcHierarchy, famille, insights, monographieRaw, ppa, rcps, interactionsVers, interactionsAnsm] = await Promise.all([
     getCachedAlternatifsDCI(med.dci, 10),
     getCachedAtcHierarchyByDci(med.dci),
     familleSlug ? getCachedMedicamentsByMarque(familleSlug) : Promise.resolve([]),
@@ -235,6 +237,8 @@ export async function MedicamentDetail(
     med.source === 'enregistrement' ? getRcpForFiche(med.n_enreg, med.code).catch(() => []) : Promise.resolve([]),
     // Interactions que d'autres RCP citent pour cette substance (lecture dans l'autre sens)
     getInteractionsVers(med.dci).catch(() => []),
+    // Interactions du Thesaurus ANSM pour la substance de la fiche (jamais pour un médicament retiré)
+    med.source === 'retrait' ? Promise.resolve(null) : getInteractionsAnsm(med.dci, lang).catch(() => null),
   ])
   const monographie = hasContent(monographieRaw) ? monographieRaw : null
   // Page « famille de marque » : proposée seulement si elle regroupe plusieurs
@@ -565,6 +569,11 @@ export async function MedicamentDetail(
                     {pickLang(lang, { fr: `Voir les génériques (${autres.length})`, ar: `عرض الأدوية الجنيسة (${autres.length})` })}
                   </a>
                 )}
+                {interactionsAnsm && (
+                  <a className="fiche-btn" href="#interactions">
+                    {pickLang(lang, { fr: `Voir les interactions (${interactionsAnsm.items.length})`, ar: `عرض التداخلات (${interactionsAnsm.items.length})` })}
+                  </a>
+                )}
                 {!isRetrait && !isNonRenouv && (
                   rcps.length > 0 ? (
                     <a className="fiche-btn" href="#rcp">
@@ -594,6 +603,9 @@ export async function MedicamentDetail(
           )}
 
           {/* ─── Monographie de la DCI (contenu saisi et relu) ──── */}
+          {/* ─── Interactions médicamenteuses (Thesaurus ANSM) ───── */}
+          {interactionsAnsm && <InteractionsAnsmSection fiche={interactionsAnsm} lang={lang} />}
+
           {/* ─── RCP officiel (ANPP) : lien vers le PDF du portail ─── */}
           <RcpSection rcps={rcps} lang={lang} />
           {med.dci && <InteractionsEntrantes items={interactionsVers} dci={med.dci} lang={lang} />}
