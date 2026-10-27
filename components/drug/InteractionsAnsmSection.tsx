@@ -191,7 +191,14 @@ type Tri = 'gravite' | 'alpha'
  * gravité, recherche par substance et tri. Les textes sont ceux de l'ANSM (français) ou leur traduction
  * arabe ; seules les lignes écrites pour la substance de la fiche et pour ses classes s'affichent.
  */
-export function InteractionsAnsmSection({ fiche, lang }: { fiche: InteractionsFiche; lang: Lang }) {
+export function InteractionsAnsmSection({ fiche, lang, titre, intro, id = 'interactions' }: {
+  fiche: InteractionsFiche
+  lang: Lang
+  /** remplace le titre et le chapeau (comparateur : « entre ces deux médicaments ») */
+  titre?: string
+  intro?: string
+  id?: string
+}) {
   const [niveau, setNiveau] = useState<Niveau | 'tous'>('tous')
   const [recherche, setRecherche] = useState('')
   const [tri, setTri] = useState<Tri>('gravite')
@@ -225,14 +232,14 @@ export function InteractionsAnsmSection({ fiche, lang }: { fiche: InteractionsFi
   )
 
   return (
-    <section id="interactions" style={{ margin: '28px 0 8px', scrollMarginTop: 16, border: `2px solid ${C.brass}`, borderRadius: 16, background: C.cream, boxShadow: '0 6px 18px rgba(18,35,63,.12)', overflow: 'hidden' }}>
+    <section id={id} style={{ margin: '28px 0 8px', scrollMarginTop: 16, border: `2px solid ${C.brass}`, borderRadius: 16, background: C.cream, boxShadow: '0 6px 18px rgba(18,35,63,.12)', overflow: 'hidden' }}>
       <div style={{ backgroundColor: C.navyDeep, backgroundImage: `${ZELLIGE_MARINE}, linear-gradient(135deg, ${C.blueDeep} 0%, ${C.navyDeep} 100%)`, color: 'white', padding: '16px 20px', display: 'grid', gap: 4, borderBottom: `1px solid ${C.brass}` }}>
         <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 10, fontFamily: DISPLAY, fontSize: 26, fontWeight: 700, color: C.brassLight }}>
           <Khatam taille={22} />
-          {t(lang, 'Interactions médicamenteuses', 'التداخلات الدوائية')}
+          {titre ?? t(lang, 'Interactions médicamenteuses', 'التداخلات الدوائية')}
         </h2>
         <p style={{ margin: 0, fontSize: 14.5, color: 'rgba(255,255,255,.88)' }}>
-          {t(lang,
+          {intro ?? t(lang,
             'Interactions de la substance active avec d\'autres médicaments, selon le Thesaurus de l\'ANSM (France). Elles valent pour toutes les spécialités qui contiennent cette substance.',
             'تداخلات المادة الفعالة مع أدوية أخرى، حسب دليل التداخلات الدوائية Thesaurus الصادر عن الوكالة الفرنسية ANSM. وهي سارية على كل الأدوية التي تحتوي هذه المادة.')}
         </p>

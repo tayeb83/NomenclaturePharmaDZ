@@ -11,7 +11,7 @@ import { AR_VALIDATED, getCopy } from '@/lib/training/copy'
  * (le jeton n'est consommé que par ce clic, jamais par un aperçu de lien) ;
  * (2) sinon, formulaire « recevoir un lien ».
  */
-export function LoginScreen({ initialToken }: { initialToken: string }) {
+export function LoginScreen({ initialToken, suite = 'training' }: { initialToken: string; suite?: 'training' | 'comparateur' }) {
   const { lang } = useLanguage()
   const copy = getCopy(lang)
   const t = copy.login
@@ -36,7 +36,7 @@ export function LoginScreen({ initialToken }: { initialToken: string }) {
       const res = await fetch('/api/training/auth/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ token, suite }),
       })
       if (res.ok) {
         const json = await res.json().catch(() => ({}))
@@ -62,7 +62,7 @@ export function LoginScreen({ initialToken }: { initialToken: string }) {
       const res = await fetch('/api/training/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, suite }),
       })
       if (res.ok) { setSent(true); setInvalid(false); return }
       setError(copy.form.errors[res.status === 429 ? 'rate' : 'serveur'])
@@ -112,7 +112,8 @@ export function LoginScreen({ initialToken }: { initialToken: string }) {
             {busy ? t.sending : t.send}
           </button>
           <p className="tr-privacy">
-            {t.noAccess} <Link href="/training">{t.requestAccess}</Link>
+            {t.noAccess}{' '}
+            <Link href={suite === 'comparateur' ? '/outils/comparateur-medicaments' : '/training'}>{t.requestAccess}</Link>
           </p>
         </form>
       )}

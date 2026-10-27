@@ -157,3 +157,42 @@ test('la base refuse deux comptes de même e-mail à la casse près', { skip }, 
   await query("INSERT INTO training_users (email, role) VALUES ('x@y.dz', 'etudiant')")
   await assert.rejects(query("INSERT INTO training_users (email, role) VALUES ('X@Y.DZ', 'etudiant')"), /uq_training_users_email/)
 })
+
+// ─── origine : demande faite depuis un outil à accès limité (sql/30) ───
+
+test('une demande du comparateur garde son origine, notifie avec le bon texte et envoie le bon lien', { skip }, async () => {
+  await svc().submitRequest(req('c@b.dz', { origine: 'comparateur' }))
+  const [u] = await query('SELECT origine, status FROM training_users')
+  assert.equal(u.origine, 'comparateur')
+  assert.equal(u.status, 'pending')
+  assert.match(sent[0].subject, /Comparateur/)
+  assert.ok(sent[0].text.includes('comparateur de médicaments'))
+
+  const [row] = await svc().listRequests()
+  assert.equal(row.origine, 'comparateur')
+
+  sent = []
+  const r = await svc().setStatus(row.id, 'approved')
+  assert.equal(r?.mailSent, true)
+  assert.match(sent[0].subject, /comparateur/)
+  assert.ok(sent[0].text.includes('suite=comparateur'), 'le lien ramène vers le comparateur')
+})
+
+test('une demande Training garde l’origine par défaut et le lien classique', { skip }, async () => {
+  await svc().submitRequest(req('t@b.dz'))
+  const [row] = await svc().listRequests()
+  assert.equal(row.origine, 'training')
+  sent = []
+  await svc().setStatus(row.id, 'approved')
+  assert.ok(!sent[0].text.includes('suite='))
+  assert.match(sent[0].subject, /Training/)
+})
+
+test('« recevoir un lien » depuis le comparateur ajoute la suite au lien', { skip }, async () => {
+  await svc().submitRequest(req('l@b.dz'))
+  const [row] = await svc().listRequests()
+  await svc().setStatus(row.id, 'approved')
+  sent = []
+  await svc().requestLoginLink('l@b.dz', 'comparateur')
+  assert.ok(sent[0].text.includes('suite=comparateur'))
+})
