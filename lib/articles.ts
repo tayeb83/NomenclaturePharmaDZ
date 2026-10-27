@@ -699,6 +699,198 @@ export const ARTICLES: Article[] = [
       },
     ],
   },
+  {
+    slug: 'medicaments-cabinet-dentaire-algerie',
+    lang: 'fr',
+    audience: 'professionnel',
+    title: 'Les médicaments du cabinet dentaire : comment s’y retrouver avec la nomenclature algérienne',
+    subtitle: 'Classes ATC, DCI, RCP officiels : le repérage avant la prescription',
+    description:
+      'Chirurgiens-dentistes et étudiants : comment retrouver, par classe ATC, les médicaments de la nomenclature algérienne utilisés en dentisterie, et vérifier statut, retrait et RCP officiel.',
+    seoTitle: 'Médicaments en dentisterie en Algérie : classes ATC et nomenclature',
+    seoKeywords: ['médicaments dentisterie algérie', 'chirurgien-dentiste algérie', 'classes ATC dentaire', 'nomenclature pharmaceutique algérie', 'anesthésiques locaux algérie'],
+    date: '2026-10-27',
+    readingTime: 4,
+    tags: ['Dentisterie', 'Classification ATC', 'Nomenclature MIPH', 'RCP ANPP', 'Algérie'],
+    sourceLinks: [
+      { label: 'Classification ATC de l’OMS (index officiel)', url: 'https://atcddd.fhi.no/atc_ddd_index/', external: true },
+      { label: 'RCP publiés par l’ANPP', url: 'https://rcp.anpp.dz/', external: true },
+      { label: 'Site officiel du MIPH', url: 'https://www.miph.gov.dz/fr/', external: true },
+    ],
+    relatedLinks: [
+      { label: 'Médicaments par spécialité : la dentisterie', url: '/specialites/dentaire' },
+      { label: 'Classes thérapeutiques (ATC)', url: '/classes-therapeutiques' },
+      { label: 'Trouver un générique', url: '/substitution' },
+      { label: 'Alertes et retraits', url: '/alertes' },
+      { label: 'S’entraîner avec les QCM', url: '/training' },
+    ],
+    faq: [
+      {
+        question: 'Existe-t-il un code ATC pour la dentisterie ?',
+        answer: 'Non. La classification ATC se fait par substance et par usage thérapeutique, pas par spécialité. Le groupe A01 (préparations stomatologiques) et le groupe N01B (anesthésiques locaux) sont les plus proches ; les antibactériens, analgésiques et anti-inflammatoires sont des classes transversales.',
+      },
+      {
+        question: 'Cette liste est-elle une recommandation de prescription ?',
+        answer: 'Non. Elle sert de repère pour naviguer dans la nomenclature. Une classe peut contenir des substances sans usage en dentisterie : le RCP officiel de chaque produit reste la référence.',
+      },
+      {
+        question: 'Où trouver le RCP officiel d’un médicament en Algérie ?',
+        answer: 'Sur le portail de l’ANPP (rcp.anpp.dz). Les fiches de DwaDZ renvoient vers le RCP quand le rattachement est établi.',
+      },
+    ],
+    content: [
+      {
+        type: 'intro',
+        text: 'Devant la nomenclature nationale, une question revient chez les chirurgiens-dentistes et les étudiants en médecine dentaire : par où commencer pour retrouver rapidement les médicaments de sa pratique ? Cet article propose une méthode de repérage, appuyée sur la classification ATC de l’OMS et sur les données officielles algériennes. Il ne contient aucune recommandation de prescription.',
+      },
+      {
+        type: 'h2',
+        title: '1. Il n’existe pas de code ATC « dentisterie »',
+        text: 'La classification ATC range les substances selon l’organe visé et l’usage thérapeutique, jamais selon la spécialité de celui qui prescrit. Deux groupes sont toutefois proches de la pratique dentaire, auxquels s’ajoutent trois classes transversales.',
+      },
+      {
+        type: 'table',
+        headers: ['Code ATC', 'Classe', 'Ce qu’elle regroupe'],
+        rows: [
+          { cells: ['A01', 'Préparations stomatologiques', 'Produits à usage local buccal (par exemple A01AA : agents de prophylaxie carieuse, A01AB : antiseptiques et anti-infectieux locaux).'] },
+          { cells: ['N01B', 'Anesthésiques locaux', 'Substances d’anesthésie locale.'] },
+          { cells: ['J01', 'Antibactériens à usage systémique', 'Classe transversale, bien plus large que la dentisterie.'] },
+          { cells: ['N02', 'Analgésiques', 'Classe transversale.'] },
+          { cells: ['M01', 'Anti-inflammatoires et antirhumatismaux', 'Classe transversale.'] },
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'warning',
+        text: 'Une classe n’est pas une recommandation : J01, N02 et M01 contiennent de nombreuses substances sans usage en dentisterie. Le classement sert à naviguer, pas à choisir un traitement.',
+      },
+      {
+        type: 'h2',
+        title: '2. Quatre gestes pour retrouver un médicament en Algérie',
+        text: 'Dans DwaDZ, chacune de ces étapes s’appuie sur la nomenclature officielle du MIPH :',
+      },
+      {
+        type: 'list',
+        items: [
+          '**Partir de la classe** : la page « Médicaments par spécialité » liste les classes de la dentisterie et renvoie vers chaque classe ATC, de la classe jusqu’à la substance.',
+          '**Passer par la DCI** : une même substance existe sous plusieurs noms commerciaux. Cherchez la DCI, puis comparez les présentations (forme, dosage, laboratoire).',
+          '**Vérifier le statut** : produit enregistré, non renouvelé ou retiré du marché. Les alertes et retraits sont consultables en un clic.',
+          '**Ouvrir le RCP officiel** : le résumé des caractéristiques du produit publié par l’ANPP est la source de référence pour les indications, contre-indications et interactions.',
+        ],
+      },
+      {
+        type: 'h2',
+        title: '3. Génériques, prix et disponibilité',
+        text: 'Pour une substance donnée, la substitution générique montre les alternatives enregistrées et leur origine (fabriquées en Algérie ou importées). Le prix public algérien est affiché lorsqu’il est renseigné ; sinon la fiche l’indique. Aucune valeur n’est estimée.',
+      },
+      {
+        type: 'h2',
+        title: '4. Pour les étudiants',
+        text: 'Les classes ATC et le lien marque, DCI et classe sont un excellent terrain de révision. L’espace Training propose des QCM construits à partir de la nomenclature : noms commerciaux, DCI, génériques, laboratoires, produits retirés et classes ATC.',
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        text: 'Information à visée professionnelle, établie à partir de documents officiels. Elle ne remplace ni le RCP du produit, ni le jugement clinique du praticien.',
+      },
+    ],
+  },
+  {
+    slug: 'medicaments-cabinet-dentaire-algerie-ar',
+    lang: 'ar',
+    audience: 'professionnel',
+    title: 'أدوية عيادة طب الأسنان: كيف تتنقل داخل التسمية الجزائرية للأدوية',
+    subtitle: 'تصنيف ATC والاسم الدولي (DCI) وملخص خصائص المنتج: التعرّف قبل الوصف',
+    description:
+      'لأطباء الأسنان والطلبة: كيف تجد حسب صنف ATC أدوية التسمية الجزائرية المستعملة في طب الأسنان، وكيف تتحقق من حالتها وسحبها وملخص خصائص المنتج الرسمي.',
+    seoTitle: 'أدوية طب الأسنان في الجزائر: أصناف ATC والتسمية الرسمية',
+    seoKeywords: ['أدوية طب الأسنان الجزائر', 'طبيب أسنان الجزائر', 'تصنيف ATC', 'التسمية الصيدلانية الجزائرية', 'المخدرات الموضعية'],
+    date: '2026-10-27',
+    readingTime: 4,
+    tags: ['طب الأسنان', 'تصنيف ATC', 'التسمية الصيدلانية', 'RCP', 'الجزائر'],
+    sourceLinks: [
+      { label: 'تصنيف ATC لمنظمة الصحة العالمية (الفهرس الرسمي)', url: 'https://atcddd.fhi.no/atc_ddd_index/', external: true },
+      { label: 'ملخصات خصائص المنتج المنشورة من طرف الوكالة الوطنية للمنتجات الصيدلانية', url: 'https://rcp.anpp.dz/', external: true },
+      { label: 'الموقع الرسمي لوزارة الصناعة الصيدلانية', url: 'https://www.miph.gov.dz/ar/', external: true },
+    ],
+    relatedLinks: [
+      { label: 'الأدوية حسب التخصص: طب الأسنان', url: '/specialites/dentaire' },
+      { label: 'الأصناف العلاجية (ATC)', url: '/classes-therapeutiques' },
+      { label: 'البحث عن بديل جنيس', url: '/substitution' },
+      { label: 'التنبيهات والأدوية المسحوبة', url: '/alertes' },
+      { label: 'التدرّب بأسئلة الاختيار من متعدد', url: '/training' },
+    ],
+    faq: [
+      {
+        question: 'هل يوجد رمز ATC خاص بطب الأسنان؟',
+        answer: 'لا. يُصنَّف الدواء في نظام ATC حسب المادة الفعالة والاستعمال العلاجي، لا حسب تخصص الواصف. أقرب مجموعتين هما A01 (مستحضرات الفم والأسنان) وN01B (المخدّرات الموضعية)، أما مضادات الجراثيم والمسكّنات ومضادات الالتهاب فأصناف مشتركة بين عدة تخصصات.',
+      },
+      {
+        question: 'هل هذه القائمة توصية بالوصف؟',
+        answer: 'لا. هي مرجع للتصفح داخل التسمية فقط. قد يحتوي الصنف على مواد لا تُستعمل في طب الأسنان، ويبقى ملخص خصائص المنتج الرسمي هو المرجع لكل دواء.',
+      },
+      {
+        question: 'أين أجد ملخص خصائص المنتج الرسمي لدواء في الجزائر؟',
+        answer: 'في بوابة الوكالة الوطنية للمنتجات الصيدلانية (rcp.anpp.dz). وتحيل بطاقات DwaDZ إلى الملخص كلما ثبت الربط بين البطاقة والوثيقة.',
+      },
+    ],
+    content: [
+      {
+        type: 'intro',
+        text: 'أمام التسمية الوطنية للأدوية يتكرر سؤال لدى أطباء الأسنان وطلبة طب الأسنان: من أين نبدأ لنعثر بسرعة على أدوية ممارستنا؟ يقترح هذا المقال طريقة للتعرّف تعتمد على تصنيف ATC لمنظمة الصحة العالمية وعلى المعطيات الرسمية الجزائرية. وهو لا يتضمن أي توصية بالوصف.',
+      },
+      {
+        type: 'h2',
+        title: '1. لا يوجد رمز ATC «لطب الأسنان»',
+        text: 'يرتّب تصنيف ATC المواد حسب العضو المستهدف والاستعمال العلاجي، ولا يرتّبها أبدًا حسب تخصص من يصفها. غير أن مجموعتين قريبتان من الممارسة السنّية، يُضاف إليهما ثلاثة أصناف مشتركة بين التخصصات.',
+      },
+      {
+        type: 'table',
+        headers: ['رمز ATC', 'الصنف', 'ما يشمله'],
+        rows: [
+          { cells: ['A01', 'مستحضرات الفم والأسنان', 'منتجات للاستعمال الموضعي في الفم (مثلًا A01AA: الوقاية من النخر، A01AB: مطهّرات ومضادات عدوى موضعية).'] },
+          { cells: ['N01B', 'المخدّرات الموضعية', 'مواد التخدير الموضعي.'] },
+          { cells: ['J01', 'مضادات الجراثيم للاستعمال الجهازي', 'صنف مشترك أوسع بكثير من طب الأسنان.'] },
+          { cells: ['N02', 'المسكّنات', 'صنف مشترك.'] },
+          { cells: ['M01', 'مضادات الالتهاب ومضادات الروماتيزم', 'صنف مشترك.'] },
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'warning',
+        text: 'الصنف ليس توصية: تضم الأصناف J01 وN02 وM01 مواد كثيرة لا تُستعمل في طب الأسنان. التصنيف وسيلة للتنقل وليس لاختيار علاج.',
+      },
+      {
+        type: 'h2',
+        title: '2. أربع خطوات للعثور على دواء في الجزائر',
+        text: 'في DwaDZ تعتمد كل خطوة على التسمية الرسمية لوزارة الصناعة الصيدلانية:',
+      },
+      {
+        type: 'list',
+        items: [
+          '**ابدأ من الصنف**: تعرض صفحة «الأدوية حسب التخصص» أصناف طب الأسنان وتحيل إلى كل صنف ATC، من الصنف إلى المادة الفعالة.',
+          '**مرّ عبر الاسم الدولي (DCI)**: المادة الواحدة توجد بعدة أسماء تجارية. ابحث عن الـ DCI ثم قارن الأشكال والجرعات والمخابر.',
+          '**تحقق من الحالة**: دواء مسجّل أو غير مجدَّد أو مسحوب من السوق. التنبيهات والأدوية المسحوبة متاحة بنقرة واحدة.',
+          '**افتح ملخص خصائص المنتج الرسمي**: الوثيقة المنشورة من الوكالة الوطنية للمنتجات الصيدلانية هي المرجع للدواعي وموانع الاستعمال والتداخلات.',
+        ],
+      },
+      {
+        type: 'h2',
+        title: '3. البدائل الجنيسة والأسعار والتوفر',
+        text: 'بالنسبة لمادة فعالة معيّنة، تعرض صفحة الاستبدال الجنيس البدائل المسجّلة ومصدرها (مصنّعة في الجزائر أو مستوردة). ويظهر السعر العمومي الجزائري عندما يكون مُدخَلًا، وإلا تشير البطاقة إلى أنه غير متوفر. لا يُقدَّر أي سعر.',
+      },
+      {
+        type: 'h2',
+        title: '4. للطلبة',
+        text: 'أصناف ATC والربط بين الاسم التجاري والـ DCI والصنف ميدان ممتاز للمراجعة. يوفر فضاء التدريب أسئلة اختيار من متعدد مبنية على التسمية: الأسماء التجارية، الـ DCI، الأدوية الجنيسة، المخابر، المنتجات المسحوبة وأصناف ATC.',
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        text: 'معلومات موجهة للمهنيين ومأخوذة من وثائق رسمية. لا تغني عن ملخص خصائص المنتج ولا عن التقدير السريري للممارس.',
+      },
+    ],
+  },
 ]
 
 export function getArticleBySlug(slug: string): Article | undefined {
