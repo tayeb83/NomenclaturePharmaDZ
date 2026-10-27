@@ -96,18 +96,34 @@ export type Resolution = {
   classes: string[]
 }
 
-export function resoudreDci(t: ThesaurusIndex, dci: string): Resolution {
-  const titres = new Set<string>()
-  const classes = new Set<string>()
-  for (const composant of substancesDeDci(dci)) {
-    const q = { libelle: composant, cible_type: null, cible: null } as const
+/** Une substance de la DCI d'un médicament et ce que le thésaurus en connaît. */
+export type Composant = {
+  /** substance telle qu'écrite dans la DCI de la nomenclature */
+  nom: string
+  /** titre du thésaurus retrouvé pour elle, null si le thésaurus ne la traite pas */
+  titre: string | null
+  /** classes du thésaurus dont elle est membre (sans son propre titre) */
+  classes: string[]
+}
+
+export function composantsDeDci(t: ThesaurusIndex, dci: string): Composant[] {
+  return substancesDeDci(dci).map(nom => {
+    const q = { libelle: nom, cible_type: null, cible: null } as const
     const titre = resolveCible(t.titres, q).dci
-    if (titre) titres.add(titre)
     const membre = resolveCible(t.membres, q).dci
-    for (const nom of new Set([titre, membre])) {
-      for (const c of (nom && t.classesDe.get(nom)) || []) classes.add(c)
+    const classes = new Set<string>()
+    for (const n of new Set([titre, membre])) {
+      for (const c of (n && t.classesDe.get(n)) || []) classes.add(c)
     }
-  }
+    if (titre) classes.delete(titre)
+    return { nom, titre, classes: [...classes].sort() }
+  })
+}
+
+export function resoudreDci(t: ThesaurusIndex, dci: string): Resolution {
+  const composants = composantsDeDci(t, dci)
+  const titres = new Set(composants.flatMap(c => (c.titre ? [c.titre] : [])))
+  const classes = new Set(composants.flatMap(c => c.classes))
   for (const titre of titres) classes.delete(titre)
   return { titres: [...titres].sort(), classes: [...classes].sort() }
 }
@@ -132,6 +148,28 @@ export type InteractionItem = {
   substance: string
   /** renseigné quand la ligne vient d'une classe de la substance, pas de la substance elle-même */
   via_classe: string | null
+  /** comparateur seulement : quelles substances de chaque médicament sont en jeu, et à quel niveau */
+  lien?: LienPaire
+}
+
+/**
+ * Où se situe l'interaction entre deux médicaments A et B. Le thésaurus écrit chaque ligne sous une
+ * substance (ou une classe) en visant un partenaire (substance ou classe) : on remonte, de chaque côté,
+ * jusqu'aux substances du médicament.
+ */
+export type LienPaire = {
+  /** médicament sous la substance duquel le thésaurus a écrit la ligne */
+  cote: 'a' | 'b'
+  /** substances de ce médicament visées par la ligne */
+  de: string[]
+  /** classe sous laquelle la ligne est écrite, quand ce n'est pas la substance elle-même */
+  de_via: string | null
+  /** substances de l'autre médicament visées par le partenaire */
+  vers: string[]
+  /** classe ou groupe désigné par le partenaire, quand la substance n'est pas nommée directement */
+  vers_via: string | null
+  /** substance↔substance, ou une des deux extrémités passe par une classe, ou les deux */
+  portee: 'substance' | 'mixte' | 'classe'
 }
 
 export function toItem(row: InteractionRow, lang: Lang, directs: ReadonlySet<string>): InteractionItem {
@@ -214,4 +252,77 @@ export function fusionnerSens(ab: InteractionItem[], ba: InteractionItem[]): Int
     out.push(it)
   }
   return trierItems(out)
+}
+
+/** Substances d'un médicament concernées par une ligne écrite sous `substance` (son titre, ou une de ses classes). */
+export function substancesVisees(composants: Composant[], substance: string, viaClasse: boolean): string[] {
+  const k = cle(substance)
+  return composants
+    .filter(c => (viaClasse ? c.classes.some(x => cle(x) === k) : !!c.titre && cle(c.titre) === k))
+    .map(c => c.nom)
+}
+
+/**
+ * Comme interactionsVisant, mais en gardant le détail : pour chaque ligne de A qui vise B, quelles substances
+ * de A et de B sont concernées, et si cela passe par une classe. `cote` dit lequel des deux est A.
+ */
+export function interactionsVisantDetail(
+  t: ThesaurusIndex, items: InteractionItem[], source: Composant[], cible: Composant[], cote: 'a' | 'b',
+): InteractionItem[] {
+  const out: InteractionItem[] = []
+  for (const it of items) {
+    const partenaire = it.partenaire_origine ?? it.partenaire
+    const k = cle(partenaire)
+    const classeP = classeDuPartenaire(t, partenaire)
+    const kc = classeP ? cle(classeP) : null
+    const directs = cible.filter(c => !!c.titre && cle(c.titre) === k)
+    const parClasse = cible.filter(c => c.classes.some(x => cle(x) === k))
+    const parGroupe = kc
+      ? cible.filter(c => (!!c.titre && cle(c.titre) === kc) || c.classes.some(x => cle(x) === kc))
+      : []
+    const vers = [...new Set([...directs, ...parClasse, ...parGroupe].map(c => c.nom))]
+    if (vers.length === 0) continue
+    const vers_via = directs.length > 0 && parClasse.length === 0 && parGroupe.length === 0 ? null : (classeP ?? partenaire)
+    const de_via = it.via_classe
+    out.push({
+      ...it,
+      lien: {
+        cote,
+        de: substancesVisees(source, it.substance, !!de_via),
+        de_via,
+        vers,
+        vers_via,
+        portee: !de_via && !vers_via ? 'substance' : de_via && vers_via ? 'classe' : 'mixte',
+      },
+    })
+  }
+  return out
+}
+
+export type MatriceSubstances = {
+  /** substances de A (lignes) et de B (colonnes) */
+  a: string[]
+  b: string[]
+  /** gravité la plus forte pour chaque couple (substance de A, substance de B), null s'il n'y a rien */
+  cases: (Niveau | null)[][]
+}
+
+/** Tableau substance par substance des interactions d'une paire de médicaments. */
+export function matriceSubstances(items: InteractionItem[], a: Composant[], b: Composant[]): MatriceSubstances {
+  const na = a.map(c => c.nom)
+  const nb = b.map(c => c.nom)
+  const cases: (Niveau | null)[][] = na.map(() => nb.map(() => null))
+  for (const it of items) {
+    const l = it.lien
+    if (!l) continue
+    const [lignes, colonnes] = l.cote === 'a' ? [l.de, l.vers] : [l.vers, l.de]
+    for (const x of lignes) for (const y of colonnes) {
+      const i = na.indexOf(x)
+      const j = nb.indexOf(y)
+      if (i < 0 || j < 0) continue
+      const actuel = cases[i][j]
+      if (!actuel || NIVEAU_RANG[it.niveau] < NIVEAU_RANG[actuel]) cases[i][j] = it.niveau
+    }
+  }
+  return { a: na, b: nb, cases }
 }

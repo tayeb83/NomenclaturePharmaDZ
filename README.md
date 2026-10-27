@@ -58,8 +58,18 @@ par wilaya et commune. Interface bilingue **français / arabe** (RTL).
 - Tests : `node --test tests/partage/`.
 
 ### ⚖️ Comparateur de deux médicaments (Outils, accès limité)
-- `/outils/comparateur-medicaments` : deux médicaments côte à côte (substance, forme, dosage, laboratoire, prix, ATC)
-  et interactions du Thesaurus ANSM **entre les deux**, dans les deux sens, avec les mêmes niveaux repliables.
+- `/outils/comparateur-medicaments` : chaque côté est un **nom de marque ou une substance**. Deux marques : fiches côte à côte
+  (substance, forme, dosage, laboratoire, prix, ATC). Dans tous les cas : interactions du Thesaurus ANSM **entre les deux**,
+  dans les deux sens, avec les mêmes niveaux repliables.
+- Outil pédagogique : chaque carte d'interaction montre **quelle substance de chaque médicament est en jeu** (les autres
+  substances d'une association sont atténuées), si le rapprochement est substance ↔ substance, substance ↔ classe ou
+  classe ↔ classe, et une phrase d'explication. Un bloc « Comprendre l'interaction » détaille les substances et classes de
+  chaque côté, une matrice substance par substance (associations) et la définition des quatre gravités.
+  Logique dans `lib/interactions-core.ts` (`composantsDeDci`, `interactionsVisantDetail`, `matriceSubstances`).
+- Un seul côté choisi : le panneau « Ce qui interagit avec … » liste tous les partenaires du thésaurus (par gravité, filtrables),
+  et permet de choisir l'autre côté en un clic : une substance, ou une marque de la nomenclature qui la contient ;
+  une classe se déplie en ses substances. API : `/api/outils/comparateur-medicaments/partenaires` et `/substances`.
+- Références envoyées aux API : `enregistrement:12` (marque) ou `dci:AMIODARONE` (substance).
 - Accès limité comme Training : demande d'accès par e-mail, validation à la main dans `/admin/training`
   (colonne Source : « Comparateur »), lien de connexion à usage unique envoyé par e-mail. Un seul compte pour les deux.
 - À activer : `psql "$DATABASE_URL" -f sql/30_acces_origine.sql` (après `sql/23`, `24`, `25`).

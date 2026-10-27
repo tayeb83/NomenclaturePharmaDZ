@@ -7,8 +7,9 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import {
-  NIVEAUX, buildThesaurusIndex, cle, classeDuPartenaire, fusionnerSens, grouperParNiveau, interactionsVisant, membresDeClasse, resoudreDci,
-  substancesDeDci, toItem, trierItems, type ClasseLien, type InteractionRow,
+  NIVEAUX, buildThesaurusIndex, cle, classeDuPartenaire, composantsDeDci, fusionnerSens, grouperParNiveau, interactionsVisant, interactionsVisantDetail,
+  matriceSubstances, membresDeClasse, resoudreDci,
+  substancesDeDci, toItem, trierItems, type ClasseLien, type InteractionItem, type InteractionRow,
 } from '../../lib/interactions-core.ts'
 
 type Json = {
@@ -200,4 +201,79 @@ test('entre deux médicaments : le sens inverse est fusionné sans doublon', () 
   assert.ok(fusion.length >= Math.max(ab.length, ba.length))
   assert.ok(fusion.length <= ab.length + ba.length)
   assert.equal(fusionnerSens(ab, ab).length, fusionnerSens(ab, []).length, 'la même ligne vue deux fois ne compte qu\'une fois')
+})
+
+// ── comparateur pédagogique : où se situe l'interaction ──────────────────────────────────────────
+
+/** Lignes du thésaurus pour tous les titres et classes d'un médicament, comme le fait la base. */
+function itemsDeMedicament(composants: ReturnType<typeof composantsDeDci>): InteractionItem[] {
+  const directs = new Set(composants.flatMap(c => (c.titre ? [c.titre] : [])))
+  const noms = new Set([...directs, ...composants.flatMap(c => c.classes)])
+  return trierItems(data.interactions
+    .filter(i => noms.has(i.substance))
+    .map((i, n) => toItem({
+      id: n + 1, substance: i.substance, partenaire: i.partenaire, partenaire_est_classe: false, niveau: i.niveau as any,
+      niveaux: (i.niveaux as any) ?? null, risque_fr: i.risque, conduite_fr: i.conduite, risque_ar: null, conduite_ar: null,
+      partenaire_ar: null, ar_statut: 'absent', page: i.page, source_version: 'test',
+    }, 'fr', directs)))
+}
+
+function paire(dciA: string, dciB: string) {
+  const a = composantsDeDci(index, dciA)
+  const b = composantsDeDci(index, dciB)
+  const items = fusionnerSens(
+    interactionsVisantDetail(index, itemsDeMedicament(a), a, b, 'a'),
+    interactionsVisantDetail(index, itemsDeMedicament(b), b, a, 'b'),
+  )
+  return { a, b, items }
+}
+
+test('comparateur : amiodarone + simvastatine, le thésaurus cite les deux substances', () => {
+  const { items } = paire('AMIODARONE', 'SIMVASTATINE')
+  assert.ok(items.length >= 1)
+  for (const it of items) {
+    assert.equal(it.lien?.portee, 'substance')
+    assert.equal(it.lien?.de_via, null)
+    assert.equal(it.lien?.vers_via, null)
+  }
+  const ab = items.find(i => i.lien?.cote === 'a')!
+  assert.deepEqual([ab.lien!.de, ab.lien!.vers], [['AMIODARONE'], ['SIMVASTATINE']])
+})
+
+test('comparateur : une substance qui passe par sa classe est signalée (mixte puis classe contre classe)', () => {
+  // KÉTOPROFÈNE n'a pas de titre : la ligne est écrite pour les AINS, et le méthotrexate y est nommé
+  const mixte = paire('KETOPROFENE', 'METHOTREXATE').items
+  assert.ok(mixte.length >= 1)
+  const m = mixte.find(i => i.lien?.cote === 'a')!
+  assert.equal(m.lien!.portee, 'mixte')
+  assert.deepEqual(m.lien!.de, ['KETOPROFENE'])
+  assert.equal(cle(m.lien!.de_via ?? ''), cle('ANTI-INFLAMMATOIRES NON STÉROÏDIENS'))
+  assert.equal(m.lien!.vers_via, null)
+
+  const classes = paire('IBUPROFENE', 'WARFARINE').items
+  assert.ok(classes.length >= 1)
+  assert.ok(classes.every(i => i.lien?.portee === 'classe' && i.lien.de_via && i.lien.vers_via))
+})
+
+test('comparateur : dans une association, seule la substance concernée est désignée, et la matrice la retrouve', () => {
+  const { a, b, items } = paire('AMOXICILLINE + ACIDE CLAVULANIQUE', 'METHOTREXATE')
+  assert.deepEqual(a.map(c => c.nom), ['AMOXICILLINE', 'ACIDE CLAVULANIQUE'])
+  assert.ok(items.length >= 1)
+  for (const it of items) {
+    const cotéAmox = it.lien!.cote === 'a' ? it.lien!.de : it.lien!.vers
+    assert.deepEqual(cotéAmox, ['AMOXICILLINE'])
+  }
+  const m = matriceSubstances(items, a, b)
+  assert.deepEqual(m.a, ['AMOXICILLINE', 'ACIDE CLAVULANIQUE'])
+  assert.equal(m.cases[0][0], 'deconseillee')
+  assert.equal(m.cases[1][0], null)
+})
+
+test('comparateur : composantsDeDci garde le titre et les classes de chaque substance, resoudreDci reste identique', () => {
+  const c = composantsDeDci(index, 'AMOXICILLINE + ACIDE CLAVULANIQUE')
+  assert.equal(c[0].titre, null)
+  assert.ok(c[0].classes.some(x => cle(x) === cle('PÉNICILLINES')))
+  const r = resoudreDci(index, 'AMIODARONE')
+  assert.deepEqual(r.titres, ['AMIODARONE'])
+  assert.ok(!r.classes.includes('AMIODARONE'))
 })
