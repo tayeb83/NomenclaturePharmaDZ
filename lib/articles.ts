@@ -891,6 +891,272 @@ export const ARTICLES: Article[] = [
       },
     ],
   },
+  {
+    slug: 'comparateur-medicaments-interactions-guide',
+    lang: 'fr',
+    audience: 'etudiant',
+    title: 'Comparateur de médicaments : comprendre où et à quel niveau se produit une interaction',
+    subtitle: 'Guide pas à pas de l’outil, avec des exemples (amiodarone, ibuprofène, amoxicilline…)',
+    description:
+      'Comment utiliser le comparateur DwaDZ par nom de marque ou par substance, lire le schéma d’une interaction du Thesaurus ANSM (substance, classe, gravité) et trouver les partenaires d’un médicament. Exemples commentés.',
+    seoTitle: 'Comparateur de médicaments DwaDZ : lire une interaction médicamenteuse (Thesaurus ANSM)',
+    seoKeywords: ['comparateur de médicaments', 'interactions médicamenteuses', 'thesaurus ANSM', 'amiodarone simvastatine', 'pharmacie étudiant algérie'],
+    date: '2026-10-27',
+    readingTime: 7,
+    tags: ['Comparateur', 'Interactions médicamenteuses', 'Thesaurus ANSM', 'Pédagogie', 'Outils'],
+    sourceLinks: [
+      { label: 'Thesaurus des interactions médicamenteuses (ANSM, septembre 2023)', url: 'https://ansm.sante.fr/uploads/2024/06/07/20230915-thesaurus-interactions-medicamenteuses-septembre-2023.pdf', external: true },
+    ],
+    relatedLinks: [
+      { label: 'Ouvrir le comparateur de médicaments (accès limité)', url: '/outils/comparateur-medicaments' },
+      { label: 'Tous les outils', url: '/outils' },
+      { label: 'Rechercher un médicament', url: '/recherche' },
+    ],
+    faq: [
+      {
+        question: 'Peut-on comparer une marque et une substance ?',
+        answer: 'Oui. Chaque côté du comparateur est au choix un nom de marque ou une substance, et les deux peuvent être mélangés.',
+      },
+      {
+        question: 'Pourquoi le comparateur parle-t-il de substances et pas de marques ?',
+        answer: 'Parce que le Thesaurus ANSM décrit les interactions par substance active, parfois par classe pharmacologique. Une marque en hérite à travers ses substances.',
+      },
+      {
+        question: 'Que faire si je n’ai choisi qu’un seul médicament ?',
+        answer: 'L’outil liste tous ses partenaires d’interaction, par gravité, et permet de choisir le second côté d’un clic : une substance, ou une marque qui la contient.',
+      },
+      {
+        question: 'Aucune interaction signalée veut-elle dire qu’il n’y en a pas ?',
+        answer: 'Non. Le thésaurus ne couvre pas toutes les associations. L’outil ne remplace pas l’avis d’un médecin ou d’un pharmacien.',
+      },
+    ],
+    content: [
+      {
+        type: 'intro',
+        text: 'Une interaction médicamenteuse ne se joue pas entre deux boîtes, mais entre des substances. Le comparateur de DwaDZ rend ce passage visible : il montre, pour chaque interaction, quelle substance de chaque médicament est en cause, si le lien passe par une classe pharmacologique, et quelle est la gravité. C’est un outil de compréhension autant que de consultation.',
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        text: 'Le comparateur est un outil à accès limité : la demande se fait par e-mail depuis la page de l’outil, avec validation manuelle. Les interactions viennent du Thesaurus de l’ANSM (France, septembre 2023), reproduit tel quel.',
+      },
+      { type: 'h2', title: '1. Choisir ses deux côtés : marque ou substance' },
+      {
+        type: 'paragraph',
+        text: 'Chaque côté a deux onglets : « Nom de marque » et « Substance ». Avec une marque, on retrouve la fiche complète (forme, dosage, laboratoire, prix, classe ATC) et, entre deux marques, un tableau côte à côte avec les différences en surbrillance. Avec une substance, on compare directement les principes actifs, ce qui convient pour réviser un cours sans penser à la marque. On peut aussi mélanger : une marque contre une substance.',
+      },
+      {
+        type: 'list',
+        items: [
+          'Marque : tapez le nom commercial (ex. CORDARONE) ; l’outil retrouve sa substance (amiodarone).',
+          'Substance : tapez la DCI (ex. amiodarone) ; les titres du thésaurus, y compris les classes, sont proposés.',
+          'Le bouton « Inverser » échange les deux côtés ; « Comparer » lance l’analyse.',
+        ],
+      },
+      { type: 'h2', title: '2. Lire le schéma d’une interaction' },
+      {
+        type: 'paragraph',
+        text: 'Sous chaque carte d’interaction, un schéma montre les deux côtés. Les substances concernées sont en plein ; les autres substances d’une association sont atténuées. Au centre, la gravité. Une étiquette donne le niveau du rapprochement et une phrase l’explique.',
+      },
+      {
+        type: 'table',
+        headers: ['Niveau du rapprochement', 'Ce que cela signifie'],
+        rows: [
+          { cells: ['Substance ↔ substance', 'Le thésaurus cite directement les deux substances. C’est le cas le plus précis.'] },
+          { cells: ['Substance ↔ classe', 'Une des deux substances est visée à travers sa classe : l’interaction vaut pour tous les membres de la classe.'] },
+          { cells: ['Classe ↔ classe', 'Les deux extrémités passent par une classe.'] },
+        ],
+      },
+      { type: 'h2', title: '3. Exemples commentés' },
+      { type: 'h3', title: 'Exemple 1 : amiodarone + simvastatine (substance ↔ substance)' },
+      {
+        type: 'paragraph',
+        text: 'Choisissez « amiodarone » d’un côté et « simvastatine » de l’autre (ou leurs marques). Le thésaurus traite directement le couple : précaution d’emploi. Le risque est une augmentation des effets indésirables musculaires de la simvastatine, de type rhabdomyolyse ; la conduite à tenir est de ne pas dépasser 20 mg/j de simvastatine, ou d’utiliser une autre statine non concernée. Le bloc « Comprendre l’interaction » liste aussi les classes de chaque substance (antiarythmiques, statines, substrats à risque du CYP3A4…), sans qu’elles soient ici à l’origine du lien.',
+      },
+      { type: 'h3', title: 'Exemple 2 : ibuprofène + warfarine (classe ↔ classe)' },
+      {
+        type: 'paragraph',
+        text: 'Ni l’ibuprofène ni la warfarine n’ont de ligne à leur nom dans ce cas : le thésaurus raisonne par classe. L’outil montre que l’ibuprofène relève de la classe des anti-inflammatoires non stéroïdiens, la warfarine de celle des anticoagulants oraux, et que l’interaction (association déconseillée) vient du rapprochement de ces deux classes. Conséquence pédagogique : ce qui est vrai pour la classe vaut pour tous ses membres, et c’est ce qu’on cherche à retenir.',
+      },
+      { type: 'h3', title: 'Exemple 3 : amoxicilline + acide clavulanique contre méthotrexate (association, via une classe)' },
+      {
+        type: 'paragraph',
+        text: 'Une marque peut contenir plusieurs substances. Ici, seule l’amoxicilline est concernée, à travers la classe des pénicillines : l’acide clavulanique reste atténué dans le schéma. La matrice « substance par substance » le confirme : une case colorée pour amoxicilline × méthotrexate, une case vide pour acide clavulanique × méthotrexate. L’interaction est classée association déconseillée.',
+      },
+      { type: 'h2', title: '4. Un seul médicament choisi : trouver ses partenaires' },
+      {
+        type: 'paragraph',
+        text: 'Si vous remplissez un côté seulement, l’outil ouvre le panneau « Ce qui interagit avec … » : tous les partenaires du thésaurus, classés par gravité, avec un filtre par gravité et une recherche par nom (ex. rifampicine). Pour chaque partenaire :',
+      },
+      {
+        type: 'list',
+        items: [
+          '« Choisir cette substance » la place dans l’autre côté.',
+          '« Marques » déplie les marques de la nomenclature algérienne qui contiennent cette substance : un clic remplit le second côté.',
+          'Pour une classe (ex. anticoagulants oraux), « Substances de la classe » déplie ses membres : une classe ne se compare pas directement, on choisit l’un d’eux.',
+        ],
+      },
+      { type: 'h2', title: '5. Les quatre gravités' },
+      {
+        type: 'table',
+        headers: ['Gravité', 'Lecture'],
+        rows: [
+          { cells: ['⊗ Contre-indication', 'Ne jamais associer.'] },
+          { cells: ['▲ Association déconseillée', 'À éviter, sauf si le bénéfice attendu l’emporte nettement ; surveillance étroite.'] },
+          { cells: ['◆ Précaution d’emploi', 'Association possible en respectant les mesures indiquées (surveillance, adaptation de dose).'] },
+          { cells: ['○ À prendre en compte', 'Risque à garder à l’esprit, sans conduite systématique.'] },
+        ],
+      },
+      { type: 'h2', title: '6. Limites à connaître' },
+      {
+        type: 'list',
+        items: [
+          'Le thésaurus est français et date de septembre 2023 : la disponibilité des spécialités diffère en Algérie.',
+          'Le rapprochement entre une substance de la nomenclature et le thésaurus est automatique ; une substance absente du thésaurus est signalée comme telle, jamais devinée.',
+          'Aucune interaction signalée ne signifie pas absence d’interaction.',
+          'Les traductions arabes des lignes du thésaurus sont en cours de relecture ; à défaut, le texte français d’origine s’affiche.',
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'warning',
+        text: 'Information, pas une prescription. Ces interactions ne remplacent pas l’avis d’un médecin ou d’un pharmacien.',
+      },
+    ],
+  },
+  {
+    slug: 'comparateur-medicaments-interactions-guide-ar',
+    lang: 'ar',
+    audience: 'etudiant',
+    title: 'مقارنة الأدوية: فهم موضع التداخل الدوائي ومستواه',
+    subtitle: 'دليل خطوة بخطوة لاستعمال الأداة، مع أمثلة (أميودارون، إيبوبروفين، أموكسيسيلين…)',
+    description:
+      'كيف تستعمل مقارنة DwaDZ بالاسم التجاري أو بالمادة الفعالة، وكيف تقرأ مخطط التداخل في دليل ANSM (المادة، الصنف، الخطورة)، وكيف تجد الأدوية المتداخلة مع دواء ما. أمثلة مشروحة.',
+    seoTitle: 'مقارنة الأدوية DwaDZ: قراءة التداخل الدوائي (دليل ANSM)',
+    seoKeywords: ['مقارنة الأدوية', 'التداخلات الدوائية', 'دليل ANSM', 'أميودارون سيمفاستاتين', 'صيدلة الجزائر'],
+    date: '2026-10-27',
+    readingTime: 7,
+    tags: ['مقارنة الأدوية', 'التداخلات الدوائية', 'دليل ANSM', 'تعليم', 'أدوات'],
+    sourceLinks: [
+      { label: 'دليل التداخلات الدوائية (ANSM، سبتمبر 2023)', url: 'https://ansm.sante.fr/uploads/2024/06/07/20230915-thesaurus-interactions-medicamenteuses-septembre-2023.pdf', external: true },
+    ],
+    relatedLinks: [
+      { label: 'فتح مقارنة الأدوية (ولوج محدود)', url: '/outils/comparateur-medicaments' },
+      { label: 'كل الأدوات', url: '/outils' },
+      { label: 'البحث عن دواء', url: '/recherche' },
+    ],
+    faq: [
+      {
+        question: 'هل يمكن مقارنة اسم تجاري بمادة فعالة؟',
+        answer: 'نعم. كل جهة في الأداة هي إما اسم تجاري أو مادة فعالة، ويمكن الخلط بينهما.',
+      },
+      {
+        question: 'لماذا تتحدث الأداة عن المواد وليس عن الأسماء التجارية؟',
+        answer: 'لأن دليل ANSM يصف التداخلات حسب المادة الفعالة، وأحيانًا حسب الصنف الدوائي. ويرث الاسم التجاري التداخلات عبر مواده.',
+      },
+      {
+        question: 'ماذا أفعل إذا اخترت دواءً واحدًا فقط؟',
+        answer: 'تعرض الأداة كل شركاء التداخل مرتبين حسب الخطورة، ويمكن اختيار الجهة الثانية بنقرة: مادة، أو اسم تجاري يحتويها.',
+      },
+      {
+        question: 'هل غياب التداخل المُعلَن يعني أنه لا يوجد تداخل؟',
+        answer: 'لا. الدليل لا يغطي كل التركيبات، والأداة لا تغني عن رأي الطبيب أو الصيدلي.',
+      },
+    ],
+    content: [
+      {
+        type: 'intro',
+        text: 'لا يحدث التداخل الدوائي بين علبتين، بل بين مواد فعالة. وتُظهر أداة المقارنة في DwaDZ هذا الانتقال: تبيّن لكل تداخل أي مادة من كل دواء هي المعنية، وهل يمر الرابط عبر صنف دوائي، وما درجة الخطورة. إنها أداة للفهم بقدر ما هي أداة للاطلاع.',
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        text: 'أداة المقارنة ذات ولوج محدود: يُطلب الولوج بالبريد الإلكتروني من صفحة الأداة، ثم يُتحقق منه يدويًا. والتداخلات مأخوذة من دليل ANSM الفرنسي (سبتمبر 2023) كما هو.',
+      },
+      { type: 'h2', title: '1. اختيار الجهتين: اسم تجاري أو مادة فعالة' },
+      {
+        type: 'paragraph',
+        text: 'لكل جهة تبويبان: «اسم تجاري» و«مادة فعالة». مع الاسم التجاري تظهر البطاقة الكاملة (الشكل، الجرعة، المخبر، الثمن، الفئة ATC)، وبين اسمين تجاريين يُعرض جدول جنبًا إلى جنب تُبرَز فيه الفروق. ومع المادة الفعالة تقارن المواد مباشرة، وهو مناسب لمراجعة درس دون التفكير في الاسم التجاري. ويمكن الخلط: اسم تجاري مقابل مادة فعالة.',
+      },
+      {
+        type: 'list',
+        items: [
+          'اسم تجاري: اكتب الاسم (مثل CORDARONE) فتجد الأداة مادته الفعالة (أميودارون).',
+          'مادة فعالة: اكتب الاسم الدولي (مثل amiodarone) فتُقترح عناوين الدليل، ومنها الأصناف.',
+          'زر «عكس» يبدّل الجهتين، وزر «قارن» يبدأ التحليل.',
+        ],
+      },
+      { type: 'h2', title: '2. قراءة مخطط التداخل' },
+      {
+        type: 'paragraph',
+        text: 'تحت كل بطاقة تداخل مخطط يبيّن الجهتين. تظهر المواد المعنية بلون ممتلئ، وتبهت بقية مواد التركيبة. وفي الوسط درجة الخطورة. وتحدد علامة مستوى المطابقة، وتشرحه جملة.',
+      },
+      {
+        type: 'table',
+        headers: ['مستوى المطابقة', 'المعنى'],
+        rows: [
+          { cells: ['مادة ↔ مادة', 'يذكر الدليل المادتين مباشرة. وهذه أدق حالة.'] },
+          { cells: ['مادة ↔ صنف', 'إحدى المادتين مستهدفة عبر صنفها: يسري التداخل على كل أفراد الصنف.'] },
+          { cells: ['صنف ↔ صنف', 'يمر الطرفان معًا عبر صنف.'] },
+        ],
+      },
+      { type: 'h2', title: '3. أمثلة مشروحة' },
+      { type: 'h3', title: 'المثال 1: أميودارون + سيمفاستاتين (مادة ↔ مادة)' },
+      {
+        type: 'paragraph',
+        text: 'اختر «أميودارون» في جهة و«سيمفاستاتين» في الأخرى (أو اسميهما التجاريين). يعالج الدليل الزوج مباشرة: احتياطات الاستعمال. الخطر هو زيادة الآثار العضلية غير المرغوبة للسيمفاستاتين من نوع انحلال العضلات المخطّطة، والسلوك الواجب اتباعه هو عدم تجاوز 20 ملغ/يوم من السيمفاستاتين، أو استعمال ستاتين آخر غير معني. ويسرد مربع «فهم التداخل» أيضًا أصناف كل مادة (مضادات اضطراب النظم، الستاتينات، ركائز الـCYP3A4 عالية الخطورة…) دون أن تكون هنا أصل الرابط.',
+      },
+      { type: 'h3', title: 'المثال 2: إيبوبروفين + وارفارين (صنف ↔ صنف)' },
+      {
+        type: 'paragraph',
+        text: 'لا يوجد في هذه الحالة سطر باسم الإيبوبروفين ولا باسم الوارفارين: يعمل الدليل بالأصناف. وتُظهر الأداة أن الإيبوبروفين ينتمي إلى صنف مضادات الالتهاب غير الستيرويدية، والوارفارين إلى صنف مضادات التخثر الفموية، وأن التداخل (جمع غير موصى به) ناتج عن مطابقة هذين الصنفين. والفائدة التعليمية: ما يصح على الصنف يصح على كل أفراده، وهذا ما نريد حفظه.',
+      },
+      { type: 'h3', title: 'المثال 3: أموكسيسيلين + حمض الكلافولانيك مقابل ميثوتريكسات (تركيبة، عبر صنف)' },
+      {
+        type: 'paragraph',
+        text: 'قد يحتوي الاسم التجاري الواحد على عدة مواد. هنا لا تُعنى إلا الأموكسيسيلين، عبر صنف البنسيلينات، بينما يظل حمض الكلافولانيك باهتًا في المخطط. وتؤكد ذلك مصفوفة «مادة مقابل مادة»: خانة ملونة لأموكسيسيلين × ميثوتريكسات، وخانة فارغة لحمض الكلافولانيك × ميثوتريكسات. ويصنَّف التداخل جمعًا غير موصى به.',
+      },
+      { type: 'h2', title: '4. اختيار دواء واحد: العثور على شركائه' },
+      {
+        type: 'paragraph',
+        text: 'إذا ملأت جهة واحدة فقط، تفتح الأداة لوحة «ما يتداخل مع …»: كل شركاء الدليل مرتبين حسب الخطورة، مع تصفية حسب الخطورة وبحث بالاسم (مثل ريفامبيسين). ولكل شريك:',
+      },
+      {
+        type: 'list',
+        items: [
+          '«اختيار هذه المادة» تضعها في الجهة الأخرى.',
+          '«الأسماء التجارية» تعرض الأسماء التجارية في التسمية الجزائرية التي تحتوي هذه المادة: نقرة واحدة تملأ الجهة الثانية.',
+          'بالنسبة إلى صنف (مثل مضادات التخثر الفموية) تعرض «مواد الصنف» أفراده: لا يُقارَن الصنف مباشرة، بل نختار أحد أفراده.',
+        ],
+      },
+      { type: 'h2', title: '5. درجات الخطورة الأربع' },
+      {
+        type: 'table',
+        headers: ['الخطورة', 'القراءة'],
+        rows: [
+          { cells: ['⊗ مضاد استطباب', 'لا يجوز الجمع أبدًا.'] },
+          { cells: ['▲ جمع غير موصى به', 'يُتجنَّب إلا إذا رجحت الفائدة المنتظرة بوضوح، مع مراقبة دقيقة.'] },
+          { cells: ['◆ احتياطات الاستعمال', 'الجمع ممكن مع احترام التدابير المذكورة (مراقبة، تعديل الجرعة).'] },
+          { cells: ['○ يؤخذ بعين الاعتبار', 'خطر يُحتفظ به في الذهن دون سلوك محدد.'] },
+        ],
+      },
+      { type: 'h2', title: '6. حدود يجب معرفتها' },
+      {
+        type: 'list',
+        items: [
+          'الدليل فرنسي ويعود إلى سبتمبر 2023، وتوفر الأدوية في الجزائر يختلف.',
+          'مطابقة مادة التسمية مع الدليل آلية؛ والمادة غير الواردة في الدليل يُشار إليها كذلك ولا تُخمَّن.',
+          'عدم الإشارة إلى تداخل لا يعني انعدامه.',
+          'ترجمة سطور الدليل إلى العربية قيد المراجعة؛ وعند غيابها يظهر النص الفرنسي الأصلي.',
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'warning',
+        text: 'معلومة وليست وصفة طبية. لا تغني هذه التداخلات عن استشارة الطبيب أو الصيدلي.',
+      },
+    ],
+  },
 ]
 
 export function getArticleBySlug(slug: string): Article | undefined {
