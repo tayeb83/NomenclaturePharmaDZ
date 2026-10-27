@@ -151,7 +151,7 @@ test('traductions arabes : chaque entrée vise un texte du thésaurus, garde ses
     risques: Record<string, string>; conduites: Record<string, string>; partenaires: Record<string, string>
   }
   const fr = { risques: new Set(data.interactions.map(i => i.risque)), conduites: new Set(data.interactions.map(i => i.conduite)), partenaires: new Set(data.interactions.map(i => i.partenaire)) }
-  const nombres = (s: string) => s.match(/\d+(?:[.,]\d+)?/g) ?? []
+  const nombres = (s: string): string[] => s.match(/\d+(?:[.,]\d+)?/g) ?? []
   for (const k of ['risques', 'conduites', 'partenaires'] as const) {
     for (const [texte, trad] of Object.entries(ar[k])) {
       assert.ok(fr[k].has(texte), `${k} : texte français inconnu : ${texte.slice(0, 60)}`)

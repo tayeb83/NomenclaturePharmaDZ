@@ -19,17 +19,16 @@ export * from './interactions-core'
 
 export const INTERACTIONS_TAG = 'interactions-ansm'
 
-/** Le PDF du thésaurus, tel que publié par l'ANSM. */
-export const ANSM_THESAURUS_URL = 'https://ansm.sante.fr/uploads/2024/06/07/20230915-thesaurus-interactions-medicamenteuses-septembre-2023.pdf'
-
 /** Au-delà, la liste des membres d'une classe est tronquée à l'affichage. */
 const MEMBRES_MAX = 60
 
 export type InteractionPartenaire = {
   /** DCI de la nomenclature DwaDZ quand le partenaire y est retrouvé (page /dci/…) */
   dci: string | null
-  /** membres connus d'une classe partenaire */
-  membres: string[]
+  /** faux quand la nomenclature a été consultée et ne contient pas la substance ; null si inconnu ou si c'est une classe */
+  en_nomenclature: boolean | null
+  /** membres connus d'une classe partenaire, avec leur DCI de la nomenclature quand ils y figurent */
+  membres: { nom: string; dci: string | null }[]
   membres_total: number
 }
 
@@ -96,14 +95,27 @@ async function fetchInteractionsFiche(dci: string, lang: Lang): Promise<Interact
 
   // un lien vers la page /dci n'est proposé que si la nomenclature DwaDZ contient la substance
   const nomenclature = await getNomenclatureIndex().catch(() => null)
+  const dciDe = (libelle: string): string | null =>
+    (nomenclature && resolveCible(nomenclature, { libelle, cible_type: null, cible: null }).dci) || null
+  const parClasse = new Map<string, InteractionPartenaire>() // les cartes d'une même classe la partagent
   const partenaires: Record<number, InteractionPartenaire> = {}
   for (const it of items) {
+    // `partenaire` peut être la traduction arabe : l'index du thésaurus raisonne sur le nom d'origine
+    const nom = it.partenaire_origine ?? it.partenaire
     if (it.partenaire_est_classe) {
-      const membres = membresDeClasse(t, it.partenaire)
-      partenaires[it.id] = { dci: null, membres: membres.slice(0, MEMBRES_MAX), membres_total: membres.length }
+      let p = parClasse.get(nom)
+      if (!p) {
+        const membres = membresDeClasse(t, nom)
+        p = {
+          dci: null, en_nomenclature: null, membres_total: membres.length,
+          membres: membres.slice(0, MEMBRES_MAX).map(m => ({ nom: m, dci: dciDe(m) })),
+        }
+        parClasse.set(nom, p)
+      }
+      partenaires[it.id] = p
     } else {
-      const lien = nomenclature && resolveCible(nomenclature, { libelle: it.partenaire, cible_type: null, cible: null }).dci
-      partenaires[it.id] = { dci: lien || null, membres: [], membres_total: 0 }
+      const dci = dciDe(nom)
+      partenaires[it.id] = { dci, en_nomenclature: nomenclature ? !!dci : null, membres: [], membres_total: 0 }
     }
   }
 

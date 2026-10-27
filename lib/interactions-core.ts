@@ -13,6 +13,9 @@
 import { buildMatchIndex, foldNom, resolveCible, type MatchIndex } from './rcp-match.ts'
 import type { Lang } from './i18n.ts'
 
+/** Le PDF du thésaurus, tel que publié par l'ANSM. */
+export const ANSM_THESAURUS_URL = 'https://ansm.sante.fr/uploads/2024/06/07/20230915-thesaurus-interactions-medicamenteuses-septembre-2023.pdf'
+
 export type Niveau = 'contre_indication' | 'deconseillee' | 'precaution_emploi' | 'a_prendre_en_compte'
 
 /** Du plus grave au moins grave : l'ordre d'affichage. */
