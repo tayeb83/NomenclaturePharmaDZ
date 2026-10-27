@@ -40,6 +40,10 @@ par wilaya et commune. Interface bilingue **français / arabe** (RTL).
   `DATABASE_URL=... python scripts/import_ansm_traductions_ar.py data/ansm/interactions_ar.json --apply`.
   Elles sont publiées en « brouillon » (mention « ترجمة قيد المراجعة ») ; une ligne relue se marque
   `UPDATE interactions_ansm SET ar_statut = 'relu' WHERE …` et n'est plus jamais écrasée.
+- Relecture : `python scripts/export_relecture_ar.py` produit `data/ansm/relecture_ar.xlsx` (textes distincts classés par
+  nombre d'interactions concernées, onglet « Vocabulaire » pour les termes récurrents). On y met le statut ou une
+  correction, puis `python scripts/import_relecture_ar.py data/ansm/relecture_ar.xlsx --apply` et l'import des
+  traductions marquent « relu » les interactions dont le risque et la conduite à tenir sont relus.
 - Après un import, les fiches se rafraîchissent seules sous 24 h ; pour aller plus vite, session admin
   puis `POST /api/admin/interactions`.
 - Contrôle du rapprochement avec votre nomenclature : `DATABASE_URL=... npx tsx scripts/check_ansm_couverture.mts`.

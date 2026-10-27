@@ -7,9 +7,9 @@ Le fichier est indexé par le TEXTE FRANÇAIS : une phrase traduite une fois ser
 les lignes qui la portent, et une ligne dont le texte français change perd sa traduction
 (voir import_ansm_interactions.py).
 
-Statut : les lignes traduites passent à « brouillon » (affichées, à relire). Une ligne
-déjà marquée « relu » n'est jamais modifiée, sauf avec --ecraser-relu.
-Pour valider une relecture : UPDATE interactions_ansm SET ar_statut = 'relu' WHERE …
+Statut : les lignes traduites passent à « brouillon » (affichées, à relire). Une ligne dont le risque et la
+conduite à tenir figurent dans la clé « relus » du fichier (voir scripts/import_relecture_ar.py) passe à « relu ».
+Une ligne déjà marquée « relu » en base n'est jamais modifiée, sauf avec --ecraser-relu.
 
 Sans --apply, tout s'exécute dans une transaction annulée à la fin.
 
@@ -45,6 +45,7 @@ def main() -> int:
 
     tr = json.loads(args.json.read_text(encoding="utf8"))
     risques, conduites, partenaires = tr["risques"], tr["conduites"], tr["partenaires"]
+    relus = {k: set(v) for k, v in tr.get("relus", {}).items()}
 
     conn = psycopg2.connect(dsn)
     try:
@@ -61,7 +62,8 @@ def main() -> int:
                 # une ligne n'est traduite que si tout ce qu'elle affiche l'est : sinon la fiche
                 # arabe garde le texte français d'origine, jamais un mélange
                 complet = bool(r) and (not conduite_fr or bool(c))
-                updates.append((id_, r if complet else None, (c or None) if complet and conduite_fr else None, p, "brouillon" if complet else "absent"))
+                relue = complet and risque_fr in relus.get("risques", ()) and (not conduite_fr or conduite_fr in relus.get("conduites", ()))
+                updates.append((id_, r if complet else None, (c or None) if complet and conduite_fr else None, p, "relu" if relue else "brouillon" if complet else "absent"))
 
             execute_values(cur, """
                 UPDATE interactions_ansm AS t SET
