@@ -22,6 +22,22 @@ par wilaya et commune. Interface bilingue **français / arabe** (RTL).
 - **Alertes & retraits** (`/alertes`, `/retraits`), **veille réglementaire**
   (`/veille`), **médicaments critiques** (`/medicaments-critiques`).
 
+### ⚠️ Interactions médicamenteuses (Thesaurus ANSM)
+- Onglet **Interactions** sur chaque fiche, FR et AR : par gravité (contre-indication,
+  association déconseillée, précaution d'emploi, « à prendre en compte » replié),
+  avec **Risques** et **Conduite à tenir** tels qu'écrits par l'ANSM, la page du PDF et la
+  substance (ou la classe) d'où vient l'interaction.
+- Le thésaurus raisonne par substance : une fiche affiche les interactions de ses substances
+  et de leurs classes. Textes français non reformulés ; l'arabe retombe sur le français
+  d'origine tant que la traduction n'est pas faite (`ar_statut` : absent / brouillon / relu).
+- Mise en route :
+  `psql "$DATABASE_URL" -f sql/29_interactions_ansm.sql`, puis
+  `python scripts/extract_ansm_interactions.py data/ansm/<thesaurus>.pdf data/ansm/interactions_fr.json`
+  (déjà fait pour la version de septembre 2023) et
+  `DATABASE_URL=... python scripts/import_ansm_interactions.py data/ansm/interactions_fr.json --apply`.
+- Contrôle du rapprochement avec votre nomenclature : `DATABASE_URL=... node scripts/check_ansm_couverture.ts`.
+- Tests : `npm run test:interactions`.
+
 ### 📊 NAQESS — accès aux médicaments (participatif)
 - Sous chaque fiche : le visiteur signale anonymement « introuvable » / « prix
   inattendu » / « trouvé », sa wilaya et le nombre de pharmacies consultées
