@@ -123,8 +123,8 @@ function Carte({ it, fiche, lang, montrerNiveau }: { it: InteractionItem; fiche:
         {it.relue === false && <span>{t(lang, '', 'ترجمة قيد المراجعة')}</span>}
         <span>
           {it.via_classe
-            ? t(lang, `via la classe ${it.via_classe}`, `عبر الصنف ${it.via_classe}`)
-            : fiche.substances.length > 1 ? t(lang, `via ${it.substance}`, `عبر ${it.substance}`) : null}
+            ? t(lang, `via la classe ${it.via_classe}`, `عبر الصنف ${fiche.noms_ar[it.via_classe] ?? it.via_classe}`)
+            : fiche.substances.length > 1 ? t(lang, `via ${it.substance}`, `عبر ${fiche.noms_ar[it.substance] ?? it.substance}`) : null}
         </span>
       </footer>
     </article>
@@ -220,7 +220,9 @@ export function InteractionsAnsmSection({ fiche, lang }: { fiche: InteractionsFi
         <div style={{ ...small, display: 'flex', flexWrap: 'wrap', gap: '4px 8px', alignItems: 'center' }}>
           <span>{t(lang, 'Substances analysées :', 'المواد المحللة:')}</span>
           {fiche.substances.map(s => (
-            <span key={s} style={{ background: '#e4edf7', color: BLUE, borderRadius: 999, padding: '0 10px', fontWeight: 700 }}>{s}</span>
+            <span key={s} style={{ background: '#e4edf7', color: BLUE, borderRadius: 999, padding: '0 10px', fontWeight: 700 }}>
+              {lang === 'ar' && fiche.noms_ar[s] ? <>{fiche.noms_ar[s]} <span dir="ltr" lang="fr" style={{ fontWeight: 400 }}>({s})</span></> : s}
+            </span>
           ))}
           {fiche.classes.length > 0 && <span>{t(lang, `et leurs classes (${fiche.classes.length})`, `وأصنافها (${fiche.classes.length})`)}</span>}
         </div>
