@@ -35,7 +35,14 @@ par wilaya et commune. Interface bilingue **français / arabe** (RTL).
   `python scripts/extract_ansm_interactions.py data/ansm/<thesaurus>.pdf data/ansm/interactions_fr.json`
   (déjà fait pour la version de septembre 2023) et
   `DATABASE_URL=... python scripts/import_ansm_interactions.py data/ansm/interactions_fr.json --apply`.
-- Contrôle du rapprochement avec votre nomenclature : `DATABASE_URL=... node scripts/check_ansm_couverture.ts`.
+- Arabe : les traductions sont dans `data/ansm/interactions_ar.json`, indexées par le texte
+  français (une phrase traduite sert à toutes les lignes qui la portent). Application :
+  `DATABASE_URL=... python scripts/import_ansm_traductions_ar.py data/ansm/interactions_ar.json --apply`.
+  Elles sont publiées en « brouillon » (mention « ترجمة قيد المراجعة ») ; une ligne relue se marque
+  `UPDATE interactions_ansm SET ar_statut = 'relu' WHERE …` et n'est plus jamais écrasée.
+- Après un import, les fiches se rafraîchissent seules sous 24 h ; pour aller plus vite, session admin
+  puis `POST /api/admin/interactions`.
+- Contrôle du rapprochement avec votre nomenclature : `DATABASE_URL=... npx tsx scripts/check_ansm_couverture.mts`.
 - Tests : `npm run test:interactions`.
 
 ### 📊 NAQESS — accès aux médicaments (participatif)

@@ -42,6 +42,7 @@ function Carte({ it, fiche, lang }: { it: InteractionItem; fiche: InteractionsFi
             <Link href={`/dci/${encodeURIComponent(p.dci.toLowerCase())}`} style={{ color: BLUE, textDecoration: 'none' }}>{it.partenaire}</Link>
           ) : it.partenaire}
         </h4>
+        {it.partenaire_origine && <span dir="ltr" lang="fr" style={{ ...small, fontWeight: 400 }}>{it.partenaire_origine}</span>}
         <Tag>{it.partenaire_est_classe ? t(lang, 'Classe', 'صنف') : t(lang, 'Substance', 'مادة')}</Tag>
         {it.niveaux.length > 1 && it.niveaux.map(k => (
           <span key={k} style={{ background: 'white', color: NIVEAU[k].color, border: `1px solid ${NIVEAU[k].line}`, borderRadius: 999, padding: '0 9px', fontSize: 12.5, fontWeight: 700 }}>
@@ -78,6 +79,7 @@ function Carte({ it, fiche, lang }: { it: InteractionItem; fiche: InteractionsFi
         <a href={`${ANSM_THESAURUS_URL}#page=${it.page}`} target="_blank" rel="noopener noreferrer" style={{ ...link, textDecoration: 'none' }}>
           {t(lang, `Thesaurus ANSM · p.${it.page} ↗`, `Thesaurus ANSM · ص.${it.page} ↗`)}
         </a>
+        {it.relue === false && <span>{t(lang, '', 'ترجمة قيد المراجعة')}</span>}
         <span>
           {it.via_classe
             ? t(lang, `via la classe ${it.via_classe}`, `عبر الصنف ${it.via_classe}`)
