@@ -10,14 +10,16 @@ import {
 import type { InteractionsFiche } from '@/lib/interactions'
 
 const NIVEAU: Record<Niveau, { fr: string; ar: string; court: { fr: string; ar: string }; color: string; bg: string; line: string; solid: string; icon: string }> = {
-  contre_indication: { fr: 'Contre-indication', ar: 'مضاد استطباب (ممنوع الجمع)', court: { fr: 'contre-indication', ar: 'مضاد استطباب' }, color: '#991b1b', bg: '#fee2e2', line: '#f3b4b4', solid: '#b42323', icon: '⛔' },
-  deconseillee: { fr: 'Association déconseillée', ar: 'جمع غير موصى به', court: { fr: 'déconseillée', ar: 'غير موصى به' }, color: '#9a3412', bg: '#ffedd5', line: '#f5c79a', solid: '#c2570c', icon: '⚠️' },
-  precaution_emploi: { fr: 'Précaution d\'emploi', ar: 'احتياطات الاستعمال', court: { fr: 'précaution', ar: 'احتياطات' }, color: '#854d0e', bg: '#fef3c7', line: '#ecd68a', solid: '#a16207', icon: 'ℹ️' },
+  contre_indication: { fr: 'Contre-indication', ar: 'مضاد استطباب (ممنوع الجمع)', court: { fr: 'contre-indication', ar: 'مضاد استطباب' }, color: '#86198f', bg: '#fae8ff', line: '#e4b4ee', solid: '#a21caf', icon: '⊗' },
+  deconseillee: { fr: 'Association déconseillée', ar: 'جمع غير موصى به', court: { fr: 'déconseillée', ar: 'غير موصى به' }, color: '#5b21b6', bg: '#ede9fe', line: '#c4b5fd', solid: '#6d28d9', icon: '▲' },
+  precaution_emploi: { fr: 'Précaution d\'emploi', ar: 'احتياطات الاستعمال', court: { fr: 'précaution', ar: 'احتياطات' }, color: '#1e40af', bg: '#dbeafe', line: '#9cc2f7', solid: '#2563eb', icon: '◆' },
   a_prendre_en_compte: { fr: 'À prendre en compte', ar: 'يؤخذ بعين الاعتبار', court: { fr: 'à prendre en compte', ar: 'يؤخذ بعين الاعتبار' }, color: '#475569', bg: '#f1f5f9', line: '#dbe3e8', solid: '#64748b', icon: '·' },
 }
 
-/** Couleur propre aux interactions : aucun autre bloc de la fiche n'est en rouge sombre. */
-const BAND = 'linear-gradient(135deg, #7f1d1d 0%, #b42323 100%)'
+/** Couleur propre aux interactions : un vert-bleu profond, volontairement loin du rouge des fiches de pharmacologie en ligne. */
+const ACCENT = '#16766f'
+const ACCENT_DARK = '#0b3d4a'
+const BAND = `linear-gradient(135deg, ${ACCENT_DARK} 0%, ${ACCENT} 100%)`
 const BLUE = '#1d4e9e'
 const MONO = 'var(--font-mono, ui-monospace, monospace)'
 const small: React.CSSProperties = { fontSize: 12.5, color: '#64748b' }
@@ -141,18 +143,18 @@ export function InteractionsBandeau({ fiche, lang }: { fiche: InteractionsFiche;
       href="#interactions"
       style={{
         display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 12px', textDecoration: 'none', color: 'inherit',
-        background: '#fff1f1', border: '2px solid #b42323', borderRadius: 12, padding: '10px 14px', marginBottom: 20,
+        background: '#effaf8', border: `2px solid ${ACCENT}`, borderRadius: 12, padding: '10px 14px', marginBottom: 20,
       }}
     >
-      <span style={{ fontWeight: 800, color: '#7f1d1d', fontSize: 16 }}>
-        ⚠️ {t(lang, 'Interactions médicamenteuses', 'التداخلات الدوائية')}
+      <span style={{ fontWeight: 800, color: ACCENT_DARK, fontSize: 16 }}>
+        ⚠ {t(lang, 'Interactions médicamenteuses', 'التداخلات الدوائية')}
       </span>
       {NIVEAUX.filter(n => c[n] > 0).map(n => (
         <span key={n} style={{ background: NIVEAU[n].solid, color: 'white', borderRadius: 999, padding: '1px 11px', fontSize: 13.5, fontWeight: 700 }}>
           {c[n]} {NIVEAU[n].court[lang]}
         </span>
       ))}
-      <span style={{ marginInlineStart: 'auto', fontSize: 14, fontWeight: 700, color: '#b42323' }}>
+      <span style={{ marginInlineStart: 'auto', fontSize: 14, fontWeight: 700, color: ACCENT }}>
         {graves > 0
           ? t(lang, 'À vérifier avant de dispenser ›', 'يُنصح بالتحقق قبل الصرف ‹')
           : t(lang, 'Voir le détail ›', 'عرض التفاصيل ‹')}
@@ -196,10 +198,10 @@ export function InteractionsAnsmSection({ fiche, lang }: { fiche: InteractionsFi
   )
 
   return (
-    <section id="interactions" style={{ margin: '28px 0 8px', scrollMarginTop: 16, border: '2px solid #b42323', borderRadius: 16, background: 'white', boxShadow: '0 6px 20px rgba(127,29,29,.14)' }}>
+    <section id="interactions" style={{ margin: '28px 0 8px', scrollMarginTop: 16, border: `2px solid ${ACCENT}`, borderRadius: 16, background: 'white', boxShadow: '0 6px 20px rgba(11,61,74,.16)' }}>
       <div style={{ background: BAND, color: 'white', padding: '16px 20px', display: 'grid', gap: 4, borderRadius: '13px 13px 0 0' }}>
         <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: 'white' }}>
-          ⚠️ {t(lang, 'Interactions médicamenteuses', 'التداخلات الدوائية')}
+          ⚠ {t(lang, 'Interactions médicamenteuses', 'التداخلات الدوائية')}
         </h2>
         <p style={{ margin: 0, fontSize: 14.5, color: 'rgba(255,255,255,.88)' }}>
           {t(lang,
