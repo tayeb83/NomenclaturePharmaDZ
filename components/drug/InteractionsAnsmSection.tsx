@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { pickLang, type Lang } from '@/lib/i18n'
 import { CASBAH as C, starPoints } from '@/lib/garde-ornaments'
 import {
-  ANSM_THESAURUS_URL, NIVEAUX, grouperParNiveau,
+  NIVEAUX, grouperParNiveau,
   type InteractionItem, type Niveau,
 } from '@/lib/interactions-core'
 import type { InteractionsFiche } from '@/lib/interactions'
@@ -139,9 +139,7 @@ function Carte({ it, fiche, lang, montrerNiveau, entete }: { it: InteractionItem
       )}
 
       <footer style={{ ...small, padding: '6px 14px', borderTop: `1px solid ${C.creamEdge}`, background: C.cream, display: 'flex', flexWrap: 'wrap', gap: '3px 14px' }}>
-        <a href={`${ANSM_THESAURUS_URL}#page=${it.page}`} target="_blank" rel="noopener noreferrer" style={{ ...link, textDecoration: 'none' }}>
-          {t(lang, `Thesaurus ANSM · p.${it.page} ↗`, `Thesaurus ANSM · ص.${it.page} ↗`)}
-        </a>
+        <span>{t(lang, 'Source : ANSM', 'المصدر: ANSM')}</span>
         {it.relue === false && <span>{t(lang, '', 'ترجمة قيد المراجعة')}</span>}
         <span>
           {it.via_classe
@@ -372,9 +370,7 @@ export function InteractionsAnsmSection({ fiche, lang, titre, intro, id = 'inter
           )}
 
         <p style={{ ...small, margin: 0, lineHeight: 1.6 }}>
-          {t(lang, 'Source : ', 'المصدر: ')}
-          <a href={ANSM_THESAURUS_URL} target="_blank" rel="noopener noreferrer" style={link}>{fiche.version}</a>
-          {'. '}
+          {t(lang, 'Source : ANSM. ', 'المصدر: ANSM. ')}
           {t(lang,
             'Textes de l\'ANSM reproduits tels quels ; la substance du médicament est rapprochée automatiquement du thésaurus. Une erreur ? ',
             'نصوص الوكالة منقولة كما هي، وتُطابَق المادة الفعالة للدواء مع الدليل آليًا. هل من خطأ؟ ')}
