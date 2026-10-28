@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
-import { goBack, internalDepth, parentOf, recordVisit } from '@/lib/nav-history'
+import { backTarget, goBack, internalDepth, parentOf, recordVisit } from '@/lib/nav-history'
 
 const LABELS: Record<string, { fr: string; ar: string }> = {
   '/': { fr: 'l\'accueil', ar: 'الرئيسية' },
@@ -34,7 +34,9 @@ export function BackBar() {
   useEffect(() => {
     recordVisit(pathname + window.location.search)
     setDepth(internalDepth())
-  }, [pathname])
+    // la page de retour est chargée d'avance : le clic est instantané
+    try { router.prefetch(backTarget(pathname)) } catch { /* prefetch facultatif */ }
+  }, [pathname, router])
 
   if (pathname === '/' || pathname === '/ar' || pathname.startsWith('/admin')) return null
 

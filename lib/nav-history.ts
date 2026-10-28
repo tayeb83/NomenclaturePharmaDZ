@@ -47,6 +47,12 @@ export function internalDepth(): number {
   return Math.max(read().length - 1, 0)
 }
 
+/** Page vers laquelle « Retour » ramènera : l'entrée précédente de la pile, sinon la page parente. */
+export function backTarget(pathname: string, fallback?: string): string {
+  const stack = read()
+  return stack.length >= 2 ? stack[stack.length - 2] : fallback ?? parentOf(pathname)
+}
+
 const norm = (p: string) => (p.startsWith('/ar/') ? p.slice(3) : p === '/ar' ? '/' : p)
 
 /** Page parente logique, quand l'historique ne suffit pas (arrivée directe sur la page). */
