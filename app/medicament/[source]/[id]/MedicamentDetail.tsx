@@ -311,13 +311,7 @@ export async function MedicamentDetail(
       {/* ─── Header ─────────────────────────────────────────── */}
       <div className="page-header" style={{ background: headerBg }}>
         <div className="container">
-          <BackButton
-            label={pickLang(lang, { fr: '← Retour', ar: '→ رجوع' })}
-            fallbackHref="/recherche"
-            className="detail-back-link"
-            style={{}}
-          />
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap', marginTop: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '.06em', marginBottom: 4 }}>
                 {pickLang(lang, { fr: 'DCI — DÉNOMINATION COMMUNE INTERNATIONALE', ar: 'DCI — التسمية الدولية المشتركة' })}
