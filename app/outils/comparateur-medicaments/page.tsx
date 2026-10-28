@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { getTrainingUser } from '@/lib/training/auth'
+import { EnteteComparateur } from '@/components/comparateur-medicaments/EnteteComparateur'
 import { AccesComparateur } from '@/components/comparateur-medicaments/AccesComparateur'
 import { ComparateurMedicaments } from '@/components/comparateur-medicaments/ComparateurMedicaments'
 
@@ -18,12 +18,7 @@ export default async function ComparateurMedicamentsPage() {
   const user = await getTrainingUser().catch(() => null)
   return (
     <>
-      <div className="page-header" style={{ background: 'linear-gradient(135deg, #12233f, #173f82)' }}>
-        <div className="container">
-          <Link href="/outils" style={{ color: 'rgba(255,255,255,.8)', fontSize: 13 }}>← Outils</Link>
-          <h1>⚖️ Comparateur de deux médicaments</h1>
-        </div>
-      </div>
+      <EnteteComparateur />
       <div className="page-body">
         <div className="container" style={{ maxWidth: 1000 }}>
           {user ? <ComparateurMedicaments /> : <AccesComparateur />}
