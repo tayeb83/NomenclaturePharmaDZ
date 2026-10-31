@@ -5,7 +5,7 @@
 
 import { query, queryOne } from './db'
 import type { Enregistrement, Retrait, NonRenouvele, SearchResult, Stats, MedicamentDetail, AtcCode, CriticalMedicament } from './db'
-import { buildQueryKeys } from './search-normalize'
+import { buildQueryKeys, foldPhonetic, foldSkeleton, hasArabic } from './search-normalize'
 
 const schemaFeatureCache = new Map<string, boolean>()
 
@@ -301,6 +301,64 @@ export async function getStats(): Promise<Stats> {
   }
 }
 
+// ─── TRI DES RÉSULTATS ────────────────────────────────────────
+const stripAccents = (text: string) => text.normalize('NFD').replace(/\p{Diacritic}/gu, '')
+const escapeLikeValue = (text: string) => text.replace(/[\\%_]/g, (m) => `\\${m}`)
+
+/**
+ * La saisie est-elle une substance (DCI) ? Vrai si elle apparaît comme mot entier dans une DCI
+ * de la nomenclature (« paracetamol » → PARACETAMOL, « codeine » → PARACETAMOL, CODEINE).
+ * Dans ce cas on affiche tous les médicaments de la DCI par ordre alphabétique,
+ * et non un classement par proximité avec un nom de marque.
+ */
+async function isDciQuery(trimmedQuery: string): Promise<boolean> {
+  const folded = stripAccents(trimmedQuery).toLowerCase().trim()
+  if (folded.length < 3 || hasArabic(folded)) return false
+  const pattern = `(^|[^a-z0-9])${folded.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-z0-9]|$)`
+  try {
+    const row = await queryOne<{ ok: number }>(
+      `SELECT 1 AS ok FROM enregistrements WHERE dci IS NOT NULL AND LOWER(UNACCENT(dci)) ~ $1 LIMIT 1`,
+      [pattern]
+    )
+    return Boolean(row)
+  } catch {
+    return false
+  }
+}
+
+/** Plus de résultats quand la liste est « toutes les présentations d'une DCI ». */
+const DCI_MODE_MIN_LIMIT = 300
+
+/**
+ * Clause ORDER BY. Recherche par marque : le nom de marque qui correspond le mieux au mot saisi
+ * d'abord (égal, commence par, un mot commence par, contient), puis les autres champs
+ * (DCI, labo…). Recherche par DCI : ordre alphabétique des noms de marque.
+ * Dans les deux cas les enregistrés précèdent les retirés et non renouvelés à rang égal.
+ * Retourne aussi les paramètres à ajouter, numérotés à partir de `startIndex`.
+ */
+function buildOrderBy(trimmedQuery: string, dciMode: boolean, startIndex: number): { sql: string; params: string[] } {
+  const sourceRank = `CASE source WHEN 'enregistrement' THEN 1 WHEN 'retrait' THEN 2 ELSE 3 END`
+  const tail = `nom_marque, dosage NULLS LAST, id`
+  const folded = stripAccents(trimmedQuery).toLowerCase().replace(/\s+/g, ' ').trim()
+  if (dciMode || !folded) return { sql: `ORDER BY ${sourceRank}, ${tail}`, params: [] }
+
+  const esc = escapeLikeValue(folded)
+  const nm = `LOWER(UNACCENT(COALESCE(nom_marque, '')))`
+  const [pExact, pPrefix, pWord, pAny] = [startIndex, startIndex + 1, startIndex + 2, startIndex + 3]
+  return {
+    sql: `ORDER BY
+      CASE
+        WHEN ${nm} = $${pExact} THEN 0
+        WHEN ${nm} LIKE $${pPrefix} THEN 1
+        WHEN ${nm} LIKE $${pWord} THEN 2
+        WHEN ${nm} LIKE $${pAny} THEN 3
+        ELSE 4
+      END,
+      ${sourceRank}, ${tail}`,
+    params: [folded, `${esc}%`, `% ${esc}%`, `%${esc}%`],
+  }
+}
+
 // ─── RECHERCHE FULLTEXT ───────────────────────────────────────
 export async function searchMedicaments(
   q: string,
@@ -311,6 +369,8 @@ export async function searchMedicaments(
     substance?: string
     activeOnly?: boolean
     advanced?: AdvancedSearchCondition[]
+    /** Recherche par substance (DCI) : tous les médicaments de la DCI, par ordre alphabétique. */
+    dciMode?: boolean
   }
 ): Promise<SearchResult[]> {
   const trimmedQuery = q.trim()
@@ -336,6 +396,9 @@ export async function searchMedicaments(
   const substancePattern = `%${substance}%`
 
   const advancedClause = buildAdvancedSearchClause(advanced, 8)
+  const dciMode = Boolean(filters?.dciMode) || Boolean(substance) || await isDciQuery(trimmedQuery)
+  const effectiveLimit = dciMode ? Math.max(limit, DCI_MODE_MIN_LIMIT) : limit
+  const order = buildOrderBy(trimmedQuery, dciMode, 8 + advancedClause.params.length)
   const hasAtcMapping = await hasTable('dci_atc_mapping')
   // critical_mapping est pré-calculée hors ligne et indexable (jointure d'égalité sur
   // n_enregistrement). On l'utilise en priorité pour éviter le LATERAL JOIN regex/UNACCENT
@@ -469,9 +532,7 @@ export async function searchMedicaments(
     ) AS combined
     ${scopeFilter ? `${scopeFilter} ${advancedClause.sql ? 'AND' : ''}` : `${advancedClause.sql ? 'WHERE' : ''}`}
     ${advancedClause.sql}
-    ORDER BY
-      CASE source WHEN 'enregistrement' THEN 1 WHEN 'retrait' THEN 2 ELSE 3 END,
-      nom_marque
+    ${order.sql}
     LIMIT $7
   `
 
@@ -536,17 +597,15 @@ export async function searchMedicaments(
     ) AS combined
     ${scopeFilter ? `${scopeFilter} ${advancedClause.sql ? 'AND' : ''}` : `${advancedClause.sql ? 'WHERE' : ''}`}
     ${advancedClause.sql}
-    ORDER BY
-      CASE source WHEN 'enregistrement' THEN 1 WHEN 'retrait' THEN 2 ELSE 3 END,
-      nom_marque
+    ${order.sql}
     LIMIT $7
   `
 
   try {
-    return await query<SearchResult>(fullSearchSql, [trimmedQuery, searchPattern, labo, laboPattern, substance, substancePattern, limit, ...advancedClause.params])
+    return await query<SearchResult>(fullSearchSql, [trimmedQuery, searchPattern, labo, laboPattern, substance, substancePattern, effectiveLimit, ...advancedClause.params, ...order.params])
   } catch (error) {
     if ((error as { code?: string }).code !== '57014') throw error
-    return await query<SearchResult>(fallbackSearchSql, [trimmedQuery, searchPattern, labo, laboPattern, substance, substancePattern, limit, ...advancedClause.params])
+    return await query<SearchResult>(fallbackSearchSql, [trimmedQuery, searchPattern, labo, laboPattern, substance, substancePattern, effectiveLimit, ...advancedClause.params, ...order.params])
   }
 }
 
@@ -580,6 +639,84 @@ function phoneticFoldSql(columnExpr: string): string {
     sql = `REGEXP_REPLACE(${sql}, '${pattern}', '${replacement}', 'g')`
   }
   return sql
+}
+
+/** Squelette consonantique côté SQL — équivalent de foldSkeleton() (search-normalize.ts). */
+function skeletonSql(columnExpr: string): string {
+  return `REGEXP_REPLACE(${phoneticFoldSql(columnExpr)}, '[aeiou]', '', 'g')`
+}
+
+/**
+ * Recherche par nom arabisé (ماكسيبلاز → MAXIPLAZ, باراسيتامول → PARACETAMOL).
+ * L'arabe n'écrit pas les voyelles brèves : on compare les squelettes consonantiques de la saisie
+ * et des noms de marque / DCI. Classement : nom de marque égal / commençant par la saisie d'abord ;
+ * si la saisie est une substance (aucune marque ne commence par elle), toutes les présentations de la
+ * DCI par ordre alphabétique.
+ */
+async function searchByArabicName(rawQuery: string, scope: string, limit: number): Promise<SearchResult[]> {
+  const skeleton = foldSkeleton(rawQuery)
+  if (skeleton.length < 2) return []
+  const scopeConditions: Record<string, string> = {
+    enregistrement: `WHERE source = 'enregistrement'`,
+    retrait:        `WHERE source = 'retrait'`,
+    non_renouvele:  `WHERE source = 'non_renouvele'`,
+    all:            '',
+  }
+  const scopeFilter = scopeConditions[scope] ?? ''
+  const columns = (alias: string, source: string, extra: string) => `
+        SELECT
+          '${source}' AS source,
+          ${alias}.id, ${alias}.n_enreg, ${alias}.dci, ${alias}.nom_marque, ${alias}.forme, ${alias}.dosage,
+          ${alias}.labo, ${alias}.pays, ${alias}.type_prod, ${alias}.statut,
+          ${extra}
+          NULL::TEXT AS code_atc,
+          FALSE AS is_critical,
+          NULL::TEXT AS critical_class_therapeutique,
+          ${skeletonSql(`${alias}.nom_marque`)} AS sk_marque,
+          ${skeletonSql(`${alias}.dci`)} AS sk_dci`
+  const sql = `
+    SELECT * FROM (
+      SELECT * FROM (
+        ${columns('e', 'enregistrement', `e.annee, NULL::DATE AS date_retrait, NULL::TEXT AS motif_retrait, e.date_final,`)}
+        FROM enregistrements e
+        UNION ALL
+        ${columns('r', 'retrait', `NULL::SMALLINT AS annee, r.date_retrait, r.motif_retrait, NULL::DATE AS date_final,`)}
+        FROM retraits r
+        UNION ALL
+        ${columns('n', 'non_renouvele', `NULL::SMALLINT AS annee, NULL::DATE AS date_retrait, NULL::TEXT AS motif_retrait, n.date_final,`)}
+        FROM non_renouveles n
+      ) AS u
+      WHERE sk_marque LIKE $1 || '%'
+         OR sk_dci = $1
+         OR sk_dci LIKE $1 || '%'
+         OR ($3 AND (sk_marque LIKE '%' || $1 || '%' OR sk_dci LIKE '%' || $1 || '%'))
+    ) AS combined
+    ${scopeFilter}
+    LIMIT $2`
+  try {
+    const rows = await query<SearchResult & { sk_marque: string; sk_dci: string }>(sql, [skeleton, 2000, skeleton.length >= 3])
+    // Les voyelles brèves étant ignorées, « mks » (ماكسي) retrouve aussi A-MOXY-PEN : on distingue
+    // au moins les noms qui commencent par une voyelle de ceux qui commencent par une consonne.
+    const startsWithVowel = (text: string) => /^[aeiou]/.test(foldPhonetic(text))
+    const queryVowelInitial = startsWithVowel(rawQuery)
+    const brandFirst = rows.some(r => r.sk_marque === skeleton || r.sk_marque.startsWith(skeleton))
+    const tier = (r: { sk_marque: string; sk_dci: string; nom_marque: string }) => {
+      if (r.sk_marque === skeleton) return 0
+      if (r.sk_marque.startsWith(skeleton)) return startsWithVowel(r.nom_marque) === queryVowelInitial ? 1 : 2
+      if (r.sk_dci === skeleton || r.sk_dci.startsWith(skeleton)) return 3
+      return 4
+    }
+    const srcRank = (s: string) => (s === 'enregistrement' ? 1 : s === 'retrait' ? 2 : 3)
+    const byName = (a: SearchResult, b: SearchResult) =>
+      srcRank(a.source) - srcRank(b.source) ||
+      a.nom_marque.localeCompare(b.nom_marque, 'fr', { sensitivity: 'base' }) ||
+      (a.dosage ?? '').localeCompare(b.dosage ?? '', 'fr', { numeric: true })
+    rows.sort((a, b) => (brandFirst ? tier(a) - tier(b) : 0) || byName(a, b))
+    return rows.slice(0, brandFirst ? limit : Math.max(limit, DCI_MODE_MIN_LIMIT)).map(({ sk_marque, sk_dci, ...r }) => r as SearchResult)
+  } catch {
+    // pg_trgm / unaccent absents ou timeout : on laisse la main à la synonymie et au flou
+    return []
+  }
 }
 
 export type TolerantSearchInfo = {
@@ -711,10 +848,24 @@ export async function searchMedicamentsTolerant(
     substance?: string
     activeOnly?: boolean
     advanced?: AdvancedSearchCondition[]
+    /** Recherche par substance (DCI) : tous les médicaments de la DCI, par ordre alphabétique. */
+    dciMode?: boolean
   }
 ): Promise<TolerantSearchResponse> {
-  const strict = await searchMedicaments(q, scope, limit, filters)
   const info: TolerantSearchInfo = { fuzzy: false, matchedTerm: null, synonymTerm: null }
+
+  // Saisie en arabe (nom arabisé) : comparaison des squelettes consonantiques avant tout le reste.
+  const noOtherFilters = !(
+    filters?.labo?.trim() ||
+    filters?.substance?.trim() ||
+    filters?.advanced?.some((condition) => condition.value?.trim())
+  )
+  if (noOtherFilters && hasArabic(q)) {
+    const viaArabic = await searchByArabicName(q, filters?.activeOnly ? 'enregistrement' : scope, limit)
+    if (viaArabic.length > 0) return { ...info, results: viaArabic }
+  }
+
+  const strict = await searchMedicaments(q, scope, limit, filters)
   if (strict.length > 0) return { ...info, results: strict }
 
   // Le repli flou ne s'applique qu'aux recherches texte simples :
@@ -735,7 +886,7 @@ export async function searchMedicamentsTolerant(
   // 1. Synonymie : nom commercial étranger / appellation populaire / arabe → DCI
   const synonym = await findSynonymTarget(keys.raw, keys.normalized)
   if (synonym) {
-    const viaSynonym = await searchMedicaments(synonym.target, scope, limit, { activeOnly: filters?.activeOnly })
+    const viaSynonym = await searchMedicaments(synonym.target, scope, limit, { activeOnly: filters?.activeOnly, dciMode: true })
     if (viaSynonym.length > 0) {
       return { fuzzy: true, matchedTerm: synonym.target, synonymTerm: synonym.term, results: viaSynonym }
     }

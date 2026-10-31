@@ -64,6 +64,7 @@ function buildSearchParams(
   activeOnly: boolean,
   advanced: AdvancedSearchCondition[],
   algerieOnly: boolean,
+  dciMode = false,
 ) {
   const params = new URLSearchParams()
   if (q.trim()) params.set('q', q)
@@ -72,6 +73,7 @@ function buildSearchParams(
   if (substance.trim()) params.set('substance', substance)
   if (activeOnly) params.set('activeOnly', '1')
   if (algerieOnly) params.set('algerieOnly', '1')
+  if (dciMode) params.set('mode', 'dci')
   if (hasAdvancedFilters(advanced)) params.set('advanced', JSON.stringify(advanced))
   return params
 }
@@ -99,6 +101,7 @@ export function SearchClient({
   initialActiveOnly,
   initialAdvanced,
   initialAlgerieOnly,
+  initialDciMode = false,
   initialAdvancedOpen = false,
   basePath = '/recherche',
 }: {
@@ -111,6 +114,8 @@ export function SearchClient({
   initialActiveOnly: boolean
   initialAdvanced: AdvancedSearchCondition[]
   initialAlgerieOnly: boolean
+  /** Liste d'une substance (DCI) choisie : toutes ses présentations, par ordre alphabétique. */
+  initialDciMode?: boolean
   /** Panneau « Recherche avancée » ouvert d'emblée (lien ?avancee=1, ou filtres déjà posés). */
   initialAdvancedOpen?: boolean
   basePath?: string
@@ -153,6 +158,8 @@ export function SearchClient({
   const [selectedAnnee, setSelectedAnnee] = useState('')
   const [selectedAtc, setSelectedAtc] = useState('')
   const [selectedSubstanceFacet, setSelectedSubstanceFacet] = useState('')
+  // Vrai quand l'utilisateur a cliqué une DCI dans les suggestions ; repasse à faux dès qu'il retape.
+  const dciModeRef = useRef(initialDciMode)
   const router = useRouter()
   const [, startTransition] = useTransition()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -171,7 +178,7 @@ export function SearchClient({
   }, [])
 
   const syncUrl = useCallback((nextQ: string, nextScope: string, nextLabo: string, nextSubstance: string, nextActiveOnly: boolean, nextAdvanced: AdvancedSearchCondition[], nextAlgerieOnly: boolean) => {
-    const params = buildSearchParams(nextQ, nextScope, nextLabo, nextSubstance, nextActiveOnly, nextAdvanced, nextAlgerieOnly)
+    const params = buildSearchParams(nextQ, nextScope, nextLabo, nextSubstance, nextActiveOnly, nextAdvanced, nextAlgerieOnly, dciModeRef.current)
     startTransition(() => {
       router.replace(`${basePath}${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false })
     })
@@ -181,7 +188,7 @@ export function SearchClient({
     if (!q.trim() && !l.trim() && !sub.trim() && !hasAdvancedFilters(adv)) { setResults([]); setFuzzyInfo(NO_FUZZY); return }
     setLoading(true)
     try {
-      const params = buildSearchParams(q, s, l, sub, active, adv, false)
+      const params = buildSearchParams(q, s, l, sub, active, adv, false, dciModeRef.current)
       const res = await fetch(`/api/search?${params.toString()}`)
       const data = await res.json()
       setResults(data.results || [])
@@ -192,7 +199,8 @@ export function SearchClient({
     } finally { setLoading(false) }
   }, [])
 
-  function handleInput(val: string) {
+  function handleInput(val: string, dci = false) {
+    dciModeRef.current = dci
     setQuery(val)
     syncUrl(val, scope, labo, substance, activeOnly, advanced, algerieOnly)
     const effAdv = effectiveAdvanced(advanced, algerieOnly)
@@ -354,7 +362,7 @@ export function SearchClient({
     URL.revokeObjectURL(url)
   }
 
-  const sg = useSuggestions(query, s => handleInput(s.label))
+  const sg = useSuggestions(query, s => handleInput(s.label, s.kind === 'dci'))
 
   return (
     <>

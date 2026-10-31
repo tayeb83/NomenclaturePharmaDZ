@@ -15,11 +15,12 @@ export function SearchBox() {
   const { lang } = useLanguage()
   const router = useRouter()
   const [q, setQ] = useState('')
-  const go = useCallback((text: string) => {
+  const go = useCallback((text: string, dci = false) => {
     const v = text.trim()
-    if (v) router.push(`/recherche?q=${encodeURIComponent(v)}`)
+    // Une substance choisie : toutes ses présentations par ordre alphabétique (mode=dci)
+    if (v) router.push(`/recherche?q=${encodeURIComponent(v)}${dci ? '&mode=dci' : ''}`)
   }, [router])
-  const sg = useSuggestions(q, s => { setQ(s.label); go(s.label) })
+  const sg = useSuggestions(q, s => { setQ(s.label); go(s.label, s.kind === 'dci') })
 
   return (
     <div className="home-search-wrap">

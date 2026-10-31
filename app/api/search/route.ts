@@ -8,8 +8,9 @@ export async function GET(request: NextRequest) {
   const labo = searchParams.get('labo') || ''
   const substance = searchParams.get('substance') || ''
   const activeOnly = searchParams.get('activeOnly') === '1'
+  const dciMode = searchParams.get('mode') === 'dci'
   const advancedRaw = searchParams.get('advanced') || '[]'
-  const limit = Math.min(parseInt(searchParams.get('limit') || '30'), 80)
+  const limit = Math.min(parseInt(searchParams.get('limit') || '30'), 80) // la liste d'une DCI est élargie côté requête
 
   let advanced: Array<{ field: string; operator: string; value: string; bool?: 'AND' | 'OR' }> = []
   try {
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { results, fuzzy, matchedTerm, synonymTerm } = await searchMedicamentsTolerant(q, scope, limit, { labo, substance, activeOnly, advanced })
+    const { results, fuzzy, matchedTerm, synonymTerm } = await searchMedicamentsTolerant(q, scope, limit, { labo, substance, activeOnly, advanced, dciMode })
     return NextResponse.json({
       results,
       count: results.length,

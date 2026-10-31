@@ -62,6 +62,7 @@ type SearchFilters = {
   substance?: string
   activeOnly?: boolean
   advanced?: AdvancedSearchCondition[]
+  dciMode?: boolean
 }
 
 async function searchDrugs(query: string, scope: string, filters: SearchFilters): Promise<TolerantSearchResponse> {
@@ -86,7 +87,7 @@ function parseAdvanced(advancedRaw: string | undefined): AdvancedSearchCondition
 export default async function RecherchePage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; scope?: string; labo?: string; substance?: string; activeOnly?: string; advanced?: string; algerieOnly?: string; avancee?: string }>
+  searchParams: Promise<{ q?: string; scope?: string; labo?: string; substance?: string; activeOnly?: string; advanced?: string; algerieOnly?: string; avancee?: string; mode?: string }>
 }) {
   const resolvedSearchParams = await searchParams
   const query = resolvedSearchParams.q || ''
@@ -97,6 +98,7 @@ export default async function RecherchePage({
     labo: resolvedSearchParams.labo || '',
     substance: resolvedSearchParams.substance || '',
     activeOnly: resolvedSearchParams.activeOnly === '1',
+    dciMode: resolvedSearchParams.mode === 'dci',
     advanced: algerieOnly
       ? [...advanced, { field: 'statut', operator: 'equals', value: 'F', bool: 'AND' }]
       : advanced,
@@ -138,6 +140,7 @@ export default async function RecherchePage({
             initialActiveOnly={Boolean(filters.activeOnly)}
             initialAdvanced={advanced}
             initialAlgerieOnly={algerieOnly}
+            initialDciMode={Boolean(filters.dciMode)}
             initialAdvancedOpen={resolvedSearchParams.avancee === '1'}
           />
         </div>
