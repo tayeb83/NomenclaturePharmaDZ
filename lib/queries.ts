@@ -29,9 +29,24 @@ async function hasTable(tableName: string): Promise<boolean> {
 
 /** Libellé arabe ATC (sql/31_atc_label_ar.sql) : `a.label_ar` si la colonne existe, sinon NULL
  *  (la fiche et les classes continuent de s'afficher avant l'application de la migration). */
+let atcArChecked: { ok: boolean; at: number } | null = null
+
 async function atcLabelAr(alias: string): Promise<string> {
-  const ok = await hasTable('atc_codes') && await hasColumn('atc_codes', 'label_ar')
-  return ok ? `${alias}.label_ar` : 'NULL::TEXT'
+  // « colonne présente » est définitif ; « absente » est revérifié toutes les 60 s, pour que la
+  // migration soit prise en compte sans redémarrer le serveur.
+  if (!atcArChecked || (!atcArChecked.ok && Date.now() - atcArChecked.at > 60_000)) {
+    let ok = false
+    try {
+      const row = await queryOne<{ exists: boolean }>(`
+        SELECT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_schema = 'public' AND table_name = 'atc_codes' AND column_name = 'label_ar'
+        ) AS "exists"`)
+      ok = row?.exists ?? false
+    } catch { /* base indisponible : on réessaiera */ }
+    atcArChecked = { ok, at: Date.now() }
+  }
+  return atcArChecked.ok ? `${alias}.label_ar` : 'NULL::TEXT'
 }
 
 let criticalMappingIndexEnsured = false
