@@ -52,7 +52,7 @@ export default async function OutilsPage() {
       atcRoots={[...atcRoots]
         .sort((a, b) => (b.dci_count ?? 0) - (a.dci_count ?? 0))
         .slice(0, 4)
-        .map(r => ({ code: r.code, label_fr: r.label_fr, dci_count: r.dci_count ?? 0 }))}
+        .map(r => ({ code: r.code, label_fr: r.label_fr, label_ar: r.label_ar ?? null, dci_count: r.dci_count ?? 0 }))}
       atcTotal={atcRoots.length}
     />
   )

@@ -1,3 +1,4 @@
+import { atcLabel } from '@/lib/atc-label'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
@@ -79,7 +80,7 @@ export default async function ClassesTherapeutiquesPage() {
                     </span>
                   </div>
                   <div style={{ fontWeight: 700, color: '#0f172a', fontSize: 14.5, lineHeight: 1.4 }}>
-                    {node.label_fr || node.label_en || node.code}
+                    {atcLabel(node, lang) || node.code}
                   </div>
                   <div style={{ fontSize: 12.5, color: '#64748b', marginTop: 8 }}>
                     {pickLang(lang, {

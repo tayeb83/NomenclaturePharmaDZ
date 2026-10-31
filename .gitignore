@@ -27,6 +27,7 @@ yarn-error.log*
 pnpm-debug.log*
 /data/*
 !/data/ansm/
+!/data/atc/
 
 __pycache__/
 *.pyc
