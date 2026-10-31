@@ -31,3 +31,17 @@ test('le squelette rapproche la saisie arabe du nom latin', () => {
   assert.equal(foldSkeleton('دوليبران'), foldSkeleton('doliprane'))
   assert.notEqual(foldSkeleton('ماكسيبلاز'), foldSkeleton('doliprane'))
 })
+
+import { displayField } from '../../lib/translate-fields.ts'
+
+test('propriétés de la fiche : traduction sûre, sinon valeur d\'origine', () => {
+  assert.equal(displayField('forme', 'COMPRIME', 'ar'), 'قرص (COMPRIME)')
+  assert.equal(displayField('dosage', '2,5MG', 'ar'), '2,5 ملغ (2,5MG)')
+  assert.equal(displayField('conditionnement', 'B/20', 'ar'), 'علبة من 20 (B/20)')
+  assert.equal(displayField('liste', 'LISTE I', 'ar'), 'القائمة I (LISTE I)')
+  assert.equal(displayField('prescription', 'HOP', 'ar'), 'للاستعمال الاستشفائي (HOP)')
+  assert.equal(displayField('stabilite', '24 MOIS', 'ar'), '24 شهرا (24 MOIS)')
+  assert.equal(displayField('stabilite', '3 ANS', 'ar'), '3 سنوات (3 ANS)')
+  assert.equal(displayField('forme', 'FORME INCONNUE', 'ar'), 'FORME INCONNUE')
+  assert.equal(displayField('dosage', '2,5MG', 'fr'), '2,5MG')
+})
