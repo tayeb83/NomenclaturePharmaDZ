@@ -1167,6 +1167,312 @@ export const ARTICLES: Article[] = [
       },
     ],
   },
+  {
+    slug: 'medicaments-par-specialite-codes-atc',
+    lang: 'fr',
+    audience: 'professionnel',
+    title: 'Médicaments par spécialité : 18 portes d’entrée dans la nomenclature algérienne, construites avec les codes ATC',
+    subtitle: 'Comment DwaDZ regroupe les classes ATC par spécialité médicale, avec des exemples à ouvrir sur le site',
+    description:
+      'Cardiologie, diabétologie, neurologie, dermatologie… : la méthode de construction des spécialités de DwaDZ à partir de la classification ATC de l’OMS, ses limites et des exemples concrets.',
+    seoTitle: 'Médicaments par spécialité en Algérie : classes ATC et nomenclature',
+    seoKeywords: ['médicaments par spécialité algérie', 'classification ATC spécialité', 'nomenclature pharmaceutique algérie', 'cardiologie ATC', 'classes thérapeutiques algérie'],
+    date: '2026-10-31',
+    readingTime: 8,
+    tags: ['Spécialités', 'Classification ATC', 'Nomenclature MIPH', 'Algérie'],
+    sourceLinks: [
+      { label: 'Classification ATC de l’OMS (index officiel)', url: 'https://atcddd.fhi.no/atc_ddd_index/', external: true },
+      { label: 'RCP publiés par l’ANPP', url: 'https://rcp.anpp.dz/', external: true },
+      { label: 'Site officiel du MIPH', url: 'https://www.miph.gov.dz/fr/', external: true },
+    ],
+    relatedLinks: [
+      { label: 'Toutes les spécialités', url: '/specialites' },
+      { label: 'Cardiologie', url: '/specialites/cardiologie' },
+      { label: 'Diabétologie / Endocrinologie', url: '/specialites/diabetologie' },
+      { label: 'Psychiatrie', url: '/specialites/psychiatrie' },
+      { label: 'Dermatologie', url: '/specialites/dermatologie' },
+      { label: 'Classes thérapeutiques (ATC)', url: '/classes-therapeutiques' },
+    ],
+    faq: [
+      {
+        question: 'Pourquoi une même classe apparaît-elle dans plusieurs spécialités ?',
+        answer: 'Parce que l’ATC classe par usage thérapeutique, pas par prescripteur. Les corticoïdes systémiques (H02), les bisphosphonates (M05) ou les myorelaxants (M03) servent à plusieurs spécialités. Les totaux d’une spécialité comptent chaque substance et chaque fiche une seule fois.',
+      },
+      {
+        question: 'Une spécialité est-elle une liste de médicaments à prescrire ?',
+        answer: 'Non. C’est un repère de navigation. Une classe peut contenir des substances sans rapport avec la pratique de la spécialité : le RCP officiel de chaque produit reste la référence.',
+      },
+      {
+        question: 'Comment les compteurs sont-ils calculés ?',
+        answer: 'À chaque affichage, à partir de la nomenclature : les substances rattachées aux codes ATC de la spécialité, puis les fiches enregistrées qui portent ces DCI. Rien n’est saisi à la main.',
+      },
+    ],
+    content: [
+      {
+        type: 'intro',
+        text: 'Après la dentisterie, DwaDZ propose désormais 18 spécialités : de la cardiologie à l’imagerie. Chacune est une porte d’entrée vers les classes de médicaments de la nomenclature algérienne qui s’y rattachent. Cet article explique comment elles ont été construites à partir des codes ATC de l’OMS, ce que cela permet, et surtout ce que cela ne dit pas.',
+      },
+      {
+        type: 'h2',
+        title: '1. Le principe : une spécialité = un ensemble de codes ATC',
+        text: 'Le code ATC se lit en cinq niveaux : le groupe anatomique (une lettre), le sous-groupe thérapeutique (2 chiffres), le sous-groupe pharmacologique (une lettre), le sous-groupe chimique (une lettre) et la substance (2 chiffres).',
+      },
+      {
+        type: 'table',
+        headers: ['Niveau', 'Exemple', 'Signification'],
+        rows: [
+          { cells: ['1', 'A', 'Voies digestives et métabolisme'] },
+          { cells: ['2', 'A10', 'Médicaments du diabète'] },
+          { cells: ['3', 'A10B', 'Hypoglycémiants, hors insulines'] },
+          { cells: ['4', 'A10BA', 'Biguanides'] },
+          { cells: ['5', 'A10BA02', 'Metformine'] },
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'Une spécialité DwaDZ ne stocke aucune information médicale : elle liste des préfixes (par exemple A10 ou N05A). Tout ce qui commence par ce préfixe en fait partie. Les substances sont rattachées aux codes ATC, puis les fiches de la nomenclature aux substances : les listes, prix et RCP affichés sont ceux du reste du site.',
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        text: 'Exemple à ouvrir : la classe A10 sur /classes-therapeutiques/A10 liste les médicaments du diabète ; la spécialité /specialites/diabetologie la regroupe avec les hormones hypophysaires et thyroïdiennes (H01 à H05) et les médicaments de l’os (M05).',
+      },
+      {
+        type: 'h2',
+        title: '2. Les 18 spécialités et leurs classes',
+        text: 'Le tableau donne le périmètre retenu pour chaque spécialité. Chaque ligne est consultable sur /specialites/ suivi de l’identifiant.',
+      },
+      {
+        type: 'table',
+        headers: ['Spécialité', 'Classes ATC', 'Remarque'],
+        rows: [
+          { cells: ['Dentisterie (dentaire)', 'A01, N01B, J01, N02, M01', 'Point de départ : stomatologie, anesthésiques locaux, plus trois classes transversales.'] },
+          { cells: ['Cardiologie (cardiologie)', 'C01 à C10, B01', 'Les antithrombotiques (B01) sont rattachés à la cardiologie.'] },
+          { cells: ['Diabétologie / Endocrinologie (diabetologie)', 'A10, H01 à H05, M05', 'H02 (corticoïdes) est partagé avec d’autres spécialités.'] },
+          { cells: ['Pneumologie / Allergologie (pneumologie)', 'R03, R05, R06', 'R01 (décongestionnants nasaux) va en ORL.'] },
+          { cells: ['Gastro-entérologie / Hépatologie (gastro-enterologie)', 'A02 à A07, A09, A16, J05AP', 'J05AP : antiviraux de l’hépatite C.'] },
+          { cells: ['Infectiologie (infectiologie)', 'J01, J02, J04, J05, P01, P02', 'Antibactériens, antifongiques, antituberculeux, antiviraux, antiparasitaires.'] },
+          { cells: ['Neurologie (neurologie)', 'N03, N04, N02C, N06D, N07', 'N02C : antimigraineux ; N06D : médicaments de la démence.'] },
+          { cells: ['Psychiatrie (psychiatrie)', 'N05A, N05B, N05C, N06A', 'N05AN : lithium, au sein des antipsychotiques N05A.'] },
+          { cells: ['Rhumatologie (rhumatologie)', 'M01, M03, M04, M05, L04', 'L04 : immunosuppresseurs et biothérapies.'] },
+          { cells: ['Dermatologie (dermatologie)', 'D01 à D11', 'D07 corticoïdes locaux, D10 acné, D05 psoriasis.'] },
+          { cells: ['Ophtalmologie (ophtalmologie)', 'S01, S03', 'S03 : formes ophtalmo-otologiques.'] },
+          { cells: ['ORL (orl)', 'S02, R01, R02', 'Petit périmètre.'] },
+          { cells: ['Gynécologie-obstétrique (gynecologie)', 'G01, G02, G03, H01BB', 'G03 contient les contraceptifs ; H01BB : ocytociques.'] },
+          { cells: ['Urologie / Néphrologie (urologie-nephrologie)', 'G04, B03, A11CC, V03AE', 'Périmètre néphrologie plus hétérogène.'] },
+          { cells: ['Oncologie (oncologie)', 'L01, L02, L03', 'Cytotoxiques, hormonothérapies, immunostimulants.'] },
+          { cells: ['Hématologie (hematologie)', 'B02, B03', 'Antihémorragiques et antianémiques (B03 aussi en néphrologie).'] },
+          { cells: ['Anesthésie-réanimation / Urgences (anesthesie-reanimation)', 'N01, N02A, M03, B05, V03AB', 'V03AB : antidotes.'] },
+          { cells: ['Imagerie / Radiologie (imagerie)', 'V08, V09', 'Produits de contraste et radiopharmaceutiques.'] },
+        ],
+      },
+      {
+        type: 'h2',
+        title: '3. Trois cas qui montrent la méthode',
+        text: 'Les exemples ci-dessous se vérifient en ouvrant la page indiquée.',
+      },
+      {
+        type: 'h3',
+        title: 'Cardiologie : une plage de codes',
+        text: 'C01 (cardiothérapie), C02 (antihypertenseurs), C03 (diurétiques), C04 (vasodilatateurs périphériques), C05, C07 (bêtabloquants), C08 (inhibiteurs calciques), C09 (système rénine-angiotensine) et C10 (hypolipémiants), auxquels s’ajoute B01 (antithrombotiques). Le code C06 n’existe plus dans l’ATC, c’est pourquoi la plage C01 à C10 compte neuf classes. Pages : /specialites/cardiologie et /classes-therapeutiques/C09.',
+      },
+      {
+        type: 'h3',
+        title: 'Psychiatrie : descendre d’un niveau',
+        text: 'Les neuroleptiques sont N05A, les anxiolytiques N05B, les hypnotiques N05C et les antidépresseurs N06A. Le lithium (N05AN01) n’a pas de classe propre dans la spécialité : il est déjà couvert par N05A. Descendre d’un niveau, c’est possible : il suffit d’ajouter N05AN seul pour une spécialité plus étroite. Page : /specialites/psychiatrie.',
+      },
+      {
+        type: 'h3',
+        title: 'Gastro-entérologie : un code précis dans un groupe réservé à l’infectiologie',
+        text: 'La spécialité retient A02 à A07, A09 et A16, mais aussi J05AP, les antiviraux directs de l’hépatite C, qui relèvent du groupe J (anti-infectieux). La même logique, inversée, s’applique à l’infectiologie : J05 entier, donc J05AP aussi. Une substance peut donc apparaître dans deux spécialités sans doublon dans les totaux. Pages : /specialites/gastro-enterologie et /specialites/infectiologie.',
+      },
+      {
+        type: 'h2',
+        title: '4. Les limites à connaître',
+        text: '',
+      },
+      {
+        type: 'list',
+        items: [
+          '**L’ATC classe des substances, pas des prescripteurs.** Une classe transversale comme J01 (antibactériens) figure en dentisterie et en infectiologie ; elle contient des produits sans usage dans l’une ou l’autre.',
+          '**Les classes se recoupent.** H02 (corticoïdes), M05, B03 ou M03 apparaissent dans plusieurs spécialités. C’est voulu, et les totaux ne comptent chaque fiche qu’une fois.',
+          '**Oncologie et hématologie sont séparées**, parce que le volume de L01 à L03 est important ; B03 reste commun avec la néphrologie.',
+          '**Les spécialités sont modifiables.** L’administration permet d’ajouter ou de retirer une classe ou une substance précise, avec un contrôle de l’existence du code et de la DCI dans la base.',
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'warning',
+        text: 'Le classement sert à naviguer, pas à choisir un traitement. Il ne remplace ni le RCP officiel, ni le jugement clinique du praticien.',
+      },
+      {
+        type: 'h2',
+        title: '5. Comment s’en servir',
+        text: '',
+      },
+      {
+        type: 'list',
+        items: [
+          '**Ouvrez /specialites** et choisissez votre spécialité : le nombre de classes, de substances et de fiches est calculé à partir de la nomenclature.',
+          '**Descendez dans la classe** (par exemple N03 pour les antiépileptiques) jusqu’à la substance, puis à la fiche du produit.',
+          '**Comparez les génériques** de la substance, vérifiez le statut (enregistré, non renouvelé, retiré) et ouvrez le RCP publié par l’ANPP.',
+        ],
+      },
+    ],
+  },
+  {
+    slug: 'medicaments-par-specialite-codes-atc-ar',
+    lang: 'ar',
+    audience: 'professionnel',
+    title: 'الأدوية حسب التخصص: 18 مدخلًا إلى التسمية الجزائرية مبنيّة على رموز ATC',
+    subtitle: 'كيف تجمع DwaDZ أصناف ATC حسب التخصص الطبي، مع أمثلة يمكن فتحها في الموقع',
+    description:
+      'أمراض القلب، السكري، الأعصاب، الجلد…: طريقة بناء تخصصات DwaDZ انطلاقًا من تصنيف ATC لمنظمة الصحة العالمية، وحدودها وأمثلة ملموسة.',
+    seoTitle: 'الأدوية حسب التخصص في الجزائر: أصناف ATC والتسمية الرسمية',
+    seoKeywords: ['الأدوية حسب التخصص الجزائر', 'تصنيف ATC', 'التسمية الصيدلانية الجزائرية', 'الأصناف العلاجية', 'أمراض القلب'],
+    date: '2026-10-31',
+    readingTime: 8,
+    tags: ['التخصصات', 'تصنيف ATC', 'التسمية الصيدلانية', 'الجزائر'],
+    sourceLinks: [
+      { label: 'تصنيف ATC لمنظمة الصحة العالمية (الفهرس الرسمي)', url: 'https://atcddd.fhi.no/atc_ddd_index/', external: true },
+      { label: 'ملخصات خصائص المنتج المنشورة من طرف الوكالة الوطنية للمنتجات الصيدلانية', url: 'https://rcp.anpp.dz/', external: true },
+      { label: 'الموقع الرسمي لوزارة الصناعة الصيدلانية', url: 'https://www.miph.gov.dz/ar/', external: true },
+    ],
+    relatedLinks: [
+      { label: 'جميع التخصصات', url: '/specialites' },
+      { label: 'أمراض القلب', url: '/specialites/cardiologie' },
+      { label: 'السكري والغدد الصماء', url: '/specialites/diabetologie' },
+      { label: 'الطب النفسي', url: '/specialites/psychiatrie' },
+      { label: 'الأمراض الجلدية', url: '/specialites/dermatologie' },
+      { label: 'الأصناف العلاجية (ATC)', url: '/classes-therapeutiques' },
+    ],
+    faq: [
+      {
+        question: 'لماذا يظهر الصنف نفسه في عدة تخصصات؟',
+        answer: 'لأن تصنيف ATC يرتّب حسب الاستعمال العلاجي لا حسب الواصف. فالكورتيكوئيدات الجهازية (H02) والبيسفوسفونات (M05) ومرخيات العضلات (M03) تُستعمل في عدة تخصصات. وتُحسب كل مادة وكل بطاقة مرة واحدة فقط في مجاميع التخصص.',
+      },
+      {
+        question: 'هل التخصص قائمة أدوية للوصف؟',
+        answer: 'لا. هو مرجع للتصفح فقط. قد يضم الصنف مواد لا علاقة لها بممارسة التخصص، ويبقى ملخص خصائص المنتج الرسمي هو المرجع لكل دواء.',
+      },
+      {
+        question: 'كيف تُحسب الأعداد المعروضة؟',
+        answer: 'عند كل عرض انطلاقًا من التسمية: المواد المرتبطة برموز ATC الخاصة بالتخصص، ثم البطاقات المسجّلة التي تحمل هذه الأسماء الدولية. لا يُدخَل شيء يدويًا.',
+      },
+    ],
+    content: [
+      {
+        type: 'intro',
+        text: 'بعد طب الأسنان، تقترح DwaDZ اليوم 18 تخصصًا، من أمراض القلب إلى التصوير الطبي. كل تخصص مدخل إلى أصناف الأدوية في التسمية الجزائرية المرتبطة به. يشرح هذا المقال كيف بُنيت انطلاقًا من رموز ATC لمنظمة الصحة العالمية، وما الذي تتيحه، وخصوصًا ما لا تقوله.',
+      },
+      {
+        type: 'h2',
+        title: '1. المبدأ: التخصص = مجموعة من رموز ATC',
+        text: 'يُقرأ رمز ATC على خمسة مستويات: المجموعة التشريحية (حرف)، المجموعة العلاجية (رقمان)، المجموعة الدوائية (حرف)، المجموعة الكيميائية (حرف)، ثم المادة الفعالة (رقمان).',
+      },
+      {
+        type: 'table',
+        headers: ['المستوى', 'مثال', 'المعنى'],
+        rows: [
+          { cells: ['1', 'A', 'الجهاز الهضمي والاستقلاب'] },
+          { cells: ['2', 'A10', 'أدوية السكري'] },
+          { cells: ['3', 'A10B', 'خافضات سكر الدم عدا الأنسولين'] },
+          { cells: ['4', 'A10BA', 'البيغوانيدات'] },
+          { cells: ['5', 'A10BA02', 'ميتفورمين'] },
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'لا يخزّن التخصص في DwaDZ أي معلومة طبية: هو قائمة بادئات (مثل A10 أو N05A)، وكل رمز يبدأ بها ينتمي إلى التخصص. تُربط المواد برموز ATC، ثم بطاقات التسمية بالمواد: فالقوائم والأسعار وملخصات الخصائص المعروضة هي نفسها في بقية الموقع.',
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        text: 'مثال للفتح: الصنف A10 في /classes-therapeutiques/A10 يضم أدوية السكري، أما التخصص /specialites/diabetologie فيجمعه مع هرمونات النخامية والغدة الدرقية (H01 إلى H05) وأدوية العظام (M05).',
+      },
+      {
+        type: 'h2',
+        title: '2. التخصصات الثمانية عشر وأصنافها',
+        text: 'يعرض الجدول النطاق المعتمد لكل تخصص. يمكن فتح كل سطر على العنوان /specialites/ متبوعًا بالمعرّف.',
+      },
+      {
+        type: 'table',
+        headers: ['التخصص', 'أصناف ATC', 'ملاحظة'],
+        rows: [
+          { cells: ['طب الأسنان (dentaire)', 'A01, N01B, J01, N02, M01', 'نقطة الانطلاق: مستحضرات الفم، المخدّرات الموضعية، وثلاثة أصناف مشتركة.'] },
+          { cells: ['أمراض القلب (cardiologie)', 'C01 إلى C10، B01', 'مضادات التخثر (B01) ملحقة بأمراض القلب.'] },
+          { cells: ['السكري والغدد الصماء (diabetologie)', 'A10, H01 إلى H05, M05', 'H02 (الكورتيكوئيدات) مشترك مع تخصصات أخرى.'] },
+          { cells: ['أمراض الرئة والحساسية (pneumologie)', 'R03, R05, R06', 'R01 (مزيلات احتقان الأنف) في الأنف والأذن والحنجرة.'] },
+          { cells: ['الجهاز الهضمي والكبد (gastro-enterologie)', 'A02 إلى A07، A09، A16، J05AP', 'J05AP: مضادات فيروسات التهاب الكبد C.'] },
+          { cells: ['الأمراض المعدية (infectiologie)', 'J01, J02, J04, J05, P01, P02', 'مضادات الجراثيم والفطريات والسل والفيروسات والطفيليات.'] },
+          { cells: ['طب الأعصاب (neurologie)', 'N03, N04, N02C, N06D, N07', 'N02C: أدوية الشقيقة؛ N06D: أدوية الخرف.'] },
+          { cells: ['الطب النفسي (psychiatrie)', 'N05A, N05B, N05C, N06A', 'N05AN: الليثيوم ضمن مضادات الذهان N05A.'] },
+          { cells: ['أمراض الروماتيزم (rhumatologie)', 'M01, M03, M04, M05, L04', 'L04: مثبطات المناعة والعلاجات البيولوجية.'] },
+          { cells: ['الأمراض الجلدية (dermatologie)', 'D01 إلى D11', 'D07 كورتيكوئيدات موضعية، D10 حب الشباب، D05 الصدفية.'] },
+          { cells: ['طب العيون (ophtalmologie)', 'S01, S03', 'S03: أشكال العين والأذن.'] },
+          { cells: ['الأنف والأذن والحنجرة (orl)', 'S02, R01, R02', 'نطاق صغير.'] },
+          { cells: ['أمراض النساء والتوليد (gynecologie)', 'G01, G02, G03, H01BB', 'G03 يضم وسائل منع الحمل؛ H01BB: مقوّيات الطلق.'] },
+          { cells: ['المسالك البولية وأمراض الكلى (urologie-nephrologie)', 'G04, B03, A11CC, V03AE', 'نطاق أمراض الكلى أكثر تنوعًا.'] },
+          { cells: ['طب الأورام (oncologie)', 'L01, L02, L03', 'مثبطات الخلايا، العلاج الهرموني، منبهات المناعة.'] },
+          { cells: ['أمراض الدم (hematologie)', 'B02, B03', 'مضادات النزف ومضادات فقر الدم (B03 مشترك مع أمراض الكلى).'] },
+          { cells: ['التخدير والإنعاش والاستعجالات (anesthesie-reanimation)', 'N01, N02A, M03, B05, V03AB', 'V03AB: الأدوية المضادة للسموم.'] },
+          { cells: ['التصوير الطبي والأشعة (imagerie)', 'V08, V09', 'مواد التباين والمستحضرات الصيدلانية الإشعاعية.'] },
+        ],
+      },
+      {
+        type: 'h2',
+        title: '3. ثلاث حالات توضح الطريقة',
+        text: 'يمكن التحقق من الأمثلة التالية بفتح الصفحة المذكورة.',
+      },
+      {
+        type: 'h3',
+        title: 'أمراض القلب: نطاق من الرموز',
+        text: 'C01 (علاج القلب)، C02 (خافضات الضغط)، C03 (مدرّات البول)، C04 (موسّعات الأوعية المحيطية)، C05، C07 (حاصرات بيتا)، C08 (حاصرات الكالسيوم)، C09 (جهاز الرينين-أنجيوتنسين) وC10 (خافضات الدهون)، ويُضاف إليها B01 (مضادات التخثر). الرمز C06 لم يعد موجودًا في ATC، ولهذا يضم النطاق C01 إلى C10 تسعة أصناف. الصفحات: /specialites/cardiologie و/classes-therapeutiques/C09.',
+      },
+      {
+        type: 'h3',
+        title: 'الطب النفسي: النزول مستوى واحدًا',
+        text: 'مضادات الذهان هي N05A، ومضادات القلق N05B، والمنوّمات N05C، ومضادات الاكتئاب N06A. أما الليثيوم (N05AN01) فلا صنف خاص به في التخصص لأن N05A يغطيه. ويمكن النزول مستوى واحدًا: يكفي إضافة N05AN وحده لتخصص أضيق. الصفحة: /specialites/psychiatrie.',
+      },
+      {
+        type: 'h3',
+        title: 'الجهاز الهضمي: رمز دقيق داخل مجموعة المضادات للعدوى',
+        text: 'يعتمد التخصص A02 إلى A07 وA09 وA16، وكذلك J05AP، أي مضادات فيروسات التهاب الكبد C المباشرة، وهي تنتمي إلى المجموعة J. وينطبق المنطق نفسه في الاتجاه المعاكس على الأمراض المعدية: J05 كاملًا ومنه J05AP. فقد تظهر المادة في تخصصين دون تكرار في المجاميع. الصفحتان: /specialites/gastro-enterologie و/specialites/infectiologie.',
+      },
+      {
+        type: 'h2',
+        title: '4. حدود يجب معرفتها',
+        text: '',
+      },
+      {
+        type: 'list',
+        items: [
+          '**يصنّف ATC المواد لا الواصفين.** صنف مشترك مثل J01 (مضادات الجراثيم) يظهر في طب الأسنان وفي الأمراض المعدية، ويضم منتجات لا تُستعمل في أحدهما أو الآخر.',
+          '**تتداخل الأصناف.** تظهر H02 (الكورتيكوئيدات) وM05 وB03 وM03 في عدة تخصصات. وهذا مقصود، ولا تُحسب البطاقة إلا مرة واحدة في المجاميع.',
+          '**فُصل طب الأورام عن أمراض الدم** لأن حجم L01 إلى L03 كبير؛ ويبقى B03 مشتركًا مع أمراض الكلى.',
+          '**التخصصات قابلة للتعديل.** تتيح لوحة الإدارة إضافة صنف أو مادة بعينها أو سحبها، مع التحقق من وجود الرمز أو الاسم الدولي في القاعدة.',
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'warning',
+        text: 'التصنيف وسيلة للتنقل وليس لاختيار علاج. لا يغني عن ملخص خصائص المنتج الرسمي ولا عن التقدير السريري للممارس.',
+      },
+      {
+        type: 'h2',
+        title: '5. كيف تستعمله',
+        text: '',
+      },
+      {
+        type: 'list',
+        items: [
+          '**افتح /specialites** واختر تخصصك: تُحسب أعداد الأصناف والمواد والبطاقات انطلاقًا من التسمية.',
+          '**انزل داخل الصنف** (مثلًا N03 لمضادات الصرع) حتى المادة الفعالة ثم بطاقة المنتج.',
+          '**قارن البدائل الجنيسة** للمادة، وتحقق من الحالة (مسجّل، غير مجدَّد، مسحوب)، وافتح ملخص خصائص المنتج المنشور من الوكالة الوطنية للمنتجات الصيدلانية.',
+        ],
+      },
+    ],
+  },
 ]
 
 export function getArticleBySlug(slug: string): Article | undefined {
