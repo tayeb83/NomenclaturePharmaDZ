@@ -31,7 +31,7 @@ export function getCachedMedicamentById(
 ): Promise<MedicamentDetail | null> {
   return unstable_cache(
     () => getMedicamentById(source, id),
-    ['medicament', source, String(id)],
+    ['medicament-v2', source, String(id)],
     { revalidate: REVALIDATE_SECONDS, tags: [NOMENCLATURE_TAG] }
   )()
 }
@@ -47,7 +47,7 @@ export function getCachedAlternatifsDCI(dci: string, limit: number): Promise<Enr
 export function getCachedAtcHierarchyByDci(dci: string): Promise<AtcCode[]> {
   return unstable_cache(
     () => getAtcHierarchyByDci(dci),
-    ['atc-hierarchy', dci],
+    ['atc-hierarchy-v2', dci],
     { revalidate: REVALIDATE_SECONDS, tags: [NOMENCLATURE_TAG] }
   )()
 }
