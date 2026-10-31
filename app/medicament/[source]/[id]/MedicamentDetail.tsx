@@ -14,6 +14,7 @@ import type { MedicamentDetail, AtcCode } from '@/lib/db-types'
 import { getCountryFlag } from '@/lib/countryFlag'
 import { pickLang, type Lang } from '@/lib/i18n'
 import { displayName } from '@/lib/arabize'
+import { displayField } from '@/lib/translate-fields'
 import { medicamentPath, medicamentSlug } from '@/lib/medicament-url'
 import { lettreForNom, lettreLabel, lettrePath } from '@/lib/repertoire'
 import { medicalPageJsonLd, breadcrumbJsonLd, faqJsonLd } from '@/lib/schema'
@@ -328,7 +329,7 @@ export async function MedicamentDetail(
               </div>
               <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: 'white', margin: 0 }}>
                 {lang === 'ar'
-                  ? [displayName(med.nom_marque, lang), med.dosage].filter(Boolean).join(' ')
+                  ? [displayName(med.nom_marque, lang), displayField('dosage', med.dosage, lang)].filter(Boolean).join(' ')
                   : medicamentDesignation(med)}
               </h1>
               {med.is_critical && (
@@ -470,8 +471,8 @@ export async function MedicamentDetail(
               <section className="fiche-box">
                 <h2 className="fiche-box-title">{pickLang(lang, { fr: 'Conditionnement', ar: 'الخصائص' })}</h2>
                 <table className="fiche-table"><tbody>
-                  <Row label={pickLang(lang, { fr: 'Forme pharmaceutique', ar: 'الشكل الصيدلاني' })} value={med.forme} />
-                  <Row label={pickLang(lang, { fr: 'Dosage', ar: 'الجرعة' })} value={med.dosage} />
+                  <Row label={pickLang(lang, { fr: 'Forme pharmaceutique', ar: 'الشكل الصيدلاني' })} value={displayField('forme', med.forme, lang) || null} />
+                  <Row label={pickLang(lang, { fr: 'Dosage', ar: 'الجرعة' })} value={displayField('dosage', med.dosage, lang) || null} />
                   {med.is_critical && (
                     <Row
                       label={pickLang(lang, { fr: 'Criticité', ar: 'الحرجية' })}
@@ -480,10 +481,10 @@ export async function MedicamentDetail(
                         : pickLang(lang, { fr: 'Critique', ar: 'حرج' })}
                     />
                   )}
-                  <Row label={pickLang(lang, { fr: 'Conditionnement', ar: 'التعبئة' })} value={med.conditionnement} />
-                  <Row label={pickLang(lang, { fr: 'Liste', ar: 'القائمة' })} value={med.liste} />
-                  <Row label={pickLang(lang, { fr: 'Prescription', ar: 'الوصفة' })} value={med.prescription} />
-                  <Row label={pickLang(lang, { fr: 'Stabilité', ar: 'الاستقرار' })} value={med.stabilite} />
+                  <Row label={pickLang(lang, { fr: 'Conditionnement', ar: 'التعبئة' })} value={displayField('conditionnement', med.conditionnement, lang) || null} />
+                  <Row label={pickLang(lang, { fr: 'Liste', ar: 'القائمة' })} value={displayField('liste', med.liste, lang) || null} />
+                  <Row label={pickLang(lang, { fr: 'Prescription', ar: 'الوصفة' })} value={displayField('prescription', med.prescription, lang) || null} />
+                  <Row label={pickLang(lang, { fr: 'Stabilité', ar: 'الاستقرار' })} value={displayField('stabilite', med.stabilite, lang) || null} />
                 </tbody></table>
               </section>
 
@@ -711,7 +712,7 @@ export async function MedicamentDetail(
                   >
                     <div className="detail-alt-name">{displayName(a.nom_marque, lang)}</div>
                     {(a.forme || a.dosage) && (
-                      <div className="detail-alt-meta">{[a.forme, a.dosage].filter(Boolean).join(' — ')}</div>
+                      <div className="detail-alt-meta">{[displayField('forme', a.forme, lang), displayField('dosage', a.dosage, lang)].filter(Boolean).join(' — ')}</div>
                     )}
                     {a.labo && (
                       <div className="detail-alt-meta">

@@ -8,6 +8,7 @@ import { getCountryFlag } from '@/lib/countryFlag'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 import { medicamentPath } from '@/lib/medicament-url'
 import { displayName } from '@/lib/arabize'
+import { displayField } from '@/lib/translate-fields'
 
 function buildWhatsAppUrl(drug: SearchResult, type: string, lang: 'fr' | 'ar'): string {
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
@@ -122,7 +123,7 @@ export function DrugCard({
       </div>
 
       <div className="drug-meta">
-        {drug.forme && <span>💊 <strong>{drug.forme}</strong>{drug.dosage ? ` — ${drug.dosage}` : ''}</span>}
+        {drug.forme && <span>💊 <strong>{displayField('forme', drug.forme, lang)}</strong>{drug.dosage ? ` — ${displayField('dosage', drug.dosage, lang)}` : ''}</span>}
         {drug.labo && (
           <span>
             🏭 {drug.labo}
