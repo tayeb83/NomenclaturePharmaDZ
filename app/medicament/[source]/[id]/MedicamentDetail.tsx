@@ -13,6 +13,7 @@ import type { Metadata } from 'next'
 import type { MedicamentDetail, AtcCode } from '@/lib/db-types'
 import { getCountryFlag } from '@/lib/countryFlag'
 import { pickLang, type Lang } from '@/lib/i18n'
+import { displayName } from '@/lib/arabize'
 import { medicamentPath, medicamentSlug } from '@/lib/medicament-url'
 import { lettreForNom, lettreLabel, lettrePath } from '@/lib/repertoire'
 import { medicalPageJsonLd, breadcrumbJsonLd, faqJsonLd } from '@/lib/schema'
@@ -321,12 +322,14 @@ export async function MedicamentDetail(
                     enregistrements actifs sous cette DCI (sinon 404). */}
                 {alternatifs.length > 0 && med.dci ? (
                   <Link href={`/dci/${encodeURIComponent(med.dci.toLowerCase())}`} style={{ color: 'inherit', textDecoration: 'underline' }}>
-                    {med.dci}
+                    {displayName(med.dci, lang)}
                   </Link>
-                ) : med.dci}
+                ) : displayName(med.dci, lang)}
               </div>
               <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: 'white', margin: 0 }}>
-                {medicamentDesignation(med)}
+                {lang === 'ar'
+                  ? [displayName(med.nom_marque, lang), med.dosage].filter(Boolean).join(' ')
+                  : medicamentDesignation(med)}
               </h1>
               {med.is_critical && (
                 <div style={{
@@ -436,8 +439,8 @@ export async function MedicamentDetail(
               <section className="fiche-box">
                 <h2 className="fiche-box-title">{pickLang(lang, { fr: 'Identification', ar: 'التعريف' })}</h2>
                 <table className="fiche-table"><tbody>
-                  <Row label={pickLang(lang, { fr: 'DCI (Substance active)', ar: 'DCI (المادة الفعالة)' })} value={med.dci} />
-                  <Row label={pickLang(lang, { fr: 'Nom de marque', ar: 'الاسم التجاري' })} value={med.nom_marque} />
+                  <Row label={pickLang(lang, { fr: 'DCI (Substance active)', ar: 'DCI (المادة الفعالة)' })} value={displayName(med.dci, lang)} />
+                  <Row label={pickLang(lang, { fr: 'Nom de marque', ar: 'الاسم التجاري' })} value={displayName(med.nom_marque, lang)} />
                   <Row label={pickLang(lang, { fr: "N° d'enregistrement", ar: 'رقم التسجيل' })} value={med.n_enreg} />
                   <Row label={pickLang(lang, { fr: 'Code produit', ar: 'رمز المنتج' })} value={med.code} />
                   {med.code_atc && (
@@ -543,8 +546,8 @@ export async function MedicamentDetail(
                 <div className="fiche-aside-label">{pickLang(lang, { fr: 'DCI', ar: 'DCI' })}</div>
                 <div className="fiche-aside-value">
                   {alternatifs.length > 0 && med.dci ? (
-                    <Link href={`/dci/${encodeURIComponent(med.dci.toLowerCase())}`}><strong>{med.dci}</strong></Link>
-                  ) : <strong>{med.dci}</strong>}
+                    <Link href={`/dci/${encodeURIComponent(med.dci.toLowerCase())}`}><strong>{displayName(med.dci, lang)}</strong></Link>
+                  ) : <strong>{displayName(med.dci, lang)}</strong>}
                 </div>
 
                 {med.prescription && (
@@ -696,7 +699,7 @@ export async function MedicamentDetail(
               <div className="section-sub">
                 {pickLang(lang, {
                   fr: <>{autres.length} médicament(s) enregistré(s) contenant <strong>{med.dci}</strong></>,
-                  ar: <>{autres.length} دواء مسجل يحتوي على <strong>{med.dci}</strong></>,
+                  ar: <>{autres.length} دواء مسجل يحتوي على <strong>{displayName(med.dci, lang)}</strong></>,
                 })}
               </div>
               <div className="detail-alt-grid">
@@ -706,7 +709,7 @@ export async function MedicamentDetail(
                     href={medicamentPath('enregistrement', a.id, a, routeLang)}
                     className="detail-alt-card"
                   >
-                    <div className="detail-alt-name">{a.nom_marque}</div>
+                    <div className="detail-alt-name">{displayName(a.nom_marque, lang)}</div>
                     {(a.forme || a.dosage) && (
                       <div className="detail-alt-meta">{[a.forme, a.dosage].filter(Boolean).join(' — ')}</div>
                     )}

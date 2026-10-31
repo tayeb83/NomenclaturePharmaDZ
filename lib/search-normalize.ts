@@ -111,12 +111,22 @@ export function foldPhonetic(text: string): string {
   return s
 }
 
+/**
+ * Squelette consonantique : clé phonétique sans voyelles. L'arabe n'écrit pas les voyelles
+ * brèves, donc باراسيتامول (barasitamul) et PARACETAMOL (barasetamol) ne se rejoignent que
+ * par leurs consonnes : « brstml » des deux côtés. Équivalent SQL : skeletonSql() dans queries.ts.
+ */
+export function foldSkeleton(text: string): string {
+  return foldPhonetic(text).replace(/[aeiou]/g, '')
+}
+
 /** Formes normalisées d'une requête utilisateur, prêtes pour le SQL */
 export function buildQueryKeys(rawQuery: string): {
   raw: string
   latin: string
   normalized: string
   phonetic: string
+  skeleton: string
   isArabic: boolean
 } {
   const raw = rawQuery.trim()
@@ -127,6 +137,7 @@ export function buildQueryKeys(rawQuery: string): {
     latin,
     normalized: normalizeLatin(latin),
     phonetic: foldPhonetic(raw),
+    skeleton: foldSkeleton(raw),
     isArabic,
   }
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import type { Suggestion, SuggestionKind } from '@/lib/suggest'
+import { displayName } from '@/lib/arabize'
 
 const TITLES: Record<SuggestionKind, { fr: string; ar: string }> = {
   marque: { fr: 'Médicaments', ar: 'الأدوية' },
@@ -37,8 +38,8 @@ export function SuggestionList({
               onMouseDown={e => { e.preventDefault(); onPick(s) }}
               onMouseEnter={() => onHover(i)}
             >
-              <span className="sg-label">{s.label}</span>
-              {s.sub && <span className="sg-sub">{s.sub}</span>}
+              <span className="sg-label">{s.kind === 'labo' ? s.label : displayName(s.label, lang)}</span>
+              {s.sub && <span className="sg-sub">{displayName(s.sub, lang)}</span>}
             </div>
           </li>
         )

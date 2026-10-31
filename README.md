@@ -12,6 +12,13 @@ par wilaya et commune. Interface bilingue **français / arabe** (RTL).
   (PARACETAMOL), laboratoire, forme ou dosage. Tolère les fautes de frappe
   (`amoxiciline` → AMOXICILLINE), l'arabe (`دوليبران` → PARACETAMOL) et
   l'arabizi (3, 7, 9…).
+- **Classement** : une saisie « marque » classe d'abord le nom de marque égal, puis celui qui commence
+  par la saisie, puis celui dont un mot commence par elle, puis les autres champs. Une saisie « substance »
+  (DCI cliquée dans les suggestions, `?mode=dci`, filtre `substance`, ou mot entier d'une DCI) liste
+  toutes les présentations de la DCI par ordre alphabétique.
+- **Noms arabisés** (`lib/arabize.ts`) : en interface arabe, les noms s'affichent « باراسيتامول (PARACETAMOL) ».
+  Graphies validées dans `WORD_OVERRIDES`, sinon translittération à règles. La recherche en arabe
+  (`ماكسيبلاز`) compare les squelettes consonantiques (`foldSkeleton`). Tests : `npm run test:search`.
 - **Catalogue complet** (`/medicaments`) : liste paginée et filtrable
   (type, statut fabriqué/importé, année), nouveautés de version, retraits.
 - **Fiches détaillées** (`/medicament/...`) : DCI, forme, dosage, labo, pays,

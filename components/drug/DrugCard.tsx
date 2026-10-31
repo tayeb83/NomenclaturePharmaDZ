@@ -7,6 +7,7 @@ import type { SearchResult } from '@/lib/db-types'
 import { getCountryFlag } from '@/lib/countryFlag'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 import { medicamentPath } from '@/lib/medicament-url'
+import { displayName } from '@/lib/arabize'
 
 function buildWhatsAppUrl(drug: SearchResult, type: string, lang: 'fr' | 'ar'): string {
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
@@ -78,8 +79,8 @@ export function DrugCard({
       <div className="drug-card-top">
         <div style={{ flex: 1 }}>
           <div className="drug-dci">DCI</div>
-          <div style={{ fontWeight: 700, fontSize: 13, color: '#334155', marginBottom: 3 }}>{drug.dci}</div>
-          <div className="drug-name">{drug.nom_marque}</div>
+          <div style={{ fontWeight: 700, fontSize: 13, color: '#334155', marginBottom: 3 }}>{displayName(drug.dci, lang)}</div>
+          <div className="drug-name">{displayName(drug.nom_marque, lang)}</div>
         </div>
         <div className="drug-badges">
           {drug.type_prod && (
