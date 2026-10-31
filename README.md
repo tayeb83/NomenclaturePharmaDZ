@@ -141,6 +141,11 @@ par wilaya et commune. Interface bilingue **français / arabe** (RTL).
   libellé arabe de chaque classe (la table ATC n'existe qu'en FR/EN).
 - À activer avec `psql "$DATABASE_URL" -f sql/28_specialites.sql`. Sans la
   migration, le site sert une Dentisterie par défaut en lecture seule.
+- `sql/32_specialites_medicales.sql` (après la 28) ajoute 17 spécialités
+  (cardiologie, diabétologie, pneumologie, gastro-entérologie, infectiologie,
+  neurologie, psychiatrie, rhumatologie, dermatologie, ophtalmologie, ORL,
+  gynécologie, urologie-néphrologie, oncologie, hématologie, anesthésie-réanimation,
+  imagerie) définies par leurs classes ATC ; idempotent, n'écrase pas l'admin.
 
 ### ⬅️ Bouton « Retour »
 `components/layout/BackBar.tsx` + `lib/nav-history.ts` : l'historique des pages
