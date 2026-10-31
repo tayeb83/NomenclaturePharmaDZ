@@ -16,6 +16,9 @@ par wilaya et commune. Interface bilingue **français / arabe** (RTL).
   par la saisie, puis celui dont un mot commence par elle, puis les autres champs. Une saisie « substance »
   (DCI cliquée dans les suggestions, `?mode=dci`, filtre `substance`, ou mot entier d'une DCI) liste
   toutes les présentations de la DCI par ordre alphabétique.
+- **ATC en arabe** : `sql/31_atc_label_ar.sql` ajoute `atc_codes.label_ar`, remplie par
+  `python scripts/import_atc_ar.py data/atc/ATC_2026_fr_en_ar.xlsx --apply` (sans `--apply` : simulation).
+  Sans la migration, le site retombe sur le libellé français.
 - **Noms arabisés** (`lib/arabize.ts`) : en interface arabe, les noms s'affichent « باراسيتامول (PARACETAMOL) ».
   Graphies validées dans `WORD_OVERRIDES`, sinon translittération à règles. La recherche en arabe
   (`ماكسيبلاز`) compare les squelettes consonantiques (`foldSkeleton`). Tests : `npm run test:search`.

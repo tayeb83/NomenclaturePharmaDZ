@@ -1,10 +1,11 @@
 'use client'
 
+import { atcLabel } from '@/lib/atc-label'
 import Link from 'next/link'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 
 type VeilleRow = { nom_marque: string; dci: string; labo: string | null; date_init: string | null }
-type AtcRoot = { code: string; label_fr: string | null; dci_count: number }
+type AtcRoot = { code: string; label_fr: string | null; label_ar?: string | null; dci_count: number }
 
 const ATC_ICONS: Record<string, string> = {
   A: '🍽️', B: '🩸', C: '❤️', D: '🧴', G: '⚕️', H: '🧬', J: '🦠',
@@ -284,7 +285,7 @@ export function OutilsClient({
                   <div key={r.code} style={{ marginBottom: 7 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, fontWeight: 600, color: '#334155', marginBottom: 3 }}>
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingInlineEnd: 8 }}>
-                        {ATC_ICONS[r.code] || '💊'} {r.code} — {r.label_fr || r.code}
+                        {ATC_ICONS[r.code] || '💊'} {r.code} — {atcLabel(r, lang) || r.code}
                       </span>
                       <span style={{ color: '#0369a1', flexShrink: 0 }}>
                         {r.dci_count} DCI

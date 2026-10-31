@@ -1,3 +1,4 @@
+import { atcLabel } from '@/lib/atc-label'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
@@ -51,7 +52,7 @@ export default async function AtcCodePage({ params }: { params: { code: string }
     node.niveau >= 2 ? getDcisByAtcPrefix(code) : Promise.resolve([]),
   ])
 
-  const label = node.label_fr || node.label_en || code
+  const label = atcLabel(node, lang) || code
 
   return (
     <>
@@ -118,7 +119,7 @@ export default async function AtcCodePage({ params }: { params: { code: string }
                       </span>
                     </div>
                     <div style={{ fontWeight: 600, color: '#0f172a', fontSize: 13.5, marginTop: 4, lineHeight: 1.4 }}>
-                      {child.label_fr || child.label_en || child.code}
+                      {atcLabel(child, lang) || child.code}
                     </div>
                   </Link>
                 ))}
@@ -165,7 +166,7 @@ export default async function AtcCodePage({ params }: { params: { code: string }
                           </Link>
                         </td>
                         <td style={{ padding: '10px 14px', color: '#475569' }}>
-                          {row.atc_label_fr || row.atc_label_en || '—'}
+                          {atcLabel({ label_fr: row.atc_label_fr, label_en: row.atc_label_en, label_ar: row.atc_label_ar }, lang) || '—'}
                         </td>
                         <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
                           {row.nb_produits > 0 ? (

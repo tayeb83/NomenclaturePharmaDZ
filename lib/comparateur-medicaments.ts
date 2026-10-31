@@ -100,7 +100,7 @@ async function fiche(ref: RefMedicament, lang: Lang): Promise<FicheComparee | nu
     source: med.source, id: med.id, nom_marque: med.nom_marque, dci: med.dci, forme: med.forme, dosage: med.dosage,
     conditionnement: med.conditionnement, labo: med.labo, pays: med.pays, type_prod: med.type_prod, statut: med.statut,
     liste: med.liste, prescription: med.prescription, code_atc: med.code_atc,
-    atc_label: (lang === 'ar' ? null : med.atc_label_fr) ?? med.atc_label_en ?? null,
+    atc_label: (lang === 'ar' ? med.atc_label_ar || null : med.atc_label_fr) ?? med.atc_label_en ?? null,
     date_init: med.date_init, date_final: med.date_final, ppa,
     nb_interactions: inter ? inter.items.length : null,
   }

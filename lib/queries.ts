@@ -27,6 +27,13 @@ async function hasTable(tableName: string): Promise<boolean> {
   return exists
 }
 
+/** Libellé arabe ATC (sql/31_atc_label_ar.sql) : `a.label_ar` si la colonne existe, sinon NULL
+ *  (la fiche et les classes continuent de s'afficher avant l'application de la migration). */
+async function atcLabelAr(alias: string): Promise<string> {
+  const ok = await hasTable('atc_codes') && await hasColumn('atc_codes', 'label_ar')
+  return ok ? `${alias}.label_ar` : 'NULL::TEXT'
+}
+
 let criticalMappingIndexEnsured = false
 
 /** critical_mapping (sql/07_critical_mapping.sql) n'a pas d'index sur la clé de jointure
@@ -1576,6 +1583,7 @@ export async function getMedicamentById(
       code_atc: atc?.code_atc ?? null,
       atc_label_fr: atc?.atc_label_fr ?? null,
       atc_label_en: atc?.atc_label_en ?? null,
+      atc_label_ar: atc?.atc_label_ar ?? null,
       is_critical: critical.isCritical,
       critical_class_therapeutique: critical.classe,
     }
@@ -1601,6 +1609,7 @@ export async function getMedicamentById(
       code_atc: atc?.code_atc ?? null,
       atc_label_fr: atc?.atc_label_fr ?? null,
       atc_label_en: atc?.atc_label_en ?? null,
+      atc_label_ar: atc?.atc_label_ar ?? null,
       is_critical: critical.isCritical,
       critical_class_therapeutique: critical.classe,
     }
@@ -1626,6 +1635,7 @@ export async function getMedicamentById(
     code_atc: atc?.code_atc ?? null,
     atc_label_fr: atc?.atc_label_fr ?? null,
     atc_label_en: atc?.atc_label_en ?? null,
+    atc_label_ar: atc?.atc_label_ar ?? null,
     is_critical: critical.isCritical,
     critical_class_therapeutique: critical.classe,
   }
@@ -2144,10 +2154,11 @@ export async function getAtcHierarchyByDci(dci: string): Promise<AtcCode[]> {
   if (!hasMappingTable || !hasAtcTable) return []
 
   try {
-    return query<AtcCode>(`
+    const [arA, arP] = await Promise.all([atcLabelAr('a'), atcLabelAr('p')])
+    return await query<AtcCode>(`
       WITH RECURSIVE atc_tree AS (
         -- Nœud de départ : le code ATC niveau 5 de la DCI
-        SELECT a.code, a.parent_code, a.niveau, a.label_en, a.label_fr
+        SELECT a.code, a.parent_code, a.niveau, a.label_en, a.label_fr, ${arA} AS label_ar
         FROM dci_atc_mapping m
         JOIN atc_codes a ON a.code = m.code_atc
         WHERE m.dci = UPPER(TRIM($1))
@@ -2155,7 +2166,7 @@ export async function getAtcHierarchyByDci(dci: string): Promise<AtcCode[]> {
         UNION ALL
 
         -- Remonter la hiérarchie jusqu'au niveau 1
-        SELECT p.code, p.parent_code, p.niveau, p.label_en, p.label_fr
+        SELECT p.code, p.parent_code, p.niveau, p.label_en, p.label_fr, ${arP} AS label_ar
         FROM atc_codes p
         JOIN atc_tree c ON p.code = c.parent_code
       )
@@ -2171,14 +2182,15 @@ export async function getAtcHierarchyByDci(dci: string): Promise<AtcCode[]> {
  * Retourne uniquement le code ATC niveau 5 (et son libellé) pour une DCI.
  * Utilisé pour les listes/cartes où on n'a pas besoin de la hiérarchie complète.
  */
-export async function getAtcByDci(dci: string): Promise<{ code_atc: string; atc_label_fr: string | null; atc_label_en: string | null } | null> {
+export async function getAtcByDci(dci: string): Promise<{ code_atc: string; atc_label_fr: string | null; atc_label_en: string | null; atc_label_ar: string | null } | null> {
   const hasMappingTable = await hasTable('dci_atc_mapping')
   const hasAtcTable = await hasTable('atc_codes')
   if (!hasMappingTable || !hasAtcTable) return null
 
   try {
-    return queryOne<{ code_atc: string; atc_label_fr: string | null; atc_label_en: string | null }>(`
-      SELECT m.code_atc, a.label_fr AS atc_label_fr, a.label_en AS atc_label_en
+    const ar = await atcLabelAr('a')
+    return await queryOne<{ code_atc: string; atc_label_fr: string | null; atc_label_en: string | null; atc_label_ar: string | null }>(`
+      SELECT m.code_atc, a.label_fr AS atc_label_fr, a.label_en AS atc_label_en, ${ar} AS atc_label_ar
       FROM dci_atc_mapping m
       JOIN atc_codes a ON a.code = m.code_atc
       WHERE m.dci = UPPER(TRIM($1))
@@ -2196,6 +2208,7 @@ export type AtcNavNode = {
   niveau: number
   label_fr: string | null
   label_en: string | null
+  label_ar?: string | null
   /** Nombre de DCI de la nomenclature mappées sous ce code (descendants inclus) */
   dci_count: number
 }
@@ -2205,6 +2218,7 @@ export type AtcDciEntry = {
   code_atc: string
   atc_label_fr: string | null
   atc_label_en: string | null
+  atc_label_ar?: string | null
   nb_produits: number
 }
 
@@ -2217,9 +2231,10 @@ async function hasAtcTables(): Promise<boolean> {
 export async function getAtcRootsWithCounts(): Promise<AtcNavNode[]> {
   if (!await hasAtcTables()) return []
   try {
+    const ar = await atcLabelAr('a')
     return await query<AtcNavNode>(`
       SELECT
-        a.code, a.parent_code, a.niveau, a.label_fr, a.label_en,
+        a.code, a.parent_code, a.niveau, a.label_fr, a.label_en, ${ar} AS label_ar,
         (SELECT COUNT(DISTINCT m.dci) FROM dci_atc_mapping m WHERE m.code_atc LIKE a.code || '%')::INT AS dci_count
       FROM atc_codes a
       WHERE a.niveau = 1
@@ -2233,8 +2248,9 @@ export async function getAtcRootsWithCounts(): Promise<AtcNavNode[]> {
 export async function getAtcNode(code: string): Promise<AtcCode | null> {
   if (!await hasAtcTables()) return null
   try {
+    const ar = await atcLabelAr('atc_codes')
     return await queryOne<AtcCode>(`
-      SELECT code, parent_code, niveau, label_fr, label_en
+      SELECT code, parent_code, niveau, label_fr, label_en, ${ar} AS label_ar
       FROM atc_codes
       WHERE code = UPPER(TRIM($1))
     `, [code])
@@ -2247,9 +2263,10 @@ export async function getAtcNode(code: string): Promise<AtcCode | null> {
 export async function getAtcChildrenWithCounts(code: string): Promise<AtcNavNode[]> {
   if (!await hasAtcTables()) return []
   try {
+    const ar = await atcLabelAr('a')
     return await query<AtcNavNode>(`
       SELECT
-        a.code, a.parent_code, a.niveau, a.label_fr, a.label_en,
+        a.code, a.parent_code, a.niveau, a.label_fr, a.label_en, ${ar} AS label_ar,
         (SELECT COUNT(DISTINCT m.dci) FROM dci_atc_mapping m WHERE m.code_atc LIKE a.code || '%')::INT AS dci_count
       FROM atc_codes a
       WHERE a.parent_code = UPPER(TRIM($1))
@@ -2264,16 +2281,17 @@ export async function getAtcChildrenWithCounts(code: string): Promise<AtcNavNode
 export async function getAtcAncestors(code: string): Promise<AtcCode[]> {
   if (!await hasAtcTables()) return []
   try {
+    const ar = await atcLabelAr('p')
     const rows = await query<AtcCode>(`
       WITH RECURSIVE atc_up AS (
-        SELECT p.code, p.parent_code, p.niveau, p.label_en, p.label_fr
+        SELECT p.code, p.parent_code, p.niveau, p.label_en, p.label_fr, ${ar} AS label_ar
         FROM atc_codes c
         JOIN atc_codes p ON p.code = c.parent_code
         WHERE c.code = UPPER(TRIM($1))
 
         UNION ALL
 
-        SELECT p.code, p.parent_code, p.niveau, p.label_en, p.label_fr
+        SELECT p.code, p.parent_code, p.niveau, p.label_en, p.label_fr, ${ar} AS label_ar
         FROM atc_codes p
         JOIN atc_up c ON p.code = c.parent_code
       )
@@ -2290,12 +2308,14 @@ export async function getAtcAncestors(code: string): Promise<AtcCode[]> {
 export async function getDcisByAtcPrefix(code: string, limit = 300): Promise<AtcDciEntry[]> {
   if (!await hasAtcTables()) return []
   try {
+    const ar = await atcLabelAr('a')
     return await query<AtcDciEntry>(`
       SELECT
         m.dci,
         m.code_atc,
         a.label_fr AS atc_label_fr,
         a.label_en AS atc_label_en,
+        ${ar} AS atc_label_ar,
         COALESCE(e.nb, 0)::INT AS nb_produits
       FROM dci_atc_mapping m
       JOIN atc_codes a ON a.code = m.code_atc

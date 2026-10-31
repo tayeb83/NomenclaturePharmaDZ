@@ -15,6 +15,7 @@ import { getCountryFlag } from '@/lib/countryFlag'
 import { pickLang, type Lang } from '@/lib/i18n'
 import { displayName } from '@/lib/arabize'
 import { displayField } from '@/lib/translate-fields'
+import { atcLabel } from '@/lib/atc-label'
 import { medicamentPath, medicamentSlug } from '@/lib/medicament-url'
 import { lettreForNom, lettreLabel, lettrePath } from '@/lib/repertoire'
 import { medicalPageJsonLd, breadcrumbJsonLd, faqJsonLd } from '@/lib/schema'
@@ -447,7 +448,7 @@ export async function MedicamentDetail(
                   {med.code_atc && (
                     <Row label={pickLang(lang, { fr: 'Code ATC', ar: 'رمز ATC' })}>
                       <span className="fiche-atc">{med.code_atc}</span>
-                      {(med.atc_label_fr || med.atc_label_en) && <> – {med.atc_label_fr || med.atc_label_en}</>}
+                      {(med.atc_label_fr || med.atc_label_en) && <> – {atcLabel({ label_fr: med.atc_label_fr, label_en: med.atc_label_en, label_ar: med.atc_label_ar }, lang)}</>}
                     </Row>
                   )}
                   {med.type_prod && (
@@ -682,7 +683,7 @@ export async function MedicamentDetail(
                         lineHeight: 1.3,
                         marginTop: 2,
                       }}>
-                        {level.label_fr || level.label_en || ''}
+                        {atcLabel(level, lang)}
                       </span>
                     </Link>
                   </div>

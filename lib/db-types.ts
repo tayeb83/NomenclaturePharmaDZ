@@ -88,6 +88,7 @@ export type AtcCode = {
   niveau: number
   label_en: string | null
   label_fr: string | null
+  label_ar?: string | null
 }
 
 export type MedicamentDetail = {
@@ -118,6 +119,7 @@ export type MedicamentDetail = {
   code_atc: string | null
   atc_label_fr: string | null
   atc_label_en: string | null
+  atc_label_ar?: string | null
   is_critical?: boolean
   critical_class_therapeutique?: string | null
 }
