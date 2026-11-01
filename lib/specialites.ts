@@ -38,6 +38,8 @@ export type ItemRow = {
 export type SpecialiteItem = ItemRow & {
   /** Libellé officiel ATC (FR), ou la DCI elle-même. */
   libelle_fr: string
+  /** Libellé arabe officiel de la classe ATC (atc_codes.label_ar), si traduit. */
+  atc_label_ar: string | null
   nb_dci: number
   nb_produits: number
 }
@@ -92,10 +94,11 @@ async function hasTables(): Promise<boolean> {
 
 // ─── Compteurs ────────────────────────────────────────────────────────────
 
-async function atcCounts(code: string): Promise<{ libelle: string; nb_dci: number; nb_produits: number }> {
+async function atcCounts(code: string): Promise<{ libelle: string; label_ar: string | null; nb_dci: number; nb_produits: number }> {
   try {
-    const label = await queryOne<{ label_fr: string | null; label_en: string | null }>(
-      `SELECT label_fr, label_en FROM atc_codes WHERE code = $1`, [code]
+    // to_jsonb : fonctionne même si la colonne label_ar n'existe pas encore (migration 31).
+    const label = await queryOne<{ label_fr: string | null; label_en: string | null; label_ar: string | null }>(
+      `SELECT label_fr, label_en, to_jsonb(a)->>'label_ar' AS label_ar FROM atc_codes a WHERE code = $1`, [code]
     )
     const c = await queryOne<{ nb_dci: string; nb_produits: string }>(
       `SELECT COUNT(DISTINCT m.dci)::TEXT AS nb_dci, COALESCE(SUM(e.nb), 0)::TEXT AS nb_produits
@@ -106,30 +109,31 @@ async function atcCounts(code: string): Promise<{ libelle: string; nb_dci: numbe
     )
     return {
       libelle: label?.label_fr || label?.label_en || code,
+      label_ar: label?.label_ar?.trim() || null,
       nb_dci: Number(c?.nb_dci ?? 0),
       nb_produits: Number(c?.nb_produits ?? 0),
     }
   } catch {
-    return { libelle: code, nb_dci: 0, nb_produits: 0 }
+    return { libelle: code, label_ar: null, nb_dci: 0, nb_produits: 0 }
   }
 }
 
-async function dciCounts(dci: string): Promise<{ libelle: string; nb_dci: number; nb_produits: number }> {
+async function dciCounts(dci: string): Promise<{ libelle: string; label_ar: string | null; nb_dci: number; nb_produits: number }> {
   try {
     const c = await queryOne<{ nb: string }>(
       `SELECT COUNT(*)::TEXT AS nb FROM enregistrements WHERE UPPER(TRIM(dci)) = $1`, [dci]
     )
     const nb = Number(c?.nb ?? 0)
-    return { libelle: dci, nb_dci: nb > 0 ? 1 : 0, nb_produits: nb }
+    return { libelle: dci, label_ar: null, nb_dci: nb > 0 ? 1 : 0, nb_produits: nb }
   } catch {
-    return { libelle: dci, nb_dci: 0, nb_produits: 0 }
+    return { libelle: dci, label_ar: null, nb_dci: 0, nb_produits: 0 }
   }
 }
 
 async function withCounts(items: ItemRow[]): Promise<SpecialiteItem[]> {
   return Promise.all(items.map(async it => {
     const c = it.kind === 'atc' ? await atcCounts(it.valeur) : await dciCounts(it.valeur)
-    return { ...it, libelle_fr: c.libelle, nb_dci: c.nb_dci, nb_produits: c.nb_produits }
+    return { ...it, libelle_fr: c.libelle, atc_label_ar: c.label_ar, nb_dci: c.nb_dci, nb_produits: c.nb_produits }
   }))
 }
 
@@ -193,7 +197,7 @@ export function getSpecialite(slug: string): Promise<SpecialiteDetail | null> {
       const [items, t] = await Promise.all([withCounts(found.items), totals(found.items)])
       return { ...found.row, items, ...t }
     },
-    ['specialites', 'detail', 'v1', slug],
+    ['specialites', 'detail', 'v2', slug],
     { revalidate: 3600, tags: [SPECIALITES_TAG] }
   )()
 }
