@@ -17,6 +17,8 @@ type Counts = Record<Status | 'stale', number>
 const TYPES: Record<string, string> = {
   dci_from_brand: 'DCI à partir du nom commercial', reference_generique: 'Référence ou générique', forme_dosage: 'Forme et dosage',
   labo_pays: 'Laboratoire et pays', retrait_motif: 'Motif de retrait', retrait_identification: 'Produit retiré', atc_classe: 'Classe ATC',
+  interaction_niveau: 'Interactions : niveau', interaction_contre_indication: 'Interactions : contre-indication', compare_specialites: 'Comparaison de deux spécialités',
+  atc_code: 'Codage ATC', atc_inverse: 'ATC : retrouver la DCI', substitution: 'Substitution',
 }
 const STATUS_LABEL: Record<Status, string> = { draft: 'Brouillon', reviewed: 'Relue', published: 'Publiée' }
 const LETTERS = ['A', 'B', 'C', 'D', 'E']

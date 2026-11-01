@@ -94,10 +94,54 @@ class GenerationTests(unittest.TestCase):
     def test_explanations_only_use_database_values(self):
         """Pas de contenu pharmacologique : les phrases de gabarit ne contiennent aucun terme clinique."""
         banned = ("indication", "effet indésirable", "contre-indication", "interaction", "posologie", "traite", "soigne")
+        # Les types « interaction » citent le thésaurus ANSM présent dans la base : seul le vocabulaire
+        # d'interaction y est permis, jamais d'indication, d'effet indésirable ni de posologie.
+        banned_interactions = ("effet indésirable", "posologie", "traite", "soigne")
         for q in self.full:
-            text = json.dumps(q["explanation"], ensure_ascii=False).lower()
-            for word in banned:
+            text = json.dumps({k: v for k, v in q["explanation"].items() if k != "outils"}, ensure_ascii=False).lower()
+            for word in (banned_interactions if q["type"] in gq.NEEDS_INTERACTIONS else banned):
                 self.assertNotIn(word, text, q["question_key"])
+            outils = json.dumps(q["explanation"]["outils"], ensure_ascii=False).lower()
+            for word in ("effet indésirable", "posologie", "traite", "soigne"):
+                self.assertNotIn(word, outils, q["question_key"])
+
+    def test_v2_types_are_generated(self):
+        for t in ("interaction_niveau", "interaction_contre_indication", "compare_specialites", "atc_code", "atc_inverse", "substitution"):
+            self.assertGreater(self.report["by_type"].get(t, 0), 0, t)
+
+    def test_every_question_says_where_to_find_the_answer(self):
+        for q in self.full:
+            outils = q["explanation"]["outils"]
+            self.assertTrue(outils, q["question_key"])
+            for o in outils:
+                self.assertTrue(o["url"].startswith("/"), o)
+                self.assertTrue(o["etapes"], o)
+
+    def test_outils_do_not_change_the_content_hash(self):
+        """Un lien du site qui évolue ne doit pas rendre « à relire » une question déjà publiée."""
+        q = copy.deepcopy(self.full[0])
+        payload = json.dumps(
+            {"stem": q["stem"], "options": q["options"], "correct_index": q["correct_index"],
+             "explanation": {k: v for k, v in q["explanation"].items() if k != "outils"}},
+            ensure_ascii=False, sort_keys=True)
+        import hashlib
+        self.assertEqual(hashlib.sha256(payload.encode("utf-8")).hexdigest(), q["content_hash"])
+
+    def test_ambiguous_interaction_pair_is_never_asked(self):
+        """DICLOFENAC + RAMIPRIL : ligne directe « déconseillée » contredite par la ligne de CLASSE ⇒ écartée."""
+        for q in self.full:
+            if q["type"] in gq.NEEDS_INTERACTIONS:
+                self.assertFalse("DICLOFENAC" in q["stem"] and "RAMIPRIL" in q["stem"], q["stem"])
+                self.assertFalse("DICLOFENAC" in q["options"] and "RAMIPRIL" in q["stem"], q["stem"])
+
+    def test_interaction_contre_indication_distractors_are_not_contraindicated(self):
+        for q in (x for x in self.full if x["type"] == "interaction_contre_indication"):
+            self.assertEqual(sum(1 for r in q["explanation"]["rationales"] if r.startswith("Correct")), 1)
+
+    def test_compare_has_exactly_one_true_claim_each_attribute_once(self):
+        for q in (x for x in self.full if x["type"] == "compare_specialites"):
+            attrs = [a for o in q["options"] for a, ps, pd in gq._COMPARE_ATTRS if o.endswith(ps) or o.endswith(pd)]
+            self.assertEqual(sorted(attrs), sorted(a for a, _, _ in gq._COMPARE_ATTRS), q["stem"])
 
     def test_report_lists_counts(self):
         self.assertEqual(self.report["total"], len(self.full))
@@ -146,6 +190,47 @@ class VerifierDetectsDefectsTests(unittest.TestCase):
         q["options"] = q["options"][:4]
         self.assertTrue(gq.verify_question(q, self.ds))
 
+    def test_wrong_interaction_level_rejected(self):
+        q = self.first("interaction_niveau")
+        q["correct_index"] = (q["correct_index"] + 1) % 5
+        self.assertTrue(gq.verify_question(q, self.ds))
+
+    def test_second_contraindicated_option_rejected(self):
+        q = self.first("interaction_contre_indication")
+        x = gq.norm(__import__("re").search(r"l'association à (.+?) est-elle", q["stem"]).group(1))
+        ci = next(p for p, lv in self.ds.interaction_pairs[x].items() if lv == "contre_indication" and self.ds.thes_dci[p] != q["options"][q["correct_index"]])
+        q["options"][(q["correct_index"] + 1) % 5] = self.ds.thes_dci[ci]
+        self.assertTrue(gq.verify_question(q, self.ds))
+
+    def test_compare_with_two_true_claims_rejected(self):
+        q = self.first("compare_specialites")
+        # inverse la phrase d'une affirmation FAUSSE : elle devient exacte, donc deux affirmations exactes
+        wrong = (q["correct_index"] + 1) % 5
+        names, _, claim = q["options"][wrong].partition(" ont ")
+        for _a, ps, pd in gq._COMPARE_ATTRS:
+            if claim == ps:
+                q["options"][wrong] = f"{names} ont {pd}"
+                break
+            if claim == pd:
+                q["options"][wrong] = f"{names} ont {ps}"
+                break
+        self.assertTrue(gq.verify_question(q, self.ds))
+
+    def test_substitution_with_non_equivalent_answer_rejected(self):
+        q = self.first("substitution")
+        q["correct_index"] = (q["correct_index"] + 1) % 5
+        self.assertTrue(gq.verify_question(q, self.ds))
+
+    def test_atc_code_wrong_answer_rejected(self):
+        q = self.first("atc_code")
+        q["correct_index"] = (q["correct_index"] + 1) % 5
+        self.assertTrue(gq.verify_question(q, self.ds))
+
+    def test_missing_outils_rejected(self):
+        q = self.first("forme_dosage")
+        q["explanation"]["outils"] = []
+        self.assertTrue(any("outils" in e for e in gq.verify_question(q, self.ds)))
+
     def test_published_without_reviewer_cannot_be_forged_as_draft(self):
         q = self.first("atc_classe")
         q["relu_par"] = "x"
@@ -167,6 +252,12 @@ class IneligibleSourcesTests(unittest.TestCase):
         d["enregistrements"].append(dict(d["enregistrements"][0], id=88888, nom_marque=retired["nom_marque"], dci=retired["dci"]))
         ds = gq.Nomenclature(d)
         self.assertIsNone(gq.gen_retrait_identification(ds, ds.resolve(f"retraits:{retired['id']}"), 42))
+
+    def test_interaction_questions_skipped_without_thesaurus(self):
+        d = dataset()
+        d["interactions"], d["interaction_classes"] = [], []
+        qs, _ = gq.generate(gq.Nomenclature(d), seed=42, limit=60)
+        self.assertFalse({q["type"] for q in qs} & gq.NEEDS_INTERACTIONS)
 
     def test_atc_questions_skipped_without_atc_tables(self):
         d = dataset()
@@ -234,6 +325,23 @@ class SyncTests(unittest.TestCase):
         self.assertEqual(row["relu_par"], "relecteur")
         self.assertFalse(row["a_valider"])
         self.assertTrue(stats.get("draft_updated", 0) + stats.get("reviewed_marked_stale", 0) + stats.get("marked_not_regenerated", 0) > 0)
+
+    def test_outils_of_a_published_question_are_refreshed_without_stale(self):
+        """Le lien d'un outil du site peut évoluer sans que la question publiée soit à relire."""
+        _, qs = self.run_sync(self.data)
+        target = next(q for q in qs if q["type"] == "interaction_niveau")
+        cur = self.conn.cursor()
+        cur.execute(
+            """UPDATE training_questions SET status='published', relu_par='relecteur', relu_at=NOW(), a_valider=FALSE,
+                      explanation = explanation - 'outils' WHERE question_key=%s""", (target["question_key"],))
+        self.conn.commit()
+        stats, _ = self.run_sync(self.data)
+        row = self.rows()[target["question_key"]]
+        self.assertEqual(row["explanation"]["outils"], target["explanation"]["outils"])
+        self.assertFalse(row["stale"])
+        self.assertEqual(row["status"], "published")
+        self.assertEqual(row["stem"], target["stem"])
+        self.assertGreaterEqual(stats.get("outils_updated", 0), 1)
 
     def test_published_question_marked_stale_when_content_changes(self):
         _, qs = self.run_sync(self.data)

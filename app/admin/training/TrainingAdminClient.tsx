@@ -9,7 +9,7 @@ type Counts = Record<Status, number>
 type Filter = Status | 'all'
 
 const STATUS_LABEL: Record<Status, string> = { pending: 'En attente', approved: 'Validé', rejected: 'Refusé' }
-const ROLE_LABEL: Record<string, string> = { etudiant: 'Étudiant(e)', enseignant: 'Enseignant(e)', pharmacien: 'Pharmacien(ne)' }
+const ROLE_LABEL: Record<string, string> = { etudiant: 'Étudiant(e)', enseignant: 'Enseignant(e) (ancien profil)', pharmacien: 'Pharmacien(ne)' }
 const SOURCE_LABEL: Record<string, string> = { email: 'E-mail', facebook: 'Facebook' }
 
 function fmtDate(iso: string | null) {

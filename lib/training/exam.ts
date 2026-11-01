@@ -72,6 +72,26 @@ function shuffle<T>(arr: T[], rnd: () => number): T[] {
   return a
 }
 
+/**
+ * Tire `n` éléments en alternant les types (un de chaque, tour à tour) : une série ou un examen blanc
+ * couvre ainsi tous les types de questions au lieu d'être noyé par le type le plus abondant.
+ * Quand un type est épuisé, les autres continuent. Le résultat est ensuite mélangé.
+ */
+export function balancedPick<T extends { type: string }>(items: T[], n: number, rnd: () => number): T[] {
+  const byType = new Map<string, T[]>()
+  for (const it of items) byType.set(it.type, [...(byType.get(it.type) ?? []), it])
+  const queues = [...byType.keys()].sort().map(k => shuffle(byType.get(k)!, rnd))
+  const out: T[] = []
+  while (out.length < n && queues.some(q => q.length)) {
+    for (const q of shuffle(queues, rnd)) {
+      const next = q.shift()
+      if (next) out.push(next)
+      if (out.length === n) break
+    }
+  }
+  return shuffle(out, rnd)
+}
+
 export function createExamService(deps: ExamDeps) {
   const { query } = deps
   const now = deps.now ?? (() => new Date())
@@ -97,17 +117,17 @@ export function createExamService(deps: ExamDeps) {
     if (!Number.isFinite(wanted) || wanted < 1 || wanted > MAX_QUESTIONS) return { ok: false, error: 'invalid' }
 
     const types = (input.types ?? []).filter(t => typeof t === 'string').slice(0, 10)
-    const rows = await query<{ id: string }>(
-      `SELECT id FROM training_questions
+    const rows = await query<{ id: string; type: string }>(
+      `SELECT id, type FROM training_questions
         WHERE status = 'published' AND NOT stale ${types.length ? 'AND type = ANY($1)' : ''}
         ORDER BY id`,
       types.length ? [types] : [],
     )
     if (rows.length === 0) return { ok: false, error: 'no_questions' }
 
-    const ids = rows.map(r => int(r.id))
-    // Examen blanc : mélange déterministe (même ordre pour tous tant que la banque est la même).
-    const ordered = shuffle(ids, mock ? seededRandom(`mock:${input.examCode}`) : rnd).slice(0, Math.min(wanted, ids.length))
+    // Tirage équilibré entre types. Examen blanc : déterministe (même ordre pour tous tant que la banque est la même).
+    const picked = balancedPick(rows.map(r => ({ id: int(r.id), type: r.type })), Math.min(wanted, rows.length), mock ? seededRandom(`mock:${input.examCode}`) : rnd)
+    const ordered = picked.map(p => p.id)
     const limit = mode === 'examen' ? ordered.length * SECONDS_PER_QUESTION : null
 
     const att = await query<{ id: string }>(

@@ -3,7 +3,8 @@
  * Module pur (aucun import) : testable directement avec `node --test`.
  */
 
-export const ROLES = ['etudiant', 'enseignant', 'pharmacien'] as const
+/** Profils proposés. (`enseignant` a existé : d'anciens comptes peuvent le porter, il n'est plus proposé.) */
+export const ROLES = ['etudiant', 'pharmacien'] as const
 export type TrainingRole = (typeof ROLES)[number]
 
 export const STATUSES = ['pending', 'approved', 'rejected'] as const

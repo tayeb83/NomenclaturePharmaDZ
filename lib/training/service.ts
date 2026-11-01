@@ -55,7 +55,6 @@ export type RequestFilters = { status?: TrainingStatus | 'all'; q?: string }
 
 const ROLE_LABEL: Record<TrainingRole, string> = {
   etudiant: 'Étudiant(e)',
-  enseignant: 'Enseignant(e)',
   pharmacien: 'Pharmacien(ne)',
 }
 
@@ -288,7 +287,7 @@ export function createTrainingService(deps: TrainingDeps) {
     if (!user) {
       const rows = await query<TrainingUserRow>(
         `INSERT INTO training_users (email, source, role, status, approved_at)
-         VALUES ($1, 'email', 'enseignant', 'approved', NOW())
+         VALUES ($1, 'email', 'pharmacien', 'approved', NOW())
          ON CONFLICT DO NOTHING
          RETURNING id, email, source, facebook_id, role, faculte, status, created_at, approved_at, last_login_at`,
         [clean],

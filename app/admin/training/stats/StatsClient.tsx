@@ -21,8 +21,10 @@ type Data = {
 const TYPES: Record<string, string> = {
   dci_from_brand: 'DCI à partir du nom commercial', reference_generique: 'Référence ou générique', forme_dosage: 'Forme et dosage',
   labo_pays: 'Laboratoire et pays', retrait_motif: 'Motif de retrait', retrait_identification: 'Produit retiré', atc_classe: 'Classe ATC',
+  interaction_niveau: 'Interactions : niveau', interaction_contre_indication: 'Interactions : contre-indication', compare_specialites: 'Comparaison de deux spécialités',
+  atc_code: 'Codage ATC', atc_inverse: 'ATC : retrouver la DCI', substitution: 'Substitution',
 }
-const ROLES: Record<string, string> = { etudiant: 'Étudiants', enseignant: 'Enseignants', pharmacien: 'Pharmaciens' }
+const ROLES: Record<string, string> = { etudiant: 'Étudiants', enseignant: 'Anciens profils « enseignant »', pharmacien: 'Pharmaciens' }
 const pct = (v: number | null) => (v === null ? '—' : `${v} %`)
 
 function Bar({ value }: { value: number }) {
