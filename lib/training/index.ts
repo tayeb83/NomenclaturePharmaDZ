@@ -4,6 +4,7 @@ import { createExamService } from './exam.ts'
 import { createQuestionsAdmin } from './questions.ts'
 import { createStatsService } from './stats.ts'
 import { sendMail } from './mail.ts'
+import { getOwnerEmail } from '../admin-auth'
 
 export const APP_URL_FALLBACK = 'https://www.dzair-pharma.net'
 
@@ -19,6 +20,18 @@ export function adminEmails(): string[] {
     .filter(e => e.includes('@'))
 }
 
+/** Équipe : propriétaire, ADMIN_EMAILS ou compte administrateur actif. */
+export async function isTrustedEmail(email: string): Promise<boolean> {
+  const e = email.trim().toLowerCase()
+  if (!e) return false
+  if (e === getOwnerEmail() || adminEmails().includes(e)) return true
+  const rows = await query<{ id: number }>(
+    "SELECT id FROM admin_accounts WHERE lower(email) = $1 AND status = 'active' LIMIT 1",
+    [e],
+  ).catch(() => [] as { id: number }[]) // table absente (sql/33 non appliqué) : pas d'accès d'office
+  return rows.length > 0
+}
+
 const g = globalThis as unknown as {
   _trainingService?: ReturnType<typeof createTrainingService>
   _trainingExam?: ReturnType<typeof createExamService>
@@ -28,7 +41,7 @@ const g = globalThis as unknown as {
 
 export function getTraining() {
   if (!g._trainingService) {
-    g._trainingService = createTrainingService({ query, sendMail, appUrl, adminEmails })
+    g._trainingService = createTrainingService({ query, sendMail, appUrl, adminEmails, isTrustedEmail })
   }
   return g._trainingService
 }

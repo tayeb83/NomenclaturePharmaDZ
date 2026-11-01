@@ -17,6 +17,8 @@ export type TrainingDeps = {
   sendMail: SendMail
   appUrl: () => string
   adminEmails: () => string[]
+  /** Adresse reconnue comme équipe (propriétaire, ADMIN_EMAILS, compte admin actif) : accès sans validation manuelle. */
+  isTrustedEmail?: (email: string) => Promise<boolean>
   now?: () => Date
 }
 
@@ -66,6 +68,32 @@ export function createTrainingService(deps: TrainingDeps) {
     await query('INSERT INTO events (user_id, type, payload) VALUES ($1, $2, $3::jsonb)', [userId, type, JSON.stringify(payload)])
   }
 
+  /** Insère un utilisateur. La colonne `origine` (sql/30) n'est écrite que pour un outil : la demande Training
+   *  reste possible tant que la migration n'est pas appliquée. */
+  async function insertUser(
+    input: { email: string; role: TrainingRole; faculte: string | null; facebookId?: string | null },
+    source: 'email' | 'facebook',
+    origine: Origine,
+    status: 'pending' | 'approved',
+  ): Promise<{ id: number }[]> {
+    const approvedAt = status === 'approved' ? 'NOW()' : 'NULL'
+    return origine === 'training'
+      ? query<{ id: number }>(
+        `INSERT INTO training_users (email, source, facebook_id, role, faculte, status, approved_at)
+         VALUES ($1, $2, $3, $4, $5, '${status}', ${approvedAt})
+         ON CONFLICT DO NOTHING
+         RETURNING id`,
+        [input.email, source, input.facebookId ?? null, input.role, input.faculte],
+      )
+      : query<{ id: number }>(
+        `INSERT INTO training_users (email, source, facebook_id, role, faculte, status, approved_at, origine)
+         VALUES ($1, $2, $3, $4, $5, '${status}', ${approvedAt}, $6)
+         ON CONFLICT DO NOTHING
+         RETURNING id`,
+        [input.email, source, input.facebookId ?? null, input.role, input.faculte, origine],
+      )
+  }
+
   /**
    * Enregistre une demande d'accès `pending`. Une adresse déjà connue ne
    * change rien et ne renvoie aucune information (le visiteur voit toujours
@@ -81,23 +109,30 @@ export function createTrainingService(deps: TrainingDeps) {
   }): Promise<{ created: boolean }> {
     const source = input.source ?? 'email'
     const origine = input.origine ?? 'training'
-    // La colonne `origine` (sql/30) n'est écrite que pour un outil : la demande Training reste
-    // possible tant que la migration n'est pas appliquée.
-    const rows = origine === 'training'
-      ? await query<{ id: number }>(
-        `INSERT INTO training_users (email, source, facebook_id, role, faculte, status)
-         VALUES ($1, $2, $3, $4, $5, 'pending')
-         ON CONFLICT DO NOTHING
-         RETURNING id`,
-        [input.email, source, input.facebookId ?? null, input.role, input.faculte],
-      )
-      : await query<{ id: number }>(
-        `INSERT INTO training_users (email, source, facebook_id, role, faculte, status, origine)
-         VALUES ($1, $2, $3, $4, $5, 'pending', $6)
-         ON CONFLICT DO NOTHING
-         RETURNING id`,
-        [input.email, source, input.facebookId ?? null, input.role, input.faculte, origine],
-      )
+
+    // Adresse déjà validée : pas de nouvelle demande, on renvoie simplement un lien de connexion.
+    const existing = (await query<TrainingUserRow>('SELECT * FROM training_users WHERE lower(email) = lower($1)', [input.email]))[0]
+    if (existing?.status === 'approved') {
+      await logEvent(existing.id, 'login_link_sent', { reason: 'already_approved' })
+      await sendAccessEmail(existing, origine)
+      return { created: false }
+    }
+
+    // Équipe / compte admin : accès accordé d'office. Le lien part à l'adresse elle-même,
+    // seule la personne qui la contrôle peut donc l'utiliser.
+    if (deps.isTrustedEmail && (await deps.isTrustedEmail(input.email).catch(() => false))) {
+      if (existing) {
+        await setStatus(existing.id, 'approved')
+        return { created: false }
+      }
+      const created = await insertUser(input, source, origine, 'approved')
+      if (created.length === 0) return { created: false }
+      await logEvent(created[0].id, 'auto_approved', { reason: 'trusted_email', origine })
+      await sendAccessEmail({ id: created[0].id, email: input.email }, origine)
+      return { created: true }
+    }
+
+    const rows = await insertUser(input, source, origine, 'pending')
     if (rows.length === 0) return { created: false }
 
     await logEvent(rows[0].id, 'signup_requested', { source, role: input.role, origine })
@@ -243,6 +278,32 @@ export function createTrainingService(deps: TrainingDeps) {
     return { user, mailSent: await sendAccessEmail(user, before.origine ?? 'training') }
   }
 
+  /**
+   * Session directe pour un membre de l'équipe déjà authentifié côté admin :
+   * crée (ou valide) son compte Training puis ouvre une session, sans demande ni e-mail.
+   */
+  async function sessionForTrusted(email: string): Promise<{ sessionToken: string; user: TrainingUserRow }> {
+    const clean = email.trim().toLowerCase()
+    let user = (await query<TrainingUserRow>('SELECT * FROM training_users WHERE lower(email) = $1', [clean]))[0]
+    if (!user) {
+      const rows = await query<TrainingUserRow>(
+        `INSERT INTO training_users (email, source, role, status, approved_at)
+         VALUES ($1, 'email', 'enseignant', 'approved', NOW())
+         ON CONFLICT DO NOTHING
+         RETURNING id, email, source, facebook_id, role, faculte, status, created_at, approved_at, last_login_at`,
+        [clean],
+      )
+      user = rows[0] ?? (await query<TrainingUserRow>('SELECT * FROM training_users WHERE lower(email) = $1', [clean]))[0]
+      await logEvent(user.id, 'auto_approved', { reason: 'admin_session' })
+    } else if (user.status !== 'approved') {
+      await query("UPDATE training_users SET status = 'approved', status_changed_at = NOW(), approved_at = NOW() WHERE id = $1", [user.id])
+      await logEvent(user.id, 'auto_approved', { reason: 'admin_session' })
+      user = { ...user, status: 'approved' }
+    }
+    await query('UPDATE training_users SET last_login_at = $2 WHERE id = $1', [user.id, now().toISOString()])
+    return { sessionToken: await createSession(user.id), user }
+  }
+
   /** Renvoie un lien à un utilisateur déjà validé (e-mail non reçu). */
   async function resendAccess(id: number): Promise<{ user: TrainingUserRow; mailSent: boolean } | null> {
     const user = (await query<TrainingUserRow>('SELECT * FROM training_users WHERE id = $1', [id]))[0]
@@ -365,7 +426,7 @@ export function createTrainingService(deps: TrainingDeps) {
     return { unvalidated: unvalidated.length, inactive: inactive.length, events: events.length }
   }
 
-  return { deleteUser, purgeRetention, requestLoginLink, consumeLoginToken, createSession, getSessionUser, destroySession, purgeExpired, submitRequest, listRequests, counts, setStatus, resendAccess, exportRequestsCsv, issueLoginToken }
+  return { sessionForTrusted, deleteUser, purgeRetention, requestLoginLink, consumeLoginToken, createSession, getSessionUser, destroySession, purgeExpired, submitRequest, listRequests, counts, setStatus, resendAccess, exportRequestsCsv, issueLoginToken }
 }
 
 export type TrainingService = ReturnType<typeof createTrainingService>
