@@ -1,4 +1,8 @@
 import type { Metadata } from 'next'
+import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
+import { getAdminSessionInfo } from '@/lib/admin-auth'
+import { getTrainingUser } from '@/lib/training/auth'
 import { TrainingLanding } from '@/components/training/TrainingLanding'
 import './training.css'
 
@@ -16,7 +20,14 @@ export const metadata: Metadata = {
   },
 }
 
-export default function TrainingPage({ searchParams }: { searchParams: { fb?: string | string[] } }) {
+export const dynamic = 'force-dynamic'
+
+export default async function TrainingPage({ searchParams }: { searchParams: { fb?: string | string[]; admin?: string } }) {
+  // Déjà connecté (compte validé) : inutile de redemander l'accès.
+  if (await getTrainingUser().catch(() => null)) redirect('/training/espace')
+  // Administrateur connecté : accès direct, sauf si on vient d'en être renvoyé (admin=0).
+  const adminCookie = (await cookies()).get('admin_session')?.value
+  if (searchParams.admin !== '0' && getAdminSessionInfo(adminCookie)?.email) redirect('/api/training/auth/admin')
   const fb = Array.isArray(searchParams.fb) ? searchParams.fb[0] : searchParams.fb
   // Le bouton Facebook n'est actif que lorsque l'application Meta est configurée (phase 3).
   const facebookEnabled = Boolean(process.env.TRAINING_FACEBOOK_APP_ID && process.env.TRAINING_FACEBOOK_APP_SECRET)
