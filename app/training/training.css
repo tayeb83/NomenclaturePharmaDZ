@@ -284,3 +284,15 @@ a.tr-btn { text-decoration: none; }
 .tr-account { margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--slate-200); }
 .tr-bar { display: inline-block; width: 120px; height: 8px; background: var(--slate-200); border-radius: 999px; overflow: hidden; vertical-align: middle; }
 .tr-bar span { display: block; height: 100%; background: var(--red); }
+
+/* ── v2 : « Comment le retrouver sur le site » et page Méthode ─────────────── */
+.tr-tools-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 10px; }
+.tr-tools-list > li { border: 1px solid var(--slate-200); border-radius: var(--radius); padding: 12px 14px; background: #fff; }
+.tr-tools-list ol { margin: 6px 0 8px; padding-inline-start: 1.25rem; }
+.tr-method-group { margin-top: 32px; }
+.tr-method-card { border: 1px solid var(--slate-200); border-radius: var(--radius); padding: 14px 16px; margin-top: 12px; background: #fff; box-shadow: var(--shadow); }
+.tr-method-card h3 { margin: 0 0 2px; }
+.tr-method-card ol { margin: 6px 0 10px; padding-inline-start: 1.25rem; }
+.tr-method-example { margin-top: 10px; padding: 10px 12px; border-radius: 8px; background: var(--slate-100, #f1f5f9); }
+.tr-method-example ul { list-style: upper-alpha; margin: 6px 0; padding-inline-start: 1.6rem; }
+.tr-method-example summary { cursor: pointer; font-weight: 700; margin-top: 6px; }

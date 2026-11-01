@@ -8,7 +8,7 @@ import { cleanFreeText, isRole, MAX_FACULTE_LENGTH } from '@/lib/training/valida
 export const dynamic = 'force-dynamic'
 
 /**
- * Dernière étape de la demande par Facebook : le profil (étudiant, enseignant,
+ * Dernière étape de la demande par Facebook : le profil (étudiant,
  * pharmacien) que Facebook ne fournit pas. L'identifiant et l'e-mail viennent
  * UNIQUEMENT du cookie signé posé au retour de Facebook, jamais du corps.
  */

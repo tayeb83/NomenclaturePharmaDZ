@@ -65,6 +65,47 @@ ATC3_LABELS = {
     "N05B": "Anxiolytiques",
 }
 
+# Interactions FICTIVES (jeu de test) : (A, B, niveau). Écrites dans les deux sens, comme dans le thésaurus.
+# Aucune valeur n'est une donnée de référence : ne jamais s'en servir pour autre chose que les tests.
+INTERACTIONS = [
+    ("SIMVASTATINE", "CLARITHROMYCINE", "contre_indication"), ("SIMVASTATINE", "FLUCONAZOLE", "contre_indication"),
+    ("ESCITALOPRAM", "SERTRALINE", "contre_indication"), ("ALPRAZOLAM", "FLUCONAZOLE", "contre_indication"),
+    ("ATORVASTATINE", "CLARITHROMYCINE", "precaution_emploi"), ("AMLODIPINE", "SIMVASTATINE", "precaution_emploi"),
+    ("METFORMINE", "CIPROFLOXACINE", "precaution_emploi"), ("CIPROFLOXACINE", "PREDNISOLONE", "precaution_emploi"),
+    ("LEVOTHYROXINE", "OMEPRAZOLE", "precaution_emploi"),
+    ("KETOPROFENE", "DICLOFENAC", "deconseillee"), ("IBUPROFENE", "DICLOFENAC", "deconseillee"),
+    ("RAMIPRIL", "LOSARTAN", "deconseillee"), ("ENALAPRIL", "VALSARTAN", "deconseillee"),
+    ("BISOPROLOL", "ATENOLOL", "deconseillee"), ("GLIMEPIRIDE", "FLUCONAZOLE", "deconseillee"),
+    ("GLICLAZIDE", "FLUCONAZOLE", "deconseillee"), ("AZITHROMYCINE", "CLARITHROMYCINE", "deconseillee"),
+    ("ALPRAZOLAM", "BROMAZEPAM", "a_prendre_en_compte"), ("OFLOXACINE", "PREDNISOLONE", "a_prendre_en_compte"),
+    # Piège volontaire : une ligne directe « déconseillée » que la ligne de CLASSE contredit (« précaution ») ⇒ à écarter.
+    ("DICLOFENAC", "RAMIPRIL", "deconseillee"),
+]
+INTERACTION_CLASSE = "ANTI-INFLAMMATOIRES NON STEROIDIENS"
+INTERACTION_CLASSE_MEMBRES = ["IBUPROFENE", "KETOPROFENE", "DICLOFENAC"]
+INTERACTION_CLASSE_LIGNE = (INTERACTION_CLASSE, "RAMIPRIL", "precaution_emploi")
+
+
+def interactions_synthetiques() -> tuple[list[dict], list[dict]]:
+    def ligne(a: str, b: str, niveau: str, classe: bool = False) -> dict:
+        return {
+            "substance": a, "substance_key": a.lower(), "partenaire": b, "partenaire_key": b.lower(),
+            "partenaire_est_classe": classe, "niveau": niveau, "niveaux": None,
+            "risque_fr": "Texte fictif de test : majoration du risque (donnée SYNTHÉTIQUE).",
+            "conduite_fr": "Texte fictif de test : conduite à tenir (donnée SYNTHÉTIQUE).",
+            "page": 12, "source_version": "Thesaurus SYNTHETIQUE (test)",
+        }
+    rows: list[dict] = []
+    for a, b, n in INTERACTIONS:
+        rows.append(ligne(a, b, n))
+        if not (a, b) == ("DICLOFENAC", "RAMIPRIL"):
+            rows.append(ligne(b, a, n))
+    rows.append(ligne(*INTERACTION_CLASSE_LIGNE))
+    classes = [{"classe": INTERACTION_CLASSE, "classe_key": INTERACTION_CLASSE.lower(), "membre": m, "membre_key": m.lower(), "origine": "liste"}
+               for m in INTERACTION_CLASSE_MEMBRES]
+    return rows, classes
+
+
 FORMES = ["COMPRIME", "COMPRIME PELLICULE", "GELULE", "SIROP", "SOLUTION INJECTABLE", "POUDRE POUR SUSPENSION BUVABLE", "SUPPOSITOIRE", "CREME"]
 DOSAGES = ["5 MG", "10 MG", "20 MG", "40 MG", "50 MG", "100 MG", "200 MG", "250 MG", "500 MG", "1 G", "125 MG/5 ML", "250 MG/5 ML"]
 LABOS = [
@@ -136,6 +177,7 @@ def build(seed: int = 7) -> dict:
         "atc_codes": {c[:4]: {"code": c[:4], "niveau": 3, "label_fr": ATC3_LABELS[c[:4]], "label_en": None}
                       for _d, c in DCIS},
         "dci_atc": {d: c for d, c in DCIS},
+        **dict(zip(("interactions", "interaction_classes"), interactions_synthetiques())),
     }
 
 

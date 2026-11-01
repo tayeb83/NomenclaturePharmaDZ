@@ -192,7 +192,7 @@ const sections: { id?: string; title: string; content: React.ReactNode }[] = [
 
         <h3>Données traitées</h3>
         <ul>
-          <li>votre adresse e-mail, votre profil (étudiant(e), enseignant(e) ou pharmacien(ne)) et, si vous le
+          <li>votre adresse e-mail, votre profil (étudiant(e) ou pharmacien(ne)) et, si vous le
             souhaitez, votre faculté ;</li>
           <li>si vous choisissez « Continuer avec Facebook » : l’identifiant Facebook et l’adresse e-mail que
             Facebook nous transmet — rien d’autre (ni liste d’amis, ni publications) ;</li>

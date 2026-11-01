@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 import { getCopy } from '@/lib/training/copy'
+import { THEME_KEYS, typesForTheme } from '@/lib/training/themes'
 import { LogoutButton } from './LogoutButton'
 
 export type SpaceAttempt = { id: number; name: string; mode: 'tuteur' | 'examen'; total: number; finished: boolean; score: number | null; started_at: string }
@@ -15,7 +16,7 @@ export function SpaceScreen({
   email, role, available, attempts, mockCodes, flashCount,
 }: {
   email: string
-  role: 'etudiant' | 'enseignant' | 'pharmacien'
+  role: string
   available: number
   attempts: SpaceAttempt[]
   mockCodes: string[]
@@ -27,6 +28,7 @@ export function SpaceScreen({
   const router = useRouter()
   const uid = useId()
   const [mode, setMode] = useState<'tuteur' | 'examen'>('tuteur')
+  const [theme, setTheme] = useState<string>('all')
   const [count, setCount] = useState(Math.min(20, Math.max(available, 1)))
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -67,11 +69,12 @@ export function SpaceScreen({
   return (
     <div className="tr-wrap tr-narrow">
       <h1 className="tr-wait-title">{c.space.title}</h1>
-      <p>{c.space.welcome} <strong dir="ltr">{email}</strong> ({c.form.roles[role]})</p>
+      <p>{c.space.welcome} <strong dir="ltr">{email}</strong> ({c.form.roles[role] ?? role})</p>
 
       <div className="tr-links-row">
         <Link className="tr-btn tr-btn-outline" href="/training/quiz">{c.spaceLinks.quiz}</Link>
         <Link className="tr-btn tr-btn-outline" href="/training/flashcards">{c.spaceLinks.flash} ({flashCount})</Link>
+        <Link className="tr-btn tr-btn-outline" href="/training/methode">{c.spaceLinks.method}</Link>
       </div>
 
       {available === 0 ? (
@@ -94,12 +97,19 @@ export function SpaceScreen({
               </div>
             </fieldset>
             <div className="tr-field">
+              <label htmlFor={`${uid}-theme`}>{c.themes.label}</label>
+              <select id={`${uid}-theme`} className="tr-select" value={theme} onChange={e => setTheme(e.target.value)}>
+                <option value="all">{c.themes.all}</option>
+                {THEME_KEYS.map(k => <option key={k} value={k}>{c.themes[k]}</option>)}
+              </select>
+            </div>
+            <div className="tr-field">
               <label htmlFor={`${uid}-n`}>{t.count}</label>
               <select id={`${uid}-n`} className="tr-select" value={count} onChange={e => setCount(Number(e.target.value))}>
                 {counts.map(n => <option key={n} value={n}>{n}</option>)}
               </select>
             </div>
-            <button type="button" className="tr-btn tr-btn-primary" disabled={!!busy} onClick={() => start({ mode, count }, 'free')}>
+            <button type="button" className="tr-btn tr-btn-primary" disabled={!!busy} onClick={() => start({ mode, count, types: typesForTheme(theme) }, 'free')}>
               {busy === 'free' ? t.beginning : t.begin}
             </button>
           </section>

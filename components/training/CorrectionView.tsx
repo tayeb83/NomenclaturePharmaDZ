@@ -6,7 +6,8 @@ import { useLanguage } from '@/components/i18n/LanguageProvider'
 import { getCopy } from '@/lib/training/copy'
 import { CheckIcon, CrossIcon, DashIcon } from './icons'
 
-type Explanation = { contexte: string; rationales: string[]; points_cles: string[]; references: { label: string; url?: string }[] }
+export type Outil = { outil: string; url: string; etapes: string[] }
+type Explanation = { contexte: string; rationales: string[]; points_cles: string[]; references: { label: string; url?: string }[]; outils?: Outil[] }
 export type CorrectionData = {
   attempt: { id: number; mode: 'tuteur' | 'examen'; total: number; finished: boolean; position: number }
   question: { id: number; type: string; stem: string; options: string[]; atc_code: string | null }
@@ -84,6 +85,22 @@ export function CorrectionView({ data }: { data: CorrectionData }) {
               )
             })}
           </ol>
+
+          {explanation.outils && explanation.outils.length > 0 && (
+            <section className="tr-section tr-tools" aria-labelledby="tr-tools">
+              <h2 id="tr-tools">{c.tools.title}</h2>
+              <p className="tr-muted">{c.tools.intro}</p>
+              <ul className="tr-tools-list">
+                {explanation.outils.map((o, i) => (
+                  <li key={i}>
+                    <strong>{o.outil}</strong>
+                    <ol>{o.etapes.map((e, j) => <li key={j}>{e}</li>)}</ol>
+                    <Link className="tr-link" href={o.url}>{c.tools.open} →</Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           <section className="tr-section" aria-labelledby="tr-ctx">
             <h2 id="tr-ctx">{t.context}</h2>

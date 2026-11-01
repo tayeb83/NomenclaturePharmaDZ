@@ -1,6 +1,6 @@
 # Dzair-Pharma Training — documentation du module
 
-Module d'entraînement aux QCM (étudiants, enseignants, pharmaciens) construit à
+Module d'entraînement aux QCM (étudiants, pharmaciens) construit à
 partir de la nomenclature. Il est **isolé** du reste du site : tables
 `training_*`, routes `/training/*` et `/admin/training/*`, aucune table
 existante modifiée.
@@ -41,7 +41,7 @@ TEST_DATABASE_URL=postgresql://user:pass@localhost:5432/dwa_test \
 
 ### Règles de génération
 
-* Sept types : DCI à partir de la marque, référence/générique, forme et
+* Sept types de base (voir aussi la phase 6 pour les six types ajoutés) : DCI à partir de la marque, référence/générique, forme et
   dosage, laboratoire et pays, motif de retrait, produit retiré, sous-groupe ATC
   (niveau 3, seulement si `atc_codes` et `dci_atc_mapping` existent).
 * 5 propositions, une seule bonne réponse. Distracteurs classés par
@@ -188,7 +188,7 @@ directement et ne prouve pas qu'un compte suit la page ; la validation reste man
 2. Retour → `/api/training/auth/facebook/callback` : état vérifié, `code` échangé
    côté serveur (le secret ne quitte jamais le serveur), lecture de `id` et `email`.
 3. L'identifiant et l'e-mail sont placés dans un cookie signé de 10 minutes ;
-   `/training/facebook` demande le profil (étudiant / enseignant / pharmacien) et la
+   `/training/facebook` demande le profil (étudiant / pharmacien) et la
    faculté, puis `POST /api/training/facebook/complete` crée la demande. L'e-mail et
    l'identifiant ne viennent **jamais** du corps de la requête, seulement du cookie signé.
 4. Pas d'e-mail renvoyé par Facebook (compte créé avec un numéro, permission refusée) :
@@ -385,3 +385,59 @@ SITE_URL=http://localhost:3000 BASELINE_URL=http://localhost:3001 REGRESSION_QUE
 * Quiz et flashcards nécessitent une connexion (pas de mode hors ligne) ; la révision n'a pas de répétition espacée.
 * Les pages d'administration existantes sont rendues dans un `<html>` imbriqué (layout admin) : avertissement
   d'hydratation en développement, antérieur au module.
+
+
+## Phase 6 — questions « outils du site » : interactions, comparaison, codage ATC, substitution
+
+Migration à appliquer : `psql "$DATABASE_URL" -f sql/34_training_v2.sql` (après 23 à 25 ; ne change que la contrainte
+sur `training_questions.type`). Puis `python scripts/generate_questions.py sync --full`.
+
+### Principe
+
+**Toute question (ancienne ou nouvelle) se résout avec les outils du site** : recherche (nom, code, DCI, laboratoire),
+fiche du médicament, comparateur de deux médicaments (interactions ANSM), classes ATC, substitution, produits retirés.
+Chaque question porte `explanation.outils` — des gabarits de navigation (outil, lien, étapes) affichés dans la correction
+sous « Comment le retrouver sur le site ». Ils n'ajoutent aucune connaissance médicale.
+
+* `outils` **n'entre pas dans `content_hash`** : un lien du site qui évolue ne rend pas « à relire » une question publiée.
+  `sync` met à jour seulement `explanation.outils` des questions dont le contenu n'a pas changé (`outils_updated`).
+* `/training/methode` : pour chaque type, l'outil, la marche à suivre et **un exemple réel** (la 1ʳᵉ question publiée du
+  type, correction repliée). Sans question publiée du type, seule la marche à suivre est affichée.
+
+### Six nouveaux types
+
+| Type | Question | Outil du site |
+|---|---|---|
+| `interaction_niveau` | Niveau de l'association X + Y (Thesaurus ANSM) : 4 niveaux + « aucune interaction répertoriée » | Comparateur de deux médicaments / fiche, rubrique Interactions |
+| `interaction_contre_indication` | Avec laquelle de ces substances X est-il contre-indiqué ? | idem |
+| `compare_specialites` | Comparer deux spécialités : laquelle des 5 affirmations (DCI, forme, dosage, laboratoire, ATC) est exacte ? | Comparateur, recherche, page DCI |
+| `substitution` | Quelle spécialité a la même DCI, forme et dosage que X ? | `/substitution/<dci>` |
+| `atc_code` | Code ATC complet (niveau 5) d'une DCI | Page DCI, classes ATC |
+| `atc_inverse` | Quelle DCI est classée dans le sous-groupe ATC `N02B` ? | `/classes-therapeutiques/<code>` |
+
+Règles de prudence (une seule bonne réponse, jamais d'ambiguïté) :
+* **Interactions** : seulement les DCI simples dont le nom est tel quel un titre du thésaurus ; une association n'est posée que
+  si une ligne directe existe **et** que toutes les lignes applicables (sens inverse, classes) donnent le même niveau unique
+  (une ligne composée « CI - ASDEC » est écartée). Les distracteurs d'une contre-indication sont des substances connues du
+  thésaurus pour lesquelles aucune ligne applicable n'est une contre-indication. Si `interactions_ansm` n'existe pas, ces types
+  sont simplement sautés.
+* **Comparaison** : spécialités à une seule ligne dans la nomenclature, profil complet ; chaque question compare les 5 mêmes attributs,
+  une affirmation seulement est vraie (la phrase « même » / « différent » est choisie en conséquence).
+* **Contrôle qualité** (`verify_question`) : relit les lignes brutes du thésaurus et de la nomenclature, sans l'index de génération ;
+  une question à zéro ou deux bonnes réponses n'est jamais écrite.
+
+### Interface
+
+* Espace : choix d'un **thème** pour la série (nomenclature, interactions, comparaison/substitution, classification/codage ATC,
+  retraits) et lien vers la méthode.
+* Tirage **équilibré entre types** (`balancedPick`) pour les séries et les examens blancs : un type abondant ne noie plus les autres.
+* **Profil « enseignant » supprimé** du formulaire, de Facebook, de la confidentialité et des textes. La base accepte encore la valeur
+  pour d'éventuels comptes existants (aucune donnée n'est modifiée) ; les comptes admin ouverts automatiquement sont créés « pharmacien ».
+
+### Limites connues
+
+* Le thésaurus raisonne par substance : les associations de plusieurs substances (« A + B ») ne donnent pas de questions d'interaction.
+* « Codage en DC » a été compris comme le **codage ATC d'une DCI** (code complet, sous-groupe, DCI d'un sous-groupe) ; à ajuster si un
+  autre codage était visé.
+* Traductions arabes des nouveaux textes (`copy.ts`) : à faire relire (`AR_VALIDATED = false`).
+* Test e2e visuel des nouvelles pages non fait ici (pas de serveur Next avec la base de production) : typage `tsc` et tests unitaires/PostgreSQL seulement.
