@@ -66,7 +66,8 @@ export default async function SpecialitePage({ params }: { params: { slug: strin
           ) : (
             <ul className="spec-items">
               {s.items.map(it => {
-                const name = lang === 'ar' && it.libelle_ar?.trim() ? it.libelle_ar : it.kind === 'atc' ? it.libelle_fr : it.valeur
+                const arLabel = lang === 'ar' ? (it.libelle_ar?.trim() || (it.kind === 'atc' ? it.atc_label_ar : null)) : null
+                const name = arLabel || (it.kind === 'atc' ? it.libelle_fr : it.valeur)
                 return (
                   <li key={it.id}>
                     <Link href={itemHref(it)} className="spec-item">
@@ -74,7 +75,7 @@ export default async function SpecialitePage({ params }: { params: { slug: strin
                         {it.kind === 'atc' ? it.valeur : 'DCI'}
                       </span>
                       <span className="spec-item-main">
-                        <span className="spec-item-name" dir={lang === 'ar' && it.libelle_ar ? 'rtl' : undefined}>{name}</span>
+                        <span className="spec-item-name" dir={arLabel ? 'rtl' : undefined}>{name}</span>
                         <span className="spec-item-count">
                           {it.kind === 'atc' && <>{n(it.nb_dci)} {pickLang(lang, { fr: it.nb_dci > 1 ? 'substances' : 'substance', ar: 'مادة فعالة' })} · </>}
                           {n(it.nb_produits)} {pickLang(lang, { fr: 'fiches', ar: 'بطاقة' })}
