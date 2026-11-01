@@ -36,7 +36,89 @@ export function checkAdminAuth(req: NextRequest): boolean {
   return isAdminSessionValid(cookie)
 }
 
+export type AdminRole = 'owner' | 'admin' | 'editor'
+
+export type AdminSessionInfo = {
+  role: AdminRole
+  email: string
+  name: string
+  /** Absent pour la session historique (mot de passe unique ADMIN_PASSWORD). */
+  accountId?: number
+}
+
+function b64url(input: string): string {
+  return Buffer.from(input, 'utf8').toString('base64url')
+}
+
+/** Jeton de session d'un compte nominatif : `v2.<charge utile>.<signature>`. */
+export function createAccountSessionToken(account: {
+  id: number
+  email: string
+  name: string
+  role: 'admin' | 'editor'
+}): string | null {
+  const secret = getSessionSecret()
+  if (!secret) return null
+  const body = b64url(
+    JSON.stringify({
+      sub: account.id,
+      email: account.email,
+      name: account.name,
+      role: account.role,
+      exp: Math.floor(Date.now() / 1000) + SESSION_MAX_AGE_SECONDS,
+      n: crypto.randomBytes(8).toString('hex'),
+    }),
+  )
+  return `v2.${body}.${signPayload(`v2.${body}`, secret)}`
+}
+
+function parseAccountSession(cookie: string): AdminSessionInfo | null {
+  const secret = getSessionSecret()
+  if (!secret) return null
+  const [prefix, body, signature] = cookie.split('.')
+  if (prefix !== 'v2' || !body || !signature) return null
+  if (!safeEqual(signature, signPayload(`v2.${body}`, secret))) return null
+  try {
+    const data = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'))
+    if (typeof data.exp !== 'number' || data.exp < Math.floor(Date.now() / 1000)) return null
+    if (data.role !== 'admin' && data.role !== 'editor') return null
+    return { role: data.role, email: String(data.email), name: String(data.name || ''), accountId: Number(data.sub) }
+  } catch {
+    return null
+  }
+}
+
+/** Identité et rôle de la session, ou null si elle est absente ou invalide. */
+export function getAdminSessionInfo(sessionCookie: string | undefined): AdminSessionInfo | null {
+  if (!sessionCookie) return null
+  if (sessionCookie.startsWith('v2.')) return parseAccountSession(sessionCookie)
+  if (!isLegacySessionValid(sessionCookie)) return null
+  return { role: 'owner', email: getOwnerEmail() ?? '', name: 'Propriétaire' }
+}
+
+export function getAdminSession(req: NextRequest): AdminSessionInfo | null {
+  return getAdminSessionInfo(req.cookies.get('admin_session')?.value)
+}
+
+/** Vrai si la session existe et que son rôle fait partie de `roles`. */
+export function hasAdminRole(req: NextRequest, roles: AdminRole[]): boolean {
+  const info = getAdminSession(req)
+  return !!info && roles.includes(info.role)
+}
+
+/** Adresse du propriétaire : destinataire des demandes d'approbation. */
+export function getOwnerEmail(): string | null {
+  const explicit = process.env.ADMIN_OWNER_EMAIL?.trim()
+  if (explicit) return explicit.toLowerCase()
+  const first = (process.env.ADMIN_EMAILS || '').split(',')[0]?.trim()
+  return first ? first.toLowerCase() : null
+}
+
 export function isAdminSessionValid(sessionCookie: string | undefined): boolean {
+  return getAdminSessionInfo(sessionCookie) !== null
+}
+
+function isLegacySessionValid(sessionCookie: string | undefined): boolean {
   if (!sessionCookie) return false
 
   const adminPwd = process.env.ADMIN_PASSWORD

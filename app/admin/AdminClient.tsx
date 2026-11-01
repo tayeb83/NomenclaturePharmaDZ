@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import Link from 'next/link'
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -65,226 +64,37 @@ type Version = {
   created_at: string
 }
 
-// ─── Composant principal ──────────────────────────────────────
+// ─── Section « Import & archive » ─────────────────────────────
 
-export default function AdminClient({ isAuthenticated }: { isAuthenticated: boolean }) {
-  const [authed, setAuthed] = useState(isAuthenticated)
+type ImportTab = 'upload' | 'archive' | 'analytics'
 
-  if (!authed) return <LoginForm onLogin={() => setAuthed(true)} />
-  return <AdminDashboard onLogout={() => setAuthed(false)} />
-}
-
-// ─── Formulaire de connexion ──────────────────────────────────
-
-function LoginForm({ onLogin }: { onLogin: () => void }) {
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-    try {
-      const res = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
-      })
-      const data = await res.json()
-      if (res.ok) {
-        onLogin()
-      } else {
-        setError(data.error || 'Erreur de connexion')
-      }
-    } catch {
-      setError('Erreur réseau')
-    } finally {
-      setLoading(false)
-    }
-  }
+export default function ImportClient({ initialTab = 'upload' }: { initialTab?: ImportTab }) {
+  const [tab, setTab] = useState<ImportTab>(initialTab)
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a' }}>
-      <div style={{ width: 380, background: 'white', borderRadius: 16, padding: 40, boxShadow: '0 20px 60px rgba(0,0,0,0.4)' }}>
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>💊</div>
-          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 800, color: '#0f172a', margin: 0 }}>
-            DwaDZ
-          </h1>
-          <p style={{ color: '#64748b', fontSize: 13, marginTop: 6 }}>Administration — Accès restreint</p>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>
-            Mot de passe administrateur
-          </label>
-          <input
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="••••••••••••"
-            required
-            autoFocus
-            style={{
-              width: '100%', padding: '10px 14px', borderRadius: 8,
-              border: error ? '2px solid #dc2626' : '2px solid #e2e8f0',
-              fontSize: 14, outline: 'none', marginBottom: 8,
-              boxSizing: 'border-box',
-            }}
-          />
-          {error && (
-            <p style={{ color: '#dc2626', fontSize: 12, marginBottom: 12 }}>{error}</p>
-          )}
-          <button
-            type="submit"
-            disabled={loading || !password}
-            style={{
-              width: '100%', padding: '11px', borderRadius: 8,
-              background: loading ? '#94a3b8' : '#0284c7',
-              color: 'white', border: 'none', fontSize: 14, fontWeight: 700,
-              cursor: loading ? 'not-allowed' : 'pointer', marginTop: 8,
-            }}
-          >
-            {loading ? 'Connexion…' : 'Se connecter'}
-          </button>
-        </form>
-
-        <div style={{ textAlign: 'center', marginTop: 20 }}>
-          <Link href="/" style={{ color: '#64748b', fontSize: 12, textDecoration: 'none' }}>
-            ← Retour au site
-          </Link>
+    <div className="adm-page">
+      <div className="adm-head">
+        <div>
+          <h1>Import &amp; archive</h1>
+          <p>Importez la nomenclature MIPH et la liste CSV des médicaments critiques, consultez les versions et les statistiques.</p>
         </div>
       </div>
-    </div>
-  )
-}
 
-// ─── Dashboard admin ──────────────────────────────────────────
-
-function AdminDashboard({ onLogout }: { onLogout: () => void }) {
-  const [tab, setTab] = useState<'upload' | 'archive' | 'analytics'>('upload')
-
-  async function handleLogout() {
-    await fetch('/api/admin/logout', { method: 'POST' })
-    onLogout()
-  }
-
-  return (
-    <div style={{ minHeight: '100vh', background: '#f1f5f9' }}>
-      {/* Header */}
-      <header style={{
-        background: '#0f172a', color: 'white',
-        padding: '0 32px', height: 60,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        position: 'sticky', top: 0, zIndex: 100,
-        boxShadow: '0 2px 20px rgba(0,0,0,0.3)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{
-            width: 34, height: 34, borderRadius: 8,
-            background: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
-          }}>💊</div>
-          <div>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 800 }}>
-              DwaDZ
-            </div>
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>
-              ADMINISTRATION
-            </div>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <Link href="/admin/garde" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
-            🏥 Géocodage garde
-          </Link>
-          <Link href="/admin/garde/export" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
-            🖨️ Export imprimable
-          </Link>
-          <Link href="/admin/garde/publication" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
-            🇩🇿 Publier les gardes
-          </Link>
-          <Link href="/admin/ppa" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
-            💰 PPA
-          </Link>
-          <Link href="/admin/acces" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
-            📊 NAQESS
-          </Link>
-          <Link href="/admin/training" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
-            Training (accès QCM)
-          </Link>
-          <Link href="/admin/training/questions" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
-            Training (relecture QCM)
-          </Link>
-          <Link href="/admin/specialites" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
-            🗂️ Spécialités
-          </Link>
-          <Link href="/admin/monographies" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
-            🧬 Monographies DCI
-          </Link>
-          <Link href="/admin/rcp" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
-            📄 RCP (ANPP)
-          </Link>
-          <Link href="/admin/social" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
-            📣 Publications Facebook
-          </Link>
-          <Link href="/" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, textDecoration: 'none' }}>
-            ← Site public
-          </Link>
-          <button
-            onClick={handleLogout}
-            style={{
-              background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
-              color: 'white', padding: '6px 14px', borderRadius: 7,
-              fontSize: 12, fontWeight: 600, cursor: 'pointer',
-            }}
-          >
-            Déconnexion
+      <div className="adm-subtabs">
+        {([
+          { id: 'upload', label: 'Importer un fichier' },
+          { id: 'archive', label: 'Archive des versions' },
+          { id: 'analytics', label: 'Analytics' },
+        ] as const).map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)} className={tab === t.id ? 'on' : ''}>
+            {t.label}
           </button>
-        </div>
-      </header>
-
-      {/* Content */}
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px' }}>
-        <div style={{ marginBottom: 28 }}>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0f172a', fontFamily: "'Playfair Display', serif", margin: 0 }}>
-            Gestion de la Nomenclature
-          </h1>
-          <p style={{ color: '#64748b', fontSize: 14, marginTop: 6 }}>
-            Importez la nomenclature MIPH et la liste CSV des médicaments critiques directement depuis Vercel
-          </p>
-        </div>
-
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: 4, marginBottom: 24, borderBottom: '2px solid #e2e8f0', paddingBottom: 0 }}>
-          {[
-            { id: 'upload', label: '📤 Importer un fichier' },
-            { id: 'archive', label: '🗂️ Archive des versions' },
-            { id: 'analytics', label: '📊 Analytics' },
-          ].map(t => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id as any)}
-              style={{
-                padding: '10px 20px', fontSize: 14, fontWeight: 600,
-                border: 'none', background: 'none', cursor: 'pointer',
-                color: tab === t.id ? '#0284c7' : '#64748b',
-                borderBottom: tab === t.id ? '2px solid #0284c7' : '2px solid transparent',
-                marginBottom: -2,
-                transition: 'all .15s',
-              }}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        {tab === 'upload' && <UploadTab />}
-        {tab === 'archive' && <ArchiveTab />}
-        {tab === 'analytics' && <AnalyticsTab />}
+        ))}
       </div>
+
+      {tab === 'upload' && <UploadTab />}
+      {tab === 'archive' && <ArchiveTab />}
+      {tab === 'analytics' && <AnalyticsTab />}
     </div>
   )
 }

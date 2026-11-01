@@ -1,6 +1,7 @@
 import crypto from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminSessionToken, SESSION_MAX_AGE_SECONDS } from '@/lib/admin-auth'
+import { createAccountSessionToken, createAdminSessionToken, getOwnerEmail, SESSION_MAX_AGE_SECONDS } from '@/lib/admin-auth'
+import { authenticate } from '@/lib/admin-accounts'
 import { getClientIp, rateLimit } from '@/lib/rate-limit'
 
 // Anti brute-force : 5 tentatives par IP puis blocage 15 minutes
@@ -24,20 +25,34 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { password } = await req.json()
+    const body = await req.json()
+    const password = typeof body.password === 'string' ? body.password : ''
+    const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
+    if (!password) return NextResponse.json({ error: 'Identifiants incorrects' }, { status: 401 })
 
+    // 1. Mot de passe unique historique : réservé au propriétaire (e-mail vide ou égal au sien).
     const adminPwd = process.env.ADMIN_PASSWORD
-    if (!adminPwd) {
-      return NextResponse.json({ error: 'ADMIN_PASSWORD non configuré sur le serveur' }, { status: 500 })
+    const ownerEmail = getOwnerEmail()
+    let sessionToken: string | null = null
+    if (adminPwd && (!email || email === ownerEmail) && passwordsMatch(password, adminPwd)) {
+      sessionToken = createAdminSessionToken(adminPwd)
+    } else if (email) {
+      // 2. Compte nominatif.
+      try {
+        const account = await authenticate(email, password)
+        if (account && (account.role === 'admin' || account.role === 'editor')) {
+          sessionToken = createAccountSessionToken(account)
+        }
+      } catch (err) {
+        console.error('Admin login (comptes) error:', err)
+      }
     }
 
-    if (!password || typeof password !== 'string' || !passwordsMatch(password, adminPwd)) {
-      return NextResponse.json({ error: 'Mot de passe incorrect' }, { status: 401 })
-    }
-
-    const sessionToken = createAdminSessionToken(adminPwd)
     if (!sessionToken) {
-      return NextResponse.json({ error: 'Configuration serveur incomplète' }, { status: 500 })
+      if (!adminPwd && !email) {
+        return NextResponse.json({ error: 'ADMIN_PASSWORD non configuré sur le serveur' }, { status: 500 })
+      }
+      return NextResponse.json({ error: 'Identifiants incorrects' }, { status: 401 })
     }
 
     const response = NextResponse.json({ success: true })
