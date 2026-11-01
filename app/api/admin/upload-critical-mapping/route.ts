@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as XLSX from 'xlsx'
-import { checkAdminAuth } from '@/lib/admin-auth'
+import { hasAdminRole } from '@/lib/admin-auth'
 import { getPool } from '@/lib/db'
 
 export const runtime = 'nodejs'
@@ -230,7 +230,7 @@ async function insertRows(client: any, rows: MappingRow[]) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!checkAdminAuth(req)) {
+  if (!hasAdminRole(req, ['owner', 'admin'])) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 

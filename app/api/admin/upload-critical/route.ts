@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
 import * as XLSX from 'xlsx'
-import { checkAdminAuth } from '@/lib/admin-auth'
+import { hasAdminRole } from '@/lib/admin-auth'
 import { NOMENCLATURE_TAG } from '@/lib/medicament-cache'
 import { getPool } from '@/lib/db'
 
@@ -154,7 +154,7 @@ async function upsertCriticalRows(
 }
 
 export async function POST(req: NextRequest) {
-  if (!checkAdminAuth(req)) {
+  if (!hasAdminRole(req, ['owner', 'admin'])) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 
