@@ -42,12 +42,11 @@ const SEGMENT_ANNUAIRE = 2
 const FIRST_FICHE_SEGMENT = 3
 const FICHES_PAR_SEGMENT = 10_000
 
-// Les fiches arabes sont jumelles des françaises (hreflang). Tant que les
-// françaises ne sont pas indexées, soumettre aussi les ~11 000 arabes double la
-// file d'attente de Google sans rien apporter. Les balises hreflang des pages
-// restent en place : l'arabe sera découvert par ce biais. Réactiver en posant
-// SITEMAP_INCLUDE_AR_FICHES=1 une fois les fiches FR indexées.
-const INCLUDE_AR_FICHES = process.env.SITEMAP_INCLUDE_AR_FICHES === '1'
+// Les fiches arabes sont jumelles des françaises (hreflang) et indexables : on
+// les déclare par défaut dans le sitemap, sans quoi Google ne les explore pas
+// (un hreflang ne suffit pas à les découvrir). Poser SITEMAP_INCLUDE_AR_FICHES=0
+// pour les retirer temporairement (ex. file d'exploration saturée).
+const INCLUDE_AR_FICHES = process.env.SITEMAP_INCLUDE_AR_FICHES !== '0'
 
 type FicheUrl = { url: string; lastModified?: Date; changeFrequency: 'monthly' | 'yearly'; priority: number }
 
