@@ -59,6 +59,34 @@ par wilaya et commune. Interface bilingue **français / arabe** (RTL).
 - Contrôle du rapprochement avec votre nomenclature : `DATABASE_URL=... npx tsx scripts/check_ansm_couverture.mts`.
 - Tests : `npm run test:interactions`.
 
+### 🔎 Médicaments recherchés (ruptures, besoins)
+Les demandes reçues par email sont saisies à la main, puis relayées chaque jour sur Facebook
+et sur une page publique **`/demandes`** (FR/AR), tant qu'elles sont actives.
+
+1. Hors du site, vous passez l'email dans un LLM avec le prompt affiché dans `/admin/demandes`
+   (bouton « Prompt pour le LLM »). Il rend un tableau JSON sans nom ni contact. **Aucun LLM n'est
+   appelé par l'application.**
+2. Dans `/admin/demandes`, vous collez le JSON → **Analyser** (aperçu sans écriture : rapprochement
+   avec la nomenclature, fusion avec une demande déjà active, entrées écartées) → **Importer**.
+3. Le **lieu est facultatif** (wilaya et commune). Les demandes identiques (même médicament, même
+   wilaya, ou sans wilaya) s'additionnent au lieu de créer des doublons, et repoussent l'expiration.
+4. Une demande reste **active 14 jours** par défaut (`jours` dans le JSON, 60 maximum), prolongeable
+   d'un clic. Les actions : *Trouvée*, *+14 j*, *Clore*, urgence, compteur.
+5. Le cron `/api/cron/demandes-daily` (05:00 UTC) dépose un brouillon « Médicaments recherchés » dans
+   la file Facebook (rubrique `demande`, FR + AR, visuel Casbah). Vous le validez dans `/admin/social`,
+   le cron `social-publish` le publie (un post par jour pour ce flux, indépendant des posts thématiques).
+   Les urgentes et les nouvelles (moins de 36 h) y figurent toujours ; les autres places tournent d'un
+   jour à l'autre. `DEMANDES_AUTO_APPROVE=1` supprime la validation (déconseillé).
+
+**Garde-fous.** Une entrée avec un email ou un téléphone est refusée. Les psychotropes et stupéfiants
+sont écartés (liste de noms dans `lib/demandes-core.ts` + colonne `liste` de la nomenclature) : jamais
+enregistrés, jamais relayés. La commune et la note privée ne sont jamais publiées. La page publique
+précise que DwaDZ met en relation, ne vend rien et ne garantit aucun stock.
+
+**Mise en place :** appliquer `sql/35_demandes_medicaments.sql` ; optionnel :
+`NEXT_PUBLIC_FACEBOOK_PAGE_URL` (bouton « Nous écrire sur Facebook » sur `/demandes`).
+Tests : `npm run test:demandes`.
+
 ### 🔗 Partage d'une fiche (Facebook, X, WhatsApp)
 - Barre de partage en haut de chaque fiche (FR/AR) : Facebook, X, WhatsApp, copie du lien et partage natif du téléphone.
   Le message est prêt à poster (nom, substance, forme, dosage, laboratoire).
@@ -416,6 +444,7 @@ d'échec de l'image, le post part en texte + aperçu de lien.
 
 ```json
 { "path": "/api/cron/social-prepare", "schedule": "0 3 * * *" }
+{ "path": "/api/cron/demandes-daily", "schedule": "0 5 * * *" }
 { "path": "/api/cron/social-publish", "schedule": "0 8 * * *" }
 ```
 
