@@ -26,6 +26,7 @@ const RUBRIQUE_KICKER: Record<Rubrique, string> = {
   algerie: 'Fabriqué en Algérie',
   retrait: 'Retrait du marché',
   nouveaute: 'Nouveautés',
+  demande: 'Médicaments recherchés',
 }
 
 const RUBRIQUE_ICON: Record<Rubrique, PostVisual['icon']> = {
@@ -33,6 +34,7 @@ const RUBRIQUE_ICON: Record<Rubrique, PostVisual['icon']> = {
   algerie: 'emblem',
   retrait: 'alert',
   nouveaute: 'sparkle',
+  demande: 'pill',
 }
 
 /** Retire emoji et ponctuation de tête d'une ligne (satori ne rend pas les emoji). */

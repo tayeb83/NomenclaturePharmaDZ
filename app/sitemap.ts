@@ -166,6 +166,12 @@ export default async function sitemap({ id }: { id: number | string }): Promise<
       priority: 0.8,
     },
     {
+      url: `${APP_URL}/demandes`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.6,
+    },
+    {
       url: `${APP_URL}/veille`,
       lastModified: catalogueDate,
       changeFrequency: 'weekly',

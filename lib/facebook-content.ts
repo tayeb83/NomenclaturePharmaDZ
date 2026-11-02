@@ -11,6 +11,11 @@
  *   - 'retrait'   : alerte sur les derniers retraits du marché (avec motif)
  *   - 'nouveaute' : nouveautés de l'année + chiffres clés de la nomenclature
  *
+ * Une cinquième rubrique, 'demande' (médicaments recherchés), suit son propre
+ * rythme : un brouillon par jour, créé par /api/cron/demandes-daily depuis les
+ * demandes actives (lib/demandes.ts). Elle ne fait pas partie de la rotation et
+ * ne compte pas dans la file des posts thématiques.
+ *
  * Le générateur alimente une file d'attente (table social_content_queue). Un cron
  * « prepare » maintient quelques brouillons d'avance ; l'admin les relit /
  * valide ; un cron « publish » envoie les posts approuvés à échéance.
@@ -21,7 +26,7 @@ import { getStats, getLastRetraits } from './queries'
 import type { Retrait } from './db-types'
 import type { IconKind } from './garde-ornaments'
 
-export type Rubrique = 'classe' | 'algerie' | 'retrait' | 'nouveaute'
+export type Rubrique = 'classe' | 'algerie' | 'retrait' | 'nouveaute' | 'demande'
 
 /**
  * Contenu structuré de l'image jointe au post (voir lib/social-visual.tsx).
@@ -446,9 +451,11 @@ const GENERATORS: Record<Rubrique, () => Promise<PostCandidate | null>> = {
   algerie: genFabriqueEnAlgerie,
   retrait: genAlerteRetraits,
   nouveaute: genNouveautesChiffres,
+  // Rubrique pilotée par son propre cron (lib/demandes.ts::preparerPostDuJour).
+  demande: async () => null,
 }
 
-/** Ordre de rotation par défaut des rubriques. */
+/** Ordre de rotation par défaut des rubriques thématiques ('demande' en est exclue). */
 export const RUBRIQUE_ROTATION: Rubrique[] = ['classe', 'algerie', 'retrait', 'nouveaute']
 
 /**
@@ -517,7 +524,8 @@ export async function enqueueCandidate(
 /** Nombre de posts encore « en attente » (brouillon ou approuvé, non publiés). */
 export async function pendingCount(): Promise<number> {
   const row = await queryOne<{ n: string }>(
-    `SELECT COUNT(*)::text AS n FROM social_content_queue WHERE statut IN ('draft', 'approuve')`
+    `SELECT COUNT(*)::text AS n FROM social_content_queue
+     WHERE statut IN ('draft', 'approuve') AND rubrique <> 'demande'`
   )
   return parseInt(row?.n ?? '0', 10)
 }
@@ -526,7 +534,7 @@ export async function pendingCount(): Promise<number> {
 export async function lastScheduledDate(): Promise<Date | null> {
   const row = await queryOne<{ scheduled_for: string | null }>(
     `SELECT scheduled_for FROM social_content_queue
-     WHERE statut IN ('draft', 'approuve') AND scheduled_for IS NOT NULL
+     WHERE statut IN ('draft', 'approuve') AND scheduled_for IS NOT NULL AND rubrique <> 'demande'
      ORDER BY scheduled_for DESC LIMIT 1`
   )
   return row?.scheduled_for ? new Date(row.scheduled_for) : null
@@ -568,12 +576,20 @@ export async function updatePost(
   )
 }
 
-/** Prochain post approuvé dont l'échéance est passée (à publier maintenant). */
-export async function getNextDuePost(): Promise<SocialPost | null> {
+/**
+ * Prochain post approuvé dont l'échéance est passée (à publier maintenant).
+ * `flux` sépare les deux rythmes : 'themes' (rubriques thématiques, tous les
+ * 2-3 jours) et 'demandes' (un post par jour). Sans `flux`, tout flux confondu.
+ */
+export async function getNextDuePost(flux?: 'themes' | 'demandes'): Promise<SocialPost | null> {
+  const filtre =
+    flux === 'demandes' ? `AND rubrique = 'demande'` :
+    flux === 'themes' ? `AND rubrique <> 'demande'` : ''
   return queryOne<SocialPost>(
     `SELECT * FROM social_content_queue
      WHERE statut = 'approuve'
        AND (scheduled_for IS NULL OR scheduled_for <= NOW())
+       ${filtre}
      ORDER BY scheduled_for ASC NULLS FIRST
      LIMIT 1`
   )

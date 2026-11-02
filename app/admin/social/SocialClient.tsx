@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 
-type Rubrique = 'classe' | 'algerie' | 'retrait' | 'nouveaute'
+type Rubrique = 'classe' | 'algerie' | 'retrait' | 'nouveaute' | 'demande'
 
 type SocialPost = {
   id: number
@@ -24,6 +24,7 @@ const RUBRIQUE_LABEL: Record<Rubrique, string> = {
   algerie: '🇩🇿 Fabriqué en Algérie',
   retrait: '⚠️ Retrait',
   nouveaute: '🆕 Nouveautés & chiffres',
+  demande: '🔎 Médicaments recherchés',
 }
 
 const STATUT_LABEL: Record<SocialPost['statut'], { txt: string; color: string; bg: string }> = {

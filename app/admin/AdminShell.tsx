@@ -36,7 +36,7 @@ const GROUPS: { title: string; items: Item[] }[] = [
       { label: 'Statistiques', href: '/admin/training/stats' },
     ],
   },
-  { title: 'Communication', items: [{ label: 'Publications Facebook', href: '/admin/social' }] },
+  { title: 'Communication', items: [{ label: 'Demandes de médicaments', href: '/admin/demandes' }, { label: 'Publications Facebook', href: '/admin/social' }] },
   { title: 'Administration', items: [{ label: 'Comptes admin', href: '/admin/comptes', adminOnly: true }] },
 ]
 

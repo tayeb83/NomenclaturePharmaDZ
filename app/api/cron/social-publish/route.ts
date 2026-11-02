@@ -19,10 +19,12 @@ function isValidBearerToken(authorizationHeader: string | null, expectedToken: s
 }
 
 /**
- * Cron « publication » : publie le prochain post APPROUVÉ dont l'échéance est
- * arrivée. Un seul post par exécution — le cron tourne chaque jour mais ne
- * publie que si un post approuvé est dû (donc de fait tous les 2-3 jours selon
- * l'espacement des dates). Les brouillons non validés ne sont jamais publiés.
+ * Cron « publication » : publie les posts APPROUVÉS dont l'échéance est
+ * arrivée, un par flux et par exécution :
+ *   - flux thématique : le cron tourne chaque jour mais ne publie que si un
+ *     post approuvé est dû (de fait tous les 2-3 jours selon l'espacement) ;
+ *   - flux « demandes » : un post par jour tant que des demandes sont actives.
+ * Les brouillons non validés ne sont jamais publiés.
  */
 export async function GET(request: NextRequest) {
   if (!isValidBearerToken(request.headers.get('authorization'), process.env.CRON_SECRET)) {
@@ -30,21 +32,32 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const post = await getNextDuePost()
-    if (!post) {
-      return NextResponse.json({ published: false, message: 'Aucun post approuvé à échéance' })
+    const results: Record<string, unknown>[] = []
+    let failed = false
+
+    for (const flux of ['themes', 'demandes'] as const) {
+      const post = await getNextDuePost(flux)
+      if (!post) {
+        results.push({ flux, published: false, message: 'Aucun post approuvé à échéance' })
+        continue
+      }
+
+      const res = await publishPostToFacebook(post)
+      if (!res.success) {
+        failed = true
+        await markError(post.id, res.error || 'Échec de publication')
+        console.error(`[api/cron/social-publish] Facebook error (${flux}):`, res.error)
+        results.push({ flux, published: false, error: res.error })
+        continue
+      }
+
+      await markPublished(post.id, res.postId || '')
+      results.push({ flux, published: true, id: post.id, titre: post.titre, fbPostId: res.postId })
     }
 
-    const res = await publishPostToFacebook(post)
-
-    if (!res.success) {
-      await markError(post.id, res.error || 'Échec de publication')
-      console.error('[api/cron/social-publish] Facebook error:', res.error)
-      return NextResponse.json({ published: false, error: res.error }, { status: 502 })
-    }
-
-    await markPublished(post.id, res.postId || '')
-    return NextResponse.json({ published: true, id: post.id, titre: post.titre, fbPostId: res.postId })
+    // Réponse historique conservée : { published, ... } du flux thématique, plus le détail par flux.
+    const [themes] = results
+    return NextResponse.json({ ...themes, results }, { status: failed ? 502 : 200 })
   } catch (err: any) {
     console.error('[api/cron/social-publish] error:', err)
     return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 })

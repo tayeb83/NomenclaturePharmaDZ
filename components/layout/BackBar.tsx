@@ -18,6 +18,7 @@ const LABELS: Record<string, { fr: string; ar: string }> = {
   '/outils': { fr: 'les outils', ar: 'الأدوات' },
   '/medicaments': { fr: 'le catalogue', ar: 'الفهرس' },
   '/alertes': { fr: 'les alertes', ar: 'التنبيهات' },
+  '/demandes': { fr: 'les médicaments recherchés', ar: 'الأدوية المطلوبة' },
 }
 
 /**
