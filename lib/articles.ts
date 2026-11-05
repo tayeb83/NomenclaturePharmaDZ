@@ -1,12 +1,6 @@
 export type ArticleLang = 'fr' | 'ar'
 export type ArticleAudience = 'professionnel' | 'etudiant'
 
-export interface ArticleLink {
-  label: string
-  url: string
-  external?: boolean
-}
-
 export interface ArticleFaq {
   question: string
   answer: string
@@ -25,13 +19,11 @@ export interface Article {
   readingTime: number // minutes
   tags: string[]
   content: ArticleSection[]
-  sourceLinks?: ArticleLink[]
-  relatedLinks?: ArticleLink[]
   faq?: ArticleFaq[]
 }
 
 export interface ArticleSection {
-  type: 'intro' | 'h2' | 'h3' | 'paragraph' | 'list' | 'table' | 'qcm' | 'callout'
+  type: 'intro' | 'h2' | 'h3' | 'paragraph' | 'list' | 'table' | 'qcm' | 'callout' | 'image'
   title?: string
   text?: string
   items?: string[]
@@ -39,6 +31,12 @@ export interface ArticleSection {
   headers?: string[]
   questions?: QcmQuestion[]
   variant?: 'info' | 'warning' | 'tip'
+  /** type « image » : fichier sous /public, texte alternatif (obligatoire), légende et dimensions réelles */
+  src?: string
+  alt?: string
+  caption?: string
+  width?: number
+  height?: number
 }
 
 export interface QcmQuestion {
@@ -63,15 +61,6 @@ export const ARTICLES: Article[] = [
     date: '2026-03-01',
     readingTime: 8,
     tags: ['Loi 18-11', 'Réglementation officine', 'Pharmacien titulaire', 'MIPH', 'Algérie 2026'],
-    sourceLinks: [
-      { label: 'Télécharger le Journal Officiel (Loi 18-11)', url: 'https://www.joradp.dz/FTP/JO-FRANCAIS/2018/F2018046.pdf', external: true },
-      { label: 'Consulter le site officiel du MIPH', url: 'https://www.miph.gov.dz/fr/', external: true },
-    ],
-    relatedLinks: [
-      { label: 'Rechercher un médicament sous surveillance', url: '/recherche' },
-      { label: 'Voir les derniers retraits officiels', url: '/alertes' },
-      { label: 'Suivre les nouveautés réglementaires', url: '/veille' },
-    ],
     faq: [
       {
         question: 'La Loi 18-11 change-t-elle le rôle du pharmacien titulaire ?',
@@ -165,13 +154,6 @@ export const ARTICLES: Article[] = [
     date: '2026-03-01',
     readingTime: 6,
     tags: ['Fiche de révision', 'Étudiant pharmacie', 'Loi 18-11', 'Officine Algérie', 'Législation'],
-    sourceLinks: [
-      { label: 'Télécharger le Journal Officiel (version FR)', url: 'https://www.joradp.dz/FTP/JO-FRANCAIS/2018/F2018046.pdf', external: true },
-    ],
-    relatedLinks: [
-      { label: 'Comparer deux versions de la nomenclature', url: '/diff' },
-      { label: 'Explorer la veille réglementaire', url: '/veille' },
-    ],
     faq: [
       {
         question: 'Qui délivre l’autorisation d’ouverture d’une officine en Algérie ?',
@@ -269,14 +251,6 @@ export const ARTICLES: Article[] = [
     date: '2026-03-08',
     readingTime: 6,
     tags: ['Data Matrix', 'Traçabilité', 'Officine', 'Checklist', 'Pharmacie Algérie'],
-    sourceLinks: [
-      { label: 'Portail officiel MIPH', url: 'https://www.miph.gov.dz/fr/', external: true },
-    ],
-    relatedLinks: [
-      { label: 'Accéder aux alertes de retraits', url: '/alertes' },
-      { label: 'Consulter les nouveautés produits', url: '/veille' },
-      { label: 'Rechercher une spécialité', url: '/recherche' },
-    ],
     faq: [
       {
         question: 'Pourquoi le Data Matrix est-il important en officine ?',
@@ -335,13 +309,6 @@ export const ARTICLES: Article[] = [
     date: '2026-03-10',
     readingTime: 5,
     tags: ['Pharmacovigilance', 'Étudiant', 'Officine', 'Effets indésirables', 'Stage'],
-    sourceLinks: [
-      { label: 'Portail officiel MIPH', url: 'https://www.miph.gov.dz/fr/', external: true },
-    ],
-    relatedLinks: [
-      { label: 'Lire la fiche de révision sur la Loi 18-11', url: '/articles/fiche-revision-reglementation-officine-algerie' },
-      { label: 'Explorer la veille réglementaire', url: '/veille' },
-    ],
     faq: [
       {
         question: 'Qu’est-ce qu’un effet indésirable à retenir en stage ?',
@@ -399,15 +366,6 @@ export const ARTICLES: Article[] = [
     date: '2026-03-01',
     readingTime: 8,
     tags: ['القانون 18-11', 'تنظيم الصيدليات', 'الصيدلي صاحب المحل', 'MIPH', 'الجزائر 2026'],
-    sourceLinks: [
-      { label: 'تحميل الجريدة الرسمية (القانون 18-11)', url: 'https://www.joradp.dz/FTP/JO-ARABE/2018/A2018046.pdf', external: true },
-      { label: 'الموقع الرسمي لوزارة الصناعة الصيدلانية', url: 'https://www.miph.gov.dz/ar/', external: true },
-    ],
-    relatedLinks: [
-      { label: 'البحث في قاعدة البيانات التنظيمية', url: '/recherche' },
-      { label: 'متابعة آخر السحوبات الرسمية', url: '/alertes' },
-      { label: 'الاطلاع على المستجدات التنظيمية', url: '/veille' },
-    ],
     faq: [
       {
         question: 'هل غيّر القانون 18-11 دور الصيدلي صاحب المحل؟',
@@ -480,13 +438,6 @@ export const ARTICLES: Article[] = [
     date: '2026-03-01',
     readingTime: 6,
     tags: ['بطاقة مراجعة', 'طالب صيدلة', 'القانون 18-11', 'صيدلية الجزائر', 'تشريع صيدلاني'],
-    sourceLinks: [
-      { label: 'تحميل الجريدة الرسمية', url: 'https://www.joradp.dz/FTP/JO-ARABE/2018/A2018046.pdf', external: true },
-    ],
-    relatedLinks: [
-      { label: 'استكشاف المراقبة التنظيمية', url: '/veille' },
-      { label: 'مقارنة نسخ التسمية الصيدلانية', url: '/diff' },
-    ],
     faq: [
       {
         question: 'من يسلم رخصة فتح صيدلية في الجزائر؟',
@@ -584,14 +535,6 @@ export const ARTICLES: Article[] = [
     date: '2026-03-08',
     readingTime: 6,
     tags: ['Data Matrix', 'التتبع', 'صيدلية', 'قائمة عملية', 'الجزائر'],
-    sourceLinks: [
-      { label: 'الموقع الرسمي لوزارة الصناعة الصيدلانية', url: 'https://www.miph.gov.dz/ar/', external: true },
-    ],
-    relatedLinks: [
-      { label: 'الاطلاع على تنبيهات السحب', url: '/alertes' },
-      { label: 'متابعة المستجدات', url: '/veille' },
-      { label: 'البحث عن تخصص دوائي', url: '/recherche' },
-    ],
     faq: [
       {
         question: 'لماذا يعتبر Data Matrix مهماً داخل الصيدلية؟',
@@ -650,13 +593,6 @@ export const ARTICLES: Article[] = [
     date: '2026-03-10',
     readingTime: 5,
     tags: ['اليقظة الدوائية', 'طالب', 'صيدلية', 'أثر غير مرغوب فيه', 'تربص'],
-    sourceLinks: [
-      { label: 'الموقع الرسمي لوزارة الصناعة الصيدلانية', url: 'https://www.miph.gov.dz/ar/', external: true },
-    ],
-    relatedLinks: [
-      { label: 'قراءة بطاقة مراجعة القانون 18-11', url: '/articles/fiche-revision-reglementation-officine-algerie-ar' },
-      { label: 'استكشاف المستجدات التنظيمية', url: '/veille' },
-    ],
     faq: [
       {
         question: 'ما هو الأثر غير المرغوب فيه الذي يجب تذكره أثناء التربص؟',
@@ -714,18 +650,6 @@ export const ARTICLES: Article[] = [
     date: '2026-10-27',
     readingTime: 4,
     tags: ['Dentisterie', 'Classification ATC', 'Nomenclature MIPH', 'RCP ANPP', 'Algérie'],
-    sourceLinks: [
-      { label: 'Classification ATC de l’OMS (index officiel)', url: 'https://atcddd.fhi.no/atc_ddd_index/', external: true },
-      { label: 'RCP publiés par l’ANPP', url: 'https://rcp.anpp.dz/', external: true },
-      { label: 'Site officiel du MIPH', url: 'https://www.miph.gov.dz/fr/', external: true },
-    ],
-    relatedLinks: [
-      { label: 'Médicaments par spécialité : la dentisterie', url: '/specialites/dentaire' },
-      { label: 'Classes thérapeutiques (ATC)', url: '/classes-therapeutiques' },
-      { label: 'Trouver un générique', url: '/substitution' },
-      { label: 'Alertes et retraits', url: '/alertes' },
-      { label: 'S’entraîner avec les QCM', url: '/training' },
-    ],
     faq: [
       {
         question: 'Existe-t-il un code ATC pour la dentisterie ?',
@@ -810,18 +734,6 @@ export const ARTICLES: Article[] = [
     date: '2026-10-27',
     readingTime: 4,
     tags: ['طب الأسنان', 'تصنيف ATC', 'التسمية الصيدلانية', 'RCP', 'الجزائر'],
-    sourceLinks: [
-      { label: 'تصنيف ATC لمنظمة الصحة العالمية (الفهرس الرسمي)', url: 'https://atcddd.fhi.no/atc_ddd_index/', external: true },
-      { label: 'ملخصات خصائص المنتج المنشورة من طرف الوكالة الوطنية للمنتجات الصيدلانية', url: 'https://rcp.anpp.dz/', external: true },
-      { label: 'الموقع الرسمي لوزارة الصناعة الصيدلانية', url: 'https://www.miph.gov.dz/ar/', external: true },
-    ],
-    relatedLinks: [
-      { label: 'الأدوية حسب التخصص: طب الأسنان', url: '/specialites/dentaire' },
-      { label: 'الأصناف العلاجية (ATC)', url: '/classes-therapeutiques' },
-      { label: 'البحث عن بديل جنيس', url: '/substitution' },
-      { label: 'التنبيهات والأدوية المسحوبة', url: '/alertes' },
-      { label: 'التدرّب بأسئلة الاختيار من متعدد', url: '/training' },
-    ],
     faq: [
       {
         question: 'هل يوجد رمز ATC خاص بطب الأسنان؟',
@@ -906,14 +818,6 @@ export const ARTICLES: Article[] = [
     date: '2026-10-27',
     readingTime: 7,
     tags: ['Comparateur', 'Interactions médicamenteuses', 'Thesaurus ANSM', 'Pédagogie', 'Outils'],
-    sourceLinks: [
-      { label: 'Thesaurus des interactions médicamenteuses (ANSM, septembre 2023)', url: 'https://ansm.sante.fr/uploads/2024/06/07/20230915-thesaurus-interactions-medicamenteuses-septembre-2023.pdf', external: true },
-    ],
-    relatedLinks: [
-      { label: 'Ouvrir le comparateur de médicaments (accès limité)', url: '/outils/comparateur-medicaments' },
-      { label: 'Tous les outils', url: '/outils' },
-      { label: 'Rechercher un médicament', url: '/recherche' },
-    ],
     faq: [
       {
         question: 'Peut-on comparer une marque et une substance ?',
@@ -1044,14 +948,6 @@ export const ARTICLES: Article[] = [
     date: '2026-10-27',
     readingTime: 7,
     tags: ['مقارنة الأدوية', 'التداخلات الدوائية', 'دليل ANSM', 'تعليم', 'أدوات'],
-    sourceLinks: [
-      { label: 'دليل التداخلات الدوائية (ANSM، سبتمبر 2023)', url: 'https://ansm.sante.fr/uploads/2024/06/07/20230915-thesaurus-interactions-medicamenteuses-septembre-2023.pdf', external: true },
-    ],
-    relatedLinks: [
-      { label: 'فتح مقارنة الأدوية (ولوج محدود)', url: '/outils/comparateur-medicaments' },
-      { label: 'كل الأدوات', url: '/outils' },
-      { label: 'البحث عن دواء', url: '/recherche' },
-    ],
     faq: [
       {
         question: 'هل يمكن مقارنة اسم تجاري بمادة فعالة؟',
@@ -1182,19 +1078,6 @@ export const ARTICLES: Article[] = [
     date: '2026-10-31',
     readingTime: 8,
     tags: ['Spécialités', 'Classification ATC', 'Nomenclature MIPH', 'Algérie'],
-    sourceLinks: [
-      { label: 'Classification ATC de l’OMS (index officiel)', url: 'https://atcddd.fhi.no/atc_ddd_index/', external: true },
-      { label: 'RCP publiés par l’ANPP', url: 'https://rcp.anpp.dz/', external: true },
-      { label: 'Site officiel du MIPH', url: 'https://www.miph.gov.dz/fr/', external: true },
-    ],
-    relatedLinks: [
-      { label: 'Toutes les spécialités', url: '/specialites' },
-      { label: 'Cardiologie', url: '/specialites/cardiologie' },
-      { label: 'Diabétologie / Endocrinologie', url: '/specialites/diabetologie' },
-      { label: 'Psychiatrie', url: '/specialites/psychiatrie' },
-      { label: 'Dermatologie', url: '/specialites/dermatologie' },
-      { label: 'Classes thérapeutiques (ATC)', url: '/classes-therapeutiques' },
-    ],
     faq: [
       {
         question: 'Pourquoi une même classe apparaît-elle dans plusieurs spécialités ?',
@@ -1335,19 +1218,6 @@ export const ARTICLES: Article[] = [
     date: '2026-10-31',
     readingTime: 8,
     tags: ['التخصصات', 'تصنيف ATC', 'التسمية الصيدلانية', 'الجزائر'],
-    sourceLinks: [
-      { label: 'تصنيف ATC لمنظمة الصحة العالمية (الفهرس الرسمي)', url: 'https://atcddd.fhi.no/atc_ddd_index/', external: true },
-      { label: 'ملخصات خصائص المنتج المنشورة من طرف الوكالة الوطنية للمنتجات الصيدلانية', url: 'https://rcp.anpp.dz/', external: true },
-      { label: 'الموقع الرسمي لوزارة الصناعة الصيدلانية', url: 'https://www.miph.gov.dz/ar/', external: true },
-    ],
-    relatedLinks: [
-      { label: 'جميع التخصصات', url: '/specialites' },
-      { label: 'أمراض القلب', url: '/specialites/cardiologie' },
-      { label: 'السكري والغدد الصماء', url: '/specialites/diabetologie' },
-      { label: 'الطب النفسي', url: '/specialites/psychiatrie' },
-      { label: 'الأمراض الجلدية', url: '/specialites/dermatologie' },
-      { label: 'الأصناف العلاجية (ATC)', url: '/classes-therapeutiques' },
-    ],
     faq: [
       {
         question: 'لماذا يظهر الصنف نفسه في عدة تخصصات؟',

@@ -58,6 +58,26 @@ function RenderSection({ section, isRtl }: { section: ArticleSection; isRtl: boo
     )
   }
 
+  if (section.type === 'image' && section.src) {
+    return (
+      <figure style={{ margin: '4px 0 28px', direction: dir }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={section.src}
+          alt={section.alt ?? ''}
+          width={section.width}
+          height={section.height}
+          loading="lazy"
+          decoding="async"
+          style={{ display: 'block', width: '100%', height: 'auto', borderRadius: 12, border: '1px solid #e2e8f0' }}
+        />
+        {section.caption && (
+          <figcaption style={{ fontSize: 13, color: '#64748b', marginTop: 8, lineHeight: 1.6 }}>{section.caption}</figcaption>
+        )}
+      </figure>
+    )
+  }
+
   if (section.type === 'h2') {
     return (
       <div style={{ marginTop: 32, marginBottom: 12 }}>
