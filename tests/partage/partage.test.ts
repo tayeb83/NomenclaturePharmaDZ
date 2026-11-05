@@ -1,7 +1,11 @@
 /** Partage d'une fiche médicament. node --test tests/partage/ */
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { shareLinks, shareMessage } from '../../lib/medicament-share.ts'
+import { FACEBOOK_PAGE_URL, shareLinks, shareMessage } from '../../lib/medicament-share.ts'
+
+test('page Facebook à suivre : adresse officielle en https', () => {
+  assert.equal(FACEBOOK_PAGE_URL, 'https://www.facebook.com/profile.php?id=61584995326062')
+})
 
 const med = { nom_marque: 'DOLIPRANE', dci: 'PARACETAMOL', forme: 'comprimé', dosage: '1000 mg', labo: 'SANOFI' }
 

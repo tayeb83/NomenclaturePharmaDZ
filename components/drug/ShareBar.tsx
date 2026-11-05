@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { CASBAH } from '@/lib/garde-ornaments'
-import { shareLinks } from '@/lib/medicament-share'
+import { FACEBOOK_PAGE_URL, shareLinks } from '@/lib/medicament-share'
 import type { Lang } from '@/lib/i18n'
 
 type Props = {
@@ -16,8 +16,8 @@ type Props = {
 }
 
 const T = {
-  fr: { titre: 'Partager cette fiche', copier: 'Copier le lien', copie: 'Lien copié', natif: 'Partager…', fb: 'Facebook', x: 'X (Twitter)', wa: 'WhatsApp' },
-  ar: { titre: 'شارك هذه البطاقة', copier: 'نسخ الرابط', copie: 'تم نسخ الرابط', natif: 'مشاركة…', fb: 'فيسبوك', x: 'إكس (تويتر)', wa: 'واتساب' },
+  fr: { titre: 'Partager cette fiche', copier: 'Copier le lien', copie: 'Lien copié', natif: 'Partager…', fb: 'Facebook', x: 'X (Twitter)', wa: 'WhatsApp', suivre: 'Suivre la page', suivreAria: 'Suivre la page Facebook de DwaDZ' },
+  ar: { titre: 'شارك هذه البطاقة', copier: 'نسخ الرابط', copie: 'تم نسخ الرابط', natif: 'مشاركة…', fb: 'فيسبوك', x: 'إكس (تويتر)', wa: 'واتساب', suivre: 'تابع الصفحة', suivreAria: 'تابع صفحة DwaDZ على فيسبوك' },
 } as const
 
 const bouton: React.CSSProperties = {
@@ -83,6 +83,12 @@ export default function ShareBar({ url, text, title, lang }: Props) {
           <Icone d={ICONES.natif} />{t.natif}
         </button>
       )}
+      <a
+        href={FACEBOOK_PAGE_URL} target="_blank" rel="noopener noreferrer" aria-label={t.suivreAria}
+        style={{ ...bouton, background: CASBAH.blueDeep, borderColor: CASBAH.blueDeep, color: '#fff', marginInlineStart: 'auto' }}
+      >
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d={ICONES.fb} /></svg>{t.suivre}
+      </a>
     </div>
   )
 }

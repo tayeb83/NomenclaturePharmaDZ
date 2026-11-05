@@ -43,7 +43,10 @@ export function shareMessage(med: ShareMed, lang: Lang): string {
   return `💊 ${sujet}${detail ? ` — ${detail}` : ''}\nLa fiche : substance active, génériques, prix et interactions médicamenteuses sur DwaDZ`
 }
 
-export type ShareLinks = { facebook: string; x: string; whatsapp: string }
+/** Page Facebook officielle de DwaDZ : destination du bouton « Suivre la page ». */
+export const FACEBOOK_PAGE_URL = 'https://www.facebook.com/profile.php?id=61584995326062'
+
+export type ShareLinks ={ facebook: string; x: string; whatsapp: string }
 
 /** Adresses de partage. `url` est l'adresse absolue de la fiche, `text` le message. */
 export function shareLinks(url: string, text: string): ShareLinks {
