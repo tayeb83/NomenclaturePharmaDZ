@@ -12,7 +12,7 @@
 import { query } from '@/lib/db'
 import { chercherSubstances } from '@/lib/comparateur-medicaments'
 import { cle, getPartenairesAnsm, NIVEAU_RANG, type Niveau } from '@/lib/interactions'
-import { PLAFOND_ABONNE, plafonner, type GraphData, type GraphEdge, type GraphNode } from './core.ts'
+import { cheminAtc, cheminDci, cheminLabo, cheminRetrait, PLAFOND_ABONNE, plafonner, type GraphData, type GraphEdge, type GraphNode } from './core.ts'
 import type { Vue } from './demos.ts'
 
 const PAYS_LOCAL = 'ALGERIE'
@@ -60,7 +60,7 @@ export async function grapheSubstance(substance: string, plafond: number): Promi
   if (!lignes.length && !retraits.length) return null
 
   const centre = `substance:${dci}`
-  const nodes: GraphNode[] = [{ id: centre, kind: 'substance', label: dci, weight: lignes.reduce((s, l) => s + l.n, 0) }]
+  const nodes: GraphNode[] = [{ id: centre, kind: 'substance', label: dci, weight: lignes.reduce((s, l) => s + l.n, 0), href: cheminDci(dci) }]
   const edges: GraphEdge[] = []
   const total = lignes.reduce((s, l) => s + l.n, 0)
 
@@ -71,7 +71,7 @@ export async function grapheSubstance(substance: string, plafond: number): Promi
     const classe = code.slice(0, 5)
     const lib = await libellesAtc([classe, code])
     const l = lib.get(classe) ?? lib.get(code)
-    nodes.push({ id: `atc:${classe}`, kind: 'atc', label: `${classe} · ${l?.label_fr || l?.label_en || code}`, labelAr: l?.label_ar ? `${classe} · ${l.label_ar}` : undefined, weight: 1000 })
+    nodes.push({ id: `atc:${classe}`, kind: 'atc', label: `${classe} · ${l?.label_fr || l?.label_en || code}`, labelAr: l?.label_ar ? `${classe} · ${l.label_ar}` : undefined, weight: 1000, href: cheminAtc(classe) })
     edges.push({ source: centre, target: `atc:${classe}`, kind: 'classe' })
   }
 
@@ -83,7 +83,7 @@ export async function grapheSubstance(substance: string, plafond: number): Promi
     if (l.pays) parPays.set(l.pays, (parPays.get(l.pays) ?? 0) + l.n)
   }
   for (const [labo, n] of parLabo) {
-    nodes.push({ id: `labo:${labo}`, kind: 'labo', label: labo, weight: n, detail: `${n} spécialité${n > 1 ? 's' : ''}`, detailAr: `${n} مستحضر` })
+    nodes.push({ id: `labo:${labo}`, kind: 'labo', label: labo, weight: n, href: cheminLabo(labo), detail: `${n} spécialité${n > 1 ? 's' : ''}`, detailAr: `${n} مستحضر` })
     edges.push({ source: centre, target: `labo:${labo}`, kind: 'fabrique', weight: n })
   }
   for (const [pays, n] of parPays) {
@@ -96,7 +96,7 @@ export async function grapheSubstance(substance: string, plafond: number): Promi
   // retraits
   for (const r of retraits) {
     const id = `retrait:${r.id}`
-    nodes.push({ id, kind: 'retrait', label: r.nom_marque, weight: 1, detail: [r.date_retrait?.slice(0, 10), r.motif_retrait].filter(Boolean).join(' · ') || undefined })
+    nodes.push({ id, kind: 'retrait', label: r.nom_marque, weight: 1, href: cheminRetrait(r.date_retrait), detail: [r.date_retrait?.slice(0, 10), r.motif_retrait].filter(Boolean).join(' · ') || undefined })
     edges.push({ source: centre, target: id, kind: 'retire' })
   }
 
@@ -118,6 +118,8 @@ export async function grapheSubstance(substance: string, plafond: number): Promi
       nodes.push({
         id, kind: p.est_classe ? 'classe' : 'interaction', label: p.nom, labelAr: nomAr.get(cle(p.nom)),
         weight: (4 - NIVEAU_RANG[niveau]) * 10 + p.lignes,
+        // seule une substance présente dans la nomenclature a une fiche ; une classe du thésaurus n'en a pas
+        href: !p.est_classe && p.dci ? cheminDci(p.dci) : undefined,
         detail: p.est_classe ? `classe · ${p.membres_total} substances` : undefined,
         detailAr: p.est_classe ? `صنف · ${p.membres_total} مادة` : undefined,
       })
@@ -157,7 +159,7 @@ export async function grapheClasse(atc: string, mode: 'importation' | 'concentra
   const total = lignes.reduce((s, l) => s + l.n, 0)
   const nodes: GraphNode[] = [{
     id: centre, kind: 'atc', label: `${code} · ${lib?.label_fr || lib?.label_en || ''}`.trim(),
-    labelAr: lib?.label_ar ? `${code} · ${lib.label_ar}` : undefined, weight: total,
+    labelAr: lib?.label_ar ? `${code} · ${lib.label_ar}` : undefined, weight: total, href: cheminAtc(code),
   }]
   const edges: GraphEdge[] = []
 
@@ -165,7 +167,7 @@ export async function grapheClasse(atc: string, mode: 'importation' | 'concentra
     const parLabo = new Map<string, number>()
     for (const l of lignes) if (l.labo) parLabo.set(l.labo, (parLabo.get(l.labo) ?? 0) + l.n)
     for (const [labo, n] of parLabo) {
-      nodes.push({ id: `labo:${labo}`, kind: 'labo', label: labo, weight: n, detail: `${n} spécialités · ${pct(n, total)}`, detailAr: `${n} مستحضر · ${pct(n, total)}` })
+      nodes.push({ id: `labo:${labo}`, kind: 'labo', label: labo, weight: n, href: cheminLabo(labo), detail: `${n} spécialités · ${pct(n, total)}`, detailAr: `${n} مستحضر · ${pct(n, total)}` })
       edges.push({ source: centre, target: `labo:${labo}`, kind: 'vend', weight: n })
     }
     const tri = [...parLabo].sort((a, b) => b[1] - a[1])
@@ -195,7 +197,7 @@ export async function grapheClasse(atc: string, mode: 'importation' | 'concentra
     if (!local) sansProdLocale++
     if (!local && s.pays.size === 1) unSeulPays++
     nodes.push({
-      id: `substance:${dci}`, kind: 'substance', label: dci, weight: s.n, local,
+      id: `substance:${dci}`, kind: 'substance', label: dci, weight: s.n, local, href: cheminDci(dci),
       detail: `${s.n} spécialités · ${local ? 'produite en Algérie' : 'importée'}`,
       detailAr: `${s.n} مستحضر · ${local ? 'منتجة في الجزائر' : 'مستوردة'}`,
     })
