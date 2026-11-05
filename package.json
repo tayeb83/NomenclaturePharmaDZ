@@ -13,6 +13,7 @@
     "test:interactions": "node --test --test-concurrency=1 \"tests/interactions/*.test.ts\"",
     "test:search": "node --test --test-concurrency=1 \"tests/search/*.test.ts\"",
     "test:demandes": "node --test --test-concurrency=1 \"tests/demandes/*.test.ts\"",
+    "test:graphe": "node --test --test-concurrency=1 \"tests/graphe/*.test.ts\"",
     "test:regression": "node --test --test-concurrency=1 \"tests/regression/*.test.ts\""
   },
   "dependencies": {

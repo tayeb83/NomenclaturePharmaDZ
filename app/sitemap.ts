@@ -15,6 +15,7 @@ import { getDirectoryPlaces, getAllPharmacyRefs, groupByWilaya, pharmacyPath } f
 import { medicamentPath } from '@/lib/medicament-url'
 import { ARTICLES } from '@/lib/articles'
 import { MIN_FAMILY_SIZE } from '@/lib/marque'
+import { DEMOS } from '@/lib/graphe/demos'
 import { LETTRE_SLUGS, REPERTOIRE_PAGE_SIZE, lettrePath } from '@/lib/repertoire'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
@@ -182,6 +183,18 @@ export default async function sitemap({ id }: { id: number | string }): Promise<
       changeFrequency: 'weekly',
       priority: 0.6,
     },
+    {
+      url: `${APP_URL}/graphe`,
+      lastModified: catalogueDate,
+      changeFrequency: 'monthly',
+      priority: 0.5,
+    },
+    ...DEMOS.map(d => ({
+      url: `${APP_URL}/graphe/demo/${d.id}`,
+      lastModified: catalogueDate,
+      changeFrequency: 'monthly' as const,
+      priority: 0.4,
+    })),
     {
       url: `${APP_URL}/substitution`,
       lastModified: catalogueDate,

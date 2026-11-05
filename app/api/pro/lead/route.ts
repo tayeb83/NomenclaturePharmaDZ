@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cleanText, hashClientIp, isMissingTableError, query, queryOne } from '@/lib/garde-feedback'
 
-const OFFERS = new Set(['veille', 'api', 'fiche_pharmacie', 'autre'])
+const OFFERS = new Set(['veille', 'api', 'fiche_pharmacie', 'graphe', 'autre'])
 const MAX_LEADS_PER_HOUR = 5
 
 /** Capture de prospects B2B depuis la page /pro */
