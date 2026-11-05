@@ -116,6 +116,9 @@ Tests : `npm run test:demandes`.
   d'une seule substance), détail = présentations et laboratoires, lien vers `/marque/<slug>`. Couche « Médicaments » activable comme les autres.
 - **Article d'explication** : `lib/articles-graphes.ts` (FR + AR, « Graphes de connaissances du médicament en Algérie : cas d'usage et comment y accéder »),
   lié depuis `/graphe` et depuis l'offre. À garder aligné sur `lib/graphe/demos.ts`.
+- **Captures dans les articles** : 4 images (`public/articles/graphes/*.png`) insérées par des sections `type: 'image'` (src, alt, légende, dimensions) dans
+  `lib/articles-graphes.ts`. Elles ont été produites sur la base de test : leur légende dit « données fictives ». Pour les refaire sur le site réel :
+  `BASE_URL=https://www.dzair-pharma.net node scripts/capture_graphes.mjs` (playwright requis), puis retirer la mention « données fictives » des légendes.
 - **Déplacer les nœuds** : glisser-déposer (souris ou doigt) ou flèches du clavier (Maj = grand pas) ; les liens et les étiquettes suivent,
   « Réinitialiser la disposition » remet l'étoile. Le survol n'ouvre jamais de page : il faut cliquer une première fois, puis une seconde.
 - **Contrôle des démos** : `/admin/graphe` → « Vérifier les démos » construit chaque démo sur la vraie base et signale substance introuvable,

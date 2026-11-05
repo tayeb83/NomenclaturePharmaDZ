@@ -19,16 +19,6 @@ export const ARTICLES_GRAPHES: Article[] = [
     date: '2026-11-05',
     readingTime: 7,
     tags: ['Graphes', 'Nomenclature', 'Cas d’usage', 'Interactions médicamenteuses', 'Marché pharmaceutique', 'Outils'],
-    sourceLinks: [
-      { label: 'Ministère de l’Industrie pharmaceutique (MIPH) : nomenclature nationale', url: 'https://miph.gov.dz', external: true },
-      { label: 'Thesaurus des interactions médicamenteuses (ANSM, septembre 2023)', url: 'https://ansm.sante.fr/uploads/2024/06/07/20230915-thesaurus-interactions-medicamenteuses-septembre-2023.pdf', external: true },
-    ],
-    relatedLinks: [
-      { label: 'Ouvrir les graphes et leurs démos gratuites', url: '/graphe' },
-      { label: 'Démo : les marques de la metformine', url: '/graphe/demo/medicaments-metformine' },
-      { label: 'Démo : le marché des AINS est-il concentré ?', url: '/graphe/demo/concentration-ains' },
-      { label: 'Espace Pro', url: '/pro' },
-    ],
     faq: [
       {
         question: 'Les démos sont-elles vraiment gratuites ?',
@@ -74,6 +64,14 @@ export const ARTICLES_GRAPHES: Article[] = [
           'Sous le dessin, les chiffres clés et un tableau de tous les liens, lisible aussi par un lecteur d’écran.',
         ],
       },
+      {
+        type: 'image',
+        src: '/articles/graphes/interactions-simvastatine.png',
+        width: 1428,
+        height: 1102,
+        alt: 'Graphe des interactions de la simvastatine : au centre la substance, une classe ATC, et trois partenaires reliés par des traits de gravité différente',
+        caption: 'Exemple : les interactions d’une substance. Le trait rouge plein marque une contre-indication, le trait doré pointillé une précaution d’emploi ; le nœud doré est la classe ATC. Données fictives, à titre d’illustration.',
+      },
       { type: 'h2', title: '2. Les cas d’usage' },
       {
         type: 'table',
@@ -86,10 +84,34 @@ export const ARTICLES_GRAPHES: Article[] = [
           { cells: ['Après un retrait', 'Une marque est retirée : à quel laboratoire appartenait-elle, et qui a encore des enregistrements de la même substance ?', 'Pharmaciens, laboratoires, autorités'] },
         ],
       },
+      {
+        type: 'image',
+        src: '/articles/graphes/concentration-ains.png',
+        width: 1428,
+        height: 1102,
+        alt: 'Graphe de concentration d’une classe : la classe ATC au centre et huit laboratoires, chacun avec sa part en pourcentage, le plus gros entouré d’un anneau doré',
+        caption: 'Exemple : la concentration d’une classe. La taille d’un nœud et son pourcentage donnent la part du laboratoire dans la classe ; l’anneau doré marque la plus grande part. Données fictives, à titre d’illustration.',
+      },
       { type: 'h2', title: '3. Les démos gratuites' },
       {
         type: 'paragraph',
         text: 'La page des graphes propose plusieurs démos par cas d’usage. Chacune est figée sur un exemple (la simvastatine pour les interactions, les hypolipémiants pour l’importation, les anti-inflammatoires pour la concentration, les marques de la metformine pour les médicaments…), ouverte sans compte, et montre les 8 nœuds les plus importants de chaque type. Elles suffisent à comprendre ce que l’on peut lire sur un graphe, et à juger de leur utilité pour votre activité.',
+      },
+      {
+        type: 'image',
+        src: '/articles/graphes/importation-statines.png',
+        width: 1428,
+        height: 1102,
+        alt: 'Graphe de dépendance à l’importation : une classe ATC, ses substances en vert quand elles sont fabriquées en Algérie, et leurs pays d’origine',
+        caption: 'Exemple : la dépendance à l’importation. Les substances vertes ont au moins un enregistrement fabriqué en Algérie ; chaque substance est reliée à ses pays d’origine. Données fictives, à titre d’illustration.',
+      },
+      {
+        type: 'image',
+        src: '/articles/graphes/medicaments-metformine.png',
+        width: 1428,
+        height: 1102,
+        alt: 'Graphe des marques d’une substance : la metformine au centre, sa classe ATC, ses laboratoires en vert-bleu et ses marques en orange',
+        caption: 'Exemple : qui commercialise quoi. Chaque marque (orange) est reliée à sa substance ; les laboratoires sont en vert-bleu. Données fictives, à titre d’illustration.',
       },
       { type: 'h2', title: '4. L’explorateur payant' },
       {
@@ -164,16 +186,6 @@ export const ARTICLES_GRAPHES: Article[] = [
     date: '2026-11-05',
     readingTime: 7,
     tags: ['رسوم بيانية', 'المدونة', 'حالات الاستخدام', 'التداخلات الدوائية', 'السوق الدوائي', 'أدوات'],
-    sourceLinks: [
-      { label: 'وزارة الصناعة الصيدلانية (MIPH): المدونة الوطنية', url: 'https://miph.gov.dz', external: true },
-      { label: 'دليل التداخلات الدوائية (ANSM، سبتمبر 2023)', url: 'https://ansm.sante.fr/uploads/2024/06/07/20230915-thesaurus-interactions-medicamenteuses-septembre-2023.pdf', external: true },
-    ],
-    relatedLinks: [
-      { label: 'فتح الرسوم وعروضها التجريبية المجانية', url: '/graphe' },
-      { label: 'عرض: علامات الميتفورمين', url: '/graphe/demo/medicaments-metformine' },
-      { label: 'عرض: هل سوق مضادات الالتهاب متركز؟', url: '/graphe/demo/concentration-ains' },
-      { label: 'الفضاء المهني', url: '/pro' },
-    ],
     faq: [
       {
         question: 'هل العروض التجريبية مجانية فعلًا؟',
@@ -219,6 +231,14 @@ export const ARTICLES_GRAPHES: Article[] = [
           'تحت الرسم الأرقام الرئيسية وجدول بكل الروابط، يقرؤه أيضًا قارئ الشاشة.',
         ],
       },
+      {
+        type: 'image',
+        src: '/articles/graphes/interactions-simvastatine.png',
+        width: 1428,
+        height: 1102,
+        alt: 'رسم تداخلات السيمفاستاتين: في الوسط المادة الفعالة، وصنف ATC، وثلاثة شركاء مرتبطة بخطوط مختلفة الخطورة',
+        caption: 'مثال: تداخلات مادة فعالة. الخط الأحمر المتصل يدل على مانع استعمال، والخط الذهبي المتقطع على احتياط عند الاستعمال؛ والعقدة الذهبية هي الصنف ATC. معطيات وهمية للتوضيح فقط.',
+      },
       { type: 'h2', title: '2. حالات الاستخدام' },
       {
         type: 'table',
@@ -231,10 +251,34 @@ export const ARTICLES_GRAPHES: Article[] = [
           { cells: ['بعد السحب', 'سُحبت علامة: لأي مخبر كانت تعود، ومن لا يزال له تسجيل للمادة نفسها؟', 'الصيادلة، المخابر، السلطات'] },
         ],
       },
+      {
+        type: 'image',
+        src: '/articles/graphes/concentration-ains.png',
+        width: 1428,
+        height: 1102,
+        alt: 'رسم تركز صنف: الصنف ATC في الوسط وثمانية مخابر، لكل منها حصتها بالنسبة المئوية، والأكبر محاط بحلقة ذهبية',
+        caption: 'مثال: تركز صنف. حجم العقدة ونسبتها يبينان حصة المخبر في الصنف؛ والحلقة الذهبية تدل على أكبر حصة. معطيات وهمية للتوضيح فقط.',
+      },
       { type: 'h2', title: '3. العروض التجريبية المجانية' },
       {
         type: 'paragraph',
         text: 'تقترح صفحة الرسوم عدة عروض لكل حالة استخدام. كل عرض مثبت على مثال (سيمفاستاتين للتداخلات، خافضات الدهون للاستيراد، مضادات الالتهاب للتركز، علامات الميتفورمين للأدوية…)، ومفتوح دون حساب، ويعرض أهم 8 عقد من كل نوع. وهي كافية لفهم ما يمكن قراءته على الرسم ولتقدير فائدته لنشاطك.',
+      },
+      {
+        type: 'image',
+        src: '/articles/graphes/importation-statines.png',
+        width: 1428,
+        height: 1102,
+        alt: 'رسم الاعتماد على الاستيراد: صنف ATC ومواده بالأخضر إذا كانت مصنّعة في الجزائر، وبلدان منشئها',
+        caption: 'مثال: الاعتماد على الاستيراد. المواد الخضراء لها تسجيل واحد على الأقل مصنّع في الجزائر؛ وكل مادة مرتبطة ببلدان منشئها. معطيات وهمية للتوضيح فقط.',
+      },
+      {
+        type: 'image',
+        src: '/articles/graphes/medicaments-metformine.png',
+        width: 1428,
+        height: 1102,
+        alt: 'رسم علامات مادة فعالة: الميتفورمين في الوسط، وصنفها ATC، ومخابرها بالأخضر المزرق وعلاماتها بالبرتقالي',
+        caption: 'مثال: من يسوّق ماذا. كل علامة (برتقالي) مرتبطة بمادتها؛ والمخابر بالأخضر المزرق. معطيات وهمية للتوضيح فقط.',
       },
       { type: 'h2', title: '4. المستكشف المدفوع' },
       {
