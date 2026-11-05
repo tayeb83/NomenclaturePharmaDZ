@@ -87,6 +87,16 @@ précise que DwaDZ met en relation, ne vend rien et ne garantit aucun stock.
 `NEXT_PUBLIC_FACEBOOK_PAGE_URL` (bouton « Nous écrire sur Facebook » sur `/demandes`).
 Tests : `npm run test:demandes`.
 
+### 🕸️ Graphe de connaissances (recherche)
+- `scripts/kg_export.py` exporte la nomenclature en **RDF/Turtle** (spécialités, substances, ATC en SKOS fr/en/ar,
+  laboratoires, pays, retraits, interactions ANSM réifiées) et calcule des **indicateurs** (dépendance à
+  l'importation, concentration par classe ATC avec indice HHI, redondance, centralité des interactions,
+  substances retirées encore enregistrées).
+- Les textes du thésaurus ANSM (risque, conduite à tenir) ne sont pas exportés : seules les relations et la gravité le sont.
+- `DATABASE_URL=... python scripts/kg_export.py --db --out data/kg` (vraie base) ou
+  `python scripts/kg_export.py --json scripts/fixtures/nomenclature_synthetique.json --out data/kg` (test, chiffres fictifs).
+- Tests : `python3 -m unittest scripts.tests.test_kg_export`.
+
 ### 🔗 Partage d'une fiche (Facebook, X, WhatsApp)
 - Barre de partage en haut de chaque fiche (FR/AR) : Facebook, X, WhatsApp, copie du lien et partage natif du téléphone.
   Le message est prêt à poster (nom, substance, forme, dosage, laboratoire).
