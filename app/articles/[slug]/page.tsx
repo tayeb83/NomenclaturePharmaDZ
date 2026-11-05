@@ -24,6 +24,8 @@ export async function generateMetadata(
   if (!article) return { title: 'Article introuvable' }
 
   const canonical = `${APP_URL}/articles/${article.slug}`
+  // visuel de partage 1200×630 propre à l'article (voir lib/article-share-image.tsx)
+  const shareImage = `${APP_URL}/partage/article/${article.slug}`
   return {
     title: `${article.seoTitle || article.title}`,
     description: article.description,
@@ -38,7 +40,9 @@ export async function generateMetadata(
       locale: article.lang === 'ar' ? 'ar_DZ' : 'fr_DZ',
       url: canonical,
       tags: article.tags,
+      images: [{ url: shareImage, width: 1200, height: 630, alt: article.title }],
     },
+    twitter: { card: 'summary_large_image', title: article.seoTitle || article.title, description: article.description, images: [shareImage] },
   }
 }
 
