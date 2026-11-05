@@ -11,9 +11,14 @@
  */
 import type { Couche } from './core.ts'
 
+/**
+ * Ce qu'une démo (ou une requête de l'explorateur) demande. Le laboratoire est un filtre facultatif :
+ * « substance + laboratoire » ne garde que ce que ce laboratoire enregistre pour cette substance.
+ */
 export type Vue =
-  | { vue: 'substance'; substance: string; couches: Couche[] }
-  | { vue: 'classe'; atc: string; mode: 'importation' | 'concentration' }
+  | { vue: 'substance'; substance: string; couches: Couche[]; labo?: string }
+  | { vue: 'classe'; atc: string; mode: 'importation' | 'concentration'; labo?: string }
+  | { vue: 'laboratoire'; labo: string; couches: Couche[] }
 
 export type Demo = {
   id: string
@@ -120,6 +125,38 @@ export const CAS_USAGE: CasUsage[] = [
         question: { fr: 'Combien de laboratoires se partagent les IPP ?', ar: 'كم مخبرًا يتقاسم سوق مثبطات مضخة البروتون؟' },
         lecture: { fr: 'L\'indice HHI (0 à 10 000) résume la concentration : en dessous de 1 500 le marché est peu concentré, au-dessus de 2 500 très concentré.', ar: 'يلخص مؤشر HHI (من 0 إلى 10 000) التركز: فوق 2 500 يكون السوق شديد التركز.' },
         params: { vue: 'classe', atc: 'A02B', mode: 'concentration' },
+      },
+    ],
+  },
+  {
+    id: 'laboratoires',
+    icone: '🏷️',
+    titre: { fr: 'Qui commercialise quoi ?', ar: 'من يسوّق ماذا؟' },
+    resume: {
+      fr: 'Les médicaments (marques) d\'une substance, ceux d\'un laboratoire, et leur croisement : substance + laboratoire.',
+      ar: 'أدوية (علامات) مادة فعالة، وأدوية مخبر، وتقاطعهما: مادة + مخبر.',
+    },
+    demos: [
+      {
+        id: 'laboratoire-saidal',
+        titre: { fr: 'Un laboratoire : Saidal', ar: 'مخبر: صيدال' },
+        question: { fr: 'Quelles substances et quels médicaments un laboratoire enregistre-t-il ?', ar: 'ما المواد والأدوية التي يسجلها مخبر؟' },
+        lecture: { fr: 'Le laboratoire est au centre ; ses substances en dessous, avec leur classe ATC et leurs marques ; ses pays d\'origine et ses retraits autour.', ar: 'المخبر في الوسط؛ وتحته مواده مع صنفها ATC وعلاماتها؛ وحوله بلدان المنشأ وعمليات السحب.' },
+        params: { vue: 'laboratoire', labo: 'SAIDAL', couches: ['atc', 'medicaments', 'pays', 'retraits'] },
+      },
+      {
+        id: 'medicaments-metformine',
+        titre: { fr: 'Les marques de la metformine', ar: 'علامات الميتفورمين' },
+        question: { fr: 'Quels médicaments contiennent cette substance, et chez quels laboratoires ?', ar: 'ما الأدوية التي تحتوي هذه المادة، ولدى أي مخابر؟' },
+        lecture: { fr: 'Chaque marque est reliée à la substance ; la taille suit son nombre de présentations et son détail donne ses laboratoires.', ar: 'كل علامة مرتبطة بالمادة؛ وحجمها يتبع عدد أشكالها وتفصيلها يعطي مخابرها.' },
+        params: { vue: 'substance', substance: 'METFORMINE', couches: ['atc', 'labos', 'medicaments'] },
+      },
+      {
+        id: 'substance-laboratoire-paracetamol',
+        titre: { fr: 'Paracétamol chez Saidal', ar: 'باراسيتامول عند صيدال' },
+        question: { fr: 'Que fait ce laboratoire pour cette substance ?', ar: 'ماذا يقدّم هذا المخبر لهذه المادة؟' },
+        lecture: { fr: 'Substance + laboratoire : seuls les enregistrements de ce laboratoire pour cette substance sont gardés ; les interactions restent celles de la substance.', ar: 'مادة + مخبر: لا تبقى إلا تسجيلات هذا المخبر لهذه المادة؛ وتبقى التداخلات هي تداخلات المادة.' },
+        params: { vue: 'substance', substance: 'PARACETAMOL', labo: 'SAIDAL', couches: ['atc', 'labos', 'medicaments', 'interactions'] },
       },
     ],
   },

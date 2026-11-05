@@ -16,7 +16,7 @@ const M = 40 // marge
 const hex = (h: string) => rgb(parseInt(h.slice(1, 3), 16) / 255, parseInt(h.slice(3, 5), 16) / 255, parseInt(h.slice(5, 7), 16) / 255)
 const NAVY = hex('#12233f'), BLUE = hex('#173f82'), BRASS = hex('#b98425'), MUTED = hex('#5b6577'), LINE = hex('#e6dcc0'), CREAM = hex('#fbf7ec')
 const KIND: Record<NodeKind, ReturnType<typeof hex>> = {
-  substance: hex('#173f82'), atc: hex('#b98425'), labo: hex('#1e8e8a'), pays: hex('#6b7894'), interaction: hex('#b3261e'), classe: hex('#8e3b7a'), retrait: hex('#5a4a42'),
+  substance: hex('#173f82'), atc: hex('#b98425'), labo: hex('#1e8e8a'), pays: hex('#6b7894'), interaction: hex('#b3261e'), classe: hex('#8e3b7a'), retrait: hex('#5a4a42'), medicament: hex('#c2662d'),
 }
 const LOCAL = hex('#2f8f4e')
 const GRAVITE: Record<Gravite, { label: string; couleur: ReturnType<typeof hex>; epaisseur: number }> = {
@@ -135,7 +135,7 @@ export async function construirePdfSubstance(g: GraphData, meta: MetaPdf): Promi
   y -= gh + 8
   // légende
   const types = [...new Set(g.nodes.map(n => n.kind))]
-  const libKind: Record<NodeKind, string> = { substance: 'Substance', atc: 'Classe ATC', labo: 'Laboratoire', pays: 'Pays d\'origine', interaction: 'Interaction', classe: 'Classe en interaction', retrait: 'Retrait' }
+  const libKind: Record<NodeKind, string> = { substance: 'Substance', atc: 'Classe ATC', labo: 'Laboratoire', pays: 'Pays d\'origine', interaction: 'Interaction', classe: 'Classe en interaction', retrait: 'Retrait', medicament: 'Médicament (marque)' }
   let lx = M
   for (const k of types) {
     page.drawCircle({ x: lx + 3, y: y + 2.5, size: 3, color: KIND[k] })
@@ -166,6 +166,13 @@ export async function construirePdfSubstance(g: GraphData, meta: MetaPdf): Promi
       const pays = g.edges.filter(e => e.kind === 'origine' && e.source === l.id).map(e => noeud.get(e.target)?.label).filter(Boolean).join(', ')
       ligne([{ t: l.label, x: M, w: W * 0.5 }, { t: String(l.weight ?? ''), x: M + W * 0.52, w: W * 0.12 }, { t: pays || '-', x: M + W * 0.68, w: W * 0.32 }])
     }
+  }
+
+  const marques = g.nodes.filter(n => n.kind === 'medicament').sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0) || a.label.localeCompare(b.label))
+  if (marques.length) {
+    titre(`Médicaments (${marques.length})`)
+    ligne([{ t: 'Marque', x: M, w: W * 0.3, f: bold, c: MUTED }, { t: 'Présentations', x: M + W * 0.32, w: W * 0.14, f: bold, c: MUTED }, { t: 'Laboratoires', x: M + W * 0.48, w: W * 0.52, f: bold, c: MUTED }])
+    for (const m of marques) ligne([{ t: m.label, x: M, w: W * 0.3 }, { t: String(m.weight ?? ''), x: M + W * 0.32, w: W * 0.14 }, { t: (m.detail ?? '').split(' · ').slice(1).join(' · ') || '-', x: M + W * 0.48, w: W * 0.52 }])
   }
 
   const inter = g.edges.filter(e => e.kind === 'interagit' && e.source === g.centre)

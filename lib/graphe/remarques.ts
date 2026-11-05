@@ -6,11 +6,15 @@ import type { Demo } from './demos.ts'
 export function remarques(vue: Demo['params'], g: GraphData): string[] {
   const n = (k: string) => g.nodes.filter(x => x.kind === k).length
   const r: string[] = []
-  if (vue.vue === 'substance') {
+  if (vue.vue === 'laboratoire') {
+    if (n('substance') === 0) r.push('aucune substance pour ce laboratoire')
+    if (vue.couches.includes('medicaments') && n('medicament') === 0) r.push('aucun médicament associé')
+  } else if (vue.vue === 'substance') {
     if (vue.couches.includes('interactions') && n('interaction') + n('classe') === 0) r.push('aucune interaction du thésaurus pour cette substance')
     if (vue.couches.includes('labos') && n('labo') === 0) r.push('aucun laboratoire')
     if (vue.couches.includes('retraits') && n('retrait') === 0) r.push('aucun retrait : la démo « retraits » n\'a rien à montrer')
     if (vue.couches.includes('atc') && n('atc') === 0) r.push('pas de classe ATC (dci_atc_mapping)')
+    if (vue.couches.includes('medicaments') && n('medicament') === 0) r.push('aucun médicament associé')
   } else if (vue.mode === 'concentration') {
     if (n('labo') < 3) r.push('moins de 3 laboratoires : la concentration n\'a pas de sens')
   } else {

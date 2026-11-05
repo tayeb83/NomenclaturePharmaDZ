@@ -43,7 +43,7 @@ export function OffreGraphe({ connecte = false, ouvrirExplorateur = true }: { co
       <ul style={{ margin: '0 0 12px', paddingInlineStart: 20, color: C.ink }}>
         {t.offrePoints.map(p => <li key={p}>{p}</li>)}
       </ul>
-      <p style={{ margin: '0 0 12px', fontSize: 14, color: C.muted }}>{t.tarif}</p>
+      <p style={{ margin: '0 0 12px', fontSize: 14, color: C.muted }}>{t.tarif} <a href={`/articles/graphes-medicaments-algerie-cas-usage-acces${lang === 'ar' ? '-ar' : ''}`} style={{ color: C.blueDeep, fontWeight: 700 }}>{t.guide}</a></p>
       <div style={{ margin: '0 0 14px', padding: '10px 14px', borderRadius: 10, background: 'white', border: `1px solid ${C.creamEdge}`, fontSize: 14 }}>
         <b>{t.payer}</b>
         <p style={{ margin: '4px 0 8px', color: C.muted }}>{t.payerTexte}</p>

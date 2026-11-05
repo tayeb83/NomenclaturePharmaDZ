@@ -47,6 +47,8 @@ export interface QcmQuestion {
   answer: string // label of correct answer
 }
 
+import { ARTICLES_GRAPHES } from './articles-graphes'
+
 export const ARTICLES: Article[] = [
   {
     slug: 'loi-18-11-exercice-officinal-2026',
@@ -1473,6 +1475,7 @@ export const ARTICLES: Article[] = [
       },
     ],
   },
+  ...ARTICLES_GRAPHES,
 ]
 
 export function getArticleBySlug(slug: string): Article | undefined {

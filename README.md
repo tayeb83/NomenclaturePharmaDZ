@@ -108,6 +108,14 @@ Tests : `npm run test:demandes`.
   Dans la vue concentration, la taille d'un nœud et son pourcentage donnent la part, l'anneau doré marque la plus grande part, et les cinq
   chiffres clés donnent HHI, plus grande part et part des trois premiers. Une démo qui écrit « AMIODARONE » retrouve « AMIODARONE CHLORHYDRATE »
   si c'est la DCI de la nomenclature.
+- **Requêtes de l'explorateur** : une vue (substance, classe ATC ou laboratoire) + un laboratoire facultatif, puis « Lancer la requête ».
+  Substance + laboratoire ne garde que les enregistrements de ce laboratoire pour cette substance (les interactions restent celles de la substance) ;
+  classe + laboratoire (mode importation) montre ce que ce laboratoire couvre dans la classe ; laboratoire seul montre ses substances, classes ATC,
+  marques, pays d'origine et retraits. Le laboratoire se saisit en partie : « saidal » retrouve « GROUPE SAIDAL » (le plus riche en enregistrements).
+- **Médicaments (marques) dans les graphes** : nœuds orange reliés à leur substance (3 par substance en démo, 6 pour un abonné, jusqu'à 30 dans la vue
+  d'une seule substance), détail = présentations et laboratoires, lien vers `/marque/<slug>`. Couche « Médicaments » activable comme les autres.
+- **Article d'explication** : `lib/articles-graphes.ts` (FR + AR, « Graphes de connaissances du médicament en Algérie : cas d'usage et comment y accéder »),
+  lié depuis `/graphe` et depuis l'offre. À garder aligné sur `lib/graphe/demos.ts`.
 - **Déplacer les nœuds** : glisser-déposer (souris ou doigt) ou flèches du clavier (Maj = grand pas) ; les liens et les étiquettes suivent,
   « Réinitialiser la disposition » remet l'étoile. Le survol n'ouvre jamais de page : il faut cliquer une première fois, puis une seconde.
 - **Contrôle des démos** : `/admin/graphe` → « Vérifier les démos » construit chaque démo sur la vraie base et signale substance introuvable,

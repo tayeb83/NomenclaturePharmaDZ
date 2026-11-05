@@ -11,7 +11,7 @@ const W = 700
 const H = 540
 
 const COULEUR: Record<NodeKind, string> = {
-  substance: C.blueDeep, atc: C.brass, labo: C.teal, pays: '#6b7894', interaction: '#b3261e', classe: '#8e3b7a', retrait: '#5a4a42',
+  substance: C.blueDeep, atc: C.brass, labo: C.teal, pays: '#6b7894', interaction: '#b3261e', classe: '#8e3b7a', retrait: '#5a4a42', medicament: '#c2662d',
 }
 const COULEUR_LOCAL = '#2f8f4e'
 const GRAVITE_STYLE: Record<string, { c: string; w: number; dash?: string }> = {
@@ -23,16 +23,16 @@ const GRAVITE_STYLE: Record<string, { c: string; w: number; dash?: string }> = {
 
 const T = {
   fr: {
-    couches: { atc: 'Classe ATC', labos: 'Laboratoires', pays: 'Pays', interactions: 'Interactions', retraits: 'Retraits' },
-    kinds: { substance: 'Substance', atc: 'Classe ATC', labo: 'Laboratoire', pays: 'Pays d\'origine', interaction: 'Substance en interaction', classe: 'Classe en interaction', retrait: 'Retrait' },
+    couches: { atc: 'Classe ATC', labos: 'Laboratoires', medicaments: 'Médicaments', pays: 'Pays', interactions: 'Interactions', retraits: 'Retraits' },
+    kinds: { substance: 'Substance', atc: 'Classe ATC', labo: 'Laboratoire', pays: 'Pays d\'origine', interaction: 'Substance en interaction', classe: 'Classe en interaction', retrait: 'Retrait', medicament: 'Médicament (marque)' },
     local: 'production algérienne',
     gravites: { contre_indication: 'Contre-indication', deconseillee: 'Association déconseillée', precaution_emploi: 'Précaution d\'emploi', a_prendre_en_compte: 'À prendre en compte' },
     legendeGravite: 'Gravité de l\'interaction',
     choisir: 'Survolez ou sélectionnez un nœud pour voir son détail.',
     liste: 'Voir les liens sous forme de tableau',
     relation: 'Relation', de: 'De', vers: 'Vers',
-    relations: { classe: 'est classée dans', fabrique: 'est fabriquée par', origine: 'provient de', interagit: 'interagit avec', retire: 'a fait l\'objet du retrait', contient: 'contient', vend: 'commercialise' },
-    inverses: { classe: 'contient la substance', fabrique: 'fabrique', origine: 'est l\'origine de', interagit: 'interagit avec', retire: 'concerne la substance', contient: 'fait partie de', vend: 'est commercialisée par' },
+    relations: { classe: 'est classée dans', fabrique: 'est fabriquée par', origine: 'provient de', interagit: 'interagit avec', retire: 'a fait l\'objet du retrait', contient: 'contient', vend: 'commercialise', marque: 'est commercialisée sous le nom' },
+    inverses: { classe: 'contient la substance', fabrique: 'fabrique', origine: 'est l\'origine de', interagit: 'interagit avec', retire: 'concerne la substance', contient: 'fait partie de', vend: 'est commercialisée par', marque: 'est une marque de' },
     tronque: 'Aperçu limité aux nœuds les plus importants de chaque type.',
     csv: 'Exporter les liens (CSV)', demo: 'DÉMO', filtrer: 'Afficher',
     ouvrir: 'Ouvrir la page', recentrer: 'Explorer ce nœud', astuce: 'Cliquez deux fois sur un nœud marqué ↗ pour ouvrir sa page.', ouvrable: 'page disponible',
@@ -40,16 +40,16 @@ const T = {
     graphe: 'Graphe',
   },
   ar: {
-    couches: { atc: 'الصنف ATC', labos: 'المخابر', pays: 'البلدان', interactions: 'التداخلات', retraits: 'السحب' },
-    kinds: { substance: 'مادة فعالة', atc: 'صنف ATC', labo: 'مخبر', pays: 'بلد المنشأ', interaction: 'مادة متداخلة', classe: 'صنف متداخل', retrait: 'سحب' },
+    couches: { atc: 'الصنف ATC', labos: 'المخابر', medicaments: 'الأدوية', pays: 'البلدان', interactions: 'التداخلات', retraits: 'السحب' },
+    kinds: { substance: 'مادة فعالة', atc: 'صنف ATC', labo: 'مخبر', pays: 'بلد المنشأ', interaction: 'مادة متداخلة', classe: 'صنف متداخل', retrait: 'سحب', medicament: 'دواء (علامة)' },
     local: 'إنتاج جزائري',
     gravites: { contre_indication: 'مانع استعمال', deconseillee: 'اقتران غير مستحسن', precaution_emploi: 'احتياط عند الاستعمال', a_prendre_en_compte: 'يؤخذ بعين الاعتبار' },
     legendeGravite: 'درجة خطورة التداخل',
     choisir: 'مرّر المؤشر أو اختر عقدة لعرض تفاصيلها.',
     liste: 'عرض الروابط في جدول',
     relation: 'العلاقة', de: 'من', vers: 'إلى',
-    relations: { classe: 'مصنفة ضمن', fabrique: 'تصنعها', origine: 'منشؤها', interagit: 'تتداخل مع', retire: 'شملها سحب', contient: 'تحتوي', vend: 'تسوّق' },
-    inverses: { classe: 'تضم المادة', fabrique: 'تصنع', origine: 'هو منشأ', interagit: 'تتداخل مع', retire: 'يخص المادة', contient: 'جزء من', vend: 'تسوّقها' },
+    relations: { classe: 'مصنفة ضمن', fabrique: 'تصنعها', origine: 'منشؤها', interagit: 'تتداخل مع', retire: 'شملها سحب', contient: 'تحتوي', vend: 'تسوّق', marque: 'تُسوَّق باسم' },
+    inverses: { classe: 'تضم المادة', fabrique: 'تصنع', origine: 'هو منشأ', interagit: 'تتداخل مع', retire: 'يخص المادة', contient: 'جزء من', vend: 'تسوّقها', marque: 'علامة للمادة' },
     tronque: 'العرض محدود في أهم العقد من كل نوع.',
     csv: 'تصدير الروابط (CSV)', demo: 'عرض تجريبي', filtrer: 'عرض',
     ouvrir: 'افتح الصفحة', recentrer: 'استكشف هذه العقدة', astuce: 'انقر مرتين على عقدة تحمل ↗ لفتح صفحتها.', ouvrable: 'صفحة متاحة',
@@ -270,10 +270,10 @@ export function GrapheView({ graph, couchesInitiales, demo = false, exportCsv = 
           <>
             <b>{nom(sel)}</b> <span style={{ color: C.muted }}>· {t.kinds[sel.kind]}</span>
             {detail(sel) && <div style={{ color: C.muted }}>{detail(sel)}</div>}
-            {(sel.href || (onExplorer && (sel.kind === 'substance' || sel.kind === 'atc' || sel.kind === 'interaction') && sel.id !== vue.centre)) && (
+            {(sel.href || (onExplorer && (sel.kind === 'substance' || sel.kind === 'atc' || sel.kind === 'interaction' || sel.kind === 'labo') && sel.id !== vue.centre)) && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '8px 0 2px' }}>
                 {sel.href && <Link href={sel.href} style={{ fontWeight: 700, fontSize: 13.5, padding: '4px 12px', borderRadius: 999, border: `1.5px solid ${C.brass}`, background: 'white', color: C.ink, textDecoration: 'none' }}>{t.ouvrir} ↗</Link>}
-                {onExplorer && sel.id !== vue.centre && (sel.kind === 'substance' || sel.kind === 'atc' || sel.kind === 'interaction') && <button type="button" onClick={() => onExplorer(sel)} style={{ font: 'inherit', fontWeight: 700, fontSize: 13.5, padding: '4px 12px', borderRadius: 999, border: `1.5px solid ${C.blueDeep}`, background: C.blueDeep, color: 'white', cursor: 'pointer' }}>{t.recentrer}</button>}
+                {onExplorer && sel.id !== vue.centre && (sel.kind === 'substance' || sel.kind === 'atc' || sel.kind === 'interaction' || sel.kind === 'labo') && <button type="button" onClick={() => onExplorer(sel)} style={{ font: 'inherit', fontWeight: 700, fontSize: 13.5, padding: '4px 12px', borderRadius: 999, border: `1.5px solid ${C.blueDeep}`, background: C.blueDeep, color: 'white', cursor: 'pointer' }}>{t.recentrer}</button>}
               </div>
             )}
             {aretesSel.length > 0 && (

@@ -13,6 +13,9 @@ export function GrapheHub() {
   return (
     <div dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       <p style={{ fontSize: 18, maxWidth: '62ch', color: C.ink, marginTop: 0 }}>{t.accroche}</p>
+      <p style={{ marginTop: 0 }}>
+        <Link href={`/articles/graphes-medicaments-algerie-cas-usage-acces${lang === 'ar' ? '-ar' : ''}`} style={{ fontWeight: 700, color: C.blueDeep }}>{t.guide}</Link>
+      </p>
       <h2 style={{ fontSize: 22, color: C.navy, marginBottom: 4 }}>{t.demos}</h2>
       <p style={{ marginTop: 0, color: C.muted }}>{t.demosTexte}</p>
       <div style={{ display: 'grid', gap: 18 }}>
