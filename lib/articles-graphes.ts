@@ -18,6 +18,7 @@ export const ARTICLES_GRAPHES: Article[] = [
     seoKeywords: ['graphe de connaissances médicament', 'nomenclature pharmaceutique algérienne', 'concentration du marché pharmaceutique', 'dépendance importation médicaments Algérie', 'interactions médicamenteuses graphe', 'laboratoires pharmaceutiques Algérie'],
     date: '2026-11-05',
     readingTime: 7,
+    image: 'graphes-concentration.png',
     tags: ['Graphes', 'Nomenclature', 'Cas d’usage', 'Interactions médicamenteuses', 'Marché pharmaceutique', 'Outils'],
     faq: [
       {
@@ -185,6 +186,7 @@ export const ARTICLES_GRAPHES: Article[] = [
     seoKeywords: ['رسم بياني للمعرفة الدوائية', 'المدونة الوطنية للمنتجات الصيدلانية', 'تركز السوق الدوائي', 'الاعتماد على استيراد الأدوية الجزائر', 'التداخلات الدوائية', 'المخابر الصيدلانية الجزائر'],
     date: '2026-11-05',
     readingTime: 7,
+    image: 'graphes-concentration.png',
     tags: ['رسوم بيانية', 'المدونة', 'حالات الاستخدام', 'التداخلات الدوائية', 'السوق الدوائي', 'أدوات'],
     faq: [
       {

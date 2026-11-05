@@ -18,6 +18,8 @@ export interface Article {
   date: string
   readingTime: number // minutes
   tags: string[]
+  /** vignette du visuel de partage : fichier PNG sous assets/articles/ (sans elle, le visuel n'a que le titre) */
+  image?: string
   content: ArticleSection[]
   faq?: ArticleFaq[]
 }

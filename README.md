@@ -105,6 +105,9 @@ Tests : `npm run test:demandes`.
   hashtags ; WhatsApp ajoute l'invitation à suivre la page. « Copier le texte » donne le message complet (titre, lien, hashtags, adresse de la page
   Facebook) à coller dans la publication. Une mention `@page` ne peut pas être préremplie par un lien : l'adresse de la page, ajoutée au texte, devient
   cliquable sur Facebook.
+- **Image de partage** : chaque article a son visuel 1200×630 (`/partage/article/<slug>`, `lib/article-share-image.tsx`, style Casbah : titre, sous-titre,
+  étiquettes) déclaré en `og:image` et `twitter:image`. Un article peut ajouter une vignette (champ `image` = PNG sous `assets/articles/`) ; c'est le cas des
+  articles sur les graphes. Après un changement, forcer Facebook à relire la page : `developers.facebook.com/tools/debug/` → « Scrape Again ».
 - Tests : `node --test tests/partage/*.test.ts`.
 
 ### 🕸️ Graphes dans le site (`/graphe`, démos gratuites + explorateur payant)
