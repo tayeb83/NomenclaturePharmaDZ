@@ -5,6 +5,7 @@ import { validerAbonnement } from '@/lib/graphe/core'
 import { isMissingTableError } from '@/lib/garde-feedback'
 import { sendMail } from '@/lib/training/mail'
 import { appUrl } from '@/lib/training'
+import { controlerDemos } from '@/lib/graphe/controle'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,6 +17,13 @@ function garde(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   if (!garde(req)) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  // ?demos=1 : contrôle des démos du catalogue (une requête par démo, quelques secondes)
+  if (req.nextUrl.searchParams.get('demos')) {
+    try { return NextResponse.json({ demos: await controlerDemos() }) } catch (err) {
+      console.error('[api/admin/graphe demos]', (err as Error).message)
+      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
+    }
+  }
   try {
     const [abonnes, demandes] = await Promise.all([listerAbonnes(), listerDemandes()])
     return NextResponse.json({ abonnes, demandes })

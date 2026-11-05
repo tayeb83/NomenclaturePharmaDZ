@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
@@ -36,6 +36,7 @@ const T = {
     tronque: 'Aperçu limité aux nœuds les plus importants de chaque type.',
     csv: 'Exporter les liens (CSV)', demo: 'DÉMO', filtrer: 'Afficher',
     ouvrir: 'Ouvrir la page', recentrer: 'Explorer ce nœud', astuce: 'Cliquez deux fois sur un nœud marqué ↗ pour ouvrir sa page.', ouvrable: 'page disponible',
+    glisser: 'Glissez un nœud pour le déplacer (flèches du clavier aussi).', reinit: 'Réinitialiser la disposition', dominant: 'Plus grande part de marché',
     graphe: 'Graphe',
   },
   ar: {
@@ -52,6 +53,7 @@ const T = {
     tronque: 'العرض محدود في أهم العقد من كل نوع.',
     csv: 'تصدير الروابط (CSV)', demo: 'عرض تجريبي', filtrer: 'عرض',
     ouvrir: 'افتح الصفحة', recentrer: 'استكشف هذه العقدة', astuce: 'انقر مرتين على عقدة تحمل ↗ لفتح صفحتها.', ouvrable: 'صفحة متاحة',
+    glisser: 'اسحب عقدة لتحريكها (أو استعمل أسهم لوحة المفاتيح).', reinit: 'إعادة الترتيب الأصلي', dominant: 'أكبر حصة في السوق',
     graphe: 'الرسم',
   },
 } as const
@@ -76,6 +78,12 @@ export function GrapheView({ graph, couchesInitiales, demo = false, exportCsv = 
   const ar = lang === 'ar'
   const [actives, setActives] = useState<Set<Couche>>(() => new Set(couchesInitiales))
   const [choisi, setChoisi] = useState<string | null>(null)
+  // nœud sur lequel on a cliqué une fois : un second clic ouvre sa page (le simple survol ne suffit pas)
+  const [arme, setArme] = useState<string | null>(null)
+  // positions choisies à la main (coordonnées du dessin) : elles l'emportent sur la disposition automatique
+  const [deplaces, setDeplaces] = useState<Record<string, { x: number; y: number }>>({})
+  const svgRef = useRef<SVGSVGElement>(null)
+  const glisse = useRef<{ id: string; dx: number; dy: number; x0: number; y0: number; bouge: boolean } | null>(null)
 
   const present = useMemo(() => new Set<Couche>(graph.nodes.map(n => coucheDe(n.kind)).filter((c): c is Couche => !!c)), [graph])
   const vue = useMemo(() => filtrerCouches(graph, actives), [graph, actives])
@@ -89,14 +97,35 @@ export function GrapheView({ graph, couchesInitiales, demo = false, exportCsv = 
   const px = (x: number) => Math.round((W / 2 + x * (W / 2 - 84)) * 10) / 10
   const py = (y: number) => Math.round((H / 2 + y * (H / 2 - 46)) * 10) / 10
 
+  /** Position d'un nœud dans le dessin : celle qu'on lui a donnée, sinon celle de la disposition. */
+  const centreDe = (id: string) => {
+    const d = deplaces[id]
+    if (d) return d
+    const p = pos.get(id)
+    return p ? { x: px(p.x), y: py(p.y) } : null
+  }
+  const dansLeDessin = (cx: number, cy: number) => {
+    const svg = svgRef.current
+    const m = svg?.getScreenCTM()
+    if (!svg || !m) return null
+    const pt = svg.createSVGPoint()
+    pt.x = cx; pt.y = cy
+    const r = pt.matrixTransform(m.inverse())
+    return { x: r.x, y: r.y }
+  }
+  const borne = (v: number, max: number) => Math.min(max - 14, Math.max(14, v))
+  function deplacer(id: string, x: number, y: number) {
+    setDeplaces(d => ({ ...d, [id]: { x: borne(x, W), y: borne(y, H) } }))
+  }
+
   const aretesSel = sel ? vue.edges.filter(e => e.source === sel.id || e.target === sel.id) : []
   const couleurNoeud = (n: GraphNode) => ((n.kind === 'pays' || n.kind === 'substance') && n.local ? COULEUR_LOCAL : COULEUR[n.kind])
   const typesPresents = [...new Set(vue.nodes.map(n => n.kind))]
 
-  /** Premier clic : sélectionne ; clic sur le nœud déjà sélectionné : ouvre sa page quand elle existe. */
+  /** Premier clic : sélectionne ; second clic sur le même nœud : ouvre sa page quand elle existe. */
   function activer(n: GraphNode) {
-    if (choisi === n.id && n.href) router.push(n.href)
-    else setChoisi(n.id)
+    if (arme === n.id && n.href) router.push(n.href)
+    else { setChoisi(n.id); setArme(n.id) }
   }
 
   function telecharger() {
@@ -123,6 +152,11 @@ export function GrapheView({ graph, couchesInitiales, demo = false, exportCsv = 
             </button>
           )
         })}
+        {Object.keys(deplaces).length > 0 && (
+          <button type="button" onClick={() => setDeplaces({})} style={{ font: 'inherit', fontSize: 13, fontWeight: 700, padding: '4px 12px', borderRadius: 999, cursor: 'pointer', border: '1.5px solid #cbd5e1', background: 'white', color: C.muted }}>
+            ↺ {t.reinit}
+          </button>
+        )}
         {exportCsv && (
           <button type="button" onClick={telecharger} style={{ font: 'inherit', fontSize: 13, fontWeight: 700, padding: '4px 12px', borderRadius: 999, cursor: 'pointer', marginInlineStart: 'auto', border: `1.5px solid ${C.brass}`, background: C.cream, color: C.ink }}>
             ⬇ {t.csv}
@@ -134,36 +168,72 @@ export function GrapheView({ graph, couchesInitiales, demo = false, exportCsv = 
         {demo && (
           <span style={{ position: 'absolute', top: 10, insetInlineStart: 10, fontSize: 11, fontWeight: 800, letterSpacing: '.08em', padding: '3px 9px', borderRadius: 6, background: C.brass, color: 'white' }}>{t.demo}</span>
         )}
-        <svg viewBox={`0 0 ${W} ${H}`} role="group" aria-label={`${t.graphe} — ${nom(noeuds.get(vue.centre) ?? vue.nodes[0])}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
+        <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} role="group" aria-label={`${t.graphe} — ${nom(noeuds.get(vue.centre) ?? vue.nodes[0])}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
           <g fill="none">
             {vue.edges.map((e, i) => {
-              const a = pos.get(e.source), b = pos.get(e.target)
+              const a = centreDe(e.source), b = centreDe(e.target)
               if (!a || !b) return null
               const g = e.niveau ? GRAVITE_STYLE[e.niveau] : null
               const actif = !sel || e.source === sel.id || e.target === sel.id
               return (
-                <line key={i} x1={px(a.x)} y1={py(a.y)} x2={px(b.x)} y2={py(b.y)}
+                <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y}
                   stroke={g?.c ?? '#c9d1de'} strokeWidth={g?.w ?? 1.6} strokeDasharray={g?.dash} opacity={actif ? 1 : 0.18} />
               )
             })}
           </g>
           {vue.nodes.map(n => {
             const p = pos.get(n.id)
-            if (!p) return null
-            const x = px(p.x), y = py(p.y), r = p.profondeur === 0 ? 30 : 10 + Math.min(1, (p.r - 0.045) / 0.05) * 9
+            const c = centreDe(n.id)
+            if (!p || !c) return null
+            const { x, y } = c
+            const r = p.profondeur === 0 ? 30 : 10 + Math.min(1, (p.r - 0.045) / 0.05) * 9
             const estSel = sel?.id === n.id
             const voisin = !sel || estSel || aretesSel.some(e => e.source === n.id || e.target === n.id)
             // le libellé complet d'une classe ATC est dans le panneau de détail ; sur le dessin, le code suffit
-            const etiquette = n.kind === 'atc' && p.profondeur === 1 ? nom(n).split(' · ')[0] : abreger(nom(n), p.profondeur === 0 ? 22 : 17)
+            const etiquette = n.kind === 'atc' ? nom(n).split(' · ')[0] : abreger(nom(n), p.profondeur === 0 ? 22 : 17)
             return (
-              <g key={n.id} tabIndex={0} role="button" aria-label={`${t.kinds[n.kind]} : ${nom(n)}${detail(n) ? ` — ${detail(n)}` : ''}${n.href ? ` — ${t.ouvrable}` : ''}`}
-                aria-pressed={estSel} opacity={voisin ? 1 : 0.45} style={{ cursor: 'pointer', outline: 'none' }}
-                onMouseEnter={() => setChoisi(n.id)} onFocus={() => setChoisi(n.id)} onClick={() => activer(n)}
-                onKeyDown={ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); activer(n) } }}>
+              <g key={n.id} tabIndex={0} role="button" aria-label={`${t.kinds[n.kind]} : ${nom(n)}${n.badge ? ` (${n.badge})` : ''}${detail(n) ? ` — ${detail(n)}` : ''}${n.href ? ` — ${t.ouvrable}` : ''}`}
+                aria-pressed={estSel} opacity={voisin ? 1 : 0.45} style={{ cursor: glisse.current?.id === n.id ? 'grabbing' : 'grab', outline: 'none', touchAction: 'none' }}
+                onMouseEnter={() => { if (!glisse.current) setChoisi(n.id) }} onFocus={() => setChoisi(n.id)}
+                onPointerDown={ev => {
+                  const m = dansLeDessin(ev.clientX, ev.clientY)
+                  if (!m) return
+                  ev.currentTarget.setPointerCapture(ev.pointerId)
+                  glisse.current = { id: n.id, dx: m.x - x, dy: m.y - y, x0: ev.clientX, y0: ev.clientY, bouge: false }
+                }}
+                onPointerMove={ev => {
+                  const d = glisse.current
+                  if (!d || d.id !== n.id) return
+                  if (!d.bouge && Math.hypot(ev.clientX - d.x0, ev.clientY - d.y0) < 4) return // un simple clic n'est pas un glissement
+                  d.bouge = true
+                  const m = dansLeDessin(ev.clientX, ev.clientY)
+                  if (m) deplacer(n.id, m.x - d.dx, m.y - d.dy)
+                }}
+                onPointerUp={ev => {
+                  const d = glisse.current
+                  glisse.current = null
+                  if (ev.currentTarget.hasPointerCapture(ev.pointerId)) ev.currentTarget.releasePointerCapture(ev.pointerId)
+                  if (!d || d.id !== n.id) return
+                  if (d.bouge) { setChoisi(n.id); setArme(null) }
+                  else activer(n)
+                }}
+                onPointerCancel={() => { glisse.current = null }}
+                onKeyDown={ev => {
+                  if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); activer(n); return }
+                  const pas = ev.shiftKey ? 40 : 12
+                  const dir: Record<string, [number, number]> = { ArrowLeft: [-pas, 0], ArrowRight: [pas, 0], ArrowUp: [0, -pas], ArrowDown: [0, pas] }
+                  const v = dir[ev.key]
+                  if (v) { ev.preventDefault(); deplacer(n.id, x + v[0], y + v[1]) }
+                }}>
+                {n.dominant && <circle cx={x} cy={y} r={r + 6} fill="none" stroke={C.brass} strokeWidth={3.5} />}
                 <circle cx={x} cy={y} r={r} fill={couleurNoeud(n)} stroke={estSel ? C.ink : 'white'} strokeWidth={estSel ? 3 : 2} />
-                {n.href && <text x={x + r * 0.72} y={y - r * 0.55} textAnchor="middle" fontSize={13} fontWeight={800} fill="#fff" stroke={C.ink} strokeWidth={0.6} paintOrder="stroke">↗</text>}
+                {n.href && <text x={x + r * 0.72} y={y - r * 0.55} textAnchor="middle" fontSize={13} fontWeight={800} fill="#fff" stroke={C.ink} strokeWidth={0.6} paintOrder="stroke" pointerEvents="none">↗</text>}
                 <text x={x} y={y + r + 15} textAnchor="middle" fontSize={p.profondeur === 0 ? 16 : 13.5} fontWeight={p.profondeur === 0 ? 800 : 600} fill={C.ink}
-                  stroke="#fffdf6" strokeWidth={3} paintOrder="stroke">{etiquette}</text>
+                  stroke="#fffdf6" strokeWidth={3} paintOrder="stroke" pointerEvents="none">{etiquette}</text>
+                {n.badge && (
+                  <text x={x} y={y + r + 31} textAnchor="middle" fontSize={13} fontWeight={800} fill={C.brassDark}
+                    stroke="#fffdf6" strokeWidth={3} paintOrder="stroke" pointerEvents="none">{n.badge}</text>
+                )}
               </g>
             )
           })}
@@ -176,6 +246,9 @@ export function GrapheView({ graph, couchesInitiales, demo = false, exportCsv = 
             <i style={{ width: 11, height: 11, borderRadius: '50%', background: COULEUR[k], display: 'inline-block' }} />{t.kinds[k]}
           </span>
         ))}
+        {vue.nodes.some(n => n.dominant) && (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><i style={{ width: 11, height: 11, borderRadius: '50%', border: `3px solid ${C.brass}`, boxSizing: 'border-box', display: 'inline-block' }} />{t.dominant}</span>
+        )}
         {vue.nodes.some(n => n.local) && (
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><i style={{ width: 11, height: 11, borderRadius: '50%', background: COULEUR_LOCAL, display: 'inline-block' }} />{t.local}</span>
         )}
@@ -215,7 +288,7 @@ export function GrapheView({ graph, couchesInitiales, demo = false, exportCsv = 
         ) : <span style={{ color: C.muted }}>{t.choisir}</span>}
       </div>
 
-      {vue.nodes.some(n => n.href) && <p style={{ fontSize: 13, color: C.muted, margin: '8px 0 0' }}>{t.astuce}</p>}
+      <p style={{ fontSize: 13, color: C.muted, margin: '8px 0 0' }}>{t.glisser}{vue.nodes.some(n => n.href) ? ` ${t.astuce}` : ''}</p>
       {vue.tronque && <p style={{ fontSize: 13, color: C.muted, margin: '8px 0 0' }}>{t.tronque}</p>}
 
       <div style={stats}>

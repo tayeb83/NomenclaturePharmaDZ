@@ -57,6 +57,12 @@ def slug(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", fold(s).lower()).strip("-") or "inconnu"
 
 
+def est_local(e: dict) -> bool:
+    """Production locale : `statut` F (fabriqué) comme partout sur le site ; sans statut, pays d'origine = Algérie."""
+    st = (e.get("statut") or "").strip().upper()
+    return st == "F" if st else fold(e.get("pays")) == PAYS_LOCAL
+
+
 def composants(dci: str) -> list[str]:
     """« A + B » → [A, B]. Une DCI simple renvoie une liste d'un élément."""
     parts = [fold(p) for p in re.split(r"\s\+\s|\+", dci or "") if fold(p)]
@@ -246,14 +252,14 @@ def indicateurs(d: dict, top: int = 10) -> dict:
 
     # 1. Dépendance à l'importation
     n = len(enr)
-    importes = [e for e in enr if fold(e.get("pays")) != PAYS_LOCAL]
+    importes = [e for e in enr if not est_local(e)]
     sub_rows = []
     for sub, es in par_sub.items():
         pays = {fold(e["pays"]) for e in es if e.get("pays")}
         labos = {fold(e["labo"]) for e in es if e.get("labo")}
         sub_rows.append({
             "substance": sub, "specialites": len(es), "laboratoires": len(labos), "pays": len(pays),
-            "produite_localement": PAYS_LOCAL in pays,
+            "produite_localement": any(est_local(e) for e in es),
             "classe_atc": d["dci_atc"].get(sub),
         })
     mono_source = [r for r in sub_rows if r["laboratoires"] == 1]

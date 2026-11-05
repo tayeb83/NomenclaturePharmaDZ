@@ -102,6 +102,16 @@ Tests : `npm run test:demandes`.
   Elles sont regroupées par **cas d'usage** (interactions, importation, concentration du marché, retraits) dans
   `lib/graphe/demos.ts` : **pour ajouter une démo, ajouter une entrée dans `demos` du cas d'usage voulu** (substance ou
   classe ATC, couches affichées au départ, textes FR et AR). Elle apparaît seule dans `/graphe`, dans sa page et dans le sitemap.
+- **Définitions** (une seule fois, dans `lib/graphe/data.ts`) : l'unité est l'**enregistrement** (une ligne de `enregistrements`) ; production locale =
+  `statut` « F » comme le comparateur du marché (pays = Algérie seulement si le statut manque) ; part de marché d'un laboratoire = ses
+  enregistrements / ceux de la classe ; HHI = somme des carrés des parts en % (< 1 500 peu concentré, > 2 500 très concentré).
+  Dans la vue concentration, la taille d'un nœud et son pourcentage donnent la part, l'anneau doré marque la plus grande part, et les cinq
+  chiffres clés donnent HHI, plus grande part et part des trois premiers. Une démo qui écrit « AMIODARONE » retrouve « AMIODARONE CHLORHYDRATE »
+  si c'est la DCI de la nomenclature.
+- **Déplacer les nœuds** : glisser-déposer (souris ou doigt) ou flèches du clavier (Maj = grand pas) ; les liens et les étiquettes suivent,
+  « Réinitialiser la disposition » remet l'étoile. Le survol n'ouvre jamais de page : il faut cliquer une première fois, puis une seconde.
+- **Contrôle des démos** : `/admin/graphe` → « Vérifier les démos » construit chaque démo sur la vraie base et signale substance introuvable,
+  classe vide, aucun retrait, aucune interaction, etc.
 - **Nœuds cliquables** : substance → `/dci/…`, laboratoire → `/laboratoire/…`, classe ATC → `/classes-therapeutiques/…`, retrait → `/retraits/<année>`,
   partenaire d'interaction présent dans la nomenclature → sa fiche DCI. Un nœud marqué ↗ s'ouvre par un second clic ou par le lien du panneau de détail.
 - **Explorateur** (`/graphe/explorer`, payant) : n'importe quelle substance ou classe ATC (mode importation ou concentration),
