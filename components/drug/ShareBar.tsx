@@ -13,11 +13,19 @@ type Props = {
   /** titre de la fiche, pour le partage natif du téléphone */
   title: string
   lang: Lang
+  /** hashtags joints au partage (X, WhatsApp ; Facebook : le premier) */
+  hashtags?: string[]
+  /** libellé du groupe, par défaut « Partager cette fiche » */
+  libelle?: string
+  /** texte complet à coller dans une publication (message, lien, hashtags, page à suivre) : ajoute un bouton « Copier le texte » */
+  texteComplet?: string
+  /** ligne ajoutée au message WhatsApp (invitation à suivre la page) */
+  suivi?: string
 }
 
 const T = {
-  fr: { titre: 'Partager cette fiche', copier: 'Copier le lien', copie: 'Lien copié', natif: 'Partager…', fb: 'Facebook', x: 'X (Twitter)', wa: 'WhatsApp', suivre: 'Suivre la page', suivreAria: 'Suivre la page Facebook de DwaDZ' },
-  ar: { titre: 'شارك هذه البطاقة', copier: 'نسخ الرابط', copie: 'تم نسخ الرابط', natif: 'مشاركة…', fb: 'فيسبوك', x: 'إكس (تويتر)', wa: 'واتساب', suivre: 'تابع الصفحة', suivreAria: 'تابع صفحة DwaDZ على فيسبوك' },
+  fr: { titre: 'Partager cette fiche', copier: 'Copier le lien', copie: 'Lien copié', natif: 'Partager…', fb: 'Facebook', x: 'X (Twitter)', wa: 'WhatsApp', suivre: 'Suivre la page', suivreAria: 'Suivre la page Facebook de DwaDZ', copierTexte: 'Copier le texte', texteCopie: 'Texte copié' },
+  ar: { titre: 'شارك هذه البطاقة', copier: 'نسخ الرابط', copie: 'تم نسخ الرابط', natif: 'مشاركة…', fb: 'فيسبوك', x: 'إكس (تويتر)', wa: 'واتساب', suivre: 'تابع الصفحة', suivreAria: 'تابع صفحة DwaDZ على فيسبوك', copierTexte: 'نسخ النص', texteCopie: 'تم نسخ النص' },
 } as const
 
 const bouton: React.CSSProperties = {
@@ -38,10 +46,11 @@ const ICONES = {
   natif: 'M18 16.1c-.8 0-1.500.3-2 .8l-7.100-4.200a3.200 3.200 0 0 0 0-1.400L16 7.200A3 3 0 1 0 15 5a3 3 0 0 0 .1.700L8 9.900a3 3 0 1 0 0 4.200l7.100 4.200c0 .2-.1.500-.1.700a3 3 0 1 0 3-2.900z',
 } as const
 
-export default function ShareBar({ url, text, title, lang }: Props) {
+export default function ShareBar({ url, text, title, lang, hashtags, libelle, texteComplet, suivi }: Props) {
   const t = T[lang]
-  const liens = shareLinks(url, text)
+  const liens = shareLinks(url, text, hashtags, suivi)
   const [copie, setCopie] = useState(false)
+  const [texteCopie, setTexteCopie] = useState(false)
   const [natif, setNatif] = useState(false)
   useEffect(() => { setNatif(typeof navigator !== 'undefined' && typeof navigator.share === 'function') }, [])
 
@@ -53,31 +62,44 @@ export default function ShareBar({ url, text, title, lang }: Props) {
     } catch { /* presse-papiers refusé : le lien reste copiable depuis la barre d'adresse */ }
   }
 
+  async function copierTexte() {
+    try {
+      await navigator.clipboard.writeText(texteComplet ?? '')
+      setTexteCopie(true)
+      setTimeout(() => setTexteCopie(false), 2200)
+    } catch { /* presse-papiers refusé : le texte reste sélectionnable dans l'aperçu du message */ }
+  }
+
   async function partagerNatif() {
-    try { await navigator.share({ title, text, url }) } catch { /* annulé par l'utilisateur */ }
+    try { await navigator.share({ title, text: [text, ...(hashtags ?? [])].join(' ').trim(), url }) } catch { /* annulé par l'utilisateur */ }
   }
 
   const lien = (href: string, label: string, icone: keyof typeof ICONES) => (
-    <a href={href} target="_blank" rel="noopener noreferrer" style={bouton} aria-label={`${t.titre} — ${label}`}>
+    <a href={href} target="_blank" rel="noopener noreferrer" style={bouton} aria-label={`${libelle ?? t.titre} — ${label}`}>
       <Icone d={ICONES[icone]} />{label}
     </a>
   )
 
   return (
     <div
-      role="group" aria-label={t.titre}
+      role="group" aria-label={libelle ?? t.titre}
       style={{
         display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, margin: '0 0 16px', padding: '9px 12px',
         border: `1px solid ${CASBAH.creamEdge}`, borderRadius: 12, background: '#fffdf6',
       }}
     >
-      <span style={{ fontSize: 13, fontWeight: 700, color: CASBAH.brassDark, marginInlineEnd: 4 }}>{t.titre}</span>
+      <span style={{ fontSize: 13, fontWeight: 700, color: CASBAH.brassDark, marginInlineEnd: 4 }}>{libelle ?? t.titre}</span>
       {lien(liens.facebook, t.fb, 'fb')}
       {lien(liens.x, t.x, 'x')}
       {lien(liens.whatsapp, t.wa, 'wa')}
       <button type="button" onClick={copier} style={bouton} aria-live="polite">
         <Icone d={ICONES.lien} />{copie ? t.copie : t.copier}
       </button>
+      {texteComplet && (
+        <button type="button" onClick={copierTexte} style={bouton} aria-live="polite">
+          <Icone d={ICONES.lien} />{texteCopie ? t.texteCopie : t.copierTexte}
+        </button>
+      )}
       {natif && (
         <button type="button" onClick={partagerNatif} style={bouton}>
           <Icone d={ICONES.natif} />{t.natif}

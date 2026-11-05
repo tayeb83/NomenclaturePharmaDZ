@@ -5,6 +5,8 @@ import { cookies } from 'next/headers'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
 import { ARTICLES, getArticleBySlug, getRelatedArticles, type ArticleSection } from '@/lib/articles'
 import { AdInContent } from '@/components/ads/AdBanner'
+import ShareBar from '@/components/drug/ShareBar'
+import { articleShareMessage, hashtagsArticle, ligneSuivre, texteACopier } from '@/lib/article-share'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
@@ -265,6 +267,7 @@ export default async function ArticleDetailPage({ params }: { params: { slug: st
     ],
   }
 
+  const shareHashtags = hashtagsArticle(article.tags, article.lang)
   const faqJsonLd = article.faq?.length
     ? {
       '@context': 'https://schema.org',
@@ -375,6 +378,20 @@ export default async function ArticleDetailPage({ params }: { params: { slug: st
                 background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0',
               }}>{tag}</span>
             ))}
+          </div>
+
+          {/* Partage : message, hashtags, et invitation à suivre la page Facebook */}
+          <div style={{ marginTop: 28 }}>
+            <ShareBar
+              url={`${APP_URL}/articles/${article.slug}`}
+              title={article.title}
+              text={articleShareMessage(article)}
+              lang={article.lang}
+              hashtags={shareHashtags}
+              suivi={ligneSuivre(article.lang)}
+              libelle={pickLang(article.lang, { fr: 'Partager cet article', ar: 'شارك هذا المقال' })}
+              texteComplet={texteACopier({ text: articleShareMessage(article), url: `${APP_URL}/articles/${article.slug}`, hashtags: shareHashtags, lang: article.lang })}
+            />
           </div>
 
           <div style={{ marginTop: 32, display: 'flex', gap: 12, flexWrap: 'wrap' }}>

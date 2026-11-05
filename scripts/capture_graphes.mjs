@@ -6,7 +6,8 @@
  *   BASE_URL=https://www.dzair-pharma.net node scripts/capture_graphes.mjs
  *   BASE_URL=http://localhost:3000 node scripts/capture_graphes.mjs interactions-simvastatine   (une seule démo)
  *
- * Prérequis : playwright et son navigateur (npx playwright install chromium).
+ * Prérequis (une fois, sans toucher à package.json) :
+ *   npm install --no-save playwright && npx playwright install chromium
  * Chaque image est le dessin d'une démo (id du catalogue lib/graphe/demos.ts), badge « DÉMO » compris.
  * ⚠️  Sur une base de test, les noms de laboratoires et de marques sont fictifs : relancer ce script contre le site
  *     réel avant de publier, ou garder la mention « données fictives » dans la légende de l'article.
@@ -15,7 +16,13 @@ import { createRequire } from 'node:module'
 import { mkdirSync } from 'node:fs'
 
 // require plutôt qu'import : trouve aussi un playwright installé globalement (NODE_PATH)
-const { chromium } = createRequire(import.meta.url)('playwright')
+let chromium
+try {
+  ;({ chromium } = createRequire(import.meta.url)('playwright'))
+} catch {
+  console.error('Playwright n\'est pas installé. Installez-le une fois, sans modifier package.json :\n\n  npm install --no-save playwright\n  npx playwright install chromium\n\npuis relancez la commande.')
+  process.exit(1)
+}
 
 const BASE = (process.env.BASE_URL || 'http://localhost:3000').replace(/\/+$/, '')
 const OUT = new URL('../public/articles/graphes/', import.meta.url).pathname

@@ -48,13 +48,19 @@ export const FACEBOOK_PAGE_URL = 'https://www.facebook.com/profile.php?id=615849
 
 export type ShareLinks ={ facebook: string; x: string; whatsapp: string }
 
-/** Adresses de partage. `url` est l'adresse absolue de la fiche, `text` le message. */
-export function shareLinks(url: string, text: string): ShareLinks {
+/**
+ * Adresses de partage. `url` est l'adresse absolue de la page, `text` le message.
+ * `hashtags` (avec ou sans « # ») : joints à X et WhatsApp ; Facebook n'en accepte qu'un (le premier).
+ * `suivi` : ligne d'invitation à suivre la page, ajoutée au message WhatsApp.
+ */
+export function shareLinks(url: string, text: string, hashtags: readonly string[] = [], suivi?: string): ShareLinks {
   const u = encodeURIComponent(url)
+  const tags = hashtags.map(h => h.replace(/^#/, '')).filter(Boolean)
+  const hash = hashtags.map(h => (h.startsWith('#') ? h : `#${h}`)).filter(h => h.length > 1)
   return {
-    // Facebook ignore le texte (il construit l'aperçu depuis la page) : seule l'adresse compte.
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${u}`,
-    x: `https://twitter.com/intent/tweet?text=${encodeURIComponent(couper(text, X_TEXT_MAX))}&url=${u}`,
-    whatsapp: `https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`,
+    // Facebook ignore le texte (il construit l'aperçu depuis la page) : seule l'adresse compte, plus un hashtag.
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${u}${tags[0] ? `&hashtag=${encodeURIComponent(`#${tags[0]}`)}` : ''}`,
+    x: `https://twitter.com/intent/tweet?text=${encodeURIComponent(couper(text, X_TEXT_MAX))}&url=${u}${tags.length ? `&hashtags=${encodeURIComponent(tags.slice(0, 4).join(','))}` : ''}`,
+    whatsapp: `https://wa.me/?text=${encodeURIComponent([text, url, hash.join(' '), suivi].filter(Boolean).join('\n'))}`,
   }
 }
