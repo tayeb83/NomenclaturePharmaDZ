@@ -5,12 +5,12 @@ import { finApres } from '@/lib/graphe/core'
 
 type Abonne = {
   id: number; email: string; is_active: boolean; starts_on: string | null; ends_on: string | null
-  moyen_paiement: 'ccp' | 'paypal' | null; reference_paiement: string | null; montant: string | null; note: string | null
+  moyen_paiement: 'ccp' | 'paypal' | 'autre' | null; reference_paiement: string | null; montant: string | null; note: string | null
 }
 type Demande = { id: number; nom: string; email: string; organisation: string | null; phone: string | null; message: string | null; status: string; created_at: string }
 
 const aujourdhui = () => new Date().toISOString().slice(0, 10)
-const MOYEN = { ccp: 'Virement CCP', paypal: 'PayPal' } as const
+const MOYEN = { ccp: 'Virement CCP', paypal: 'PayPal', autre: 'Autre' } as const
 const DUREES = [{ m: 1, l: '1 mois' }, { m: 3, l: '3 mois' }, { m: 6, l: '6 mois' }, { m: 12, l: '12 mois' }]
 const vide = { email: '', ends_on: finApres(aujourdhui(), 12), moyen_paiement: 'ccp', reference_paiement: '', montant: '', note: '', prevenir: true }
 
@@ -99,7 +99,7 @@ export default function GrapheAdminClient() {
       <div className="adm-head">
         <div>
           <h1>Abonnés — graphes et fiches PDF</h1>
-          <p>Le paiement se fait par virement CCP ou par PayPal uniquement. Une fois le virement reçu (ou le paiement PayPal confirmé), activez l’abonnement ici : la personne se connecte avec son adresse e-mail, sans mot de passe.</p>
+          <p>Les demandes arrivent par e-mail : vous répondez par un devis. Une fois le devis accepté et le règlement reçu, activez l’abonnement ici : la personne se connecte avec son adresse e-mail, sans mot de passe.</p>
         </div>
       </div>
 
@@ -140,9 +140,10 @@ export default function GrapheAdminClient() {
             <select id="gr-moyen" className="adm-input" value={form.moyen_paiement} onChange={e => setForm({ ...form, moyen_paiement: e.target.value })}>
               <option value="ccp">Virement CCP</option>
               <option value="paypal">PayPal</option>
+              <option value="autre">Autre (selon le devis)</option>
             </select>
           </label>
-          <label className="adm-field" htmlFor="gr-ref">{form.moyen_paiement === 'paypal' ? 'Identifiant de transaction PayPal' : 'Référence du virement CCP'}
+          <label className="adm-field" htmlFor="gr-ref">{form.moyen_paiement === 'paypal' ? 'Identifiant de transaction PayPal' : form.moyen_paiement === 'ccp' ? 'Référence du virement CCP' : 'Référence du devis ou du règlement'}
             <input id="gr-ref" className="adm-input" value={form.reference_paiement} maxLength={120} onChange={e => setForm({ ...form, reference_paiement: e.target.value })} />
           </label>
           <label className="adm-field" htmlFor="gr-montant">Montant reçu

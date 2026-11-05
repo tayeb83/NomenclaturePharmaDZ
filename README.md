@@ -126,14 +126,14 @@ Tests : `npm run test:demandes`.
   30 nœuds par type, filtres par couche, « Explorer ce nœud » (recentre le graphe), export CSV des liens et **fiche PDF d'une substance**
   (`/api/graphe/pdf?substance=…` : chiffres clés, graphe, laboratoires, interactions par gravité sans les textes ANSM, retraits ; en français).
   API : `/api/graphe/explorer` et `/api/graphe/pdf` (401 sans connexion, 403 sans abonnement).
-- **Abonnement** : paiement par **virement CCP ou PayPal uniquement**, constaté à la main. La demande arrive dans `pro_leads` (offre « graphe »).
-  **Admin → Abonnements → Graphes & PDF** (`/admin/graphe`, propriétaire et administrateurs) : liste des demandes à traiter, activation ou
-  renouvellement (date de fin, moyen de paiement, référence du virement ou de la transaction, montant), e-mail de confirmation à l'abonné,
-  suspension, réactivation, suppression.
+- **Abonnement sur devis** : pas de formulaire ni de paiement en ligne. L'offre (`/graphe`, bloc « Explorateur complet ») et l'article proposent un
+  bouton « Demander un devis par e-mail » (`mailto:` prérempli : cas d'usage, substances ou laboratoires, utilisateurs, durée) ; vous répondez par un devis.
+  Une fois le devis accepté et le règlement reçu : **Admin → Abonnements → Graphes & PDF** (`/admin/graphe`, propriétaire et administrateurs) pour activer ou
+  renouveler (date de fin, moyen de règlement CCP / PayPal / autre, référence, montant), prévenir l'abonné par e-mail, suspendre, réactiver ou supprimer.
   L'abonné se connecte avec le lien e-mail de Training (même compte). L'équipe (propriétaire, `ADMIN_EMAILS`, comptes admin) y accède d'office.
-- Coordonnées affichées sur l'offre (variables publiques, à définir avant le build) : `NEXT_PUBLIC_GRAPHE_CCP_NUMERO`,
-  `NEXT_PUBLIC_GRAPHE_CCP_TITULAIRE`, `NEXT_PUBLIC_GRAPHE_PAYPAL_URL` (lien `https://paypal.me/…` ou bouton PayPal). Sans elles, l'offre dit que
-  les coordonnées sont envoyées par e-mail après la demande.
+- **Prix et adresse de contact** (variables publiques lues au build, `lib/graphe/offre.ts`) : `NEXT_PUBLIC_GRAPHE_PRIX_FR` (ex. « À partir de 6 000 DZD par an »),
+  `NEXT_PUBLIC_GRAPHE_PRIX_AR` (à défaut, le texte français), `NEXT_PUBLIC_GRAPHE_CONTACT_EMAIL` (défaut : l'adresse du site). Sans prix, l'offre et l'article
+  disent « sur devis ».
 - À activer : `psql "$DATABASE_URL" -f sql/36_graphe.sql` (après `sql/13`, `23`). Sans cette migration, les démos fonctionnent
   et l'explorateur reste fermé.
 - Tests : `npm run test:graphe`.

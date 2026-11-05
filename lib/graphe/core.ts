@@ -235,8 +235,9 @@ export const cheminRetrait = (date: string | null | undefined) => {
 
 // ─── Abonnements (administration) ────────────────────────────────────────────
 
-export type MoyenPaiement = 'ccp' | 'paypal'
-export const MOYENS_PAIEMENT: MoyenPaiement[] = ['ccp', 'paypal']
+/** Les modalités de règlement sont celles du devis : on enregistre simplement ce qui a été reçu. */
+export type MoyenPaiement = 'ccp' | 'paypal' | 'autre'
+export const MOYENS_PAIEMENT: MoyenPaiement[] = ['ccp', 'paypal', 'autre']
 
 export type AbonnementSaisie = {
   email: string
@@ -260,7 +261,7 @@ export function validerAbonnement(b: Record<string, unknown>): { ok: true; valeu
   if (!ends_on) return { ok: false, erreur: 'Indiquez la date de fin : un abonnement sans fin est une erreur de saisie probable.' }
   if (starts_on && starts_on > ends_on) return { ok: false, erreur: 'La date de fin précède la date de début.' }
   const moyen = txt(b.moyen_paiement, 10)
-  if (moyen && !MOYENS_PAIEMENT.includes(moyen as MoyenPaiement)) return { ok: false, erreur: 'Moyen de paiement : CCP ou PayPal uniquement.' }
+  if (moyen && !MOYENS_PAIEMENT.includes(moyen as MoyenPaiement)) return { ok: false, erreur: 'Moyen de paiement inconnu (CCP, PayPal ou autre).' }
   return { ok: true, valeur: { email, ends_on, starts_on, moyen_paiement: (moyen as MoyenPaiement) ?? null, reference_paiement: txt(b.reference_paiement, 120), montant: txt(b.montant, 40), note: txt(b.note, 500) } }
 }
 

@@ -1,4 +1,5 @@
 import type { Article } from './articles'
+import { EMAIL_DEVIS, prixTexte } from './graphe/offre'
 
 /**
  * Article de présentation des graphes de connaissances (FR + AR) : ce que montrent les graphes, pour quels cas
@@ -38,12 +39,16 @@ export const ARTICLES_GRAPHES: Article[] = [
         answer: 'Le choix libre : n’importe quelle substance, classe ATC ou laboratoire, le croisement substance + laboratoire, jusqu’à 30 nœuds par type, le recentrage d’un clic, l’export CSV des liens et la fiche PDF d’une substance.',
       },
       {
-        question: 'Comment payer ?',
-        answer: 'Par virement CCP ou par PayPal, et uniquement par l’un de ces deux moyens. Les coordonnées figurent sur la page des graphes ou vous sont envoyées par e-mail après votre demande.',
+        question: 'Combien coûte l’explorateur ?',
+        answer: `${prixTexte('fr')} Le devis tient compte du nombre d’utilisateurs et de la durée.`,
       },
       {
-        question: 'Combien de temps faut-il pour obtenir l’accès ?',
-        answer: 'L’activation est manuelle : elle suit la réception de votre paiement. Un e-mail vous prévient, puis vous vous connectez avec votre adresse, sans mot de passe.',
+        question: 'Comment demander l’accès ?',
+        answer: `Par un simple e-mail à ${EMAIL_DEVIS} (le bouton « Demander un devis par e-mail » de la page des graphes prépare le message). Nous vous répondons avec un devis ; après votre accord, nous activons votre accès.`,
+      },
+      {
+        question: 'Comment me connecter une fois l’accès activé ?',
+        answer: 'Avec l’adresse e-mail de votre demande : un lien de connexion à usage unique vous est envoyé, sans mot de passe.',
       },
       {
         question: 'Les graphes remplacent-ils l’avis d’un professionnel de santé ?',
@@ -98,21 +103,25 @@ export const ARTICLES_GRAPHES: Article[] = [
           'Fiche PDF d’une substance : chiffres clés, graphe, laboratoires, marques, interactions classées par gravité, retraits (en français).',
         ],
       },
-      { type: 'h2', title: '5. Comment demander l’accès' },
+      { type: 'h2', title: '5. Prix et demande d’accès' },
+      {
+        type: 'paragraph',
+        text: prixTexte('fr'),
+      },
       {
         type: 'list',
         items: [
-          'Ouvrez la page des graphes et descendez jusqu’au bloc « Explorateur complet ». Cliquez sur « Demander un abonnement ».',
-          'Renseignez votre nom, votre adresse e-mail (celle de votre futur compte), éventuellement votre organisation et votre besoin : cas d’usage visé, substances ou laboratoires qui vous intéressent.',
-          'Réglez par virement CCP ou par PayPal, uniquement. Indiquez l’adresse e-mail de votre demande en référence du paiement. Le tarif est communiqué sur demande.',
-          'L’équipe active votre abonnement à réception du paiement et vous prévient par e-mail.',
-          'Connectez-vous avec cette adresse : un lien à usage unique vous est envoyé, sans mot de passe. Ouvrez ensuite l’explorateur.',
+          `Écrivez-nous à ${EMAIL_DEVIS}. Le bouton « Demander un devis par e-mail » de la page des graphes prépare le message : il suffit de le compléter.`,
+          'Indiquez votre nom, votre organisation, le cas d’usage visé, les substances, classes ATC ou laboratoires qui vous intéressent, le nombre d’utilisateurs et la durée souhaitée.',
+          'Nous vous envoyons un devis par e-mail.',
+          'Après votre accord, nous activons votre accès et vous prévenons.',
+          'Connectez-vous avec l’adresse de votre demande : un lien à usage unique vous est envoyé, sans mot de passe. Ouvrez ensuite l’explorateur.',
         ],
       },
       {
         type: 'callout',
         variant: 'info',
-        text: 'Besoin d’un graphe ou d’une fiche précise (un laboratoire, une classe, une liste de substances) ? Dites-le dans le champ « Votre besoin » de la demande : le cas d’usage visé permet de vous répondre plus vite.',
+        text: 'Besoin d’un graphe ou d’une fiche précise (un laboratoire, une classe, une liste de substances) ? Dites-le dans votre e-mail : le cas d’usage visé permet de chiffrer et de répondre plus vite.',
       },
       { type: 'h2', title: '6. Lire les chiffres : définitions' },
       {
@@ -175,12 +184,16 @@ export const ARTICLES_GRAPHES: Article[] = [
         answer: 'الاختيار الحر: أي مادة فعالة أو صنف ATC أو مخبر، وتقاطع مادة + مخبر، وحتى 30 عقدة من كل نوع، وإعادة التمركز بنقرة، وتصدير الروابط بصيغة CSV، وبطاقة PDF لمادة.',
       },
       {
-        question: 'كيف أدفع؟',
-        answer: 'عبر تحويل CCP أو عبر PayPal، وبإحدى هاتين الوسيلتين فقط. تجد البيانات في صفحة الرسوم أو تصلك عبر البريد الإلكتروني بعد طلبك.',
+        question: 'كم يكلّف المستكشف؟',
+        answer: `${prixTexte('ar')} يراعي عرض السعر عدد المستخدمين والمدة.`,
       },
       {
-        question: 'كم يستغرق الحصول على الولوج؟',
-        answer: 'التفعيل يدوي: يتم بعد استلام الدفع. يصلك بريد إلكتروني، ثم تسجل الدخول بعنوانك دون كلمة مرور.',
+        question: 'كيف أطلب الولوج؟',
+        answer: `برسالة بريد إلكتروني بسيطة إلى ${EMAIL_DEVIS} (زر «اطلب عرض سعر عبر البريد الإلكتروني» في صفحة الرسوم يحضّر الرسالة). نردّ عليك بعرض سعر، وبعد موافقتك نفعّل ولوجك.`,
+      },
+      {
+        question: 'كيف أسجّل الدخول بعد التفعيل؟',
+        answer: 'بعنوان البريد الإلكتروني الذي أرسلت منه طلبك: يصلك رابط دخول لمرة واحدة دون كلمة مرور.',
       },
       {
         question: 'هل تغني الرسوم عن رأي مهني صحي؟',
@@ -235,21 +248,25 @@ export const ARTICLES_GRAPHES: Article[] = [
           'بطاقة PDF لمادة: الأرقام الرئيسية، الرسم، المخابر، العلامات، التداخلات مرتبة حسب الخطورة، عمليات السحب (بالفرنسية).',
         ],
       },
-      { type: 'h2', title: '5. كيف تطلب الولوج' },
+      { type: 'h2', title: '5. السعر وطلب الولوج' },
+      {
+        type: 'paragraph',
+        text: prixTexte('ar'),
+      },
       {
         type: 'list',
         items: [
-          'افتح صفحة الرسوم ونزّل إلى خانة «المستكشف الكامل». اضغط «اطلب اشتراكًا».',
-          'اكتب اسمك وبريدك الإلكتروني (الذي سيكون عنوان حسابك)، واختياريًا مؤسستك وحاجتك: حالة الاستخدام المقصودة، والمواد أو المخابر التي تهمك.',
-          'ادفع عبر تحويل CCP أو عبر PayPal فقط. اذكر البريد الإلكتروني الخاص بطلبك كمرجع للدفع. السعر عند الطلب.',
-          'يفعّل الفريق اشتراكك عند استلام الدفع ويخبرك بالبريد الإلكتروني.',
-          'سجّل الدخول بهذا العنوان: يصلك رابط لمرة واحدة دون كلمة مرور. ثم افتح المستكشف.',
+          `راسلنا على ${EMAIL_DEVIS}. زر «اطلب عرض سعر عبر البريد الإلكتروني» في صفحة الرسوم يحضّر الرسالة: يكفي إكمالها.`,
+          'اذكر اسمك ومؤسستك وحالة الاستخدام المقصودة والمواد أو الأصناف ATC أو المخابر التي تهمك وعدد المستخدمين والمدة المرغوبة.',
+          'نرسل إليك عرض سعر عبر البريد الإلكتروني.',
+          'بعد موافقتك نفعّل ولوجك ونخبرك.',
+          'سجّل الدخول بعنوان طلبك: يصلك رابط لمرة واحدة دون كلمة مرور. ثم افتح المستكشف.',
         ],
       },
       {
         type: 'callout',
         variant: 'info',
-        text: 'هل تحتاج إلى رسم أو بطاقة محددة (مخبر أو صنف أو قائمة مواد)؟ اذكر ذلك في خانة «حاجتك» ضمن الطلب: معرفة حالة الاستخدام تسمح بالرد عليك أسرع.',
+        text: 'هل تحتاج إلى رسم أو بطاقة محددة (مخبر أو صنف أو قائمة مواد)؟ اذكر ذلك في رسالتك: معرفة حالة الاستخدام تسمح بالتسعير والرد عليك أسرع.',
       },
       { type: 'h2', title: '6. قراءة الأرقام: التعريفات' },
       {
