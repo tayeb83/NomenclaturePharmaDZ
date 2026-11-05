@@ -97,14 +97,15 @@ test('chemins : mêmes clés que les pages du site', () => {
   assert.equal(cheminRetrait(null), '/retraits')
 })
 
-test('validerAbonnement : e-mail, dates et moyen de paiement (CCP ou PayPal seulement)', () => {
+test('validerAbonnement : e-mail, dates et moyen de paiement (CCP, PayPal ou autre)', () => {
   const ok = validerAbonnement({ email: ' Nom@Exemple.DZ ', ends_on: '2027-06-30', moyen_paiement: 'paypal', reference_paiement: ' TX 123 ', montant: '25 EUR' })
   assert.ok(ok.ok && ok.valeur.email === 'nom@exemple.dz' && ok.valeur.reference_paiement === 'TX 123' && ok.valeur.moyen_paiement === 'paypal')
   assert.equal(validerAbonnement({ email: 'x', ends_on: '2027-06-30' }).ok, false)
   assert.equal(validerAbonnement({ email: 'a@b.dz' }).ok, false)                                            // pas de date de fin
   assert.equal(validerAbonnement({ email: 'a@b.dz', ends_on: '30/06/2027' }).ok, false)
   assert.equal(validerAbonnement({ email: 'a@b.dz', ends_on: '2027-06-30', starts_on: '2027-07-01' }).ok, false)
-  assert.equal(validerAbonnement({ email: 'a@b.dz', ends_on: '2027-06-30', moyen_paiement: 'baridimob' }).ok, false)
+  assert.equal(validerAbonnement({ email: 'a@b.dz', ends_on: '2027-06-30', moyen_paiement: 'bitcoin' }).ok, false)
+  assert.equal(validerAbonnement({ email: 'a@b.dz', ends_on: '2027-06-30', moyen_paiement: 'autre' }).ok, true)
   const sans = validerAbonnement({ email: 'a@b.dz', ends_on: '2027-06-30', moyen_paiement: '' })
   assert.ok(sans.ok && sans.valeur.moyen_paiement === null)
 })
@@ -206,4 +207,23 @@ test('disposer : voisins de voisins écartés sans traverser le dessin', () => {
 test('cheminMarque : famille de marque (premier mot), comme /marque/[slug]', () => {
   assert.equal(cheminMarque('DOLIPRANE'), '/marque/doliprane')
   assert.equal(cheminMarque('NEO-CALM Plus'), '/marque/neo-calm')
+})
+
+
+// ─── Offre : prix et demande de devis ────────────────────────────────────────
+import { lienDemandeDevis, prixTexte } from '../../lib/graphe/offre.ts'
+
+test('prix : « sur devis » sans prix renseigné, jamais un chiffre inventé', () => {
+  assert.match(prixTexte('fr', { fr: '', ar: '' }), /^Sur devis/)
+  assert.match(prixTexte('ar', { fr: '', ar: '' }), /عرض سعر/)
+  assert.equal(prixTexte('fr', { fr: 'À partir de 6 000 DZD par an', ar: '' }), 'À partir de 6 000 DZD par an. Un devis précis vous est envoyé sur demande.')
+})
+
+test('demande de devis : mailto avec objet et message à compléter, dans la langue voulue', () => {
+  const u = new URL(lienDemandeDevis('fr', 'devis@exemple.dz'))
+  assert.equal(u.protocol, 'mailto:')
+  assert.equal(u.pathname, 'devis@exemple.dz')
+  assert.match(u.searchParams.get('subject')!, /devis/i)
+  assert.match(u.searchParams.get('body')!, /Cas d'usage visé/)
+  assert.match(new URL(lienDemandeDevis('ar', 'devis@exemple.dz')).searchParams.get('body')!, /حالة الاستخدام/)
 })

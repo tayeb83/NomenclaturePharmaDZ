@@ -22,16 +22,12 @@ CREATE TABLE IF NOT EXISTS graphe_abonnements (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Paiement : virement CCP ou PayPal uniquement (reçu à la main, voir l'admin /admin/graphe).
+-- Règlement : modalités du devis (CCP, PayPal ou autre), constaté à la main, voir l'admin /admin/graphe.
 ALTER TABLE graphe_abonnements ADD COLUMN IF NOT EXISTS moyen_paiement TEXT;
-ALTER TABLE graphe_abonnements ADD COLUMN IF NOT EXISTS reference_paiement TEXT;   -- n° de virement CCP, identifiant de transaction PayPal
+ALTER TABLE graphe_abonnements ADD COLUMN IF NOT EXISTS reference_paiement TEXT;   -- n° de virement, identifiant de transaction, référence du devis
 ALTER TABLE graphe_abonnements ADD COLUMN IF NOT EXISTS montant TEXT;              -- libre : « 4 000 DZD », « 25 EUR »
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'graphe_abonnements_moyen_check') THEN
-    ALTER TABLE graphe_abonnements ADD CONSTRAINT graphe_abonnements_moyen_check CHECK (moyen_paiement IS NULL OR moyen_paiement IN ('ccp', 'paypal'));
-  END IF;
-END $$;
+ALTER TABLE graphe_abonnements DROP CONSTRAINT IF EXISTS graphe_abonnements_moyen_check;
+ALTER TABLE graphe_abonnements ADD CONSTRAINT graphe_abonnements_moyen_check CHECK (moyen_paiement IS NULL OR moyen_paiement IN ('ccp', 'paypal', 'autre'));
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_graphe_abonnements_email ON graphe_abonnements (lower(email));
 

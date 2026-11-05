@@ -11,7 +11,7 @@ export type Abonne = {
   is_active: boolean
   starts_on: string | null
   ends_on: string | null
-  moyen_paiement: 'ccp' | 'paypal' | null
+  moyen_paiement: 'ccp' | 'paypal' | 'autre' | null
   reference_paiement: string | null
   montant: string | null
   note: string | null
