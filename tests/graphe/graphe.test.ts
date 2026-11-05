@@ -133,3 +133,47 @@ test('PDF : document valide, nom de la substance, plusieurs pages avec beaucoup 
   assert.ok(doc.getPageCount() >= 2)
   assert.match(doc.getTitle() ?? '', /SIMVASTATINE/)
 })
+
+// ─── Définitions et tailles ──────────────────────────────────────────────────
+import { estLocal, lectureHhi, pluriel } from '../../lib/graphe/core.ts'
+import { remarques } from '../../lib/graphe/remarques.ts'
+
+test('estLocal : le statut F fait foi, le pays seulement à défaut', () => {
+  assert.equal(estLocal('F', 'INDE'), true)
+  assert.equal(estLocal('I', 'ALGERIE'), false)
+  assert.equal(estLocal(' f ', null), true)
+  assert.equal(estLocal(null, 'ALGERIE'), true)
+  assert.equal(estLocal('', 'FRANCE'), false)
+})
+
+test('pluriel et lecture du HHI', () => {
+  assert.equal(pluriel(1, 'enregistrement'), '1 enregistrement')
+  assert.equal(pluriel(5, 'enregistrement'), '5 enregistrements')
+  assert.equal(lectureHhi(756).fr, 'peu concentré')
+  assert.equal(lectureHhi(1800).fr, 'modérément concentré')
+  assert.equal(lectureHhi(4200).fr, 'très concentré')
+})
+
+test('disposer : la taille d\'un laboratoire suit sa part, sans être écrasée par le centre ni par la classe ATC', () => {
+  const labos = [['a', 50], ['b', 25], ['c', 5]] as const
+  const conc: GraphData = {
+    centre: 'c0', tronque: false, stats: [],
+    nodes: [{ id: 'c0', kind: 'atc', label: 'M01A', weight: 80 }, ...labos.map(([id, w]) => ({ id, kind: 'labo' as const, label: id, weight: w }))],
+    edges: labos.map(([id, w]) => ({ source: 'c0', target: id, kind: 'vend' as const, weight: w })),
+  }
+  const r = new Map(disposer(conc).map(p => [p.id, p.r]))
+  assert.ok(r.get('a')! > r.get('b')! && r.get('b')! > r.get('c')!)
+  assert.ok(r.get('a')! - r.get('c')! > 0.02)   // écart visible, pas des nœuds tous identiques
+  // même graphe avec une classe ATC au poids démesuré dans une vue substance : les laboratoires gardent leurs écarts
+  const sub: GraphData = { ...conc, nodes: [...conc.nodes, { id: 'atc', kind: 'atc', label: 'C10AA', weight: 1000 }], edges: [...conc.edges, { source: 'c0', target: 'atc', kind: 'classe' }] }
+  const r2 = new Map(disposer(sub).map(p => [p.id, p.r]))
+  assert.ok(Math.abs(r2.get('a')! - r.get('a')!) < 1e-9)
+})
+
+test('remarques : signale ce que la démo promet de montrer et n\'a pas', () => {
+  const vide: GraphData = { centre: 's', tronque: false, stats: [], nodes: [{ id: 's', kind: 'substance', label: 'X' }], edges: [] }
+  const ret = remarques({ vue: 'substance', substance: 'X', couches: ['atc', 'labos', 'retraits'] }, vide)
+  assert.ok(ret.some(m => /retrait/.test(m)) && ret.some(m => /laboratoire/.test(m)) && ret.some(m => /ATC/.test(m)))
+  assert.deepEqual(remarques({ vue: 'substance', substance: 'X', couches: [] }, vide), [])
+  assert.ok(remarques({ vue: 'classe', atc: 'M01A', mode: 'concentration' }, vide)[0].includes('3 laboratoires'))
+})

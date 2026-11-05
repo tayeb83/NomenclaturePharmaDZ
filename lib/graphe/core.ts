@@ -19,6 +19,10 @@ export type GraphNode = {
   local?: boolean
   /** page du site qui détaille ce nœud (fiche DCI, laboratoire, classe ATC, année de retrait) */
   href?: string
+  /** texte court accolé au libellé sur le dessin (« 13 % » pour une part de marché) */
+  badge?: string
+  /** nœud qui pèse le plus dans son groupe (laboratoire à la plus grande part de marché) */
+  dominant?: boolean
 }
 
 export type EdgeKind = 'classe' | 'fabrique' | 'origine' | 'interagit' | 'retire' | 'contient' | 'vend'
@@ -127,9 +131,15 @@ export function disposer(g: GraphData): Placement[] {
   }
   const byId = new Map(g.nodes.map(n => [n.id, n]))
   const poids = (id: string) => byId.get(id)?.weight ?? 1
-  const maxPoids = Math.max(1, ...g.nodes.map(n => n.weight ?? 1))
-  const rayon = (id: string, profondeur: number) =>
-    profondeur === 0 ? 0.13 : 0.045 + 0.05 * Math.sqrt(poids(id) / maxPoids) * (profondeur === 1 ? 1 : 0.8)
+  // taille relative au plus lourd nœud du même type (hors centre) : le centre ou une classe ATC (poids fixé à 1000
+  // pour survivre au plafond) n'écrasent pas les autres, et une part de marché se lit sur le diamètre
+  const maxParType = new Map<NodeKind, number>()
+  for (const n of g.nodes) if (n.id !== g.centre) maxParType.set(n.kind, Math.max(maxParType.get(n.kind) ?? 1, n.weight ?? 1))
+  const rayon = (id: string, profondeur: number) => {
+    if (profondeur === 0) return 0.13
+    const n = byId.get(id)!
+    return 0.045 + 0.05 * Math.sqrt(poids(id) / (maxParType.get(n.kind) ?? 1))
+  }
 
   const ordreType: NodeKind[] = ['atc', 'classe', 'labo', 'substance', 'interaction', 'retrait', 'pays']
   const premier = file.filter(id => prof.get(id) === 1).sort((a, b) => {
@@ -241,4 +251,26 @@ export function finApres(depuis: string, mois: number): string {
   const dernier = new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth() + 1, 0)).getUTCDate()
   t.setUTCDate(Math.min(d, dernier))
   return t.toISOString().slice(0, 10)
+}
+
+// ─── Appartenance locale / importée et lecture de l'indice HHI ───────────────
+
+/**
+ * Production locale. Le site entier s'appuie sur `statut` (F = fabriqué en Algérie, autre = importé) : on fait de même.
+ * Sans statut renseigné, on se rabat sur le pays d'origine.
+ */
+export function estLocal(statut: string | null | undefined, pays: string | null | undefined): boolean {
+  const st = (statut ?? '').trim().toUpperCase()
+  if (st) return st === 'F'
+  return /alg|dz/i.test(pays ?? '') || /الجزائر/.test(pays ?? '')
+}
+
+/** « 1 enregistrement », « 5 enregistrements ». */
+export const pluriel = (n: number, un: string, plusieurs = `${un}s`) => `${n} ${n > 1 ? plusieurs : un}`
+
+/** Seuils usuels de l'indice HHI (0 à 10 000). */
+export function lectureHhi(hhi: number): { fr: string; ar: string } {
+  if (hhi < 1500) return { fr: 'peu concentré', ar: 'تركز ضعيف' }
+  if (hhi <= 2500) return { fr: 'modérément concentré', ar: 'تركز متوسط' }
+  return { fr: 'très concentré', ar: 'تركز شديد' }
 }

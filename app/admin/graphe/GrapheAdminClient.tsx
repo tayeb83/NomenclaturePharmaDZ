@@ -22,6 +22,9 @@ function etat(a: Abonne, jour: string): { label: string; tone: string } {
   return { label: 'Actif', tone: 'ok' }
 }
 
+type ResultatDemo = { id: string; titre: string; etat: 'ok' | 'attention' | 'vide' | 'erreur'; noeuds: number; liens: number; remarques: string[] }
+const ETAT_DEMO = { ok: { l: 'OK', t: 'ok' }, attention: { l: 'À vérifier', t: 'wa' }, vide: { l: 'Sans données', t: 'bad' }, erreur: { l: 'Erreur', t: 'bad' } } as const
+
 const date = (v: string | null) => (v ? new Date(`${v.slice(0, 10)}T00:00:00Z`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '—')
 
 export default function GrapheAdminClient() {
@@ -34,6 +37,17 @@ export default function GrapheAdminClient() {
   const [msg, setMsg] = useState<{ text: string; err?: boolean } | null>(null)
   const [aSupprimer, setASupprimer] = useState<number | null>(null)
   const jour = useMemo(aujourdhui, [])
+  const [demos, setDemos] = useState<ResultatDemo[] | null>(null)
+  const [controle, setControle] = useState(false)
+
+  async function verifierDemos() {
+    setControle(true)
+    const res = await fetch('/api/admin/graphe?demos=1')
+    const json = await res.json().catch(() => ({}))
+    setControle(false)
+    if (res.ok) setDemos(json.demos || [])
+    else setMsg({ text: json.error || 'Contrôle impossible', err: true })
+  }
 
   const charger = useCallback(async () => {
     const res = await fetch('/api/admin/graphe')
@@ -148,6 +162,28 @@ export default function GrapheAdminClient() {
           {msg && <span className={`adm-msg${msg.err ? ' err' : ''}`} role="status">{msg.text}</span>}
         </div>
       </form>
+
+      <div className="adm-card">
+        <h3>Contrôle des démos <button className="adm-btn" type="button" onClick={verifierDemos} disabled={controle}>{controle ? 'Contrôle en cours…' : 'Vérifier les démos'}</button></h3>
+        <p style={{ fontSize: 13, color: 'var(--adm-muted)', margin: '0 0 8px' }}>Construit chaque démo du catalogue sur la vraie base et signale ce qui manque : substance introuvable, classe vide, aucun retrait, aucune interaction…</p>
+        {demos && (
+          <div className="adm-tw">
+            <table className="adm-table">
+              <thead><tr><th>Démo</th><th>État</th><th>Nœuds</th><th>Liens</th><th>Remarques</th></tr></thead>
+              <tbody>
+                {demos.map(d => (
+                  <tr key={d.id}>
+                    <td><a href={`/graphe/demo/${d.id}`} target="_blank" rel="noopener noreferrer">{d.titre}</a><small style={{ display: 'block', color: 'var(--adm-muted)' }}>{d.id}</small></td>
+                    <td><span className={`adm-pill ${ETAT_DEMO[d.etat].t}`}>{ETAT_DEMO[d.etat].l}</span></td>
+                    <td>{d.noeuds}</td><td>{d.liens}</td>
+                    <td>{d.remarques.join(' · ') || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       <div className="adm-card">
         <h3>Abonnés ({abonnes.length})</h3>
