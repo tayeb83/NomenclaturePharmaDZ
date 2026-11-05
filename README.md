@@ -97,6 +97,21 @@ Tests : `npm run test:demandes`.
   `python scripts/kg_export.py --json scripts/fixtures/nomenclature_synthetique.json --out data/kg` (test, chiffres fictifs).
 - Tests : `python3 -m unittest scripts.tests.test_kg_export`.
 
+### 🕸️ Graphes dans le site (`/graphe`, démos gratuites + explorateur payant)
+- **Démos** (`/graphe/demo/<id>`) : ouvertes à tous, sans compte, plafonnées à 8 nœuds par type, rafraîchies une fois par jour.
+  Elles sont regroupées par **cas d'usage** (interactions, importation, concentration du marché, retraits) dans
+  `lib/graphe/demos.ts` : **pour ajouter une démo, ajouter une entrée dans `demos` du cas d'usage voulu** (substance ou
+  classe ATC, couches affichées au départ, textes FR et AR). Elle apparaît seule dans `/graphe`, dans sa page et dans le sitemap.
+- **Explorateur** (`/graphe/explorer`, payant) : n'importe quelle substance ou classe ATC (mode importation ou concentration),
+  30 nœuds par type, filtres par couche, export CSV des liens. API : `/api/graphe/explorer` (401 sans connexion, 403 sans abonnement).
+- **Abonnement** : le paiement se fait hors ligne (CCP, BaridiMob, virement). La demande arrive dans `pro_leads` (offre « graphe »,
+  visible dans l'admin Pro) ; l'équipe active ensuite l'abonné :
+  `INSERT INTO graphe_abonnements (email, ends_on, note) VALUES ('nom@exemple.dz', '2027-06-30', 'CCP 12345');`
+  L'abonné se connecte avec le lien e-mail de Training (même compte). L'équipe (propriétaire, `ADMIN_EMAILS`, comptes admin) y accède d'office.
+- À activer : `psql "$DATABASE_URL" -f sql/36_graphe.sql` (après `sql/13`, `23`). Sans cette migration, les démos fonctionnent
+  et l'explorateur reste fermé.
+- Tests : `npm run test:graphe`.
+
 ### 🔗 Partage d'une fiche (Facebook, X, WhatsApp)
 - Barre de partage en haut de chaque fiche (FR/AR) : Facebook, X, WhatsApp, copie du lien et partage natif du téléphone.
   Le message est prêt à poster (nom, substance, forme, dosage, laboratoire).
