@@ -97,6 +97,16 @@ Tests : `npm run test:demandes`.
   `python scripts/kg_export.py --json scripts/fixtures/nomenclature_synthetique.json --out data/kg` (test, chiffres fictifs).
 - Tests : `python3 -m unittest scripts.tests.test_kg_export`.
 
+### 📰 Partage d'un article
+- Barre de partage en bas de chaque article (`components/drug/ShareBar.tsx`, `lib/article-share.ts`) : Facebook, X, WhatsApp, copier le lien, **copier le texte**,
+  partage natif du téléphone, et « Suivre la page » (Facebook). Les hashtags viennent de `#DwaDZ #Pharmacie #Algérie` (`#DwaDZ #صيدلة #الجزائر` en arabe)
+  puis des étiquettes de l'article, 6 au plus.
+- Limites de Facebook : un lien de partage ignore le texte et n'accepte qu'**un** hashtag (le premier, `#DwaDZ`). X et WhatsApp reprennent message et
+  hashtags ; WhatsApp ajoute l'invitation à suivre la page. « Copier le texte » donne le message complet (titre, lien, hashtags, adresse de la page
+  Facebook) à coller dans la publication. Une mention `@page` ne peut pas être préremplie par un lien : l'adresse de la page, ajoutée au texte, devient
+  cliquable sur Facebook.
+- Tests : `node --test tests/partage/*.test.ts`.
+
 ### 🕸️ Graphes dans le site (`/graphe`, démos gratuites + explorateur payant)
 - **Démos** (`/graphe/demo/<id>`) : ouvertes à tous, sans compte, plafonnées à 8 nœuds par type, rafraîchies une fois par jour.
   Elles sont regroupées par **cas d'usage** (interactions, importation, concentration du marché, retraits) dans
