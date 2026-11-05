@@ -17,6 +17,8 @@ export type GraphNode = {
   detailAr?: string
   /** nœud d'origine locale (production algérienne), pour colorer les substances */
   local?: boolean
+  /** page du site qui détaille ce nœud (fiche DCI, laboratoire, classe ATC, année de retrait) */
+  href?: string
 }
 
 export type EdgeKind = 'classe' | 'fabrique' | 'origine' | 'interagit' | 'retire' | 'contient' | 'vend'
@@ -185,4 +187,58 @@ export function enCsv(g: GraphData): string {
     lignes.push([e.source, nom.get(e.source) ?? '', e.kind, e.target, nom.get(e.target) ?? '', e.niveau ?? '', e.weight ?? ''] as string[])
   }
   return lignes.map(l => l.map(csvCell).join(';')).join('\n') + '\n'
+}
+
+// ─── Chemins vers les pages du site ──────────────────────────────────────────
+
+const slugLabo = (nom: string) => nom.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+
+/** Fiche DCI (même clé que generateStaticParams : le nom en minuscules, encodé). */
+export const cheminDci = (dci: string) => `/dci/${encodeURIComponent(dci.trim().toLowerCase())}`
+export const cheminLabo = (nom: string) => `/laboratoire/${slugLabo(nom)}`
+export const cheminAtc = (code: string) => `/classes-therapeutiques/${code.toUpperCase()}`
+/** Les retraits sont rangés par année ; sans date exploitable, la page générale. */
+export const cheminRetrait = (date: string | null | undefined) => {
+  const a = /^(\d{4})-/.exec(date ?? '')?.[1]
+  return a ? `/retraits/${a}` : '/retraits'
+}
+
+// ─── Abonnements (administration) ────────────────────────────────────────────
+
+export type MoyenPaiement = 'ccp' | 'paypal'
+export const MOYENS_PAIEMENT: MoyenPaiement[] = ['ccp', 'paypal']
+
+export type AbonnementSaisie = {
+  email: string
+  ends_on: string | null
+  starts_on: string | null
+  moyen_paiement: MoyenPaiement | null
+  reference_paiement: string | null
+  montant: string | null
+  note: string | null
+}
+
+/** Valide et normalise la saisie du formulaire d'activation. Renvoie l'erreur en clair ou la saisie propre. */
+export function validerAbonnement(b: Record<string, unknown>): { ok: true; valeur: AbonnementSaisie } | { ok: false; erreur: string } {
+  const txt = (v: unknown, max: number) => { const s = typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, max) : ''; return s || null }
+  const email = txt(b.email, 200)?.toLowerCase() ?? ''
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, erreur: 'Adresse e-mail invalide.' }
+  const date = (v: unknown) => { const s = txt(v, 10); return s && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s)) ? s : null }
+  const ends_on = date(b.ends_on), starts_on = date(b.starts_on)
+  if (b.ends_on && !ends_on) return { ok: false, erreur: 'Date de fin invalide (AAAA-MM-JJ).' }
+  if (b.starts_on && !starts_on) return { ok: false, erreur: 'Date de début invalide (AAAA-MM-JJ).' }
+  if (!ends_on) return { ok: false, erreur: 'Indiquez la date de fin : un abonnement sans fin est une erreur de saisie probable.' }
+  if (starts_on && starts_on > ends_on) return { ok: false, erreur: 'La date de fin précède la date de début.' }
+  const moyen = txt(b.moyen_paiement, 10)
+  if (moyen && !MOYENS_PAIEMENT.includes(moyen as MoyenPaiement)) return { ok: false, erreur: 'Moyen de paiement : CCP ou PayPal uniquement.' }
+  return { ok: true, valeur: { email, ends_on, starts_on, moyen_paiement: (moyen as MoyenPaiement) ?? null, reference_paiement: txt(b.reference_paiement, 120), montant: txt(b.montant, 40), note: txt(b.note, 500) } }
+}
+
+/** Date de fin proposée : `mois` mois après `depuis` (AAAA-MM-JJ), au dernier jour du mois si besoin. */
+export function finApres(depuis: string, mois: number): string {
+  const [y, m, d] = depuis.split('-').map(Number)
+  const t = new Date(Date.UTC(y, m - 1 + mois, 1))
+  const dernier = new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth() + 1, 0)).getUTCDate()
+  t.setUTCDate(Math.min(d, dernier))
+  return t.toISOString().slice(0, 10)
 }

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 import { CASBAH as C } from '@/lib/garde-ornaments'
-import { COUCHES, type GraphData } from '@/lib/graphe/core'
+import { COUCHES, type GraphData, type GraphNode } from '@/lib/graphe/core'
 import { GrapheView } from './GrapheView'
 import { TEXTES } from './textes'
 
@@ -80,9 +80,31 @@ export function Explorateur() {
       <div aria-live="polite" style={{ minHeight: 24, margin: '10px 0', color: etat === 'erreur' ? '#b3261e' : C.muted }}>
         {etat === 'charge' ? t.chargement : etat === 'erreur' ? message : ''}
       </div>
-      {graph && <GrapheView key={graph.centre} graph={graph} couchesInitiales={[...COUCHES]} exportCsv />}
+      {graph && vue === 'substance' && graph.centre.startsWith('substance:') && (
+        <p style={{ margin: '0 0 10px' }}>
+          <a href={`/api/graphe/pdf?substance=${encodeURIComponent(graph.centre.slice('substance:'.length))}`}
+            style={{ display: 'inline-block', font: 'inherit', fontWeight: 700, padding: '8px 16px', borderRadius: 999, border: `2px solid ${C.brass}`, background: C.navy, color: C.brassLight, textDecoration: 'none' }}>
+            📄 {t.pdf}
+          </a>
+          <span style={{ marginInlineStart: 10, fontSize: 13, color: C.muted }}>{t.pdfAide}</span>
+        </p>
+      )}
+      {graph && <GrapheView key={graph.centre} graph={graph} couchesInitiales={[...COUCHES]} exportCsv onExplorer={recentrer} />}
     </div>
   )
+
+  /** Recentre sur un nœud : une substance (la DCI) ou une classe ATC (le code, déjà dans le libellé). */
+  function recentrer(n: GraphNode) {
+    const valeur = n.kind === 'atc' ? n.label.split(' · ')[0] : n.label
+    const v = n.kind === 'atc' ? 'classe' : 'substance'
+    setVue(v); setSaisie(valeur); setChoix(valeur); setSugg([])
+    setEtat('charge'); setMessage('')
+    const q = v === 'substance' ? `vue=substance&substance=${encodeURIComponent(valeur)}` : `vue=classe&atc=${encodeURIComponent(valeur)}&mode=${mode}`
+    fetch(`/api/graphe/explorer?${q}`).then(async r => {
+      const j = await r.json().catch(() => ({}))
+      if (r.ok) { setGraph(j.graph); setEtat('repos') } else { setEtat('erreur'); setMessage(j.error || t.aucun) }
+    }).catch(() => { setEtat('erreur'); setMessage(t.aucun) })
+  }
 
   async function afficherAvec(m: 'importation' | 'concentration') {
     setEtat('charge')

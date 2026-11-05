@@ -1,6 +1,8 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 import { CASBAH as C } from '@/lib/garde-ornaments'
 import { abreger, coucheDe, COUCHES, disposer, enCsv, filtrerCouches, type Couche, type GraphData, type GraphNode, type NodeKind } from '@/lib/graphe/core'
@@ -33,6 +35,7 @@ const T = {
     inverses: { classe: 'contient la substance', fabrique: 'fabrique', origine: 'est l\'origine de', interagit: 'interagit avec', retire: 'concerne la substance', contient: 'fait partie de', vend: 'est commercialisée par' },
     tronque: 'Aperçu limité aux nœuds les plus importants de chaque type.',
     csv: 'Exporter les liens (CSV)', demo: 'DÉMO', filtrer: 'Afficher',
+    ouvrir: 'Ouvrir la page', recentrer: 'Explorer ce nœud', astuce: 'Cliquez deux fois sur un nœud marqué ↗ pour ouvrir sa page.', ouvrable: 'page disponible',
     graphe: 'Graphe',
   },
   ar: {
@@ -48,6 +51,7 @@ const T = {
     inverses: { classe: 'تضم المادة', fabrique: 'تصنع', origine: 'هو منشأ', interagit: 'تتداخل مع', retire: 'يخص المادة', contient: 'جزء من', vend: 'تسوّقها' },
     tronque: 'العرض محدود في أهم العقد من كل نوع.',
     csv: 'تصدير الروابط (CSV)', demo: 'عرض تجريبي', filtrer: 'عرض',
+    ouvrir: 'افتح الصفحة', recentrer: 'استكشف هذه العقدة', astuce: 'انقر مرتين على عقدة تحمل ↗ لفتح صفحتها.', ouvrable: 'صفحة متاحة',
     graphe: 'الرسم',
   },
 } as const
@@ -58,12 +62,15 @@ const stats: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repe
  * Graphe en étoile (SVG, sans bibliothèque). Les nœuds sont atteignables au clavier ; un tableau des liens
  * accompagne le dessin pour les lecteurs d'écran.
  */
-export function GrapheView({ graph, couchesInitiales, demo = false, exportCsv = false }: {
+export function GrapheView({ graph, couchesInitiales, demo = false, exportCsv = false, onExplorer }: {
   graph: GraphData
   couchesInitiales: Couche[]
   demo?: boolean
   exportCsv?: boolean
+  /** abonnés : recentre l'explorateur sur une substance ou une classe ATC (valeur = DCI ou code) */
+  onExplorer?: (n: GraphNode) => void
 }) {
+  const router = useRouter()
   const { lang } = useLanguage()
   const t = T[lang]
   const ar = lang === 'ar'
@@ -85,6 +92,12 @@ export function GrapheView({ graph, couchesInitiales, demo = false, exportCsv = 
   const aretesSel = sel ? vue.edges.filter(e => e.source === sel.id || e.target === sel.id) : []
   const couleurNoeud = (n: GraphNode) => ((n.kind === 'pays' || n.kind === 'substance') && n.local ? COULEUR_LOCAL : COULEUR[n.kind])
   const typesPresents = [...new Set(vue.nodes.map(n => n.kind))]
+
+  /** Premier clic : sélectionne ; clic sur le nœud déjà sélectionné : ouvre sa page quand elle existe. */
+  function activer(n: GraphNode) {
+    if (choisi === n.id && n.href) router.push(n.href)
+    else setChoisi(n.id)
+  }
 
   function telecharger() {
     const blob = new Blob(['﻿' + enCsv(vue)], { type: 'text/csv;charset=utf-8' })
@@ -143,11 +156,12 @@ export function GrapheView({ graph, couchesInitiales, demo = false, exportCsv = 
             // le libellé complet d'une classe ATC est dans le panneau de détail ; sur le dessin, le code suffit
             const etiquette = n.kind === 'atc' && p.profondeur === 1 ? nom(n).split(' · ')[0] : abreger(nom(n), p.profondeur === 0 ? 22 : 17)
             return (
-              <g key={n.id} tabIndex={0} role="button" aria-label={`${t.kinds[n.kind]} : ${nom(n)}${detail(n) ? ` — ${detail(n)}` : ''}`}
+              <g key={n.id} tabIndex={0} role="button" aria-label={`${t.kinds[n.kind]} : ${nom(n)}${detail(n) ? ` — ${detail(n)}` : ''}${n.href ? ` — ${t.ouvrable}` : ''}`}
                 aria-pressed={estSel} opacity={voisin ? 1 : 0.45} style={{ cursor: 'pointer', outline: 'none' }}
-                onMouseEnter={() => setChoisi(n.id)} onFocus={() => setChoisi(n.id)} onClick={() => setChoisi(n.id)}
-                onKeyDown={ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); setChoisi(n.id) } }}>
+                onMouseEnter={() => setChoisi(n.id)} onFocus={() => setChoisi(n.id)} onClick={() => activer(n)}
+                onKeyDown={ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); activer(n) } }}>
                 <circle cx={x} cy={y} r={r} fill={couleurNoeud(n)} stroke={estSel ? C.ink : 'white'} strokeWidth={estSel ? 3 : 2} />
+                {n.href && <text x={x + r * 0.72} y={y - r * 0.55} textAnchor="middle" fontSize={13} fontWeight={800} fill="#fff" stroke={C.ink} strokeWidth={0.6} paintOrder="stroke">↗</text>}
                 <text x={x} y={y + r + 15} textAnchor="middle" fontSize={p.profondeur === 0 ? 16 : 13.5} fontWeight={p.profondeur === 0 ? 800 : 600} fill={C.ink}
                   stroke="#fffdf6" strokeWidth={3} paintOrder="stroke">{etiquette}</text>
               </g>
@@ -183,6 +197,12 @@ export function GrapheView({ graph, couchesInitiales, demo = false, exportCsv = 
           <>
             <b>{nom(sel)}</b> <span style={{ color: C.muted }}>· {t.kinds[sel.kind]}</span>
             {detail(sel) && <div style={{ color: C.muted }}>{detail(sel)}</div>}
+            {(sel.href || (onExplorer && (sel.kind === 'substance' || sel.kind === 'atc' || sel.kind === 'interaction') && sel.id !== vue.centre)) && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '8px 0 2px' }}>
+                {sel.href && <Link href={sel.href} style={{ fontWeight: 700, fontSize: 13.5, padding: '4px 12px', borderRadius: 999, border: `1.5px solid ${C.brass}`, background: 'white', color: C.ink, textDecoration: 'none' }}>{t.ouvrir} ↗</Link>}
+                {onExplorer && sel.id !== vue.centre && (sel.kind === 'substance' || sel.kind === 'atc' || sel.kind === 'interaction') && <button type="button" onClick={() => onExplorer(sel)} style={{ font: 'inherit', fontWeight: 700, fontSize: 13.5, padding: '4px 12px', borderRadius: 999, border: `1.5px solid ${C.blueDeep}`, background: C.blueDeep, color: 'white', cursor: 'pointer' }}>{t.recentrer}</button>}
+              </div>
+            )}
             {aretesSel.length > 0 && (
               <ul style={{ margin: '6px 0 0', paddingInlineStart: 18, color: C.ink }}>
                 {aretesSel.slice(0, 6).map((e, i) => {
@@ -195,6 +215,7 @@ export function GrapheView({ graph, couchesInitiales, demo = false, exportCsv = 
         ) : <span style={{ color: C.muted }}>{t.choisir}</span>}
       </div>
 
+      {vue.nodes.some(n => n.href) && <p style={{ fontSize: 13, color: C.muted, margin: '8px 0 0' }}>{t.astuce}</p>}
       {vue.tronque && <p style={{ fontSize: 13, color: C.muted, margin: '8px 0 0' }}>{t.tronque}</p>}
 
       <div style={stats}>

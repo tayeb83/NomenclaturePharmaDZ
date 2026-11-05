@@ -102,12 +102,20 @@ Tests : `npm run test:demandes`.
   Elles sont regroupées par **cas d'usage** (interactions, importation, concentration du marché, retraits) dans
   `lib/graphe/demos.ts` : **pour ajouter une démo, ajouter une entrée dans `demos` du cas d'usage voulu** (substance ou
   classe ATC, couches affichées au départ, textes FR et AR). Elle apparaît seule dans `/graphe`, dans sa page et dans le sitemap.
+- **Nœuds cliquables** : substance → `/dci/…`, laboratoire → `/laboratoire/…`, classe ATC → `/classes-therapeutiques/…`, retrait → `/retraits/<année>`,
+  partenaire d'interaction présent dans la nomenclature → sa fiche DCI. Un nœud marqué ↗ s'ouvre par un second clic ou par le lien du panneau de détail.
 - **Explorateur** (`/graphe/explorer`, payant) : n'importe quelle substance ou classe ATC (mode importation ou concentration),
-  30 nœuds par type, filtres par couche, export CSV des liens. API : `/api/graphe/explorer` (401 sans connexion, 403 sans abonnement).
-- **Abonnement** : le paiement se fait hors ligne (CCP, BaridiMob, virement). La demande arrive dans `pro_leads` (offre « graphe »,
-  visible dans l'admin Pro) ; l'équipe active ensuite l'abonné :
-  `INSERT INTO graphe_abonnements (email, ends_on, note) VALUES ('nom@exemple.dz', '2027-06-30', 'CCP 12345');`
+  30 nœuds par type, filtres par couche, « Explorer ce nœud » (recentre le graphe), export CSV des liens et **fiche PDF d'une substance**
+  (`/api/graphe/pdf?substance=…` : chiffres clés, graphe, laboratoires, interactions par gravité sans les textes ANSM, retraits ; en français).
+  API : `/api/graphe/explorer` et `/api/graphe/pdf` (401 sans connexion, 403 sans abonnement).
+- **Abonnement** : paiement par **virement CCP ou PayPal uniquement**, constaté à la main. La demande arrive dans `pro_leads` (offre « graphe »).
+  **Admin → Abonnements → Graphes & PDF** (`/admin/graphe`, propriétaire et administrateurs) : liste des demandes à traiter, activation ou
+  renouvellement (date de fin, moyen de paiement, référence du virement ou de la transaction, montant), e-mail de confirmation à l'abonné,
+  suspension, réactivation, suppression.
   L'abonné se connecte avec le lien e-mail de Training (même compte). L'équipe (propriétaire, `ADMIN_EMAILS`, comptes admin) y accède d'office.
+- Coordonnées affichées sur l'offre (variables publiques, à définir avant le build) : `NEXT_PUBLIC_GRAPHE_CCP_NUMERO`,
+  `NEXT_PUBLIC_GRAPHE_CCP_TITULAIRE`, `NEXT_PUBLIC_GRAPHE_PAYPAL_URL` (lien `https://paypal.me/…` ou bouton PayPal). Sans elles, l'offre dit que
+  les coordonnées sont envoyées par e-mail après la demande.
 - À activer : `psql "$DATABASE_URL" -f sql/36_graphe.sql` (après `sql/13`, `23`). Sans cette migration, les démos fonctionnent
   et l'explorateur reste fermé.
 - Tests : `npm run test:graphe`.

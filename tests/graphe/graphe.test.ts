@@ -82,3 +82,54 @@ test('catalogue : identifiants uniques, au moins 2 démos par cas d\'usage, text
   assert.equal(trouverDemo('interactions-simvastatine')?.cas.id, 'interactions')
   assert.equal(trouverDemo('inconnue'), null)
 })
+
+// ─── Chemins, abonnements, PDF ───────────────────────────────────────────────
+import { cheminAtc, cheminDci, cheminLabo, cheminRetrait, finApres, validerAbonnement } from '../../lib/graphe/core.ts'
+import { construirePdfSubstance, sure } from '../../lib/graphe/pdf.ts'
+import { PDFDocument } from 'pdf-lib'
+
+test('chemins : mêmes clés que les pages du site', () => {
+  assert.equal(cheminDci('AMOXICILLINE + ACIDE CLAVULANIQUE'), '/dci/amoxicilline%20%2B%20acide%20clavulanique')
+  assert.equal(cheminLabo('SAIDAL - Groupe'), '/laboratoire/saidal-groupe')
+  assert.equal(cheminLabo('Laboratoires Mérinal'), '/laboratoire/laboratoires-merinal')
+  assert.equal(cheminAtc('c10aa'), '/classes-therapeutiques/C10AA')
+  assert.equal(cheminRetrait('2020-07-17'), '/retraits/2020')
+  assert.equal(cheminRetrait(null), '/retraits')
+})
+
+test('validerAbonnement : e-mail, dates et moyen de paiement (CCP ou PayPal seulement)', () => {
+  const ok = validerAbonnement({ email: ' Nom@Exemple.DZ ', ends_on: '2027-06-30', moyen_paiement: 'paypal', reference_paiement: ' TX 123 ', montant: '25 EUR' })
+  assert.ok(ok.ok && ok.valeur.email === 'nom@exemple.dz' && ok.valeur.reference_paiement === 'TX 123' && ok.valeur.moyen_paiement === 'paypal')
+  assert.equal(validerAbonnement({ email: 'x', ends_on: '2027-06-30' }).ok, false)
+  assert.equal(validerAbonnement({ email: 'a@b.dz' }).ok, false)                                            // pas de date de fin
+  assert.equal(validerAbonnement({ email: 'a@b.dz', ends_on: '30/06/2027' }).ok, false)
+  assert.equal(validerAbonnement({ email: 'a@b.dz', ends_on: '2027-06-30', starts_on: '2027-07-01' }).ok, false)
+  assert.equal(validerAbonnement({ email: 'a@b.dz', ends_on: '2027-06-30', moyen_paiement: 'baridimob' }).ok, false)
+  const sans = validerAbonnement({ email: 'a@b.dz', ends_on: '2027-06-30', moyen_paiement: '' })
+  assert.ok(sans.ok && sans.valeur.moyen_paiement === null)
+})
+
+test('finApres : ajoute des mois sans déborder', () => {
+  assert.equal(finApres('2026-01-15', 12), '2027-01-15')
+  assert.equal(finApres('2026-01-31', 1), '2026-02-28')
+  assert.equal(finApres('2026-11-30', 3), '2027-02-28')
+})
+
+test('sure : accents français conservés, caractères hors WinAnsi remplacés', () => {
+  assert.equal(sure('Précaution d’emploi – œdème'), 'Précaution d’emploi – œdème')
+  assert.equal(sure('باراسيتامول'), '???????????')
+})
+
+test('PDF : document valide, nom de la substance, plusieurs pages avec beaucoup de lignes', async () => {
+  const gros: GraphData = {
+    ...g, tronque: true,
+    stats: [{ cle: 'a', fr: 'spécialités enregistrées', ar: '', valeur: '16' }],
+    nodes: [...g.nodes, ...Array.from({ length: 90 }, (_, i) => ({ id: `x${i}`, kind: 'interaction' as const, label: `PARTENAIRE ${i} باراسيتامول`, weight: i }))],
+    edges: [...g.edges, ...Array.from({ length: 90 }, (_, i) => ({ source: 's', target: `x${i}`, kind: 'interagit' as const, niveau: 'precaution_emploi' as const }))],
+  }
+  const bytes = await construirePdfSubstance(gros, { version: 'TEST', date: '1 janvier 2026' })
+  assert.equal(Buffer.from(bytes.slice(0, 5)).toString(), '%PDF-')
+  const doc = await PDFDocument.load(bytes)
+  assert.ok(doc.getPageCount() >= 2)
+  assert.match(doc.getTitle() ?? '', /SIMVASTATINE/)
+})
