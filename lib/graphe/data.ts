@@ -19,9 +19,10 @@ import { query } from '@/lib/db'
 import { chercherSubstances } from '@/lib/comparateur-medicaments'
 import { cle, getPartenairesAnsm, NIVEAU_RANG, type Niveau } from '@/lib/interactions'
 import {
-  cheminAtc, cheminDci, cheminLabo, cheminRetrait, estLocal, lectureHhi, PLAFOND_ABONNE, plafonner, pluriel,
+  cheminAtc, cheminDci, cheminLabo, cheminMarque, cheminRetrait, estLocal, lectureHhi, PLAFOND_ABONNE, plafonner, pluriel,
   type GraphData, type GraphEdge, type GraphNode,
 } from './core.ts'
+import { PLAFOND_DEMO } from './core.ts'
 import type { Vue } from './demos.ts'
 
 const PAYS_LOCAL = 'ALGERIE'
@@ -68,21 +69,74 @@ export async function resoudreDci(saisie: string): Promise<string | null> {
   return proche[0]?.dci ?? null
 }
 
+/** Même idée pour un laboratoire : « SAIDAL » retrouve « GROUPE SAIDAL » (le plus riche en enregistrements). */
+export async function resoudreLabo(saisie: string): Promise<string | null> {
+  const labo = norm(saisie)
+  if (!labo) return null
+  const exact = await query<{ n: number }>(`SELECT COUNT(*)::int AS n FROM enregistrements WHERE ${NORM_SQL('labo')} = $1`, [labo])
+  if ((exact[0]?.n ?? 0) > 0) return labo
+  const proche = await query<{ labo: string }>(
+    `SELECT ${NORM_SQL('labo')} AS labo FROM enregistrements WHERE ${NORM_SQL('labo')} LIKE '%' || $1 || '%' GROUP BY 1 ORDER BY COUNT(*) DESC, 1 LIMIT 1`,
+    [labo.replace(/[%_\\]/g, m => `\\${m}`)],
+  )
+  return proche[0]?.labo ?? null
+}
+
+export async function chercherLabos(saisie: string): Promise<{ labo: string; n: number }[]> {
+  const q = norm(saisie).slice(0, 60)
+  if (q.length < 2) return []
+  return query<{ labo: string; n: number }>(
+    `SELECT ${NORM_SQL('labo')} AS labo, COUNT(*)::int AS n FROM enregistrements
+      WHERE labo IS NOT NULL AND ${NORM_SQL('labo')} LIKE '%' || $1 || '%' GROUP BY 1 ORDER BY (${NORM_SQL('labo')} LIKE $1 || '%') DESC, COUNT(*) DESC, 1 LIMIT 8`,
+    [q.replace(/[%_\\]/g, m => `\\${m}`)],
+  ).catch(() => [])
+}
+
+type Marque = { dci: string; marque: string; n: number; labos: string }
+
+/** Médicaments (marques) des substances données, éventuellement limités à un laboratoire : les plus présentés d'abord. */
+async function marquesDe(dcis: string[], labo: string | null): Promise<Marque[]> {
+  if (!dcis.length) return []
+  return query<Marque>(
+    `SELECT ${NORM_SQL('dci')} AS dci, UPPER(TRIM(nom_marque)) AS marque, COUNT(*)::int AS n,
+            STRING_AGG(DISTINCT UPPER(TRIM(labo)), ', ') AS labos
+       FROM enregistrements
+      WHERE ${NORM_SQL('dci')} = ANY($1) AND nom_marque IS NOT NULL AND TRIM(nom_marque) <> ''
+        AND ($2::text IS NULL OR UPPER(TRIM(labo)) = $2)
+      GROUP BY 1, 2 ORDER BY 1, COUNT(*) DESC, 2`,
+    [dcis, labo],
+  ).catch(() => [])
+}
+
+/** Nœud « médicament » : une marque, reliée à sa substance. */
+function noeudMarque(m: Marque): GraphNode {
+  return {
+    id: `medicament:${m.dci}:${m.marque}`, kind: 'medicament', label: m.marque, weight: m.n, href: cheminMarque(m.marque),
+    detail: `${pluriel(m.n, 'présentation')}${m.labos ? ` · ${m.labos}` : ''}`, detailAr: `${m.n} شكل${m.labos ? ` · ${m.labos}` : ''}`,
+  }
+}
+
+/** Marques par substance retenue : au plus `parParent` chacune (3 en démo, 6 pour un abonné). */
+const marquesParParent = (plafond: number) => (plafond <= PLAFOND_DEMO ? 3 : 6)
+
 // ─── Vue « substance » ───────────────────────────────────────────────────────
 
-export async function grapheSubstance(substance: string, plafond: number): Promise<GraphData | null> {
+export async function grapheSubstance(substance: string, plafond: number, laboSaisi?: string): Promise<GraphData | null> {
   const dci = (await resoudreDci(substance)) ?? norm(substance)
   if (!dci) return null
+  // filtre laboratoire (facultatif) : une saisie qui ne correspond à aucun laboratoire ne donne aucun résultat
+  const labo = laboSaisi?.trim() ? await resoudreLabo(laboSaisi) : null
+  if (laboSaisi?.trim() && !labo) return null
 
   const lignes = await query<{ labo: string | null; pays: string | null; statut: string | null; n: number }>(
     `SELECT UPPER(TRIM(labo)) AS labo, UPPER(TRIM(pays)) AS pays, UPPER(TRIM(statut)) AS statut, COUNT(*)::int AS n
-       FROM enregistrements WHERE ${NORM_SQL('dci')} = $1 GROUP BY 1, 2, 3`,
-    [dci],
+       FROM enregistrements WHERE ${NORM_SQL('dci')} = $1 AND ($2::text IS NULL OR UPPER(TRIM(labo)) = $2) GROUP BY 1, 2, 3`,
+    [dci, labo],
   )
   const retraits = await query<{ id: number; nom_marque: string; labo: string | null; date_retrait: string | null; motif_retrait: string | null }>(
     `SELECT id, nom_marque, UPPER(TRIM(labo)) AS labo, date_retrait::text AS date_retrait, motif_retrait
-       FROM retraits WHERE ${NORM_SQL('dci')} = $1 ORDER BY date_retrait DESC NULLS LAST LIMIT 60`,
-    [dci],
+       FROM retraits WHERE ${NORM_SQL('dci')} = $1 AND ($2::text IS NULL OR UPPER(TRIM(labo)) = $2) ORDER BY date_retrait DESC NULLS LAST LIMIT 60`,
+    [dci, labo],
   ).catch(() => [])
   if (!lignes.length && !retraits.length) return null
 
@@ -120,6 +174,16 @@ export async function grapheSubstance(substance: string, plafond: number): Promi
   }
   for (const l of lignes) {
     if (l.labo && l.pays) edges.push({ source: `labo:${l.labo}`, target: `pays:${l.pays}`, kind: 'origine', weight: l.n })
+  }
+
+  if (labo) nodes[0].detail = `filtré sur le laboratoire ${labo}`
+
+  // médicaments (marques) de la substance : reliés à la substance, les plus présentés d'abord (le plafond coupe le reste)
+  const marques = await marquesDe([dci], labo)
+  for (const m of marques) {
+    const nd = noeudMarque(m)
+    nodes.push(nd)
+    edges.push({ source: centre, target: nd.id, kind: 'marque' })
   }
 
   // retraits : reliés à la substance et au laboratoire titulaire (créé s'il n'a plus aucun enregistrement)
@@ -168,6 +232,7 @@ export async function grapheSubstance(substance: string, plafond: number): Promi
     stats: [
       { cle: 'enregistrements', fr: 'enregistrements', ar: 'تسجيلات', valeur: String(total) },
       { cle: 'labos', fr: 'laboratoires', ar: 'مخابر', valeur: String(parLabo.size) },
+      { cle: 'marques', fr: 'médicaments (marques)', ar: 'أدوية (علامات)', valeur: String(marques.length) },
       { cle: 'import', fr: 'importés', ar: 'مستوردة', valeur: pct(total - locaux, total) },
       { cle: 'interactions', fr: 'partenaires d\'interaction', ar: 'شركاء التداخل', valeur: String(nbInteractions) },
       { cle: 'ci', fr: 'contre-indications', ar: 'موانع استعمال', valeur: String(ci) },
@@ -179,14 +244,17 @@ export async function grapheSubstance(substance: string, plafond: number): Promi
 
 // ─── Vue « classe » ──────────────────────────────────────────────────────────
 
-export async function grapheClasse(atc: string, mode: 'importation' | 'concentration', plafond: number): Promise<GraphData | null> {
+export async function grapheClasse(atc: string, mode: 'importation' | 'concentration', plafond: number, laboSaisi?: string): Promise<GraphData | null> {
   const code = atc.trim().toUpperCase()
   if (!ATC_RE.test(code)) return null
+  // le filtre laboratoire n'a pas de sens pour la concentration (elle compare les laboratoires entre eux)
+  const labo = mode === 'importation' && laboSaisi?.trim() ? await resoudreLabo(laboSaisi) : null
+  if (mode === 'importation' && laboSaisi?.trim() && !labo) return null
   const lignes = await query<{ dci: string; labo: string | null; pays: string | null; statut: string | null; n: number }>(
     `SELECT ${NORM_SQL('e.dci')} AS dci, UPPER(TRIM(e.labo)) AS labo, UPPER(TRIM(e.pays)) AS pays, UPPER(TRIM(e.statut)) AS statut, COUNT(*)::int AS n
        FROM enregistrements e JOIN dci_atc_mapping m ON ${NORM_SQL('m.dci')} = ${NORM_SQL('e.dci')}
-      WHERE m.code_atc LIKE $1 || '%' GROUP BY 1, 2, 3, 4`,
-    [code],
+      WHERE m.code_atc LIKE $1 || '%' AND ($2::text IS NULL OR UPPER(TRIM(e.labo)) = $2) GROUP BY 1, 2, 3, 4`,
+    [code, labo],
   )
   if (!lignes.length) return null
   const lib = (await libellesAtc([code])).get(code)
@@ -255,7 +323,7 @@ export async function grapheClasse(atc: string, mode: 'importation' | 'concentra
     }
   }
   for (const [p, n] of parPays) nodes.push({ id: `pays:${p}`, kind: 'pays', label: p, weight: n, local: p === PAYS_LOCAL, detail: pluriel(n, 'enregistrement'), detailAr: `${n} تسجيل` })
-  return plafonner({
+  const g = plafonner({
     centre, nodes, edges, tronque: false,
     stats: [
       { cle: 'substances', fr: 'substances', ar: 'مواد فعالة', valeur: String(parSub.size) },
@@ -264,12 +332,113 @@ export async function grapheClasse(atc: string, mode: 'importation' | 'concentra
       { cle: 'un-pays', fr: 'importées d\'un seul pays', ar: 'مستوردة من بلد واحد', valeur: String(unSeulPays) },
     ],
   }, plafond)
+  // médicaments (marques) des seules substances retenues par le plafond, `parParent` au plus chacune
+  const gardees = g.nodes.filter(n => n.kind === 'substance').map(n => n.label)
+  const parParent = marquesParParent(plafond)
+  const vues = new Map<string, number>()
+  for (const m of await marquesDe(gardees, labo)) {
+    const k = vues.get(m.dci) ?? 0
+    if (k >= parParent) continue
+    vues.set(m.dci, k + 1)
+    const nd = noeudMarque(m)
+    g.nodes.push(nd)
+    g.edges.push({ source: `substance:${m.dci}`, target: nd.id, kind: 'marque' })
+  }
+  if (labo) g.nodes[0].detail = `filtré sur le laboratoire ${labo}`
+  return g
 }
 
 // ─── Entrées publiques ───────────────────────────────────────────────────────
 
+// ─── Vue « laboratoire » ─────────────────────────────────────────────────────
+
+/** Un laboratoire au centre : ses substances (avec classe ATC et marques), ses pays d'origine et ses retraits. */
+export async function grapheLabo(laboSaisi: string, plafond: number): Promise<GraphData | null> {
+  const labo = await resoudreLabo(laboSaisi)
+  if (!labo) return null
+  const lignes = await query<{ dci: string; pays: string | null; statut: string | null; n: number }>(
+    `SELECT ${NORM_SQL('dci')} AS dci, UPPER(TRIM(pays)) AS pays, UPPER(TRIM(statut)) AS statut, COUNT(*)::int AS n
+       FROM enregistrements WHERE ${NORM_SQL('labo')} = $1 GROUP BY 1, 2, 3`,
+    [labo],
+  )
+  const retraits = await query<{ id: number; nom_marque: string; dci: string | null; date_retrait: string | null; motif_retrait: string | null }>(
+    `SELECT id, nom_marque, ${NORM_SQL('dci')} AS dci, date_retrait::text AS date_retrait, motif_retrait
+       FROM retraits WHERE ${NORM_SQL('labo')} = $1 ORDER BY date_retrait DESC NULLS LAST LIMIT 60`,
+    [labo],
+  ).catch(() => [])
+  if (!lignes.length && !retraits.length) return null
+
+  const centre = `labo:${labo}`
+  const total = lignes.reduce((s, l) => s + l.n, 0)
+  const nodes: GraphNode[] = [{ id: centre, kind: 'labo', label: labo, weight: total, href: cheminLabo(labo), detail: pluriel(total, 'enregistrement'), detailAr: `${total} تسجيل` }]
+  const edges: GraphEdge[] = []
+
+  const parSub = new Map<string, { n: number; locaux: number }>()
+  const parPays = new Map<string, number>()
+  let locaux = 0
+  for (const l of lignes) {
+    const s = parSub.get(l.dci) ?? { n: 0, locaux: 0 }
+    s.n += l.n
+    if (estLocal(l.statut, l.pays)) { s.locaux += l.n; locaux += l.n }
+    parSub.set(l.dci, s)
+    if (l.pays) parPays.set(l.pays, (parPays.get(l.pays) ?? 0) + l.n)
+  }
+  for (const [dci, s] of parSub) {
+    nodes.push({
+      id: `substance:${dci}`, kind: 'substance', label: dci, weight: s.n, local: s.locaux > 0, href: cheminDci(dci),
+      detail: `${pluriel(s.n, 'enregistrement')} chez ce laboratoire`, detailAr: `${s.n} تسجيل لدى هذا المخبر`,
+    })
+    edges.push({ source: centre, target: `substance:${dci}`, kind: 'fabrique', weight: s.n })
+  }
+  for (const [pays, n] of parPays) {
+    nodes.push({ id: `pays:${pays}`, kind: 'pays', label: pays, weight: n, local: pays === PAYS_LOCAL, detail: pluriel(n, 'enregistrement'), detailAr: `${n} تسجيل` })
+    edges.push({ source: centre, target: `pays:${pays}`, kind: 'origine', weight: n })
+  }
+  for (const r of retraits) {
+    nodes.push({ id: `retrait:${r.id}`, kind: 'retrait', label: r.nom_marque, weight: 1, href: cheminRetrait(r.date_retrait), detail: [r.date_retrait?.slice(0, 10), r.dci, r.motif_retrait].filter(Boolean).join(' · ') || undefined })
+    edges.push({ source: centre, target: `retrait:${r.id}`, kind: 'retire' })
+  }
+
+  const g = plafonner({
+    centre, nodes, edges, tronque: false,
+    stats: [
+      { cle: 'enregistrements', fr: 'enregistrements', ar: 'تسجيلات', valeur: String(total) },
+      { cle: 'substances', fr: 'substances', ar: 'مواد فعالة', valeur: String(parSub.size) },
+      { cle: 'pays', fr: 'pays d\'origine', ar: 'بلدان المنشأ', valeur: String(parPays.size) },
+      { cle: 'import', fr: 'importés', ar: 'مستوردة', valeur: pct(total - locaux, total) },
+      { cle: 'retraits', fr: 'retraits', ar: 'عمليات سحب', valeur: String(retraits.length) },
+    ],
+  }, plafond)
+
+  // classes ATC et médicaments des seules substances retenues
+  const gardees = g.nodes.filter(n => n.kind === 'substance').map(n => n.label)
+  const mapping = gardees.length
+    ? await query<{ dci: string; code_atc: string }>(`SELECT ${NORM_SQL('dci')} AS dci, code_atc FROM dci_atc_mapping WHERE ${NORM_SQL('dci')} = ANY($1)`, [gardees]).catch(() => [])
+    : []
+  const classes = new Map<string, string[]>()
+  for (const m of mapping) classes.set(m.code_atc.slice(0, 5), [...(classes.get(m.code_atc.slice(0, 5)) ?? []), m.dci])
+  const lib = await libellesAtc([...classes.keys()])
+  for (const [classe, dcis] of classes) {
+    const l = lib.get(classe)
+    g.nodes.push({ id: `atc:${classe}`, kind: 'atc', label: `${classe} · ${l?.label_fr || l?.label_en || classe}`, labelAr: l?.label_ar ? `${classe} · ${l.label_ar}` : undefined, weight: dcis.length, href: cheminAtc(classe) })
+    for (const d of dcis) g.edges.push({ source: `substance:${d}`, target: `atc:${classe}`, kind: 'classe' })
+  }
+  const parParent = marquesParParent(plafond)
+  const vues = new Map<string, number>()
+  for (const m of await marquesDe(gardees, labo)) {
+    const k = vues.get(m.dci) ?? 0
+    if (k >= parParent) continue
+    vues.set(m.dci, k + 1)
+    const nd = noeudMarque(m)
+    g.nodes.push(nd)
+    g.edges.push({ source: `substance:${m.dci}`, target: nd.id, kind: 'marque' })
+  }
+  return g
+}
+
 export function construire(v: Vue, plafond: number): Promise<GraphData | null> {
-  return v.vue === 'substance' ? grapheSubstance(v.substance, plafond) : grapheClasse(v.atc, v.mode, plafond)
+  if (v.vue === 'laboratoire') return grapheLabo(v.labo, plafond)
+  return v.vue === 'substance' ? grapheSubstance(v.substance, plafond, v.labo) : grapheClasse(v.atc, v.mode, plafond, v.labo)
 }
 
 export async function chercherClasses(saisie: string): Promise<{ code: string; label: string; label_ar: string | null }[]> {

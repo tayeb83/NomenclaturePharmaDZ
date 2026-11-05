@@ -84,7 +84,7 @@ test('catalogue : identifiants uniques, au moins 2 démos par cas d\'usage, text
 })
 
 // ─── Chemins, abonnements, PDF ───────────────────────────────────────────────
-import { cheminAtc, cheminDci, cheminLabo, cheminRetrait, finApres, validerAbonnement } from '../../lib/graphe/core.ts'
+import { cheminAtc, cheminDci, cheminLabo, cheminMarque, cheminRetrait, finApres, validerAbonnement } from '../../lib/graphe/core.ts'
 import { construirePdfSubstance, sure } from '../../lib/graphe/pdf.ts'
 import { PDFDocument } from 'pdf-lib'
 
@@ -176,4 +176,34 @@ test('remarques : signale ce que la démo promet de montrer et n\'a pas', () => 
   assert.ok(ret.some(m => /retrait/.test(m)) && ret.some(m => /laboratoire/.test(m)) && ret.some(m => /ATC/.test(m)))
   assert.deepEqual(remarques({ vue: 'substance', substance: 'X', couches: [] }, vide), [])
   assert.ok(remarques({ vue: 'classe', atc: 'M01A', mode: 'concentration' }, vide)[0].includes('3 laboratoires'))
+})
+
+test('disposer : voisins de voisins écartés sans traverser le dessin', () => {
+  // 6 substances, chacune avec 4 marques : 24 nœuds sur l'anneau extérieur
+  const nodes: GraphData['nodes'] = [{ id: 'c', kind: 'labo', label: 'LAB', weight: 100 }]
+  const edges: GraphData['edges'] = []
+  for (let i = 0; i < 6; i++) {
+    nodes.push({ id: `s${i}`, kind: 'substance', label: `S${i}`, weight: 10 })
+    edges.push({ source: 'c', target: `s${i}`, kind: 'fabrique' })
+    for (let j = 0; j < 4; j++) {
+      nodes.push({ id: `m${i}-${j}`, kind: 'medicament', label: `M${i}${j}`, weight: 1 })
+      edges.push({ source: `s${i}`, target: `m${i}-${j}`, kind: 'marque' })
+    }
+  }
+  const places = disposer({ centre: 'c', nodes, edges, stats: [], tronque: false })
+  const ext = places.filter(p => p.profondeur === 2).map(p => ({ id: p.id, a: Math.atan2(p.y, p.x) })).sort((p, q) => p.a - q.a)
+  assert.equal(ext.length, 24)
+  const ecartMin = Math.min(...ext.map((p, k) => (k ? p.a - ext[k - 1].a : p.a + 2 * Math.PI - ext[ext.length - 1].a)))
+  assert.ok(ecartMin >= 0.2, `écart minimal ${ecartMin.toFixed(3)} rad`)
+  // une marque reste dans le voisinage angulaire de sa substance (liens courts)
+  const ang = new Map(places.map(p => [p.id, Math.atan2(p.y, p.x)]))
+  for (let i = 0; i < 6; i++) for (let j = 0; j < 4; j++) {
+    const d = Math.abs(((ang.get(`m${i}-${j}`)! - ang.get(`s${i}`)! + 3 * Math.PI) % (2 * Math.PI)) - Math.PI)
+    assert.ok(d < 1.6, `m${i}-${j} trop loin de s${i} : ${d.toFixed(2)} rad`)
+  }
+})
+
+test('cheminMarque : famille de marque (premier mot), comme /marque/[slug]', () => {
+  assert.equal(cheminMarque('DOLIPRANE'), '/marque/doliprane')
+  assert.equal(cheminMarque('NEO-CALM Plus'), '/marque/neo-calm')
 })

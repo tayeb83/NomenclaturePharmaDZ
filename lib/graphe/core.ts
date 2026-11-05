@@ -2,8 +2,9 @@
  * DwaDZ — graphes de connaissances : types, plafonds démo/abonné, disposition en étoile et droits d'accès.
  * Aucun accès serveur : testable seul (node --test tests/graphe/).
  */
+import { marqueSlug } from '../marque.ts'
 
-export type NodeKind = 'substance' | 'atc' | 'labo' | 'pays' | 'interaction' | 'retrait' | 'classe'
+export type NodeKind = 'substance' | 'atc' | 'labo' | 'pays' | 'interaction' | 'retrait' | 'classe' | 'medicament'
 
 export type GraphNode = {
   id: string
@@ -25,7 +26,7 @@ export type GraphNode = {
   dominant?: boolean
 }
 
-export type EdgeKind = 'classe' | 'fabrique' | 'origine' | 'interagit' | 'retire' | 'contient' | 'vend'
+export type EdgeKind = 'classe' | 'fabrique' | 'origine' | 'interagit' | 'retire' | 'contient' | 'vend' | 'marque'
 export type Gravite = 'contre_indication' | 'deconseillee' | 'precaution_emploi' | 'a_prendre_en_compte'
 
 export type GraphEdge = {
@@ -47,8 +48,8 @@ export type GraphData = {
   tronque: boolean
 }
 
-export type Couche = 'atc' | 'labos' | 'pays' | 'interactions' | 'retraits'
-export const COUCHES: Couche[] = ['atc', 'labos', 'pays', 'interactions', 'retraits']
+export type Couche = 'atc' | 'labos' | 'pays' | 'interactions' | 'retraits' | 'medicaments'
+export const COUCHES: Couche[] = ['atc', 'labos', 'medicaments', 'pays', 'interactions', 'retraits']
 
 /** Plafond de nœuds par couche : la démo montre l'essentiel, l'abonné voit tout. */
 export const PLAFOND_DEMO = 8
@@ -95,7 +96,7 @@ export function plafonner(g: GraphData, max: number): GraphData {
 
 /** Filtre par couches : le centre reste, les autres nœuds suivent leur type. */
 const COUCHE_DE_KIND: Partial<Record<NodeKind, Couche>> = {
-  atc: 'atc', labo: 'labos', pays: 'pays', interaction: 'interactions', classe: 'interactions', retrait: 'retraits',
+  atc: 'atc', labo: 'labos', pays: 'pays', interaction: 'interactions', classe: 'interactions', retrait: 'retraits', medicament: 'medicaments',
 }
 export const coucheDe = (k: NodeKind): Couche | undefined => COUCHE_DE_KIND[k]
 export function filtrerCouches(g: GraphData, actives: ReadonlySet<Couche>): GraphData {
@@ -141,7 +142,7 @@ export function disposer(g: GraphData): Placement[] {
     return 0.045 + 0.05 * Math.sqrt(poids(id) / (maxParType.get(n.kind) ?? 1))
   }
 
-  const ordreType: NodeKind[] = ['atc', 'classe', 'labo', 'substance', 'interaction', 'retrait', 'pays']
+  const ordreType: NodeKind[] = ['atc', 'classe', 'labo', 'substance', 'medicament', 'interaction', 'retrait', 'pays']
   const premier = file.filter(id => prof.get(id) === 1).sort((a, b) => {
     const ka = ordreType.indexOf(byId.get(a)!.kind), kb = ordreType.indexOf(byId.get(b)!.kind)
     return ka - kb || poids(b) - poids(a) || a.localeCompare(b)
@@ -156,13 +157,30 @@ export function disposer(g: GraphData): Placement[] {
     const y = ps.reduce((s, p) => s + Math.sin(angle.get(p)!), 0)
     return { id, a: ps.length ? Math.atan2(y, x) : 0 }
   }).sort((p, q) => p.a - q.a)
-  const ecart = Math.min(TAU / Math.max(voulu.length, 1), 0.34)
-  let prec = -Infinity
-  for (const v of voulu) {
-    const a = Math.max(v.a, prec + ecart)
-    angle.set(v.id, a)
-    prec = a
+  // Écartement des voisins de voisins : chacun tend vers l'angle de ses parents, deux voisins trop proches se repoussent.
+  // Une relaxation (quelques dizaines de passes, déterministe) évite que l'écart minimal ne décale tout le cercle,
+  // ce qui ferait traverser le dessin à de longs liens.
+  const n2 = voulu.length
+  const ecart = Math.min(TAU / Math.max(n2, 1), 0.3)
+  const desire = voulu.map(v => v.a)
+  const th = [...desire]
+  const diffCirc = (d: number) => ((((d + Math.PI) % TAU) + TAU) % TAU) - Math.PI
+  if (n2 > 1) {
+    for (let pass = 0; pass < 300; pass++) {
+      const ordre = th.map((_, i) => i).sort((a, b) => th[a] - th[b])
+      const delta = new Array<number>(n2).fill(0)
+      for (let k = 0; k < n2; k++) {
+        const a = ordre[k], b = ordre[(k + 1) % n2]
+        const gap = th[b] - th[a] + (k === n2 - 1 ? TAU : 0)
+        if (gap < ecart) { const push = (ecart - gap) / 2; delta[a] -= push; delta[b] += push }
+      }
+      for (let i = 0; i < n2; i++) th[i] += delta[i] + 0.03 * diffCirc(desire[i] - th[i])
+    }
+    // dernier balayage : écart minimal garanti (à 85 %), à partir de la position relaxée
+    const ordre = th.map((_, i) => i).sort((a, b) => th[a] - th[b])
+    for (let k = 1; k < n2; k++) th[ordre[k]] = Math.max(th[ordre[k]], th[ordre[k - 1]] + ecart * 0.85)
   }
+  voulu.forEach((v, i) => angle.set(v.id, th[i]))
 
   return g.nodes.filter(n => prof.has(n.id)).map(n => {
     const p = prof.get(n.id)!
@@ -206,6 +224,8 @@ const slugLabo = (nom: string) => nom.toLowerCase().normalize('NFD').replace(/[\
 /** Fiche DCI (même clé que generateStaticParams : le nom en minuscules, encodé). */
 export const cheminDci = (dci: string) => `/dci/${encodeURIComponent(dci.trim().toLowerCase())}`
 export const cheminLabo = (nom: string) => `/laboratoire/${slugLabo(nom)}`
+/** Famille de marque (premier mot du nom commercial) : /marque/<slug>. */
+export const cheminMarque = (nom: string) => `/marque/${marqueSlug(nom)}`
 export const cheminAtc = (code: string) => `/classes-therapeutiques/${code.toUpperCase()}`
 /** Les retraits sont rangés par année ; sans date exploitable, la page générale. */
 export const cheminRetrait = (date: string | null | undefined) => {
