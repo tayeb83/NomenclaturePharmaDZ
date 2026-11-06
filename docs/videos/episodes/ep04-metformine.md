@@ -11,7 +11,7 @@
 | Attention 1 | « الـ ANSM تقول: مع **منتجات التباين اليودية** (اللي يحقنوها في الـ scanner) — **ممنوع**. السبب: خطر **حموضة لبنية** (acidose lactique) إذا الكلى تعبت. » | Interactions → badge rouge « Contre-indication » |
 | Comment | « الطبيب يقرر: غالباً يوقّفو وقت الفحص و يردّو بعد التحليل. **ما توقّفش وحدك**. » | Texte : « Décision du médecin » |
 | Attention 2 | « و **الكحول**: غير مستحسن، خاصة مع الصيام أو الجفاف. » | Badge « Déconseillée » |
-| Attention 3 | « و مع بعض **مدرّات البول** (من نوع العروة): خاص مراقبة الكلى. » | Badge « Précaution d'emploi » |
+| Attention 3 | « و مع بعض **مدرّات البول** (من نوع العروة): لازم مراقبة الكلى. » | Badge « Précaution d'emploi » |
 | Réflexe | « قبل أي فحص بالأشعة، قول للطبيب: **"أنا نتعالج بالميتفورمين"**. » | Texte plein écran |
 | Appel | « شوف تفاعلات دواك في **DwaDZ**. هادي معلومة عامة، ما تعوضش رأي الطبيب ولا الصيدلي. » | Logo + site |
 

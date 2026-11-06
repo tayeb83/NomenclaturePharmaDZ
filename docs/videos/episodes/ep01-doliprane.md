@@ -8,7 +8,7 @@
 | Bloc | Voix (darija) | Écran / capture |
 |------|---------------|------------------|
 | Hook | **« الدوليبران… الدوا اللي كلنا نشريوه بلا ما نسقسيو. واش تعرف علاش لازم تحذر؟ »** | Gros plan boîte de Doliprane, texte : « Bénin ? pas toujours » |
-| C'est quoi | « الدوليبران هو اسم تجاري. المادة الفعالة اللي فيه اسمها **باراسيتامول**. يهبّط السخانة و يهدّي الوجيعة — الراس، السنّ، الجسم. » | Recherche « DOLIPRANE » dans DwaDZ → fiche → champ **DCI = PARACETAMOL** surligné |
+| C'est quoi | « الدوليبران هو اسم تجاري. المادة الفعالة اللي فيه اسمها **باراسيتامول**. يهبّط السخانة و يهدّي الوجع — الراس، السنّ، الجسم. » | Recherche « DOLIPRANE » dans DwaDZ → fiche → champ **DCI = PARACETAMOL** surligné |
 | Comment | « كيفاش نديرو؟ اقرا الورقة اللي في العلبة. فيها الدوز القصوى في النهار، و المدة اللي لازم تخليها بين جرعة و جرعة. ما تزيدش، و ما تقولش "نزيد باش يزول بكري". » **[A]** | Zoom sur la notice : dose max / intervalle |
 | Attention 1 | « الخطر الأول: **الكبد**. الباراسيتامول بزاف يتعب الكبد، و ما تحسش بيه في الأول. و الكحول و الصيام الطويل يزيدو الخطر. » | Pictogramme foie + « Surdosage = foie » |
 | Attention 2 | « و الخطر التاني: تاخذ دوا آخر فيه **نفس المادة** — نزلة، سخانة، أدوية "كولد" — و تتجاوز الدوز بلا ما تدري. شوف دايما الـ DCI. » | Fiche DCI → liste des marques contenant PARACETAMOL |

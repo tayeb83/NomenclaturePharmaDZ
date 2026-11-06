@@ -1,4 +1,4 @@
-# Ép. 02 — الإيبوبروفين (Advil/Brufen…) : مضاد الالتهاب اللي يعور المعدة
+# Ép. 02 — الإيبوبروفين (Advil/Brufen…) : مضاد الالتهاب اللي يوجع المعدة
 
 - **Durée cible** : 60 s
 - **Source des faits** : monographie IBUPROFENE (DwaDZ, `sql/19_…` — **brouillon : à relire avant usage**), Thesaurus ANSM classe « ANTI-INFLAMMATOIRES NON STÉROÏDIENS »
@@ -6,8 +6,8 @@
 
 | Bloc | Voix (darija) | Écran / capture |
 |------|---------------|------------------|
-| Hook | **« الوجيعة؟ تاخذ إيبوبروفين… و ما تعرفش شحال من ناس يدخلو للمستعجلات بسبب المعدة. »** | Boîte + texte « AINS » |
-| C'est quoi | « الإيبوبروفين من عائلة **مضادات الالتهاب غير الستيرويدية**، يعني AINS. يهدّي الوجيعة، يهبّط السخانة، و يقلّل الالتهاب. » | Fiche DCI IBUPROFENE → **ATC M01AE01** |
+| Hook | **« الوجع؟ تاخذ إيبوبروفين… و ما تعرفش شحال من ناس يدخلو للمستعجلات بسبب المعدة. »** | Boîte + texte « AINS » |
+| C'est quoi | « الإيبوبروفين من عائلة **مضادات الالتهاب غير الستيرويدية**، يعني AINS. يهدّي الوجع، يهبّط السخانة، و يقلّل الالتهاب. » | Fiche DCI IBUPROFENE → **ATC M01AE01** |
 | Comment | « ديرو **مع الماكلة** أو بعدها، بأقل دوز ولأقصر مدة. و الدوز الكبير يتكتب غير بوصفة الطبيب. » | Texte : « Pendant / après un repas » |
 | Attention 1 | « ما تاخذوش إذا عندك **قرحة في المعدة**، أو **حساسية** من الأسبرين أو دواء من نفس العائلة، أو مشكل كبير في الكلى، الكبد، القلب. » | Liste à puces animée (contre-indications) |
 | Attention 2 | « **الحامل**: من الشهر السادس (24 أسبوع) ممنوع تماماً، حتى لو جرعة وحدة. قبلها، غير بنصيحة الطبيب. » | Icône femme enceinte + « ≥ 24 SA = interdit » |

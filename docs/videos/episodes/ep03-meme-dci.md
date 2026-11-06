@@ -6,11 +6,11 @@
 
 | Bloc | Voix (darija) | Écran / capture |
 |------|---------------|------------------|
-| Hook | **« تاخذ دوليبران، و بعد شوية إيفيرالقان… واش درت؟ تاخذ نفس الدوا جوج مرات! »** | Deux boîtes côte à côte, flèche rouge |
+| Hook | **« تاخذ دوليبران، و بعد شوية إيفيرالقان… واش درت؟ تاخذ نفس الدوا زوج مرات! »** | Deux boîtes côte à côte, flèche rouge |
 | C'est quoi | « الاسم التجاري يتبدل من مخبر لمخبر. اللي يهم هو **المادة الفعالة** — اللي نسميوها **DCI**. » | Barre de recherche DwaDZ : tape une marque → fiche |
-| Démo 1 | « شوف: نكتب الاسم... تطلعلي الـ DCI. نفس الـ DCI في جوج فيشات = نفس المادة. » | `/substitution` : liste des marques de la même DCI |
+| Démo 1 | « شوف: نكتب الاسم... تطلعلي الـ DCI. نفس الـ DCI في زوج فيشات = نفس المادة. » | `/substitution` : liste des marques de la même DCI |
 | Démo 2 | « و هنا تلقى كامل الأسماء اللي فيها هاد المادة، و المخابر، و الدوز، و الشكل. » | Capture de la page DCI avec laboratoires |
-| Attention | « القاعدة: **ما تخلطش جوج أدوية عندهم نفس الـ DCI** إلا بنصيحة الصيدلي. ينفعك تقارن بعدها في **المقارن**. » | `/comparateur` : deux marques, mêmes substances |
+| Attention | « القاعدة: **ما تخلطش زوج أدوية عندهم نفس الـ DCI** إلا بنصيحة الصيدلي. ينفعك تقارن بعدها في **المقارن**. » | `/comparateur` : deux marques, mêmes substances |
 | Réflexe | « قبل ما تشري: اقرا الـ DCI، سقسي الصيدلي، و اسأل على الجنريك — يقدر يكون أرخص. » | Texte : « DCI ≠ marque » |
 | Appel | « DwaDZ… كلش على دوا البلاد. » *(slogan du site)* | Logo + `dzair-pharma.net` |
 

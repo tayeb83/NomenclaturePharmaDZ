@@ -6,7 +6,7 @@
 
 | Bloc | Voix (darija) | Écran / capture |
 |------|---------------|------------------|
-| Hook | **« حامل و راسك يعورك؟ ما تاخذيش أي حاجة في الدار قبل ما تسقسي. »** | Femme enceinte, main sur le ventre |
+| Hook | **« حامل و راسك يوجعك؟ ما تاخذيش أي حاجة في الدار قبل ما تسقسي. »** | Femme enceinte, main sur le ventre |
 | Pourquoi | « بعض الأدوية تعدّي للجنين. و المخاطر تتبدل حسب **شهر الحمل**. » | Frise du temps (trimestres) |
 | Exemple | « مثلاً **الإيبوبروفين** و عائلته (AINS): ابتداء من **الأسبوع 24** من الحمل **ممنوع**، حتى جرعة وحدة، لأنو يضر كلى الجنين. » | Fiche IBUPROFENE : monographie, rubrique grossesse |
 | Réflexe 1 | « ما تقراش على النت وتقرر. **الطبيب أو الصيدلي** يقولك أي مسكّن يناسبك في حالتك. » | Texte plein écran |
