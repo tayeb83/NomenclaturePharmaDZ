@@ -3,62 +3,109 @@
 <style>
 @font-face{font-family:Cairo;font-weight:800;src:url(fonts/cairo-arabic-800-normal.woff2) format("woff2");unicode-range:U+0600-06FF,U+0750-077F,U+FB50-FDFF,U+FE70-FEFF}
 @font-face{font-family:Cairo;font-weight:800;src:url(fonts/cairo-latin-800-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+2000-206F,U+20AC,U+2122}
-html,body{margin:0;background:#071f29}svg{display:block;font-family:Cairo,sans-serif;font-weight:800}
+html,body{margin:0;background:#071f29}svg{display:block;font-family:Cairo,"Noto Color Emoji",sans-serif;font-weight:800}
 </style></head><body><svg id="s" xmlns="http://www.w3.org/2000/svg"></svg>
 <script>
-// Couverture d'une vidéo : ?fmt=v (1080×1920, zone utile centrale 3:4 pour la carte du site) ou ?fmt=h (1200×630, partage Facebook).
-const NS = "http://www.w3.org/2000/svg", q = new URLSearchParams(location.search), V = q.get("fmt") !== "h";
+// Couverture d'une vidéo : ?ep=dci|atc|interaction&fmt=v (1080×1920, zone utile centrale 3:4) ou fmt=h (1200×630, partage Facebook).
+const NS = "http://www.w3.org/2000/svg", q = new URLSearchParams(location.search), V = q.get("fmt") !== "h", EP = q.get("ep") || "dci";
 const W = V ? 1080 : 1200, H = V ? 1920 : 630;
 const svg = document.getElementById("s"); svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("width", W); svg.setAttribute("height", H);
 const el = (t, a = {}, p = svg) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); p.appendChild(e); return e; };
-const txt = (s, a, p = svg) => { const e = el("text", a, p); e.textContent = s; return e; };
+const txt = (s, a, p = svg, maxW) => { const e = el("text", a, p); e.textContent = s; if (maxW) FIT.push([e, maxW]); return e; };
+const FIT = []; // réduit la police d'un texte qui dépasse la largeur permise (mesuré une fois les polices chargées)
 
-const defs = el("defs"); const g = el("linearGradient", { id: "bg", x1: 0, y1: 0, x2: V ? 0 : 1, y2: V ? 1 : 1 }, defs);
+const defs = el("defs"); const g = el("linearGradient", { id: "bg", x1: 0, y1: 0, x2: V ? 0 : 1, y2: 1 }, defs);
 el("stop", { offset: 0, "stop-color": "#0f4c5c" }, g); el("stop", { offset: 1, "stop-color": "#071f29" }, g);
 el("rect", { width: W, height: H, fill: "url(#bg)" });
 for (let i = 0; i < 9; i++) el("circle", { cx: (i * 131 + 90) % W, cy: (i * 233 + 120) % H, r: 20 + (i * 17) % 50, fill: "#fff", "fill-opacity": .06 });
 
-function pill(parent, x, y, s) {
+// ── éléments d'illustration communs ──
+function pill(parent, x, y, s, label, left = "#fff", right = "#ff9f1c") {
   const p = el("g", { transform: `translate(${x} ${y}) scale(${s})` }, parent);
-  el("rect", { x: -230, y: -80, width: 460, height: 160, rx: 80, fill: "#fff" }, p);
-  el("path", { d: "M0 -80 H150 A80 80 0 0 1 150 80 H0 Z", fill: "#ff9f1c" }, p);
-  txt("PARACETAMOL", { x: 0, y: 16, "text-anchor": "middle", fill: "#111", "font-size": 54 }, p);
+  el("rect", { x: -230, y: -80, width: 460, height: 160, rx: 80, fill: left, stroke: "#fff", "stroke-width": 4 }, p);
+  el("path", { d: "M0 -80 H150 A80 80 0 0 1 150 80 H0 Z", fill: right }, p);
+  if (label) txt(label, { x: 0, y: 16, "text-anchor": "middle", fill: "#111", "font-size": 54 }, p);
+  else { [-90, 30].forEach((dx) => { el("ellipse", { cx: dx, cy: -10, rx: 30, ry: 36, fill: "#fff", stroke: "#bbb", "stroke-width": 4 }, p); el("circle", { cx: dx + 3, cy: -4, r: 14, fill: "#222" }, p); }); el("path", { d: "M-80 40 Q-30 80 20 40", stroke: "#333", "stroke-width": 10, fill: "none", "stroke-linecap": "round" }, p); }
+  return p;
 }
-function box(parent, x, y, c, name, s) {
-  const b = el("g", { transform: `translate(${x} ${y}) scale(${s})` }, parent);
+function box(parent, x, y, c, name) {
+  const b = el("g", { transform: `translate(${x} ${y})` }, parent);
   el("rect", { x: -150, y: -110, width: 300, height: 220, rx: 50, fill: c, stroke: "#fff", "stroke-width": 8 }, b);
   txt(name, { x: 0, y: -48, "text-anchor": "middle", fill: "#fff", "font-size": 40 }, b);
   [-45, 45].forEach((dx) => { el("ellipse", { cx: dx, cy: 10, rx: 24, ry: 28, fill: "#fff" }, b); el("circle", { cx: dx, cy: 14, r: 12, fill: "#222" }, b); });
   el("path", { d: "M-40 62 Q0 100 40 62", stroke: "#fff", "stroke-width": 9, fill: "none", "stroke-linecap": "round" }, b);
 }
-function illustration(parent, cx, cy, s) { // trois marques → une seule substance active
+
+// ── DCI : trois marques → une substance active ──
+function illDCI(parent, cx, cy, s) {
   const g2 = el("g", { transform: `translate(${cx} ${cy}) scale(${s})` }, parent);
   [[-320, "#ff6b6b", "DOLIPRANE"], [0, "#4dabf7", "EFFERALGAN"], [320, "#51cf66", "DAFALGAN"]].forEach(([dx, c, n]) => {
-    box(g2, dx, -230, c, n, 1);
+    box(g2, dx, -230, c, n);
     el("path", { d: `M${dx} -100 Q${dx / 2} 20 0 110`, stroke: "#fff", "stroke-width": 10, fill: "none", "stroke-linecap": "round", opacity: .85 }, g2);
   });
-  pill(g2, 0, 210, 1);
+  pill(g2, 0, 210, 1, "PARACETAMOL");
   const tag = el("g", { transform: "translate(0 60)" }, g2); el("rect", { x: -120, y: -42, width: 240, height: 84, rx: 42, fill: "#e03131", stroke: "#fff", "stroke-width": 6 }, tag);
   txt("DCI", { x: 0, y: 20, "text-anchor": "middle", fill: "#fff", "font-size": 56 }, tag);
 }
 
+// ── ATC : le code N02BE01 et ses 5 niveaux ──
+const ATC = [["N", "#ff6b6b", "الجهاز العصبي", "Système nerveux"], ["N02", "#ffa94d", "مسكّنات الألم", "Analgésiques"], ["N02B", "#ffd43b", "مسكّنات وخافضات حرارة أخرى", "Autres analgésiques et antipyrétiques"],
+  ["N02BE", "#69db7c", "الأنيليدات", "Anilides"], ["N02BE01", "#4dabf7", "باراسيتامول", "Paracétamol"]];
+function illATC(parent, cx, top, k) { // k : échelle (1 = vertical)
+  const g2 = el("g", { transform: `translate(${cx} ${top}) scale(${k})` }, parent);
+  const cols = ["#ff6b6b", "#ffa94d", "#ffa94d", "#ffd43b", "#69db7c", "#4dabf7", "#4dabf7"], ch = "N02BE01", TW = 120, GAP = 12, x0 = -(7 * TW + 6 * GAP) / 2 + TW / 2;
+  ch.split("").forEach((c, i) => { el("rect", { x: x0 + i * (TW + GAP) - TW / 2, y: -80, width: TW, height: 160, rx: 26, fill: cols[i] }, g2); txt(c, { x: x0 + i * (TW + GAP), y: 36, "text-anchor": "middle", fill: "#111", "font-size": 100 }, g2); });
+  ATC.forEach(([code, c, ar, fr], i) => {
+    const y = 170 + i * 94, r = el("g", { transform: `translate(0 ${y})` }, g2);
+    el("rect", { x: -480, y: -42, width: 960, height: 84, rx: 24, fill: "#fff", "fill-opacity": .1, stroke: c, "stroke-width": 4 }, r);
+    el("rect", { x: -472, y: -34, width: 250, height: 68, rx: 18, fill: c }, r); txt(code, { x: -347, y: 17, "text-anchor": "middle", fill: "#111", "font-size": 46 }, r);
+    txt(ar, { x: 130, y: 2, "text-anchor": "middle", direction: "rtl", fill: "#fff", "font-size": 40 }, r, 680); txt(fr, { x: 130, y: 33, "text-anchor": "middle", fill: "#ffe08a", "font-size": 22 }, r, 680);
+  });
+}
+
+// ── Interaction : deux pilules et les quatre niveaux de gravité ──
+const NIV = [["⊗", "#e03131", "مضاد استطباب", "Contre-indication"], ["▲", "#f76707", "جمع غير موصى به", "Association déconseillée"], ["◆", "#f2b705", "احتياطات الاستعمال", "Précaution d'emploi"], ["○", "#1098ad", "يؤخذ بعين الاعتبار", "À prendre en compte"]];
+function illInter(parent, cx, top, k, compactRows) {
+  const g2 = el("g", { transform: `translate(${cx} ${top}) scale(${k})` }, parent);
+  pill(g2, -230, 0, .55, null, "#fff", "#ff9f1c"); pill(g2, 230, 0, .55, null, "#fff", "#4dabf7");
+  txt("+", { x: 0, y: 36, "text-anchor": "middle", fill: "#fff", "font-size": 120 }, g2); txt("💥", { x: 0, y: -62, "text-anchor": "middle", "font-size": 130 }, g2);
+  NIV.forEach(([ic, c, ar, fr], i) => {
+    const y = 150 + i * (compactRows ? 92 : 86), r = el("g", { transform: `translate(0 ${y})` }, g2);
+    el("rect", { x: -470, y: -40, width: 940, height: 80, rx: 28, fill: "#102f3b", stroke: c, "stroke-width": 6 }, r);
+    el("circle", { cx: -405, cy: 0, r: 30, fill: c }, r); txt(ic, { x: -405, y: 15, "text-anchor": "middle", fill: "#fff", "font-size": 42 }, r);
+    txt(ar, { x: 90, y: 2, "text-anchor": "middle", direction: "rtl", fill: "#fff", "font-size": 40 }, r, 760); txt(fr, { x: 90, y: 31, "text-anchor": "middle", fill: "#ffe08a", "font-size": 22 }, r, 760);
+  });
+}
+
+const CFG = {
+  dci: { ar: "ما هي الـ DCI؟", fr: ["C'est quoi une DCI ?"], subAr: "أسماء كثيرة، مادة فعالة واحدة", subFr: "Plusieurs noms, une seule substance active",
+    vert: (p) => illDCI(p, 540, 1130, 1), horiz: (p) => illDCI(p, 900, 295, .42) },
+  atc: { ar: "ما هو تصنيف ATC؟", fr: ["C'est quoi l'ATC ?"], subAr: "رمز واحد يحدد عائلة الدواء", subFr: "Un seul code pour classer chaque médicament",
+    vert: (p) => illATC(p, 540, 860, 1), horiz: (p) => illATC(p, 905, 105, .5) },
+  interaction: { ar: "ما هو التفاعل الدوائي؟", fr: ["C'est quoi une interaction", "médicamenteuse ?"], subAr: "أربعة مستويات من الخطورة", subFr: "Quatre niveaux de gravité",
+    vert: (p) => illInter(p, 540, 1010, 1, false), horiz: (p) => illInter(p, 905, 128, .5, true) },
+}[EP];
+
 if (V) {
   txt("DwaDZ", { x: 540, y: 330, "text-anchor": "middle", fill: "#ffd166", "font-size": 64 });
   txt("فيديو تعليمي · Vidéo pédagogique", { x: 540, y: 400, "text-anchor": "middle", fill: "#cfe8ee", "font-size": 40 });
-  txt("ما هي الـ DCI؟", { x: 540, y: 630, "text-anchor": "middle", fill: "#ffd166", "font-size": 132, direction: "rtl" });
-  txt("C'est quoi une DCI ?", { x: 540, y: 740, "text-anchor": "middle", fill: "#fff", "font-size": 76 });
-  illustration(svg, 540, 1130, 1.0);
-  txt("أسماء كثيرة، مادة فعالة واحدة", { x: 540, y: 1520, "text-anchor": "middle", fill: "#fff", "font-size": 70, direction: "rtl" });
-  txt("Plusieurs noms, une seule substance active", { x: 540, y: 1590, "text-anchor": "middle", fill: "#cfe8ee", "font-size": 38 });
-  txt("dzair-pharma.net", { x: 540, y: 1650, "text-anchor": "middle", fill: "#ffd166", "font-size": 40 });
+  txt(CFG.ar, { x: 540, y: 630, "text-anchor": "middle", fill: "#ffd166", "font-size": 132, direction: "rtl" }, svg, 940);
+  CFG.fr.forEach((l, i) => txt(l, { x: 540, y: 735 + i * 80, "text-anchor": "middle", fill: "#fff", "font-size": 72 }, svg, 940));
+  CFG.vert(svg);
+  txt(CFG.subAr, { x: 540, y: 1548, "text-anchor": "middle", fill: "#fff", "font-size": 62, direction: "rtl" }, svg, 940);
+  txt(CFG.subFr, { x: 540, y: 1610, "text-anchor": "middle", fill: "#cfe8ee", "font-size": 36 }, svg, 940);
+  txt("dzair-pharma.net", { x: 540, y: 1668, "text-anchor": "middle", fill: "#ffd166", "font-size": 38 });
 } else {
   txt("DwaDZ", { x: 70, y: 90, fill: "#ffd166", "font-size": 52 });
-  txt("ما هي الـ DCI؟", { x: 340, y: 235, "text-anchor": "middle", fill: "#ffd166", "font-size": 104, direction: "rtl" });
-  txt("C'est quoi une DCI ?", { x: 340, y: 325, "text-anchor": "middle", fill: "#fff", "font-size": 52 });
-  txt("أسماء كثيرة، مادة فعالة واحدة", { x: 340, y: 440, "text-anchor": "middle", fill: "#fff", "font-size": 40, direction: "rtl" });
-  txt("Plusieurs noms, une seule substance active", { x: 340, y: 490, "text-anchor": "middle", fill: "#cfe8ee", "font-size": 27 });
+  txt(CFG.ar, { x: 340, y: 235, "text-anchor": "middle", fill: "#ffd166", "font-size": 104, direction: "rtl" }, svg, 580);
+  CFG.fr.forEach((l, i) => txt(l, { x: 340, y: 325 + i * 56, "text-anchor": "middle", fill: "#fff", "font-size": 50 }, svg, 580));
+  txt(CFG.subAr, { x: 340, y: 450, "text-anchor": "middle", fill: "#fff", "font-size": 40, direction: "rtl" }, svg, 580);
+  txt(CFG.subFr, { x: 340, y: 498, "text-anchor": "middle", fill: "#cfe8ee", "font-size": 27 }, svg, 580);
   txt("dzair-pharma.net", { x: 70, y: 585, fill: "#ffd166", "font-size": 34 });
-  illustration(svg, 900, 295, 0.42);
+  CFG.horiz(svg);
 }
-document.fonts.ready.then(() => { window.READY = true });
+document.fonts.ready.then(() => {
+  FIT.forEach(([e, w]) => { const l = e.getComputedTextLength(); if (l > w) e.setAttribute("font-size", Math.floor(+e.getAttribute("font-size") * w / l)); });
+  window.READY = true;
+});
 </script></body></html>
