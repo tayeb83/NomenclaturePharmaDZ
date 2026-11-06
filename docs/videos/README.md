@@ -85,7 +85,18 @@ node docs/videos/animation/render.mjs dci --scale 1       # 1080×1920 (défaut 
 node docs/videos/animation/render.mjs dci --stills 3,15   # images fixes pour contrôler une scène
 ```
 
-- **Pilote** : `episodes/dci.js` (« C'est quoi une DCI ? », 42 s). Pour un nouvel épisode (ATC, interaction…), copier ce fichier et changer scènes + `subs`.
-- **Voix** : le MP4 est muet. Enregistrer la voix darija sur les timings des sous-titres, ou ajuster les timings à la voix (`start`/`end` dans `subs`).
+- **Épisodes animés** : `dci` (C'est quoi une DCI ?, 42 s), `atc` (C'est quoi l'ATC ?, 56 s), `interaction` (C'est quoi une interaction médicamenteuse ?, 57 s). Pour un nouvel épisode (ATC, interaction…), copier ce fichier et changer scènes + `subs`.
+- **Voix off automatique** (`animation/voice.py`) : voix algériennes Microsoft (`ar-DZ-AminaNeural` femme, `ar-DZ-IsmaelNeural` homme) via `edge-tts`.
+  ```bash
+  node docs/videos/animation/render.mjs interaction          # vidéo + sous-titres + out/interaction.subs.json
+  python3 docs/videos/animation/voice.py interaction         # → out/interaction.amina.mp4 (voix + vidéo)
+  python3 docs/videos/animation/voice.py interaction --voice ar-DZ-IsmaelNeural
+  ```
+  Chaque sous-titre est lu à son moment ; le champ `say` d'un sous-titre donne un texte parlé plus complet que le texte affiché.
+  Les sigles latins sont épelés (ANSM, ATC, N02BE01…), `DwaDZ` devient « دوا دي زاد ». La ponctuation est retirée avant la synthèse
+  (la voix fait une longue pause à chaque signe) ; une phrase trop longue est accélérée jusqu'à x1,25, le rapport signale les dépassements.
+  **Limites** : c'est de l'arabe standard à accent algérien, pas du darija natif ; certains mots dialectaux (تاع, كاين, زوج…) peuvent être
+  mal prononcés. À écouter avant publication. Le texte est envoyé au service vocal de Microsoft : ne mettre que du contenu destiné à être public.
+  Besoin réseau : `speech.platform.bing.com` (à autoriser dans l'environnement). Pour une voix humaine, enregistrer sur les timings des `.srt`.
 - **Police** : Cairo 800 (SIL OFL), incluse dans `animation/fonts/`. Le rendu arabe a été vérifié.
 - Les marques utilisées dans les dessins sont à valider `[A]` avant publication.

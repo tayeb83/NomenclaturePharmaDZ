@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Rend un épisode animé en MP4 (image par image, déterministe) + sous-titres .srt arabe et français.
-// Usage : node render.mjs dci [--scale 0.667] [--fps 25] [--no-burn] [--stills 3,15,24] [--out out]
+// Usage : node render.mjs dci [--scale 0.667] [--fps 25] [--no-burn] [--meta] [--stills 3,15,24] [--out out]
 // Prérequis : playwright (déjà dans l'environnement) et ffmpeg.
 import { createRequire } from "node:module";
 import { readFileSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
@@ -28,8 +28,10 @@ const srt = (k) => subs.map((s, i) => `${i + 1}\n${ts(s.start)} --> ${ts(s.end)}
 mkdirSync(outDir, { recursive: true });
 writeFileSync(path.join(outDir, `${ep}.ar.srt`), srt("ar"), "utf8");
 writeFileSync(path.join(outDir, `${ep}.fr.srt`), srt("fr"), "utf8");
+writeFileSync(path.join(outDir, `${ep}.subs.json`), JSON.stringify({ duration, subs }, null, 1), "utf8");
 
 const even = (n) => Math.round(n / 2) * 2; // H.264 exige des dimensions paires
+if (argv.includes("--meta")) { console.log("Sous-titres exportés (sans rendu vidéo)."); process.exit(0); }
 const W = even(1080 * scale), Hh = even(1920 * scale);
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: W, height: Hh } });
