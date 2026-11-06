@@ -86,17 +86,20 @@ node docs/videos/animation/render.mjs dci --stills 3,15   # images fixes pour co
 ```
 
 - **Épisodes animés** : `dci` (C'est quoi une DCI ?, 42 s), `atc` (C'est quoi l'ATC ?, 56 s), `interaction` (C'est quoi une interaction médicamenteuse ?, 57 s). Pour un nouvel épisode (ATC, interaction…), copier ce fichier et changer scènes + `subs`.
-- **Voix off automatique** (`animation/voice.py`) : voix algériennes Microsoft (`ar-DZ-AminaNeural` femme, `ar-DZ-IsmaelNeural` homme) via `edge-tts`.
-  ```bash
-  node docs/videos/animation/render.mjs interaction          # vidéo + sous-titres + out/interaction.subs.json
-  python3 docs/videos/animation/voice.py interaction         # → out/interaction.amina.mp4 (voix + vidéo)
-  python3 docs/videos/animation/voice.py interaction --voice ar-DZ-IsmaelNeural
-  ```
-  Chaque sous-titre est lu à son moment ; le champ `say` d'un sous-titre donne un texte parlé plus complet que le texte affiché.
-  Les sigles latins sont épelés (ANSM, ATC, N02BE01…), `DwaDZ` devient « دوا دي زاد ». La ponctuation est retirée avant la synthèse
-  (la voix fait une longue pause à chaque signe) ; une phrase trop longue est accélérée jusqu'à x1,25, le rapport signale les dépassements.
-  **Limites** : c'est de l'arabe standard à accent algérien, pas du darija natif ; certains mots dialectaux (تاع, كاين, زوج…) peuvent être
-  mal prononcés. À écouter avant publication. Le texte est envoyé au service vocal de Microsoft : ne mettre que du contenu destiné à être public.
-  Besoin réseau : `speech.platform.bing.com` (à autoriser dans l'environnement). Pour une voix humaine, enregistrer sur les timings des `.srt`.
+- **Voix off** (`animation/voice.py`) : trois modes. Chaque sous-titre est lu à son moment ; le champ `say` donne un texte parlé plus complet.
+  1. **Ta voix clonée** (recommandé) : enregistre 2–5 min en suivant `animation/voix/ENREGISTREMENT.md`, puis
+     ```bash
+     export ELEVENLABS_API_KEY=...        # jamais dans le dépôt
+     python3 docs/videos/animation/clone_voice.py "Voix DwaDZ" docs/videos/animation/voix/echantillon1.m4a
+     node docs/videos/animation/render.mjs interaction
+     python3 docs/videos/animation/voice.py interaction --provider elevenlabs   # → out/interaction.clone.mp4
+     ```
+     Réglages : `--stability`, `--similarity`, `--speed`. Les phrases sont mises en cache (`out/cache`) : relancer ne repaie rien.
+  2. **Ton enregistrement tel quel** : `voice.py interaction --audio mon_enregistrement.m4a` (un fichier couvrant toute la vidéo).
+  3. **Voix Microsoft ar-DZ** (`voice.py interaction`) : arabe standard, peu naturelle ; seulement pour tester le calage.
+  Les sigles latins sont épelés (ANSM, ATC, N02BE01…), `DwaDZ` devient « دوا دي زاد ».
+  **Limites** : un clone reproduit ta voix mais lit un texte arabe ; un mot dialectal (تاع, زوج…) peut sortir trop « standard » → l'écrire
+  comme tu le prononces dans `say`. Les échantillons et les textes sont envoyés au service choisi (ElevenLabs, ou Microsoft pour le mode 3) :
+  ne cloner que sa propre voix, et ne mettre que du contenu destiné à être public. Les fichiers audio de `voix/` ne sont pas versionnés.
 - **Police** : Cairo 800 (SIL OFL), incluse dans `animation/fonts/`. Le rendu arabe a été vérifié.
 - Les marques utilisées dans les dessins sont à valider `[A]` avant publication.
