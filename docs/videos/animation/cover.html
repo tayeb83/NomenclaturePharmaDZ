@@ -7,14 +7,14 @@ html,body{margin:0;background:#071f29}svg{display:block;font-family:Cairo,"Noto 
 </style></head><body><svg id="s" xmlns="http://www.w3.org/2000/svg"></svg>
 <script>
 // Couverture d'une vidéo : ?ep=dci|atc|interaction&fmt=v (1080×1920, zone utile centrale 3:4) ou fmt=h (1200×630, partage Facebook).
-const NS = "http://www.w3.org/2000/svg", q = new URLSearchParams(location.search), V = q.get("fmt") !== "h", EP = q.get("ep") || "dci";
-const W = V ? 1080 : 1200, H = V ? 1920 : 630;
+const NS = "http://www.w3.org/2000/svg", q = new URLSearchParams(location.search), VERT = q.get("fmt") !== "h", EP = q.get("ep") || "dci";
+const W = VERT ? 1080 : 1200, H = VERT ? 1920 : 630;
 const svg = document.getElementById("s"); svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("width", W); svg.setAttribute("height", H);
 const el = (t, a = {}, p = svg) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); p.appendChild(e); return e; };
 const txt = (s, a, p = svg, maxW) => { const e = el("text", a, p); e.textContent = s; if (maxW) FIT.push([e, maxW]); return e; };
 const FIT = []; // réduit la police d'un texte qui dépasse la largeur permise (mesuré une fois les polices chargées)
 
-const defs = el("defs"); const g = el("linearGradient", { id: "bg", x1: 0, y1: 0, x2: V ? 0 : 1, y2: 1 }, defs);
+const defs = el("defs"); const g = el("linearGradient", { id: "bg", x1: 0, y1: 0, x2: VERT ? 0 : 1, y2: 1 }, defs);
 el("stop", { offset: 0, "stop-color": "#0f4c5c" }, g); el("stop", { offset: 1, "stop-color": "#071f29" }, g);
 el("rect", { width: W, height: H, fill: "url(#bg)" });
 for (let i = 0; i < 9; i++) el("circle", { cx: (i * 131 + 90) % W, cy: (i * 233 + 120) % H, r: 20 + (i * 17) % 50, fill: "#fff", "fill-opacity": .06 });
@@ -77,16 +77,32 @@ function illInter(parent, cx, top, k, compactRows) {
   });
 }
 
-const CFG = {
+const BUILTIN = {
   dci: { ar: "ما هي الـ DCI؟", fr: ["C'est quoi une DCI ?"], subAr: "أسماء كثيرة، مادة فعالة واحدة", subFr: "Plusieurs noms, une seule substance active",
     vert: (p) => illDCI(p, 540, 1130, 1), horiz: (p) => illDCI(p, 900, 295, .42) },
   atc: { ar: "ما هو تصنيف ATC؟", fr: ["C'est quoi l'ATC ?"], subAr: "رمز واحد يحدد عائلة الدواء", subFr: "Un seul code pour classer chaque médicament",
     vert: (p) => illATC(p, 540, 860, 1), horiz: (p) => illATC(p, 905, 105, .5) },
   interaction: { ar: "ما هو التفاعل الدوائي؟", fr: ["C'est quoi une interaction", "médicamenteuse ?"], subAr: "أربعة مستويات من الخطورة", subFr: "Quatre niveaux de gravité",
     vert: (p) => illInter(p, 540, 1010, 1, false), horiz: (p) => illInter(p, 905, 128, .5, true) },
-}[EP];
+};
+// ── épisodes « par spécification » : grande pastille colorée avec deux icônes (SPEC.cover) ──
+function illGeneric(parent, cx, cy, k, c) {
+  const g2 = el("g", { transform: `translate(${cx} ${cy}) scale(${k})` }, parent);
+  el("circle", { r: 330, fill: c.c, "fill-opacity": .22, stroke: c.c, "stroke-width": 16 }, g2);
+  el("circle", { r: 250, fill: "#fff", "fill-opacity": .08 }, g2);
+  txt(c.icons[0], { x: 0, y: 120, "text-anchor": "middle", "font-size": 340 }, g2);
+  if (c.icons[1]) { el("circle", { cx: 230, cy: -230, r: 105, fill: "#102f3b", stroke: "#fff", "stroke-width": 8 }, g2); txt(c.icons[1], { x: 230, y: -190, "text-anchor": "middle", "font-size": 130 }, g2); }
+}
 
-if (V) {
+
+const load = (src) => new Promise((ok) => { const e = document.createElement("script"); e.src = src; e.onload = ok; document.head.appendChild(e); });
+(async () => {
+  let CFG = BUILTIN[EP];
+  if (!CFG) {
+    await load("lib/spec.js"); await load("episodes/" + EP + ".js"); const c = window.SPEC.cover;
+    CFG = { ar: c.ar, fr: c.fr, subAr: c.subAr, subFr: c.subFr, vert: (p) => illGeneric(p, 540, 1190, .88, c), horiz: (p) => illGeneric(p, 900, 315, .55, c) };
+  }
+if (VERT) {
   txt("DwaDZ", { x: 540, y: 330, "text-anchor": "middle", fill: "#ffd166", "font-size": 64 });
   txt("فيديو تعليمي · Vidéo pédagogique", { x: 540, y: 400, "text-anchor": "middle", fill: "#cfe8ee", "font-size": 40 });
   txt(CFG.ar, { x: 540, y: 630, "text-anchor": "middle", fill: "#ffd166", "font-size": 132, direction: "rtl" }, svg, 940);
@@ -104,8 +120,9 @@ if (V) {
   txt("dzair-pharma.net", { x: 70, y: 585, fill: "#ffd166", "font-size": 34 });
   CFG.horiz(svg);
 }
-document.fonts.ready.then(() => {
+
+  await document.fonts.ready;
   FIT.forEach(([e, w]) => { const l = e.getComputedTextLength(); if (l > w) e.setAttribute("font-size", Math.floor(+e.getAttribute("font-size") * w / l)); });
   window.READY = true;
-});
+})();
 </script></body></html>
