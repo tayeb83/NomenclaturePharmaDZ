@@ -1,9 +1,9 @@
-# DwaDZ — Vidéos pédagogiques en darija
+# DwaDZ — Vidéos pédagogiques en arabe standard (sous-titres français)
 
 Série courte (45–75 s) pour Reels / TikTok / Shorts / Facebook : **« C'est quoi ce médicament ? Et attention à… »**.
 Chaque épisode part d'une fiche de l'outil (nom de marque → DCI → interactions ANSM) et se termine sur
-`dzair-pharma.net`. Voix en darija algérienne, termes techniques gardés en français comme on les dit en vrai
-(« la dose », « l'ordonnance », « le foie »), sous-titres FR + AR.
+`dzair-pharma.net`. **Voix et texte en arabe standard simple, traduction française toujours en sous-titre** (le darija a été essayé : un clone de
+voix le lit comme de l'arabe littéraire).
 
 ## Structure d'un épisode (6 blocs)
 
@@ -35,7 +35,7 @@ Colonne de gauche = ce que la voix dit. Colonne de droite = **capture de l'outil
 fiche DwaDZ ──► scripts/video_brief.py ──► brouillon d'épisode (.md)
       │                                            │
       └─ captures d'écran (Playwright)             ▼
-                                         rédaction darija + relecture pharmacien
+                                         rédaction arabe standard + traduction FR + relecture pharmacien
                                                    │
                                          voix off (toi ou enregistrement) ──► montage + sous-titres FR/AR
                                                    │
@@ -45,8 +45,8 @@ fiche DwaDZ ──► scripts/video_brief.py ──► brouillon d'épisode (.md
 - **Brouillon automatique** : `python3 scripts/video_brief.py PARACETAMOL` génère l'ossature (interactions classées par
   gravité, avec page du PDF ANSM) à compléter. `--classe "ANTI-INFLAMMATOIRES NON STÉROÏDIENS"` pour une classe.
 - **Captures** : `scripts/capture_graphes.mjs` montre comment piloter Playwright sur le site ; même principe pour une fiche.
-- **Voix** : voix humaine fortement recommandée (le darija synthétique sonne faux et fait perdre la confiance).
-- **Sous-titres** : un fichier `.srt` par langue, produit à partir de la colonne « voix » (FR en littéral, AR en darija écrite).
+- **Voix** : ta voix clonée (voir `animation/voice.py`) ou un enregistrement humain ; une voix synthétique générique sonne faux et fait perdre la confiance.
+- **Sous-titres** : un fichier `.srt` par langue, produit par `animation/render.mjs` à partir du texte de l'épisode (AR en arabe standard, FR en traduction).
 
 ## Calendrier de lancement (12 épisodes, 2/semaine)
 
@@ -106,3 +106,24 @@ node docs/videos/animation/render.mjs dci --stills 3,15   # images fixes pour co
   ne cloner que sa propre voix, et ne mettre que du contenu destiné à être public. Les fichiers audio de `voix/` ne sont pas versionnés.
 - **Police** : Cairo 800 (SIL OFL), incluse dans `animation/fonts/`. Le rendu arabe a été vérifié.
 - Les marques utilisées dans les dessins sont à valider `[A]` avant publication.
+
+
+## Mettre les vidéos sur le site et les gérer depuis l'admin
+
+Le site a une page publique `/videos` (liste) et `/videos/<identifiant>` (lecteur, sous-titres, partage, données Google), et un écran
+**Admin → Communication → Vidéos** pour les gérer. Code : `app/videos/`, `app/admin/videos/`, `app/api/admin/videos/`, `lib/videos*.ts`.
+
+**Mise en route (une seule fois)**
+1. Fusionner la branche, laisser Vercel déployer.
+2. Appliquer la migration : `psql "$DATABASE_URL" -f sql/37_videos.sql`
+3. Stockage des fichiers (recommandé) : dans Vercel, **Storage → Create → Blob**, puis « Connect to project » : `BLOB_READ_WRITE_TOKEN` est
+   ajouté tout seul ; redéployer. Sans cela, l'admin accepte quand même l'**adresse https** d'un MP4 déjà hébergé.
+4. Facebook (facultatif) : les variables `FACEBOOK_PAGE_ID` et `FACEBOOK_PAGE_ACCESS_TOKEN` déjà utilisées pour les publications suffisent.
+
+**Pour chaque vidéo** (Admin → Vidéos → « + Nouvelle ») : titres français/arabe, description, fichier MP4 (envoi direct, jusqu'à 200 Mo),
+image d'aperçu facultative, sous-titres (case « incrustés » cochée pour les vidéos DwaDZ, sinon fichiers SRT/VTT), relecteur et sources
+(**obligatoires pour publier**, contrôlés par l'API et par la base), puis statut « Publiée ». Un bouton « Publier sur Facebook » envoie la vidéo
+à la Page (une seule fois, avec légende et lien prêts). Tests : `npm run test:videos`.
+
+**Limites connues** : l'envoi vers Vercel Blob et la publication Facebook n'ont pas pu être testés de bout en bout hors production
+(jeton Blob et Page Facebook requis) ; Facebook traite la vidéo de façon asynchrone ; l'ancienne structure d'admin affiche aussi le pied de page du site.

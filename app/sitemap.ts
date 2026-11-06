@@ -14,6 +14,7 @@ import { getGardeCoverage, slugify } from '@/lib/garde'
 import { getDirectoryPlaces, getAllPharmacyRefs, groupByWilaya, pharmacyPath } from '@/lib/annuaire'
 import { medicamentPath } from '@/lib/medicament-url'
 import { ARTICLES } from '@/lib/articles'
+import { getPublishedSlugs as getVideoSlugs } from '@/lib/videos'
 import { MIN_FAMILY_SIZE } from '@/lib/marque'
 import { DEMOS } from '@/lib/graphe/demos'
 import { LETTRE_SLUGS, REPERTOIRE_PAGE_SIZE, lettrePath } from '@/lib/repertoire'
@@ -123,6 +124,7 @@ export default async function sitemap({ id }: { id: number | string }): Promise<
     versionDate,
     marqueFamilies,
     lettreCounts,
+    videoSlugs,
   ] = await Promise.all([
     load(isHubs, getAllLaboSlugs, []),
     load(isHubs, () => getAllDciList(2000), []),
@@ -136,6 +138,7 @@ export default async function sitemap({ id }: { id: number | string }): Promise<
     load(isHubs || isFiches, getLastVersionDate, null),
     load(isHubs, () => getAllMarqueFamilies(MIN_FAMILY_SIZE), []),
     load(isHubs, getLettreCounts, {} as Record<string, number>),
+    load(isHubs, getVideoSlugs, [] as { slug: string; updated_at: string }[]),
   ])
 
   // Toutes les pages dérivées du catalogue changent le jour où une nouvelle
@@ -426,6 +429,13 @@ export default async function sitemap({ id }: { id: number | string }): Promise<
       lastModified: new Date(article.date),
       changeFrequency: 'monthly' as const,
       priority: 0.75,
+    })),    // Vidéos pédagogiques : la page liste n'est indexée que s'il y a au moins une vidéo publiée.
+    ...(videoSlugs.length ? [{ url: `${APP_URL}/videos`, changeFrequency: 'weekly' as const, priority: 0.7 }] : []),
+    ...videoSlugs.map(v => ({
+      url: `${APP_URL}/videos/${v.slug}`,
+      lastModified: new Date(v.updated_at),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
     })),
   ]
 
