@@ -20,6 +20,8 @@ const EMPTY: Form = {
   slug: '', episode: '', titre_ar: '', titre_fr: '', description_ar: '', description_fr: '', video_url: '', poster_url: '',
   sous_titres_incrustes: true, vtt_ar: '', vtt_fr: '', duree_sec: '', tags: 'DwaDZ', sources: '', statut: 'brouillon', reviewed_by: '', reviewed_at: '',
 }
+/** Au-delà, l'envoi passe directement du navigateur vers Blob (les fonctions Vercel refusent plus de 4,5 Mo). */
+const DIRECT_MAX_BYTES = 4 * 1024 * 1024
 const mono: React.CSSProperties = { fontFamily: 'DM Mono, monospace', fontSize: 12 }
 
 /** Durée d'un fichier vidéo local, lue par le navigateur. */
@@ -92,6 +94,15 @@ export function VideosClient() {
     const limit = setTimeout(() => ctrl.abort(), 10 * 60 * 1000)
     try {
       const ext = file.name.split('.').pop()?.toLowerCase() || (folder === 'videos' ? 'mp4' : 'png')
+      if (file.size <= DIRECT_MAX_BYTES) {
+        // petit fichier : navigateur → ce site → Blob (même domaine, sans le trajet direct vers Blob)
+        const fd = new FormData()
+        fd.append('file', file); fd.append('folder', folder); fd.append('name', `${base}.${ext}`)
+        const res = await fetch('/api/admin/videos/upload-direct', { method: 'POST', body: fd, signal: ctrl.signal })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`)
+        return data.url as string
+      }
       const blob = await upload(`${folder}/${base}.${ext}`, file, {
         access: 'public', handleUploadUrl: '/api/admin/videos/upload', multipart: file.size > 20 * 1024 * 1024, abortSignal: ctrl.signal,
       })
@@ -105,6 +116,13 @@ export function VideosClient() {
     } finally {
       clearInterval(tick); clearTimeout(limit); abortRef.current = null; setSending(null)
     }
+  }
+
+  async function testStorage() {
+    say(true, 'Test du stockage en cours…')
+    const res = await fetch('/api/admin/videos/upload')
+    const data = await res.json().catch(() => ({}))
+    say(!!data?.ok, data?.message || data?.error || 'Test impossible')
   }
 
   async function onVideoFile(file?: File) {
@@ -202,6 +220,7 @@ export function VideosClient() {
               {uploadOk
                 ? <input type="file" accept="video/mp4" disabled={busy || sending !== null} onChange={(e) => onVideoFile(e.target.files?.[0])} />
                 : <small style={{ color: 'var(--adm-warn)' }}>Envoi de fichiers non configuré (variable BLOB_READ_WRITE_TOKEN) : collez l’adresse https d’un MP4 déjà hébergé.</small>}
+              {uploadOk && <button type="button" className="adm-btn" style={{ justifySelf: 'start', fontSize: 12 }} onClick={testStorage}>Tester le stockage</button>}
               {sending && (
                 <div style={{ fontSize: 12.5 }}>
                   Envoi de {sending.name} ({(sending.size / 1048576).toFixed(1)} Mo)… {sending.seconds} s — ne fermez pas la page.{' '}
