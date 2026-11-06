@@ -60,12 +60,12 @@ fiche DwaDZ ──► scripts/video_brief.py ──► brouillon d'épisode (.md
 | 3 | 06 Aspirine + AINS | Pourquoi ne pas les cumuler |
 | 4 | 07 Générique ou princeps ? | Utiliser `/substitution` |
 | 4 | 08 Lire une notice | DCI, dosage, forme, voie |
-| 5 | 09 Alcool et médicaments | Metformine, paracétamol, métronidazole… |
+| 5 | 09 Alcool et médicaments | Metformine, insuline/sulfamides, sédatifs (ANSM) |
 | 5 | 10 Grossesse | AINS interdits dès 24 SA, ce qu'on peut demander |
 | 6 | 11 Pharmacie de garde | Utiliser `/pharmacie-de-garde` la nuit |
 | 6 | 12 Médicament retiré | `/retraits` : vérifier son armoire |
 
-Épisodes 05–12 : à produire avec `video_brief.py` + monographie relue. Les épisodes 01–04 sont déjà écrits dans `episodes/`.
+Les 12 épisodes sont écrits dans `episodes/`. Tous attendent la relecture pharmacien (champ `Relu par`) ; les marqueurs `[A]` signalent un fait à vérifier avant tournage.
 
 ## Mesure
 
