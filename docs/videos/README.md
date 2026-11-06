@@ -104,6 +104,7 @@ node docs/videos/animation/render.mjs dci --stills 3,15   # images fixes pour co
   **Limites** : un clone reproduit ta voix mais lit un texte arabe ; un mot dialectal (تاع, زوج…) peut sortir trop « standard » → l'écrire
   comme tu le prononces dans `say`. Les échantillons et les textes sont envoyés au service choisi (ElevenLabs, ou Microsoft pour le mode 3) :
   ne cloner que sa propre voix, et ne mettre que du contenu destiné à être public. Les fichiers audio de `voix/` ne sont pas versionnés.
+- **Couverture** : `node docs/videos/animation/cover.mjs` produit `out/couverture-dci-verticale.jpg` (image d'aperçu du site, zone utile centrale) et `out/couverture-dci-partage.jpg` (1200×630, Facebook). Pour une autre vidéo, adapter les textes et l'illustration dans `cover.html`.
 - **Police** : Cairo 800 (SIL OFL), incluse dans `animation/fonts/`. Le rendu arabe a été vérifié.
 - Les marques utilisées dans les dessins sont à valider `[A]` avant publication.
 
