@@ -68,6 +68,7 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
           { href: '/substitution', label: fr ? '♻️ Substitution générique' : '♻️ الاستبدال الجنيس' },
           { href: '/pharmacies', label: fr ? '📍 Annuaire des pharmacies' : '📍 دليل الصيدليات' },
           { href: '/graphe', label: fr ? '🕸️ Graphes' : '🕸️ الرسوم البيانية' },
+          { href: '/videos', label: fr ? '🎬 Vidéos' : '🎬 فيديوهات' },
           { href: '/training', label: fr ? 'Training QCM' : 'تدريب QCM' },
           { href: '/pro', label: fr ? '💼 Espace Pro' : '💼 الفضاء المهني' },
           { href: '/a-propos', label: fr ? 'ℹ️ À propos' : 'ℹ️ حول المنصة' },

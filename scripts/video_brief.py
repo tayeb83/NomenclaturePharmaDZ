@@ -41,19 +41,19 @@ def main() -> int:
     print(f"# Ép. XX — {a.substance}\n")
     print(f"- **Source** : {d['source']['version']} ({len(rows)} interactions)")
     print("- **Relu par** : ________ · **Date** : ________  ← ne pas tourner sans\n")
-    print("| Bloc | Voix (darija) | Écran / capture |\n|---|---|---|")
-    print("| Hook | À écrire (erreur courante) | Boîte + texte |")
-    print("| C'est quoi | DCI → indication en 1 phrase | Fiche DwaDZ, DCI + ATC |")
-    print("| Comment | Dose/durée **de la notice** [A] | Zoom notice |")
+    print("| Bloc | Voix (arabe standard) | Traduction FR | Écran / capture |\n|---|---|---|---|")
+    print("| Hook | À écrire (erreur courante) | À traduire | Boîte + texte |")
+    print("| C'est quoi | DCI → indication en 1 phrase | À traduire | Fiche DwaDZ, DCI + ATC |")
+    print("| Comment | Dose/durée **de la notice** [A] | À traduire | Zoom notice |")
     for code, label in NIVEAUX:
         sel = [r for r in rows if r["niveau"] == code]
         for r in sel[: a.max]:
             risque = " ".join(r["risque"].split())
-            print(f"| Attention — {label} | « … {r['partenaire'].title()} » : {risque[:140]} | Onglet Interactions, badge « {label} » (ANSM p. {r['page']}) |")
+            print(f"| Attention — {label} | À écrire en arabe standard : {r['partenaire'].title()} | {risque[:160]} (ANSM, texte d'origine) | Onglet Interactions, badge « {label} » (ANSM p. {r['page']}) |")
         if len(sel) > a.max:
             print(f"| _({label}: +{len(sel) - a.max} autres)_ | | |")
-    print("| Réflexe | Demander au pharmacien/médecin | Texte plein écran |")
-    print("| Appel | « Tape le nom sur DwaDZ » + « ما تعوضش رأي الطبيب ولا الصيدلي » | Logo + site |")
+    print("| Réflexe | اسأل الطبيب أو الصيدلي | Demande au médecin ou au pharmacien | Texte plein écran |")
+    print("| Appel | اكتب الاسم في DwaDZ. معلومة عامة لا تغني عن رأي الطبيب أو الصيدلي. | Tape le nom sur DwaDZ. Information générale : elle ne remplace pas l'avis du médecin ou du pharmacien. | Logo + site |")
     return 0
 
 

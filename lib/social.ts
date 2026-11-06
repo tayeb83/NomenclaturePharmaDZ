@@ -417,6 +417,33 @@ export async function postFacebookPhoto(image: Buffer, caption: string): Promise
   }
 }
 
+/**
+ * Publie une vidéo sur la Page : Facebook télécharge lui-même le fichier à l'adresse `fileUrl`
+ * (https public, MP4). Le traitement de la vidéo est asynchrone côté Facebook.
+ * Nécessite le jeton de Page existant avec la permission de publier (pages_manage_posts).
+ */
+export async function postFacebookVideo(
+  fileUrl: string,
+  description: string,
+  title?: string
+): Promise<{ success: boolean; postId?: string; error?: string }> {
+  const { token, pageId, error: tokenError } = await resolvePageAccessToken()
+  if (!token || !pageId) return { success: false, error: tokenError || 'Facebook credentials manquants' }
+
+  try {
+    const body = new URLSearchParams({ file_url: fileUrl, description, access_token: token })
+    if (title) body.set('title', title)
+    const res = await fetch(`${FACEBOOK_GRAPH_BASE}/${pageId}/videos`, { method: 'POST', body })
+    const data: any = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      return { success: false, error: data?.error ? describeGraphError({ data }) : `HTTP ${res.status}` }
+    }
+    return { success: true, postId: data.id }
+  } catch (err: any) {
+    return { success: false, error: describeGraphError(err) }
+  }
+}
+
 // ─── DIAGNOSTIC FACEBOOK ──────────────────────────────────────
 
 export type FacebookDiagnostic = {

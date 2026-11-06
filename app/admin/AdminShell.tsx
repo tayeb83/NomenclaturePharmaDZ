@@ -37,7 +37,7 @@ const GROUPS: { title: string; items: Item[] }[] = [
     ],
   },
   { title: 'Abonnements', items: [{ label: 'Graphes & PDF', href: '/admin/graphe', adminOnly: true }] },
-  { title: 'Communication', items: [{ label: 'Demandes de médicaments', href: '/admin/demandes' }, { label: 'Publications Facebook', href: '/admin/social' }] },
+  { title: 'Communication', items: [{ label: 'Demandes de médicaments', href: '/admin/demandes' }, { label: 'Publications Facebook', href: '/admin/social' }, { label: 'Vidéos', href: '/admin/videos' }] },
   { title: 'Administration', items: [{ label: 'Comptes admin', href: '/admin/comptes', adminOnly: true }] },
 ]
 

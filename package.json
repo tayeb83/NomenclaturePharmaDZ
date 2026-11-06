@@ -14,9 +14,11 @@
     "test:search": "node --test --test-concurrency=1 \"tests/search/*.test.ts\"",
     "test:demandes": "node --test --test-concurrency=1 \"tests/demandes/*.test.ts\"",
     "test:graphe": "node --test --test-concurrency=1 \"tests/graphe/*.test.ts\"",
-    "test:regression": "node --test --test-concurrency=1 \"tests/regression/*.test.ts\""
+    "test:regression": "node --test --test-concurrency=1 \"tests/regression/*.test.ts\"",
+    "test:videos": "node --test --test-concurrency=1 \"tests/videos/*.test.ts\""
   },
   "dependencies": {
+    "@vercel/blob": "^2.8.2",
     "axios": "^1.7.2",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
