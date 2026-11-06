@@ -17,6 +17,7 @@ accélérée (jusqu'à x1,25) ; le rapport signale celles qui dépassent encore.
 épelés en arabe, DwaDZ devient « دوا دي زاد ». Les voix générées sont mises en cache (out/cache) : relancer ne repaie rien.
 
 ElevenLabs : clé dans ELEVENLABS_API_KEY ; identifiant de la voix via --voice-id, ELEVENLABS_VOICE_ID ou voix/voice_id.txt.
+Sortie conforme aux Reels/vidéos Facebook : AAC-LC 48 kHz stéréo, index MP4 en tête (lecture rapide).
 Prérequis : pip install requests edge-tts ; ffmpeg.
 """
 import argparse, asyncio, hashlib, json, os, re, subprocess, sys, tempfile
@@ -123,7 +124,7 @@ def main() -> int:
     if a.audio:
         tag = "voixperso"
         m4a = out / f"{a.ep}.{tag}.m4a"
-        sh("ffmpeg", "-y", "-loglevel", "error", "-i", a.audio, "-af", f"apad,atrim=0:{meta['duration']},loudnorm=I=-16:TP=-1.5", "-c:a", "aac", "-b:a", "128k", str(m4a))
+        sh("ffmpeg", "-y", "-loglevel", "error", "-i", a.audio, "-af", f"apad,atrim=0:{meta['duration']},loudnorm=I=-16:TP=-1.5,aresample=48000", "-ac", "2", "-ar", "48000", "-c:a", "aac", "-b:a", "128k", str(m4a))
         report = []
     else:
         tag = "clone" if a.provider == "elevenlabs" else a.voice.split("-")[2].replace("Neural", "").lower()
@@ -142,12 +143,12 @@ def main() -> int:
             ms = int(st * 1000)
             filt.append(f"[{i}:a]aresample=44100,atempo={tempo:.3f},adelay={ms}|{ms}[a{i}]")
             labels.append(f"[a{i}]")
-        filt.append("".join(labels) + f"amix=inputs={len(segs)}:normalize=0:dropout_transition=0,apad,atrim=0:{meta['duration']},loudnorm=I=-16:TP=-1.5[v]")
+        filt.append("".join(labels) + f"amix=inputs={len(segs)}:normalize=0:dropout_transition=0,apad,atrim=0:{meta['duration']},loudnorm=I=-16:TP=-1.5,aresample=48000[v]")
         m4a = out / f"{a.ep}.{tag}.m4a"
-        sh("ffmpeg", "-y", "-loglevel", "error", *ins, "-filter_complex", ";".join(filt), "-map", "[v]", "-c:a", "aac", "-b:a", "128k", str(m4a))
+        sh("ffmpeg", "-y", "-loglevel", "error", *ins, "-filter_complex", ";".join(filt), "-map", "[v]", "-ac", "2", "-ar", "48000", "-c:a", "aac", "-b:a", "128k", str(m4a))
 
     res = out / f"{a.ep}.{tag}.mp4"
-    sh("ffmpeg", "-y", "-loglevel", "error", "-i", str(video), "-i", str(m4a), "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "copy", "-shortest", str(res))
+    sh("ffmpeg", "-y", "-loglevel", "error", "-i", str(video), "-i", str(m4a), "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "copy", "-shortest", "-movflags", "+faststart", str(res))
     print("Voix :", "ton enregistrement" if a.audio else (("elevenlabs · voix clonée " + eleven_voice_id(a)) if a.provider == "elevenlabs" else ("Microsoft " + a.voice)), "·", res)
     print("\n".join(report) if report else "Tous les segments tiennent dans leur créneau.")
     return 0
