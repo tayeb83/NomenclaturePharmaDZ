@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { upload } from '@vercel/blob/client'
 import { countCues, formatDuree, slugify, srtToVtt } from '@/lib/videos-core'
@@ -45,7 +45,9 @@ export function VideosClient() {
   const [fbOk, setFbOk] = useState(false)
   const [tableMissing, setTableMissing] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [progress, setProgress] = useState<number | null>(null)
+  // Envoi en cours : pas de barre de progression (voir sendFile), mais le temps écoulé et un bouton Annuler.
+  const [sending, setSending] = useState<{ name: string; size: number; seconds: number } | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
 
   const say = (ok: boolean, text: string) => setMsg({ ok, text })
@@ -73,21 +75,36 @@ export function VideosClient() {
     })
   }
 
+  /**
+   * Envoi direct vers Vercel Blob. Volontairement SANS `onUploadProgress` : avec un suivi de progression, la bibliothèque envoie
+   * le fichier en flux continu (fetch « duplex »), mode qui peut rester bloqué à ~98 % sur certains réseaux. Sans suivi, c'est un
+   * envoi classique, plus fiable. On affiche à la place le temps écoulé, avec un délai maximal de 10 minutes et un bouton Annuler.
+   */
   async function sendFile(file: File, folder: 'videos' | 'videos/posters') {
     if (!form) return null
     const base = form.slug || slugify(form.titre_fr)
     if (!base) { say(false, 'Renseignez d’abord l’identifiant ou le titre français.'); return null }
-    setProgress(0)
+    const ctrl = new AbortController()
+    abortRef.current = ctrl
+    const started = Date.now()
+    setSending({ name: file.name, size: file.size, seconds: 0 })
+    const tick = setInterval(() => setSending((x) => (x ? { ...x, seconds: Math.round((Date.now() - started) / 1000) } : x)), 1000)
+    const limit = setTimeout(() => ctrl.abort(), 10 * 60 * 1000)
     try {
       const ext = file.name.split('.').pop()?.toLowerCase() || (folder === 'videos' ? 'mp4' : 'png')
       const blob = await upload(`${folder}/${base}.${ext}`, file, {
-        access: 'public', handleUploadUrl: '/api/admin/videos/upload', multipart: file.size > 20 * 1024 * 1024,
-        onUploadProgress: ({ percentage }) => setProgress(Math.round(percentage)),
+        access: 'public', handleUploadUrl: '/api/admin/videos/upload', multipart: file.size > 20 * 1024 * 1024, abortSignal: ctrl.signal,
       })
       return blob.url
     } catch (e: any) {
-      say(false, `Envoi impossible : ${e?.message || e}`); return null
-    } finally { setProgress(null) }
+      const annule = ctrl.signal.aborted
+      say(false, annule
+        ? 'Envoi interrompu. Vérifiez dans Vercel → Storage → Blob si le fichier est arrivé : si oui, copiez son adresse https dans le champ « Adresse du fichier ».'
+        : `Envoi impossible : ${e?.message || e}`)
+      return null
+    } finally {
+      clearInterval(tick); clearTimeout(limit); abortRef.current = null; setSending(null)
+    }
   }
 
   async function onVideoFile(file?: File) {
@@ -183,9 +200,20 @@ export function VideosClient() {
             <div style={{ border: '1px dashed var(--adm-line)', borderRadius: 10, padding: 12, display: 'grid', gap: 10 }}>
               <strong style={{ fontSize: 13 }}>Fichier vidéo (MP4)</strong>
               {uploadOk
-                ? <input type="file" accept="video/mp4" disabled={busy || progress !== null} onChange={(e) => onVideoFile(e.target.files?.[0])} />
+                ? <input type="file" accept="video/mp4" disabled={busy || sending !== null} onChange={(e) => onVideoFile(e.target.files?.[0])} />
                 : <small style={{ color: 'var(--adm-warn)' }}>Envoi de fichiers non configuré (variable BLOB_READ_WRITE_TOKEN) : collez l’adresse https d’un MP4 déjà hébergé.</small>}
-              {progress !== null && <div style={{ fontSize: 12 }}>Envoi… {progress} %</div>}
+              {sending && (
+                <div style={{ fontSize: 12.5 }}>
+                  Envoi de {sending.name} ({(sending.size / 1048576).toFixed(1)} Mo)… {sending.seconds} s — ne fermez pas la page.{' '}
+                  <button type="button" className="adm-btn" style={{ padding: '2px 8px', fontSize: 12 }} onClick={() => abortRef.current?.abort()}>Annuler</button>
+                  {sending.seconds >= 90 && (
+                    <div style={{ color: 'var(--adm-warn)', marginTop: 4 }}>
+                      Cela dure plus que prévu. Le fichier est peut-être déjà arrivé : ouvrez Vercel → Storage → Blob. Si vous l’y voyez,
+                      annulez ici et collez son adresse https dans le champ ci-dessous.
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="adm-fields">
                 {L('Adresse du fichier (https)', input('video_url', { style: mono, placeholder: 'https://…/video.mp4' }))}
                 {L('Durée (secondes)', input('duree_sec', { type: 'number', min: 1 }))}
