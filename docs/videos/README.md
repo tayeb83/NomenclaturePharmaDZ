@@ -71,3 +71,21 @@ Les 12 épisodes sont écrits dans `episodes/`. Tous attendent la relecture phar
 
 Rétention à 3 s et à 15 s, partages, clics vers le site (UTM `utm_source=video&utm_campaign=epXX`). Garder les 3 épisodes
 qui retiennent le mieux et refaire des variantes (autre médicament, même gabarit).
+
+## Vidéos animées « dessin animé » (`animation/`)
+
+Pour expliquer un concept (DCI, ATC, interaction) avec des personnages et des schémas animés, sans logiciel de montage :
+chaque épisode est un petit fichier JS (`animation/episodes/<nom>.js`) qui décrit les scènes, les timings et les sous-titres
+(arabe darija + français). Le rendu est **déterministe** (image par image, 25 i/s) via Playwright + ffmpeg.
+
+```bash
+node docs/videos/animation/render.mjs dci                 # → out/dci.mp4 (sous-titres incrustés) + dci.ar.srt + dci.fr.srt
+node docs/videos/animation/render.mjs dci --no-burn       # → MP4 sans sous-titres (à utiliser avec les .srt)
+node docs/videos/animation/render.mjs dci --scale 1       # 1080×1920 (défaut 0,667 = 720×1280)
+node docs/videos/animation/render.mjs dci --stills 3,15   # images fixes pour contrôler une scène
+```
+
+- **Pilote** : `episodes/dci.js` (« C'est quoi une DCI ? », 42 s). Pour un nouvel épisode (ATC, interaction…), copier ce fichier et changer scènes + `subs`.
+- **Voix** : le MP4 est muet. Enregistrer la voix darija sur les timings des sous-titres, ou ajuster les timings à la voix (`start`/`end` dans `subs`).
+- **Police** : Cairo 800 (SIL OFL), incluse dans `animation/fonts/`. Le rendu arabe a été vérifié.
+- Les marques utilisées dans les dessins sont à valider `[A]` avant publication.
