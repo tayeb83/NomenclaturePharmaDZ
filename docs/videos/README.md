@@ -76,7 +76,7 @@ qui retiennent le mieux et refaire des variantes (autre médicament, même gabar
 
 Pour expliquer un concept (DCI, ATC, interaction) avec des personnages et des schémas animés, sans logiciel de montage :
 chaque épisode est un petit fichier JS (`animation/episodes/<nom>.js`) qui décrit les scènes, les timings et les sous-titres
-(arabe darija + français). Le rendu est **déterministe** (image par image, 25 i/s) via Playwright + ffmpeg.
+(arabe standard + français). Le rendu est **déterministe** (image par image, 25 i/s) via Playwright + ffmpeg.
 
 ```bash
 node docs/videos/animation/render.mjs dci                 # → out/dci.mp4 (sous-titres incrustés) + dci.ar.srt + dci.fr.srt
@@ -97,8 +97,9 @@ node docs/videos/animation/render.mjs dci --stills 3,15   # images fixes pour co
      Réglages : `--stability`, `--similarity`, `--speed`. Les phrases sont mises en cache (`out/cache`) : relancer ne repaie rien.
   2. **Ton enregistrement tel quel** : `voice.py interaction --audio mon_enregistrement.m4a` (un fichier couvrant toute la vidéo).
   3. **Voix Microsoft ar-DZ** (`voice.py interaction`) : arabe standard, peu naturelle ; seulement pour tester le calage.
-  **Parti pris : voix en arabe standard simple, sous-titres et animation en darija.** Le champ `say` de chaque sous-titre contient le texte lu
-  en arabe standard (زوج → اثنان, تاع → لـ…) ; `ar` reste le sous-titre en darija. Un clone de voix lit mieux un texte standard qu'un texte dialectal.
+  **Parti pris : tout en arabe standard simple (texte affiché et voix), avec la traduction française toujours en sous-titre.** Le texte arabe
+  d'un sous-titre est exactement ce que la voix lit ; `fr` en est la traduction. (Le darija a été essayé : un clone de voix et les voix
+  synthétiques le lisent comme de l'arabe littéraire. Pistes de vrai darija étudiées : modèles Natiq-dz-ARG / Habibi, pas retenues.)
   Les sigles latins sont épelés (ANSM, ATC, N02BE01…), les chiffres en arabe standard, `DwaDZ` devient « دوا دي زاد ».
   **Limites** : un clone reproduit ta voix mais lit un texte arabe ; un mot dialectal (تاع, زوج…) peut sortir trop « standard » → l'écrire
   comme tu le prononces dans `say`. Les échantillons et les textes sont envoyés au service choisi (ElevenLabs, ou Microsoft pour le mode 3) :

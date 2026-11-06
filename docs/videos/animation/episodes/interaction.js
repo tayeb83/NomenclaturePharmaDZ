@@ -5,26 +5,16 @@
 // `say` = texte lu par la voix (plus complet que le sous-titre). Darija ALGÉRIEN. [A] relecture avant publication.
 window.EP = (() => {
   const subs = [
-    { start: 0,  end: 4,  ar: ["دوا مع دوا…", "ساعات الخلطة خطر!"], fr: ["Un médicament + un autre…", "le mélange peut être dangereux !"],
-      say: "دواء مع دواء… قد يصبح الخلط خطرًا!" },
-    { start: 4,  end: 11, ar: ["كي تاخذ زوج أدوية مع بعض", "واحد يقدر يبدّل مفعول الآخر"], fr: ["Quand tu prends deux médicaments ensemble,", "l'un peut modifier l'effet de l'autre"],
-      say: "عندما تتناول دواءين معًا، قد يغيّر أحدهما مفعول الآخر. هذا هو التفاعل الدوائي." },
-    { start: 11, end: 16, ar: ["الوكالة الفرنسية ANSM", "قسّمتهم لـ 4 مستويات"], fr: ["L'agence française ANSM", "les classe en 4 niveaux"],
-      say: "الوكالة الفرنسية صنّفتها في أربعة مستويات." },
-    { start: 16, end: 22, ar: ["1 — مضاد استطباب", "ممنوع الجمع"], fr: ["1 — Contre-indication :", "ne jamais associer"],
-      say: "الأول: مضاد استطباب، يُمنع الجمع. مثال: الميتفورمين مع مواد التباين." },
-    { start: 22, end: 28, ar: ["2 — جمع غير موصى به", "الأحسن تتجنبو"], fr: ["2 — Association déconseillée :", "à éviter, sauf décision du médecin"],
-      say: "الثاني: جمع غير موصى به. مثال: الباراسيتامول مع مضاد حيوي." },
-    { start: 28, end: 34, ar: ["3 — احتياطات الاستعمال", "ممكن، لكن بالمراقبة"], fr: ["3 — Précaution d'emploi :", "possible, avec surveillance"],
-      say: "الثالث: احتياطات. ممكن بمراقبة. مثال: الباراسيتامول ومضادات التخثر." },
-    { start: 34, end: 40, ar: ["4 — يؤخذ بعين الاعتبار", "الخطر موجود، خلّيه في بالك"], fr: ["4 — À prendre en compte :", "le risque existe, garde-le en tête"],
-      say: "الرابع: يؤخذ بعين الاعتبار. مثال: الأسبرين مع ديفيراسيروكس." },
-    { start: 40, end: 46, ar: ["ما توقفش دواك وحدك!", "سقسي الطبيب ولا الصيدلي"], fr: ["N'arrête pas ton traitement seul !", "demande au médecin ou au pharmacien"],
-      say: "لكن انتبه: لا توقف دواءك بمفردك، واسأل الطبيب أو الصيدلي." },
-    { start: 46, end: 52, ar: ["في DwaDZ كل فيش فيها", "تبويب التفاعلات"], fr: ["Sur DwaDZ, chaque fiche a", "son onglet Interactions"],
-      say: "في DwaDZ تجد في كل بطاقة تبويب التفاعلات مرتّبة حسب الخطورة." },
-    { start: 52, end: 57, ar: ["معلومة عامة، ما تعوضش", "رأي الطبيب ولا الصيدلي"], fr: ["Information générale : elle ne remplace pas", "l'avis du médecin ou du pharmacien"],
-      say: "معلومة عامة لا تغني عن الطبيب أو الصيدلي." },
+    { start: 0, end: 4, ar: ["دواء مع دواء…", "قد يصبح الخلط خطرًا!"], fr: ["Un médicament + un autre…", "le mélange peut devenir dangereux !"] },
+    { start: 4, end: 11, ar: ["عندما تتناول دواءين معًا،", "قد يغيّر أحدهما مفعول الآخر", "وهذا هو التفاعل الدوائي"], fr: ["Quand tu prends deux médicaments ensemble,", "l'un peut modifier l'effet de l'autre :", "c'est l'interaction médicamenteuse"] },
+    { start: 11, end: 16, ar: ["الوكالة الفرنسية للأدوية", "صنّفتها في أربعة مستويات"], fr: ["L'agence française du médicament (ANSM)", "les classe en quatre niveaux"] },
+    { start: 16, end: 22, ar: ["الأول: مضاد استطباب، يُمنع الجمع.", "مثال: الميتفورمين مع مواد التباين"], fr: ["1 — Contre-indication : ne jamais associer.", "Ex. : metformine + produits de contraste"] },
+    { start: 22, end: 28, ar: ["الثاني: جمع غير موصى به.", "مثال: الباراسيتامول مع مضاد حيوي"], fr: ["2 — Association déconseillée : à éviter.", "Ex. : paracétamol + un antibiotique"] },
+    { start: 28, end: 34, ar: ["الثالث: احتياطات، ممكن بمراقبة.", "مثال: الباراسيتامول ومضادات التخثر"], fr: ["3 — Précaution d'emploi : avec surveillance.", "Ex. : paracétamol + anticoagulants"] },
+    { start: 34, end: 40, ar: ["الرابع: يؤخذ بعين الاعتبار.", "مثال: الأسبرين مع ديفيراسيروكس"], fr: ["4 — À prendre en compte : le risque existe.", "Ex. : aspirine + déférasirox"] },
+    { start: 40, end: 46, ar: ["لكن انتبه: لا توقف دواءك بمفردك،", "واسأل الطبيب أو الصيدلي"], fr: ["Attention : n'arrête pas ton traitement seul,", "demande au médecin ou au pharmacien"] },
+    { start: 46, end: 52, ar: ["في DwaDZ تجد في كل بطاقة", "تبويب التفاعلات مرتّبة حسب الخطورة"], fr: ["Sur DwaDZ, chaque fiche a son onglet", "Interactions, classées par gravité"] },
+    { start: 52, end: 57, ar: ["معلومة عامة لا تغني", "عن الطبيب أو الصيدلي"], fr: ["Information générale : elle ne remplace", "ni le médecin ni le pharmacien"] },
   ];
   const G = {};
   const LV = [
@@ -63,7 +53,7 @@ window.EP = (() => {
     h.el("text", { x: 0, y: 0, "text-anchor": "middle", direction: "rtl", fill: "#ffd166", "font-size": 110 }, G.title).textContent = "التفاعل الدوائي";
     h.el("text", { x: 0, y: 70, "text-anchor": "middle", fill: "#fff", "font-size": 46 }, G.title).textContent = "INTERACTION MÉDICAMENTEUSE";
     G.aura = h.el("circle", { r: 150, fill: "none", stroke: "#ff6b6b", "stroke-width": 12, "stroke-dasharray": "30 20" }, svg);
-    G.eff = h.el("text", { x: 0, y: 0, "text-anchor": "middle", direction: "rtl", fill: "#ffe08a", "font-size": 66 }, svg); G.eff.textContent = "تبدّل المفعول ⚡";
+    G.eff = h.el("text", { x: 0, y: 0, "text-anchor": "middle", direction: "rtl", fill: "#ffe08a", "font-size": 66 }, svg); G.eff.textContent = "يتغيّر المفعول ⚡";
 
     // C : 4 cartes
     G.cards = LV.map((l, i) => {
@@ -84,7 +74,7 @@ window.EP = (() => {
     G.stop = h.el("g", {}, svg);
     h.el("circle", { r: 190, fill: "#e03131", stroke: "#fff", "stroke-width": 12 }, G.stop);
     h.el("text", { x: 0, y: 70, "text-anchor": "middle", "font-size": 230 }, G.stop).textContent = "✋";
-    G.stopTxt = h.el("text", { x: 540, y: 1160, "text-anchor": "middle", direction: "rtl", fill: "#fff", "font-size": 82 }, svg); G.stopTxt.textContent = "ما توقفش دواك وحدك";
+    G.stopTxt = h.el("text", { x: 540, y: 1160, "text-anchor": "middle", direction: "rtl", fill: "#fff", "font-size": 82 }, svg); G.stopTxt.textContent = "لا توقف دواءك بمفردك";
     G.doc = h.el("text", { x: 540, y: 1290, "text-anchor": "middle", "font-size": 130 }, svg); G.doc.textContent = "👩‍⚕️ 💊 👨‍⚕️";
 
     // E : fiche DwaDZ

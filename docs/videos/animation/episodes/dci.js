@@ -2,16 +2,16 @@
 // [A] Vérifier que les trois marques existent dans la nomenclature DZ avant publication.
 window.EP = (() => {
   const subs = [
-    { start: 0,  end: 4,  ar: ["علاش نفس الدوا", "عندو بزاف سميات؟"], fr: ["Pourquoi un même médicament", "a-t-il plusieurs noms ?"], say: "لماذا يملك الدواء الواحد عدة أسماء؟" },
-    { start: 4,  end: 8,  ar: ["هادو أسماء تجارية،", "كل مخبر يسمّي على كيفو"], fr: ["Ce sont des noms de marque :", "chaque laboratoire choisit le sien"], say: "هذه أسماء تجارية، ولكل مخبر اسمه." },
-    { start: 8,  end: 12, ar: ["دوليبران، إيفيرالقان، دافالقان..."], fr: ["Doliprane, Efferalgan, Dafalgan…"], say: "دوليبران، إيفيرالغان، دافالغان" },
-    { start: 12, end: 17, ar: ["لكن داخلهم كاين", "نفس المادة الفعالة"], fr: ["Mais à l'intérieur, il y a", "la même substance active"], say: "لكن في داخلها جميعًا المادة الفعالة نفسها." },
-    { start: 17, end: 22, ar: ["هادي هي الـ DCI:", "باراسيتامول"], fr: ["C'est la DCI :", "le paracétamol"], say: "هذه هي DCI، أي المادة الفعالة: الباراسيتامول." },
-    { start: 22, end: 26, ar: ["إذا تاخذ زوج منهم", "في نفس الوقت…"], fr: ["Si tu prends deux de ces produits", "en même temps…"], say: "إذا تناولت اثنين منها في الوقت نفسه،" },
-    { start: 26, end: 30, ar: ["تاخذ نفس المادة زوج مرات", "والكبد يتعب"], fr: ["tu prends deux fois la même", "substance : le foie souffre"], say: "فتأخذ المادة نفسها مرتين، ويتأثر الكبد." },
-    { start: 30, end: 34, ar: ["قبل ما تشري: اقرا الـ DCI", "وسقسي الصيدلي"], fr: ["Avant d'acheter : lis la DCI", "et demande au pharmacien"], say: "قبل الشراء، اقرأ الـ DCI واسأل الصيدلي." },
-    { start: 34, end: 38, ar: ["اكتب الاسم في DwaDZ", "وشوف الـ DCI"], fr: ["Tape le nom sur DwaDZ", "et regarde la DCI"], say: "اكتب الاسم في DwaDZ وشاهد الـ DCI." },
-    { start: 38, end: 42, ar: ["معلومة عامة، ما تعوضش", "رأي الطبيب ولا الصيدلي"], fr: ["Information générale : elle ne remplace", "pas l'avis du médecin ou du pharmacien"], say: "معلومة عامة لا تغني عن الطبيب أو الصيدلي." },
+    { start: 0, end: 4, ar: ["لماذا يملك الدواء الواحد", "عدة أسماء؟"], fr: ["Pourquoi un même médicament", "a-t-il plusieurs noms ?"] },
+    { start: 4, end: 8, ar: ["هذه أسماء تجارية،", "ولكل مخبر اسمه"], fr: ["Ce sont des noms de marque :", "chaque laboratoire a le sien"] },
+    { start: 8, end: 12, ar: ["دوليبران، إيفيرالغان، دافالغان"], fr: ["Doliprane, Efferalgan, Dafalgan…"] },
+    { start: 12, end: 17, ar: ["لكن في داخلها جميعًا", "المادة الفعالة نفسها"], fr: ["Mais à l'intérieur de toutes,", "la même substance active"] },
+    { start: 17, end: 22, ar: ["هذه هي الـ DCI،", "أي المادة الفعالة: الباراسيتامول"], fr: ["C'est la DCI, c'est-à-dire", "la substance active : le paracétamol"] },
+    { start: 22, end: 26, ar: ["إذا تناولت اثنين منها", "في الوقت نفسه،"], fr: ["Si tu en prends deux", "en même temps,"] },
+    { start: 26, end: 30, ar: ["فتأخذ المادة نفسها مرتين،", "ويتأثر الكبد"], fr: ["tu prends deux fois la même substance", "et le foie en pâtit"] },
+    { start: 30, end: 34, ar: ["قبل الشراء، اقرأ الـ DCI", "واسأل الصيدلي"], fr: ["Avant d'acheter, lis la DCI", "et demande au pharmacien"] },
+    { start: 34, end: 38, ar: ["اكتب الاسم في DwaDZ", "وشاهد الـ DCI"], fr: ["Tape le nom sur DwaDZ", "et regarde la DCI"] },
+    { start: 38, end: 42, ar: ["معلومة عامة لا تغني", "عن الطبيب أو الصيدلي"], fr: ["Information générale : elle ne remplace", "ni le médecin ni le pharmacien"] },
   ];
   const G = {};
   const BR = [
@@ -32,8 +32,8 @@ window.EP = (() => {
     G.logo.textContent = "DwaDZ";
 
     G.title = h.el("g", {}, svg);
-    const t1 = h.el("text", { x: 0, y: 0, "text-anchor": "middle", direction: "rtl", fill: "#fff", "font-size": 104 }, G.title); t1.textContent = "نفس الدوا";
-    const t2 = h.el("text", { x: 0, y: 130, "text-anchor": "middle", direction: "rtl", fill: "#ffd166", "font-size": 104 }, G.title); t2.textContent = "بزاف سميات؟";
+    const t1 = h.el("text", { x: 0, y: 0, "text-anchor": "middle", direction: "rtl", fill: "#fff", "font-size": 104 }, G.title); t1.textContent = "الدواء نفسه";
+    const t2 = h.el("text", { x: 0, y: 130, "text-anchor": "middle", direction: "rtl", fill: "#ffd166", "font-size": 104 }, G.title); t2.textContent = "بأسماء متعددة؟";
     G.q = h.el("text", { x: 0, y: 0, "text-anchor": "middle", fill: "#ff6b6b", "font-size": 340 }, svg); G.q.textContent = "?";
 
     // Boîtes de marque (personnages)
@@ -76,7 +76,7 @@ window.EP = (() => {
     G.pills = [0, 1].map(() => { const p = h.el("g", {}, svg); h.el("rect", { x: -60, y: -26, width: 120, height: 52, rx: 26, fill: "#fff" }, p); h.el("path", { d: "M0 -26 H34 A26 26 0 0 1 34 26 H0 Z", fill: "#ff9f1c" }, p); return p; });
     G.warn = h.el("text", { x: 0, y: 0, "text-anchor": "middle", "font-size": 190 }, svg); G.warn.textContent = "⚠️";
     G.sweat = h.el("text", { x: 0, y: 0, "text-anchor": "middle", "font-size": 90 }, svg); G.sweat.textContent = "💦";
-    G.x2 = h.el("text", { x: 540, y: 440, "text-anchor": "middle", fill: "#ff6b6b", "font-size": 84, direction: "rtl" }, svg); G.x2.textContent = "نفس الـ DCI = جرعة ×2";
+    G.x2 = h.el("text", { x: 540, y: 440, "text-anchor": "middle", fill: "#ff6b6b", "font-size": 84, direction: "rtl" }, svg); G.x2.textContent = "المادة نفسها = جرعة ×2";
 
     // Barre de recherche DwaDZ
     G.search = h.el("g", {}, svg);

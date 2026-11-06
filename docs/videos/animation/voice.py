@@ -12,7 +12,7 @@
   # 3) Voix Microsoft ar-DZ (arabe standard, peu naturelle ; pour tester le calage)
   python3 voice.py interaction                         # → out/interaction.amina.mp4
 
-Chaque sous-titre est lu à son moment (champ `say` de l'épisode, sinon les lignes arabes). Une phrase trop longue est
+Chaque sous-titre est lu à son moment : le texte arabe affiché EST le texte lu (un champ `say` optionnel peut le remplacer). Une phrase trop longue est
 accélérée (jusqu'à x1,25) ; le rapport signale celles qui dépassent encore. Les sigles latins (ANSM, ATC, N02BE01…) sont
 épelés en arabe, DwaDZ devient « دوا دي زاد ». Les voix générées sont mises en cache (out/cache) : relancer ne repaie rien.
 
@@ -134,7 +134,7 @@ def main() -> int:
             d, slot = duration(mp3), s["end"] - s["start"] - 0.25
             tempo = max(1.0, min(d / slot, 1.25))
             if d / tempo > slot + 0.05:
-                report.append(f"  ⚠ segment {i + 1} ({s['start']}–{s['end']} s) : voix {d / tempo:.1f} s pour {slot:.1f} s → raccourcir le texte `say`")
+                report.append(f"  ⚠ segment {i + 1} ({s['start']}–{s['end']} s) : voix {d / tempo:.1f} s pour {slot:.1f} s → raccourcir le texte arabe de ce sous-titre")
             segs.append((mp3, s["start"] + 0.12, tempo))
         ins, filt, labels = [], [], []
         for i, (mp3, st, tempo) in enumerate(segs):
