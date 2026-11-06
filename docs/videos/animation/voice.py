@@ -46,7 +46,12 @@ def prepare(text: str, keep_punct: bool) -> str:
 
 
 def sh(*a) -> str:
-    return subprocess.run(a, check=True, capture_output=True, text=True).stdout.strip()
+    try:
+        return subprocess.run(a, check=True, capture_output=True, text=True).stdout.strip()
+    except subprocess.CalledProcessError as e:  # montrer la vraie cause (ffmpeg écrit sur stderr)
+        sys.exit(f"Échec de la commande {a[0]} (code {e.returncode}) :\n{(e.stderr or '').strip()[-600:]}")
+    except FileNotFoundError:
+        sys.exit(f"Programme introuvable : {a[0]} (installe-le, par ex. « brew install ffmpeg » sur Mac).")
 
 
 def duration(p: Path) -> float:
@@ -111,6 +116,8 @@ def main() -> int:
     out = Path(a.out)
     meta = json.loads((out / f"{a.ep}.subs.json").read_text(encoding="utf-8"))
     video = out / f"{a.ep}.mp4"
+    if not video.exists():  # vérifier AVANT de générer la voix (qui consomme des caractères)
+        sys.exit(f"Vidéo introuvable : {video}\n→ remets {a.ep}.mp4 dans le dossier out/ (fichier du kit d'origine), sans remplacer le dossier entier.")
     cache = out / "cache"; cache.mkdir(parents=True, exist_ok=True)
 
     if a.audio:
