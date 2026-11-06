@@ -97,7 +97,9 @@ node docs/videos/animation/render.mjs dci --stills 3,15   # images fixes pour co
      Réglages : `--stability`, `--similarity`, `--speed`. Les phrases sont mises en cache (`out/cache`) : relancer ne repaie rien.
   2. **Ton enregistrement tel quel** : `voice.py interaction --audio mon_enregistrement.m4a` (un fichier couvrant toute la vidéo).
   3. **Voix Microsoft ar-DZ** (`voice.py interaction`) : arabe standard, peu naturelle ; seulement pour tester le calage.
-  Les sigles latins sont épelés (ANSM, ATC, N02BE01…), `DwaDZ` devient « دوا دي زاد ».
+  **Parti pris : voix en arabe standard simple, sous-titres et animation en darija.** Le champ `say` de chaque sous-titre contient le texte lu
+  en arabe standard (زوج → اثنان, تاع → لـ…) ; `ar` reste le sous-titre en darija. Un clone de voix lit mieux un texte standard qu'un texte dialectal.
+  Les sigles latins sont épelés (ANSM, ATC, N02BE01…), les chiffres en arabe standard, `DwaDZ` devient « دوا دي زاد ».
   **Limites** : un clone reproduit ta voix mais lit un texte arabe ; un mot dialectal (تاع, زوج…) peut sortir trop « standard » → l'écrire
   comme tu le prononces dans `say`. Les échantillons et les textes sont envoyés au service choisi (ElevenLabs, ou Microsoft pour le mode 3) :
   ne cloner que sa propre voix, et ne mettre que du contenu destiné à être public. Les fichiers audio de `voix/` ne sont pas versionnés.

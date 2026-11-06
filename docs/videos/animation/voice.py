@@ -25,7 +25,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 LETTERS = dict(zip("ABCDEFGHIJKLMNOPQRSTUVWXYZ",
     "إيه بي سي دي إي إف جي إتش آي جاي كاي إل إم إن أو بي كيو آر إس تي يو في دبليو إكس واي زد".split()))
-DIGITS = dict(zip("0123456789", "صفر واحد زوج تلاتة ربعة خمسة ستة سبعة تمنية تسعة".split()))
+DIGITS = dict(zip("0123456789", "صفر واحد اثنان ثلاثة أربعة خمسة ستة سبعة ثمانية تسعة".split()))
 WORDS = {"DwaDZ": "دوا دي زاد", "DCI": "دي سي آي", "ATC": "إيه تي سي", "ANSM": "إيه إن إس إم"}
 
 

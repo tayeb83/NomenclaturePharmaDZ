@@ -2,16 +2,16 @@
 // [A] Vérifier que les trois marques existent dans la nomenclature DZ avant publication.
 window.EP = (() => {
   const subs = [
-    { start: 0,  end: 4,  ar: ["علاش نفس الدوا", "عندو بزاف سميات؟"], fr: ["Pourquoi un même médicament", "a-t-il plusieurs noms ?"] },
-    { start: 4,  end: 8,  ar: ["هادو أسماء تجارية،", "كل مخبر يسمّي على كيفو"], fr: ["Ce sont des noms de marque :", "chaque laboratoire choisit le sien"] },
-    { start: 8,  end: 12, ar: ["دوليبران، إيفيرالقان، دافالقان..."], fr: ["Doliprane, Efferalgan, Dafalgan…"] },
-    { start: 12, end: 17, ar: ["لكن داخلهم كاين", "نفس المادة الفعالة"], fr: ["Mais à l'intérieur, il y a", "la même substance active"] },
-    { start: 17, end: 22, ar: ["هادي هي الـ DCI:", "باراسيتامول"], fr: ["C'est la DCI :", "le paracétamol"] },
-    { start: 22, end: 26, ar: ["إذا تاخذ زوج منهم", "في نفس الوقت…"], fr: ["Si tu prends deux de ces produits", "en même temps…"] },
-    { start: 26, end: 30, ar: ["تاخذ نفس المادة زوج مرات", "والكبد يتعب"], fr: ["tu prends deux fois la même", "substance : le foie souffre"] },
-    { start: 30, end: 34, ar: ["قبل ما تشري: اقرا الـ DCI", "وسقسي الصيدلي"], fr: ["Avant d'acheter : lis la DCI", "et demande au pharmacien"] },
-    { start: 34, end: 38, ar: ["اكتب الاسم في DwaDZ", "وشوف الـ DCI"], fr: ["Tape le nom sur DwaDZ", "et regarde la DCI"] },
-    { start: 38, end: 42, ar: ["معلومة عامة، ما تعوضش", "رأي الطبيب ولا الصيدلي"], fr: ["Information générale : elle ne remplace", "pas l'avis du médecin ou du pharmacien"] },
+    { start: 0,  end: 4,  ar: ["علاش نفس الدوا", "عندو بزاف سميات؟"], fr: ["Pourquoi un même médicament", "a-t-il plusieurs noms ?"], say: "لماذا يملك الدواء الواحد عدة أسماء؟" },
+    { start: 4,  end: 8,  ar: ["هادو أسماء تجارية،", "كل مخبر يسمّي على كيفو"], fr: ["Ce sont des noms de marque :", "chaque laboratoire choisit le sien"], say: "هذه أسماء تجارية، ولكل مخبر اسمه." },
+    { start: 8,  end: 12, ar: ["دوليبران، إيفيرالقان، دافالقان..."], fr: ["Doliprane, Efferalgan, Dafalgan…"], say: "دوليبران، إيفيرالغان، دافالغان" },
+    { start: 12, end: 17, ar: ["لكن داخلهم كاين", "نفس المادة الفعالة"], fr: ["Mais à l'intérieur, il y a", "la même substance active"], say: "لكن في داخلها جميعًا المادة الفعالة نفسها." },
+    { start: 17, end: 22, ar: ["هادي هي الـ DCI:", "باراسيتامول"], fr: ["C'est la DCI :", "le paracétamol"], say: "هذه هي DCI، أي المادة الفعالة: الباراسيتامول." },
+    { start: 22, end: 26, ar: ["إذا تاخذ زوج منهم", "في نفس الوقت…"], fr: ["Si tu prends deux de ces produits", "en même temps…"], say: "إذا تناولت اثنين منها في الوقت نفسه،" },
+    { start: 26, end: 30, ar: ["تاخذ نفس المادة زوج مرات", "والكبد يتعب"], fr: ["tu prends deux fois la même", "substance : le foie souffre"], say: "فتأخذ المادة نفسها مرتين، ويتأثر الكبد." },
+    { start: 30, end: 34, ar: ["قبل ما تشري: اقرا الـ DCI", "وسقسي الصيدلي"], fr: ["Avant d'acheter : lis la DCI", "et demande au pharmacien"], say: "قبل الشراء، اقرأ الـ DCI واسأل الصيدلي." },
+    { start: 34, end: 38, ar: ["اكتب الاسم في DwaDZ", "وشوف الـ DCI"], fr: ["Tape le nom sur DwaDZ", "et regarde la DCI"], say: "اكتب الاسم في DwaDZ وشاهد الـ DCI." },
+    { start: 38, end: 42, ar: ["معلومة عامة، ما تعوضش", "رأي الطبيب ولا الصيدلي"], fr: ["Information générale : elle ne remplace", "pas l'avis du médecin ou du pharmacien"], say: "معلومة عامة لا تغني عن الطبيب أو الصيدلي." },
   ];
   const G = {};
   const BR = [

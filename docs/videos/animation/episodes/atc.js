@@ -3,18 +3,18 @@
 // Darija ALGÉRIEN (زوج, تاع, وين, لازم…). [A] Relire avec un locuteur avant publication.
 window.EP = (() => {
   const subs = [
-    { start: 0,  end: 4,  ar: ["كل دوا عندو", "بطاقة هوية: الـ ATC"], fr: ["Chaque médicament a une carte d'identité :", "le code ATC"] },
-    { start: 4,  end: 9,  ar: ["ATC هو تصنيف عالمي", "تاع منظمة الصحة العالمية"], fr: ["L'ATC est une classification mondiale", "de l'Organisation mondiale de la santé"] },
-    { start: 9,  end: 13, ar: ["الرمز يتكوّن من 7 خانات", "وكل خانة تقولك حاجة"], fr: ["Le code compte 7 caractères,", "chacun apporte une information"] },
-    { start: 13, end: 18, ar: ["الحرف الأول: الجهاز", "N = الجهاز العصبي"], fr: ["La 1re lettre : le système", "N = système nerveux"] },
-    { start: 18, end: 23, ar: ["نوع العلاج: N02", "مسكّنات الوجع"], fr: ["N02 : le type de traitement", "les analgésiques"] },
-    { start: 23, end: 28, ar: ["عائلة أدق: N02B", "مسكّنات وخافضات الحمى"], fr: ["N02B : un sous-groupe plus précis", "autres analgésiques et antipyrétiques"] },
-    { start: 28, end: 33, ar: ["العائلة الكيميائية: N02BE", "الأنيليدات"], fr: ["N02BE : le groupe chimique", "les anilides"] },
-    { start: 33, end: 37, ar: ["وفي الأخير: N02BE01", "باراسيتامول"], fr: ["Et enfin N02BE01 :", "le paracétamol"] },
-    { start: 37, end: 42, ar: ["هادي هي المادة الفعالة", "تاع الدوليبران"], fr: ["C'est la substance active", "du Doliprane"] },
-    { start: 42, end: 47, ar: ["الأدوية اللي يبداو بنفس الرمز", "من نفس العائلة"], fr: ["Les médicaments dont le code commence", "pareil sont de la même famille"] },
-    { start: 47, end: 52, ar: ["في DwaDZ كل فيش فيها الـ ATC", "وتقدر تتصفح الأدوية بالعائلة"], fr: ["Sur DwaDZ, chaque fiche a son ATC", "et tu peux parcourir par famille"] },
-    { start: 52, end: 56, ar: ["معلومة عامة، ما تعوضش", "رأي الطبيب ولا الصيدلي"], fr: ["Information générale : elle ne remplace pas", "l'avis du médecin ou du pharmacien"] },
+    { start: 0,  end: 4,  ar: ["كل دوا عندو", "بطاقة هوية: الـ ATC"], fr: ["Chaque médicament a une carte d'identité :", "le code ATC"], say: "لكل دواء بطاقة هوية: رمز ATC." },
+    { start: 4,  end: 9,  ar: ["ATC هو تصنيف عالمي", "تاع منظمة الصحة العالمية"], fr: ["L'ATC est une classification mondiale", "de l'Organisation mondiale de la santé"], say: "ATC تصنيف عالمي تضعه منظمة الصحة العالمية." },
+    { start: 9,  end: 13, ar: ["الرمز يتكوّن من 7 خانات", "وكل خانة تقولك حاجة"], fr: ["Le code compte 7 caractères,", "chacun apporte une information"], say: "الرمز من سبع خانات، ولكل خانة معنى." },
+    { start: 13, end: 18, ar: ["الحرف الأول: الجهاز", "N = الجهاز العصبي"], fr: ["La 1re lettre : le système", "N = système nerveux"], say: "الحرف الأول يدل على الجهاز: N هو الجهاز العصبي." },
+    { start: 18, end: 23, ar: ["نوع العلاج: N02", "مسكّنات الوجع"], fr: ["N02 : le type de traitement", "les analgésiques"], say: "N02: نوع العلاج، المسكّنات." },
+    { start: 23, end: 28, ar: ["عائلة أدق: N02B", "مسكّنات وخافضات الحمى"], fr: ["N02B : un sous-groupe plus précis", "autres analgésiques et antipyrétiques"], say: "N02B: مسكّنات وخافضات حرارة أخرى." },
+    { start: 28, end: 33, ar: ["العائلة الكيميائية: N02BE", "الأنيليدات"], fr: ["N02BE : le groupe chimique", "les anilides"], say: "N02BE: المجموعة الكيميائية، الأنيليدات." },
+    { start: 33, end: 37, ar: ["وفي الأخير: N02BE01", "باراسيتامول"], fr: ["Et enfin N02BE01 :", "le paracétamol"], say: "وأخيرًا: باراسيتامول." },
+    { start: 37, end: 42, ar: ["هادي هي المادة الفعالة", "تاع الدوليبران"], fr: ["C'est la substance active", "du Doliprane"], say: "هذه هي المادة الفعالة في الدوليبران." },
+    { start: 42, end: 47, ar: ["الأدوية اللي يبداو بنفس الرمز", "من نفس العائلة"], fr: ["Les médicaments dont le code commence", "pareil sont de la même famille"], say: "الأدوية ذات الرمز المتشابه تنتمي إلى العائلة نفسها." },
+    { start: 47, end: 52, ar: ["في DwaDZ كل فيش فيها الـ ATC", "وتقدر تتصفح الأدوية بالعائلة"], fr: ["Sur DwaDZ, chaque fiche a son ATC", "et tu peux parcourir par famille"], say: "في DwaDZ تجد ATC في كل بطاقة دواء." },
+    { start: 52, end: 56, ar: ["معلومة عامة، ما تعوضش", "رأي الطبيب ولا الصيدلي"], fr: ["Information générale : elle ne remplace pas", "l'avis du médecin ou du pharmacien"], say: "معلومة عامة لا تغني عن الطبيب أو الصيدلي." },
   ];
   const G = {};
   const CODE = ["N", "0", "2", "B", "E", "0", "1"];
