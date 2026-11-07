@@ -252,3 +252,26 @@ image d'aperçu = `couverture-<épisode>-verticale.jpg` (le fichier `…-partage
   ```
 - **À vérifier avant publication** : Choisir un retrait réel et récent, citer son motif tel que publié. La consigne « rapporte le médicament au pharmacien » est à confirmer avec le relecteur.
 
+---------------------------------------------------------------------------------------------------
+
+## 15 — Le comparateur de médicaments : vérifier les interactions (ANSM)  (fichier : comparateur.clone.mp4 · couverture : couverture-comparateur-verticale.jpg · 75 s)
+
+- **Identifiant** : `comparateur-interactions-medicaments` · **N° d'épisode** : 15
+- **Titre français** : Le comparateur de médicaments : vérifier les interactions (ANSM)
+- **العنوان بالعربية** : مقارن الأدوية: تحقق من التداخلات الدوائية (ANSM)
+- **Description française** :
+  ```text
+  Ton médicament interagit-il avec un autre ? Découvre le comparateur DwaDZ : choisis, de chaque côté, un nom de marque ou une substance, et l'outil cherche dans le Thesaurus des interactions de l'ANSM si elles sont signalées entre les deux, avec leur gravité et l'explication de l'endroit où elles se situent. Outil à accès limité : demande l'accès par e-mail, l'équipe valide, puis tu reçois un lien de connexion sans mot de passe. Ne remplace pas l'avis d'un médecin ou d'un pharmacien. Accès sur demande : https://www.dzair-pharma.net/outils/comparateur-medicaments — Vidéo en arabe, sous-titrée en français.
+  ```
+- **الوصف بالعربية** :
+  ```text
+  هل يتداخل دواؤك مع دواء آخر؟ اكتشف مقارن الأدوية في DwaDZ: اختر في كل جهة اسمًا تجاريًا أو مادة فعالة، فتبحث الأداة في دليل التداخلات الدوائية الصادر عن ANSM عمّا إذا كانت هناك تداخلات بينهما، مع درجة خطورتها وشرح موضعها. أداة بولوج محدود: اطلب الولوج عبر البريد الإلكتروني، ويراجع الفريق طلبك ثم يصلك رابط دخول دون كلمة مرور. لا تغني عن رأي الطبيب أو الصيدلي. الولوج عند الطلب: https://www.dzair-pharma.net/outils/comparateur-medicaments — فيديو بالعربية مع ترجمة فرنسية.
+  ```
+- **Étiquettes** : DwaDZ, ANSM, التفاعلات, الدواء
+- **Sources** :
+  ```text
+  Thesaurus des interactions médicamenteuses de l'ANSM, septembre 2023 (source de l'outil)
+  Comparateur de deux médicaments DwaDZ : https://www.dzair-pharma.net/outils/comparateur-medicaments (accès limité, sur demande)
+  ```
+- **À vérifier avant publication** : Montrer des captures de l'outil réel si possible. Rappeler qu'une absence d'interaction dans le thésaurus ne prouve pas que l'association soit sans risque. L'exemple paracétamol + flucloxacilline vient du thésaurus (association déconseillée, p. 191).
+

@@ -15,7 +15,7 @@
     G.bar = el("rect", { x: 160, y: 160, width: 0, height: 8, rx: 4, fill: "#ffd166" }, svg);
 
     const txt = (p, s, a) => { const e = el("text", a, p); e.textContent = s; return e; };
-    const emoji = (p, ch, fs, y = 0, x = 0) => txt(p, ch, { x, y: y + fs * 0.36, "text-anchor": "middle", "font-size": fs });
+    const emoji = (p, ch, fs, y = 0, x = 0) => txt(p, ch, { x, y: y + fs * 0.36, "text-anchor": "middle", "font-size": fs, fill: "#fff" });
     const FIT = G.fit = [];
     const reg = (e, w) => { if (w) FIT.push([e, w]); return e; };
     const ar = (p, s, fs, y, fill = "#fff", x = 0, w) => reg(txt(p, s, { x, y, "text-anchor": "middle", direction: "rtl", fill, "font-size": s.length > 22 ? Math.round(fs * 0.78) : fs }), w);
@@ -62,6 +62,20 @@
           const tB = Math.min(1.9, d * 0.42), tC = tB + 0.3;
           const s = outBack(prog(u, 0.1, 0.7)); place(bar, 540, 640, s, 0, s ? 1 : 0); const q = v.q || ""; ty.textContent = q.slice(0, Math.floor(prog(u, 0.6, tB) * (q.length + 0.99)));
           const r = outBack(prog(u, tC, tC + 0.7)); place(rs, 540, 900, r, 0, r ? 1 : 0); };
+      } else if (k === "cmpform") { // simulation du formulaire de comparaison : deux saisies, bouton, carte de résultat
+        const mkBar = (n, text) => { const b = el("g", {}, g0); el("rect", { x: -440, y: -55, width: 880, height: 110, rx: 55, fill: "#fff" }, b);
+          el("circle", { cx: -385, cy: 0, r: 38, fill: "#4dabf7" }, b); txt(b, String(n), { x: -385, y: 20, "text-anchor": "middle", fill: "#fff", "font-size": 52 });
+          return { b, t: txt(b, "", { x: -320, y: 22, fill: "#222", "font-size": text.length > 20 ? 46 : 56 }), text }; };
+        const A = mkBar(1, v.a), B = mkBar(2, v.b);
+        const btn = el("g", {}, g0); el("rect", { x: -190, y: -50, width: 380, height: 100, rx: 50, fill: "#4dabf7", stroke: "#fff", "stroke-width": 6 }, btn); ar(btn, "قارن", 56, 20, "#fff", 40, 220); txt(btn, "⚖️", { x: -110, y: 22, "text-anchor": "middle", "font-size": 52 });
+        const R = v.res || {}, rc = el("g", {}, g0); el("rect", { x: -440, y: -150, width: 880, height: 300, rx: 54, fill: "#102f3b", stroke: R.c || "#f76707", "stroke-width": 12 }, rc);
+        el("circle", { cx: -320, cy: 0, r: 90, fill: R.c || "#f76707" }, rc); emoji(rc, R.i || "▲", 110, 0, -320); ar(rc, R.t || "", 62, -5, "#fff", 90, 640); if (R.f) fr(rc, R.f, 34, 60, "#ffe08a", 90, 640);
+        sc.tick = (u, d) => { const k2 = Math.min(1, (d - 1.2) / 4.6), tA = [0.4 * k2, 1.5 * k2], tB = [1.7 * k2, 2.8 * k2], tBtn = 3.0 * k2, tR = 3.7 * k2;
+          const typed = (o, w) => { o.t.textContent = o.text.slice(0, Math.floor(prog(u, w[0], w[1]) * (o.text.length + 0.99))); };
+          const sA = outBack(prog(u, 0.1, 0.6)); place(A.b, 540, 560, sA, 0, sA ? 1 : 0); typed(A, tA);
+          const sB = outBack(prog(u, 0.3, 0.8)); place(B.b, 540, 720, sB, 0, sB ? 1 : 0); typed(B, tB);
+          const sb = outBack(prog(u, tBtn, tBtn + 0.5)); place(btn, 540, 880, sb * (1 + (u > tBtn && u < tBtn + 0.9 ? Math.sin((u - tBtn) * 12) * 0.05 : 0)), 0, sb ? 1 : 0);
+          const sr = outBack(prog(u, tR, tR + 0.7)); place(rc, 540, 1130, sr, 0, sr ? 1 : 0); };
       } else if (k === "warn") {
         const w = el("g", {}, g0); emoji(w, v.icon || "⚠️", 300);
         const b = el("g", {}, g0); el("rect", { x: -450, y: -80, width: 900, height: 200, rx: 50, fill: v.c || "#e03131" }, b); ar(b, v.t || "", 70, 20, "#fff", 0, 840); if (v.f) fr(b, v.f, 38, 82, "#fff", 0, 840);
