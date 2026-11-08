@@ -16,6 +16,7 @@ Chaque sous-titre est lu à son moment : le texte arabe affiché EST le texte lu
 accélérée (jusqu'à x1,25) ; le rapport signale celles qui dépassent encore. Les sigles latins (ANSM, ATC, N02BE01…) sont
 épelés en arabe, DwaDZ devient « دوا دي زاد ». Les voix générées sont mises en cache (out/cache) : relancer ne repaie rien.
 
+Réglages par défaut de la voix clonée : modèle eleven_v3 + lexique complet (choisis à l'écoute avec tester_accent.py, variante E).
 Accent / prononciation : --lexique p (écrit en latin les noms à P : paracétamol, Doliprane, ibuprofène, aspirine) ou complet (tous les noms de médicaments) ;
 voir tester_accent.py pour comparer à l'oreille avant de choisir.
 ElevenLabs : clé dans ELEVENLABS_API_KEY ; identifiant de la voix via --voice-id, ELEVENLABS_VOICE_ID ou voix/voice_id.txt.
@@ -145,14 +146,15 @@ def main() -> int:
     ap.add_argument("--voice", default="ar-DZ-AminaNeural", help="voix Microsoft (edge) : ar-DZ-AminaNeural ou ar-DZ-IsmaelNeural")
     ap.add_argument("--rate", default="+20%", help="vitesse de la voix Microsoft (utiliser --rate=-5%%)")
     ap.add_argument("--voice-id", help="identifiant de la voix clonée (ElevenLabs)")
-    ap.add_argument("--model", default="eleven_multilingual_v2")
-    ap.add_argument("--stability", type=float, default=0.5, help="0-1 : bas = plus expressif, haut = plus régulier")
+    ap.add_argument("--model", default="eleven_v3", help="eleven_v3 (défaut, retenu à l'écoute : meilleur accent) ou eleven_multilingual_v2")
+    ap.add_argument("--stability", type=float, default=0.5, help="0,5 par défaut. eleven_v3 n'accepte que 0 (créatif), 0,5 (naturel) ou 1 (robuste)")
     ap.add_argument("--similarity", type=float, default=0.8, help="0-1 : fidélité à ta voix")
     ap.add_argument("--speed", type=float, default=1.0, help="0,7–1,2 (ElevenLabs)")
     ap.add_argument("--lexique", default=None, help="prononciation : chemin ou nom (p, complet) de voix/lexique_<nom>.json ; « aucun » pour désactiver (défaut : voix/lexique.json s'il existe)")
     ap.add_argument("--out", default=str(HERE / "out"))
     a = ap.parse_args()
-    lex = load_lexique(a.lexique)
+    # Lexique : celui demandé ; sinon voix/lexique.json s'il existe ; sinon, pour la voix clonée, le lexique « complet » (vrai P, noms de médicaments à la française)
+    lex = load_lexique(a.lexique) if a.lexique is not None else (load_lexique(None) or (load_lexique("complet") if a.provider == "elevenlabs" else {}))
     out = Path(a.out)
     meta = json.loads((out / f"{a.ep}.subs.json").read_text(encoding="utf-8"))
     video = out / f"{a.ep}.mp4"

@@ -108,6 +108,7 @@ node docs/videos/animation/render.mjs dci --stills 3,15   # images fixes pour co
   (= texte lu), sa traduction française, l'illustration (`card`, `warn`, `list`, `steps`, `compare`, `search`, `logo`) et l'humeur de la mascotte, plus les métadonnées du site
   (`meta`) et la couverture (`cover`). Les durées se déduisent du texte (≈ 11 caractères par seconde). Moteur : `animation/lib/build.js` ; pour un nouvel épisode, copier un fichier existant.
   `node animation/render.mjs <nom>` rend la vidéo ; `node animation/meta.mjs > metadonnees-episodes.md` régénère les métadonnées à saisir dans l'admin.
+- **Réglage retenu à l'écoute (variante E de `tester_accent.py`)** : modèle `eleven_v3` + lexique complet, désormais **par défaut** dans `voice.py` pour la voix clonée. `./generer_voix.sh -f` régénère toutes les vidéos avec ces réglages.
 - **Accent et prononciation** : le clone lit l'arabe standard avec l'accent de son échantillon. Pour un accent plus proche du tien : (1) clone-toi à partir d'un échantillon en **arabe standard**
   (`animation/voix/ENREGISTREMENT_FUSHA.md`) ; (2) `voice.py … --lexique p` écrit en lettres latines les noms à P (paracétamol, Doliprane, ibuprofène, aspirine) pour obtenir un vrai P, `--lexique complet`
   pour tous les noms de médicaments (`voix/lexique_*.json`, modifiables) ; (3) `python3 animation/tester_accent.py` compare 5 réglages à l'oreille avant de choisir.
