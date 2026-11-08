@@ -108,6 +108,9 @@ node docs/videos/animation/render.mjs dci --stills 3,15   # images fixes pour co
   (= texte lu), sa traduction française, l'illustration (`card`, `warn`, `list`, `steps`, `compare`, `search`, `logo`) et l'humeur de la mascotte, plus les métadonnées du site
   (`meta`) et la couverture (`cover`). Les durées se déduisent du texte (≈ 11 caractères par seconde). Moteur : `animation/lib/build.js` ; pour un nouvel épisode, copier un fichier existant.
   `node animation/render.mjs <nom>` rend la vidéo ; `node animation/meta.mjs > metadonnees-episodes.md` régénère les métadonnées à saisir dans l'admin.
+- **Accent et prononciation** : le clone lit l'arabe standard avec l'accent de son échantillon. Pour un accent plus proche du tien : (1) clone-toi à partir d'un échantillon en **arabe standard**
+  (`animation/voix/ENREGISTREMENT_FUSHA.md`) ; (2) `voice.py … --lexique p` écrit en lettres latines les noms à P (paracétamol, Doliprane, ibuprofène, aspirine) pour obtenir un vrai P, `--lexique complet`
+  pour tous les noms de médicaments (`voix/lexique_*.json`, modifiables) ; (3) `python3 animation/tester_accent.py` compare 5 réglages à l'oreille avant de choisir.
 - **Toutes les voix d'un coup** : `animation/generer_voix.sh` (ElevenLabs) génère `out/<épisode>.clone.mp4` pour chaque épisode qui n'en a pas encore.
 - **Couverture** : `node docs/videos/animation/cover.mjs` produit `out/couverture-dci-verticale.jpg` (image d'aperçu du site, zone utile centrale) et `out/couverture-dci-partage.jpg` (1200×630, Facebook). Pour une autre vidéo, adapter les textes et l'illustration dans `cover.html`.
 - **Police** : Cairo 800 (SIL OFL), incluse dans `animation/fonts/`. Le rendu arabe a été vérifié.

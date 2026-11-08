@@ -16,6 +16,8 @@ Chaque sous-titre est lu à son moment : le texte arabe affiché EST le texte lu
 accélérée (jusqu'à x1,25) ; le rapport signale celles qui dépassent encore. Les sigles latins (ANSM, ATC, N02BE01…) sont
 épelés en arabe, DwaDZ devient « دوا دي زاد ». Les voix générées sont mises en cache (out/cache) : relancer ne repaie rien.
 
+Accent / prononciation : --lexique p (écrit en latin les noms à P : paracétamol, Doliprane, ibuprofène, aspirine) ou complet (tous les noms de médicaments) ;
+voir tester_accent.py pour comparer à l'oreille avant de choisir.
 ElevenLabs : clé dans ELEVENLABS_API_KEY ; identifiant de la voix via --voice-id, ELEVENLABS_VOICE_ID ou voix/voice_id.txt.
 Sortie conforme aux Reels/vidéos Facebook : AAC-LC 48 kHz stéréo, index MP4 en tête (lecture rapide).
 Prérequis : pip install requests edge-tts ; ffmpeg.
@@ -34,11 +36,45 @@ def spell(m: re.Match) -> str:
     tok = m.group(0)
     if tok in WORDS:
         return WORDS[tok]
-    return " ".join(LETTERS.get(c) or DIGITS.get(c) or c for c in tok)
+    if tok.isupper() or any(c.isdigit() for c in tok):  # sigles et codes (ATC, N02BE01) : épelés en arabe
+        return " ".join(LETTERS.get(c) or DIGITS.get(c) or c for c in tok)
+    return tok  # mot latin ordinaire (paracétamol, Doliprane…) : lu tel quel par la voix
 
 
-def prepare(text: str, keep_punct: bool) -> str:
-    text = re.sub(r"[A-Za-z0-9]+", spell, text)
+# ── Lexique de prononciation ────────────────────────────────────────────────
+# Un lecteur arabe prononce ب comme « b » : « باراسيتامول » sort « barasitamol », alors qu'on dit « paracétamol » avec un P.
+# Le lexique remplace des mots arabes par leur écriture latine (la voix les prononce alors à la française, avec le vrai P).
+# Fichier JSON {"باراسيتامول": "paracétamol", …} ; clés sans « ال » (elle est retirée avec la préposition collée, و/ب/ك/ف/ل).
+AR = "\u0621-\u063A\u0641-\u064A\u064B-\u0652\u0671"  # lettres et voyelles brèves arabes (sans la ponctuation « ، ؟ »)
+
+
+def load_lexique(spec: str | None) -> dict:
+    """spec : chemin, ou nom (p, complet) → voix/lexique_<nom>.json ; « aucun » ou vide : pas de lexique."""
+    if spec is None:
+        f = HERE / "voix" / "lexique.json"
+        return json.loads(f.read_text(encoding="utf-8")) if f.exists() else {}
+    if spec in ("", "aucun"):
+        return {}
+    f = Path(spec) if Path(spec).exists() else HERE / "voix" / f"lexique_{spec}.json"
+    if not f.exists():
+        sys.exit(f"Lexique introuvable : {spec}")
+    return json.loads(f.read_text(encoding="utf-8"))
+
+
+def apply_lexique(text: str, lex: dict) -> str:
+    prefixes = "(?:و|ف)?(?:لل|(?:ب|ك|ل)?(?:ال)?)"  # conjonction + préposition + article, éventuellement collés
+    def conj_of(pre: str) -> str:  # garde la conjonction/préposition collée, retire l'article « ال »
+        return pre[:-2] if pre.endswith("ال") else pre[:-1] if pre.endswith("لل") else pre
+    for word, repl in sorted(lex.items(), key=lambda kv: -len(kv[0])):
+        pat = rf"(?<![{AR}])({prefixes}){re.escape(word)}(?![{AR}])"
+        text = re.sub(pat, lambda m, repl=repl: f"{conj_of(m.group(1) or '')} {repl}".strip(), text)
+    return text
+
+
+def prepare(text: str, keep_punct: bool, lex: dict | None = None) -> str:
+    if lex:
+        text = apply_lexique(text, lex)
+    text = re.sub(r"[A-Za-zÀ-ÿ0-9]+", spell, text)
     if keep_punct:  # voix clonée : les pauses naturelles aident, on garde la ponctuation
         text = text.replace("—", "،").replace(":", "،").replace("…", "...")
         return re.sub(r"\s+", " ", text).strip()
@@ -76,7 +112,8 @@ def eleven_tts(text: str, vid: str, a, dest: Path) -> None:
         f"{base}/v1/text-to-speech/{vid}", params={"output_format": "mp3_44100_128"}, timeout=120,
         headers={"xi-api-key": os.environ.get("ELEVENLABS_API_KEY", ""), "Content-Type": "application/json"},
         json={"text": text, "model_id": a.model, "voice_settings": {
-            "stability": a.stability, "similarity_boost": a.similarity, "style": 0.0, "use_speaker_boost": True, "speed": a.speed}},
+            "stability": a.stability, "similarity_boost": a.similarity, "style": 0.0, "use_speaker_boost": True,
+            **({"speed": a.speed} if a.speed != 1.0 else {})}},
     )
     if r.status_code != 200:
         sys.exit(f"ElevenLabs a refusé la requête (HTTP {r.status_code}) : {r.text[:300]}")
@@ -112,8 +149,10 @@ def main() -> int:
     ap.add_argument("--stability", type=float, default=0.5, help="0-1 : bas = plus expressif, haut = plus régulier")
     ap.add_argument("--similarity", type=float, default=0.8, help="0-1 : fidélité à ta voix")
     ap.add_argument("--speed", type=float, default=1.0, help="0,7–1,2 (ElevenLabs)")
+    ap.add_argument("--lexique", default=None, help="prononciation : chemin ou nom (p, complet) de voix/lexique_<nom>.json ; « aucun » pour désactiver (défaut : voix/lexique.json s'il existe)")
     ap.add_argument("--out", default=str(HERE / "out"))
     a = ap.parse_args()
+    lex = load_lexique(a.lexique)
     out = Path(a.out)
     meta = json.loads((out / f"{a.ep}.subs.json").read_text(encoding="utf-8"))
     video = out / f"{a.ep}.mp4"
@@ -130,7 +169,7 @@ def main() -> int:
         tag = "clone" if a.provider == "elevenlabs" else a.voice.split("-")[2].replace("Neural", "").lower()
         segs, report = [], []
         for i, s in enumerate(meta["subs"]):
-            text = prepare(s.get("say") or " ".join(s["ar"]), keep_punct=a.provider == "elevenlabs")
+            text = prepare(s.get("say") or " ".join(s["ar"]), keep_punct=a.provider == "elevenlabs", lex=lex)
             mp3 = synth(text, a, cache)
             d, slot = duration(mp3), s["end"] - s["start"] - 0.25
             tempo = max(1.0, min(d / slot, 1.25))
@@ -154,4 +193,5 @@ def main() -> int:
     return 0
 
 
-sys.exit(main())
+if __name__ == "__main__":
+    sys.exit(main())
