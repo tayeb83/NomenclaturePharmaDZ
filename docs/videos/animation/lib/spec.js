@@ -14,6 +14,8 @@ window.V = {
   search: (q, res) => ({ k: "search", q, res }),
   cform: (a, b, res) => ({ k: "cmpform", a, b, res }),   // formulaire « deux médicaments » puis carte de résultat {c, i, t, f}
   logo: () => ({ k: "logo" }),
+  // Capture d'écran réelle : zoom animé de la région `from` vers `to` ([x, y, largeur, hauteur] en pixels de l'image), surlignage `hl` (liste de rectangles).
+  shot: (img, iw, ih, to, hl, from, fh) => ({ k: "shot", img, iw, ih, to, hl: hl || [], from, fh }), // fh : hauteur du cadre (900 par défaut ; moins pour une image très large)
 };
 window.specToEP = function (S) {
   let t = 0; const subs = [], segs = [];

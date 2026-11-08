@@ -1,7 +1,7 @@
 // Moteur de scènes (dessin animé) piloté par window.SPEC. Chaque segment = une scène : hook, card, list, steps, search, warn, compare, logo.
 (function () {
   const S = window.SPEC, T = window.specToEP(S);
-  const G = { scenes: [] };
+  const G = { scenes: [], imgs: [] };
   const BG = ["#0f4c5c", "#071f29"];
 
   function init(svg, h) {
@@ -76,6 +76,23 @@
           const sB = outBack(prog(u, 0.3, 0.8)); place(B.b, 540, 720, sB, 0, sB ? 1 : 0); typed(B, tB);
           const sb = outBack(prog(u, tBtn, tBtn + 0.5)); place(btn, 540, 880, sb * (1 + (u > tBtn && u < tBtn + 0.9 ? Math.sin((u - tBtn) * 12) * 0.05 : 0)), 0, sb ? 1 : 0);
           const sr = outBack(prog(u, tR, tR + 0.7)); place(rc, 540, 1130, sr, 0, sr ? 1 : 0); };
+      } else if (k === "shot") { // capture d'écran réelle dans un cadre arrondi : la caméra glisse de `from` vers `to`, le surlignage pulse
+        const FW = 960, FH = v.fh || 900, CX = 540, CY = 790, id = "clip" + i;
+        const cp = el("clipPath", { id }, g0); el("rect", { x: CX - FW / 2, y: CY - FH / 2, width: FW, height: FH, rx: 36 }, cp);
+        el("rect", { x: CX - FW / 2, y: CY - FH / 2, width: FW, height: FH, rx: 36, fill: "#fff" }, g0);
+        const holder = el("g", { "clip-path": `url(#${id})` }, g0), world = el("g", {}, holder);
+        el("image", { href: v.img, x: 0, y: 0, width: v.iw, height: v.ih, preserveAspectRatio: "none" }, world);
+        const hls = (v.hl || []).map((r) => el("rect", { x: r[0], y: r[1], width: r[2], height: r[3], rx: 14, fill: "none", stroke: "#ffd166", "stroke-width": 9, "vector-effect": "non-scaling-stroke" }, world));
+        el("rect", { x: CX - FW / 2, y: CY - FH / 2, width: FW, height: FH, rx: 36, fill: "none", stroke: "#ffd166", "stroke-width": 6 }, g0);
+        G.imgs.push(new Promise((ok) => { const im = new Image(); im.onload = ok; im.onerror = ok; im.src = v.img; }));
+        const A = v.from || [0, 0, v.iw, v.ih], B = v.to, ctr = (R) => [R[0] + R[2] / 2, R[1] + R[3] / 2], fit = (R) => Math.min(FW / R[2], FH / R[3]);
+        sc.tick = (u, d) => {
+          const t = h.inOut(prog(u, 0.2, 1.5)), [ax, ay] = ctr(A), [bx, by] = ctr(B), sa = fit(A), sb = fit(B);
+          const z = Math.exp(Math.log(sa) + (Math.log(sb) - Math.log(sa)) * t) * (1 + 0.025 * Math.max(0, u - 1.5) / Math.max(d - 1.5, 1)); // légère dérive après l'arrivée
+          const cx = ax + (bx - ax) * t, cy = ay + (by - ay) * t;
+          world.setAttribute("transform", `translate(${CX - cx * z} ${CY - cy * z}) scale(${z})`);
+          hls.forEach((r, j) => r.setAttribute("stroke-opacity", outCubic(prog(u, 1.2 + j * 0.3, 1.7 + j * 0.3)) * (0.75 + 0.25 * Math.sin(u * 6))));
+        };
       } else if (k === "warn") {
         const w = el("g", {}, g0); emoji(w, v.icon || "⚠️", 300);
         const b = el("g", {}, g0); el("rect", { x: -450, y: -80, width: 900, height: 200, rx: 50, fill: v.c || "#e03131" }, b); ar(b, v.t || "", 70, 20, "#fff", 0, 840); if (v.f) fr(b, v.f, 38, 82, "#fff", 0, 840);
@@ -110,6 +127,8 @@
     G.mouth.setAttribute("d", mp); G.pup.forEach((p) => p.setAttribute("r", mood === "surprised" ? 11 : 8));
   }
   // Une fois les polices chargées : réduit tout texte plus large que son cadre (appelé par engine.html).
-  function afterFonts() { (G.fit || []).forEach(([e, w]) => { const l = e.getComputedTextLength(); if (l > w) e.setAttribute("font-size", Math.floor(+e.getAttribute("font-size") * w / l)); }); }
+  async function afterFonts() { (G.fit || []).forEach(([e, w]) => { const l = e.getComputedTextLength(); if (l > w) e.setAttribute("font-size", Math.floor(+e.getAttribute("font-size") * w / l)); });
+    if (G.imgs.length) { await Promise.all(G.imgs); await new Promise((r) => setTimeout(r, 300)); } // captures chargées et décodées avant la première image
+  }
   window.EP = { duration: T.duration, subs: T.subs, init, update, afterFonts };
 })();

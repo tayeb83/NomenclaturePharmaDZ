@@ -275,3 +275,27 @@ image d'aperçu = `couverture-<épisode>-verticale.jpg` (le fichier `…-partage
   ```
 - **À vérifier avant publication** : Montrer des captures de l'outil réel si possible. Rappeler qu'une absence d'interaction dans le thésaurus ne prouve pas que l'association soit sans risque. L'exemple paracétamol + flucloxacilline vient du thésaurus (association déconseillée, p. 191).
 
+---------------------------------------------------------------------------------------------------
+
+## 16 — Ordonnance avec TELFAST : substance, famille et génériques avec DwaDZ  (fichier : telfast.clone.mp4 · couverture : couverture-telfast-verticale.jpg · 85 s)
+
+- **Identifiant** : `ordonnance-telfast-dwadz` · **N° d'épisode** : 16
+- **Titre français** : Ordonnance avec TELFAST : substance, famille et génériques avec DwaDZ
+- **العنوان بالعربية** : وصفة فيها TELFAST: المادة الفعالة والعائلة والجنيسات مع DwaDZ
+- **Description française** :
+  ```text
+  Tu as une ordonnance avec TELFAST CP : quelle est la substance active, la famille du médicament, et quels sont ses génériques ? Suis le parcours sur DwaDZ : recherche du nom, fiche du médicament (substance active, code ATC, forme et dosage), classification ATC, autres médicaments de même substance (génériques), laboratoire, validité de l'enregistrement et interactions selon l'ANSM. Avant de remplacer un médicament par un générique, vérifie le dosage et la forme et demande au pharmacien. Vidéo en arabe, sous-titrée en français.
+  ```
+- **الوصف بالعربية** :
+  ```text
+  أمامك وصفة فيها TELFAST CP: ما المادة الفعالة، وما العائلة الدوائية، وما الأدوية الجنيسة؟ اتبع المسار في DwaDZ: البحث عن الاسم، ثم بطاقة الدواء (المادة الفعالة ورمز ATC والشكل والجرعة)، والتصنيف ATC، والأدوية الأخرى بنفس المادة الفعالة (الجنيسة)، والمخبر وصلاحية التسجيل، والتداخلات حسب ANSM. وقبل أن تستبدل دواءً بجنيس تحقق من الجرعة والشكل واسأل الصيدلي. فيديو بالعربية مع ترجمة فرنسية.
+  ```
+- **Étiquettes** : DwaDZ, TELFAST, الدواء_الجنيس, ATC
+- **Sources** :
+  ```text
+  Fiche du médicament TELFAST sur DwaDZ (nomenclature nationale des produits pharmaceutiques, MIPH) : substance active fexofénadine chlorhydrate, ATC R06AX26
+  Classification ATC (OMS), version 2026 utilisée par DwaDZ
+  Thesaurus des interactions médicamenteuses de l'ANSM, septembre 2023
+  ```
+- **À vérifier avant publication** : Captures du site réel, au moment de la capture : la fiche indique une validité d'enregistrement échue (4 juin 2024) et la recherche signale « retiré (1) » : ne pas présenter TELFAST comme disponible sans vérifier son statut actuel avant publication. Exemple pédagogique, pas un conseil de substitution : relecture par un pharmacien.
+
