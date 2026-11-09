@@ -17,6 +17,7 @@ export type VideoPublic = {
   has_vtt_ar: boolean; has_vtt_fr: boolean
   duree_sec: number | null; tags: string[]; sources: string
   reviewed_by: string | null; reviewed_at: string | null; published_at: string | null
+  cta_url: string | null; cta_label_fr: string | null; cta_label_ar: string | null
 }
 
 export type VideoAdminRow = VideoPublic & {
@@ -24,16 +25,27 @@ export type VideoAdminRow = VideoPublic & {
   fb_post_id: string | null; fb_published_at: string | null; updated_at: string
 }
 
-const PUBLIC_COLS = `id, slug, episode, titre_ar, titre_fr, description_ar, description_fr, video_url, poster_url,
+const BASE_COLS = `id, slug, episode, titre_ar, titre_fr, description_ar, description_fr, video_url, poster_url,
   sous_titres_incrustes, (vtt_ar IS NOT NULL) AS has_vtt_ar, (vtt_fr IS NOT NULL) AS has_vtt_fr,
   duree_sec, tags, sources, reviewed_by, reviewed_at, published_at`
+const CTA_COLS = `, cta_url, cta_label_fr, cta_label_ar`
+const NO_CTA_COLS = `, NULL::text AS cta_url, NULL::text AS cta_label_fr, NULL::text AS cta_label_ar`
+const PUBLIC_COLS = BASE_COLS + CTA_COLS
+
+/** Exécute la requête avec les colonnes du bouton ; si la migration sql/38 manque (colonne inconnue), réessaie sans elles. */
+async function avecCta<T>(run: (cols: string) => Promise<T>): Promise<T> {
+  try { return await run(BASE_COLS + CTA_COLS) } catch (err: any) {
+    if (err?.code === '42703') return run(BASE_COLS + NO_CTA_COLS)
+    throw err
+  }
+}
 
 const isMissingTable = (err: any) => err?.code === '42P01'
 
 export const listPublishedVideos = unstable_cache(
   async (): Promise<VideoPublic[]> => {
     try {
-      return await query<VideoPublic>(`SELECT ${PUBLIC_COLS} FROM videos WHERE statut = 'publie' ORDER BY episode NULLS LAST, published_at DESC`)
+      return await avecCta((cols) => query<VideoPublic>(`SELECT ${cols} FROM videos WHERE statut = 'publie' ORDER BY episode NULLS LAST, published_at DESC`))
     } catch (err) {
       if (isMissingTable(err)) return []
       throw err
@@ -47,7 +59,7 @@ export function getPublishedVideo(slug: string): Promise<VideoPublic | null> {
   return unstable_cache(
     async () => {
       try {
-        return await queryOne<VideoPublic>(`SELECT ${PUBLIC_COLS} FROM videos WHERE slug = $1 AND statut = 'publie'`, [slug])
+        return await avecCta((cols) => queryOne<VideoPublic>(`SELECT ${cols} FROM videos WHERE slug = $1 AND statut = 'publie'`, [slug]))
       } catch (err) {
         if (isMissingTable(err)) return null
         throw err
@@ -84,13 +96,13 @@ export async function getPublishedVtts(slug: string): Promise<{ ar: string | nul
 // ── Admin ─────────────────────────────────────────────────────
 
 export async function listVideosAdmin(): Promise<VideoAdminRow[]> {
-  return query<VideoAdminRow>(
-    `SELECT ${PUBLIC_COLS}, statut, fb_post_id, fb_published_at, updated_at FROM videos ORDER BY episode NULLS LAST, id`
-  )
+  return avecCta((cols) => query<VideoAdminRow>(
+    `SELECT ${cols}, statut, fb_post_id, fb_published_at, updated_at FROM videos ORDER BY episode NULLS LAST, id`
+  ))
 }
 
 export async function getVideoAdmin(id: number): Promise<(VideoAdminRow & { vtt_ar: string | null; vtt_fr: string | null }) | null> {
-  return queryOne(`SELECT ${PUBLIC_COLS}, vtt_ar, vtt_fr, statut, fb_post_id, fb_published_at, updated_at FROM videos WHERE id = $1`, [id])
+  return avecCta((cols) => queryOne(`SELECT ${cols}, vtt_ar, vtt_fr, statut, fb_post_id, fb_published_at, updated_at FROM videos WHERE id = $1`, [id]))
 }
 
 /** Crée ou met à jour (par id, sinon par slug). published_at est fixé à la première publication. */
@@ -98,20 +110,21 @@ export async function saveVideo(v: VideoInput): Promise<number> {
   const params = [
     v.slug, v.episode, v.titre_ar, v.titre_fr, v.description_ar, v.description_fr, v.video_url, v.poster_url,
     v.sous_titres_incrustes, v.vtt_ar, v.vtt_fr, v.duree_sec, v.tags, v.sources, v.statut, v.reviewed_by, v.reviewed_at,
+    v.cta_url, v.cta_label_fr, v.cta_label_ar,
   ]
   const cols = `slug, episode, titre_ar, titre_fr, description_ar, description_fr, video_url, poster_url,
-    sous_titres_incrustes, vtt_ar, vtt_fr, duree_sec, tags, sources, statut, reviewed_by, reviewed_at`
+    sous_titres_incrustes, vtt_ar, vtt_fr, duree_sec, tags, sources, statut, reviewed_by, reviewed_at, cta_url, cta_label_fr, cta_label_ar`
   const set = `slug = $1, episode = $2, titre_ar = $3, titre_fr = $4, description_ar = $5, description_fr = $6, video_url = $7,
     poster_url = $8, sous_titres_incrustes = $9, vtt_ar = $10, vtt_fr = $11, duree_sec = $12, tags = $13, sources = $14,
-    statut = $15::varchar, reviewed_by = $16, reviewed_at = $17, updated_at = NOW(),
+    statut = $15::varchar, reviewed_by = $16, reviewed_at = $17, cta_url = $18, cta_label_fr = $19, cta_label_ar = $20, updated_at = NOW(),
     published_at = CASE WHEN $15::varchar = 'publie' THEN COALESCE(videos.published_at, NOW()) ELSE videos.published_at END`
   if (v.id) {
-    const row = await queryOne<{ id: number }>(`UPDATE videos SET ${set} WHERE id = $18 RETURNING id`, [...params, v.id])
+    const row = await queryOne<{ id: number }>(`UPDATE videos SET ${set} WHERE id = $21 RETURNING id`, [...params, v.id])
     if (!row) throw Object.assign(new Error('Vidéo introuvable'), { code: 'NOT_FOUND' })
     return row.id
   }
   const row = await queryOne<{ id: number }>(
-    `INSERT INTO videos (${cols}, published_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::varchar,$16,$17, CASE WHEN $15::varchar = 'publie' THEN NOW() END)
+    `INSERT INTO videos (${cols}, published_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::varchar,$16,$17,$18,$19,$20, CASE WHEN $15::varchar = 'publie' THEN NOW() END)
      ON CONFLICT (slug) DO UPDATE SET ${set} RETURNING id`,
     params
   )

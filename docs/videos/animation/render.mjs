@@ -21,7 +21,12 @@ const burn = !argv.includes("--no-burn");
 const stills = opt("stills", "").split(",").filter(Boolean).map(Number);
 
 // Sous-titres : lus dans le fichier d'épisode, sans navigateur
-const win = {}; vm.runInNewContext(readFileSync(path.join(here, "episodes", ep + ".js"), "utf8"), { window: win });
+const win = {}
+vm.runInNewContext(readFileSync(path.join(here, "lib", "spec.js"), "utf8"), { window: win }) // aides (seg, V, COL, specToEP)
+vm.runInNewContext(readFileSync(path.join(here, "episodes", ep + ".js"), "utf8"), { window: win, ...win });
+if (win.SPEC && !win.EP) { // épisode « par spécification » : sous-titres et durée calculés sans navigateur
+  const T = win.specToEP(win.SPEC); win.EP = { duration: T.duration, subs: T.subs }
+}
 const { duration, subs } = win.EP;
 const ts = (s) => { const ms = Math.round(s * 1000), p = (n, l = 2) => String(n).padStart(l, "0"); return `${p(Math.floor(ms / 3600000))}:${p(Math.floor(ms / 60000) % 60)}:${p(Math.floor(ms / 1000) % 60)},${p(ms % 1000, 3)}`; };
 const srt = (k) => subs.map((s, i) => `${i + 1}\n${ts(s.start)} --> ${ts(s.end)}\n${s[k].join("\n")}\n`).join("\n");

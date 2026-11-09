@@ -14,11 +14,13 @@ type Form = {
   description_ar: string; description_fr: string; video_url: string; poster_url: string
   sous_titres_incrustes: boolean; vtt_ar: string; vtt_fr: string; duree_sec: string
   tags: string; sources: string; statut: 'brouillon' | 'publie'; reviewed_by: string; reviewed_at: string
+  cta_url: string; cta_label_fr: string; cta_label_ar: string
 }
 
 const EMPTY: Form = {
   slug: '', episode: '', titre_ar: '', titre_fr: '', description_ar: '', description_fr: '', video_url: '', poster_url: '',
   sous_titres_incrustes: true, vtt_ar: '', vtt_fr: '', duree_sec: '', tags: 'DwaDZ', sources: '', statut: 'brouillon', reviewed_by: '', reviewed_at: '',
+  cta_url: '', cta_label_fr: '', cta_label_ar: '',
 }
 /** Au-delà, l'envoi passe directement du navigateur vers Blob (les fonctions Vercel refusent plus de 4,5 Mo). */
 const DIRECT_MAX_BYTES = 4 * 1024 * 1024
@@ -74,6 +76,7 @@ export function VideosClient() {
       description_ar: v.description_ar, description_fr: v.description_fr, video_url: v.video_url ?? '', poster_url: v.poster_url ?? '',
       sous_titres_incrustes: v.sous_titres_incrustes, vtt_ar: v.vtt_ar ?? '', vtt_fr: v.vtt_fr ?? '', duree_sec: v.duree_sec?.toString() ?? '',
       tags: (v.tags || []).join(', '), sources: v.sources, statut: v.statut, reviewed_by: v.reviewed_by ?? '', reviewed_at: (v.reviewed_at ?? '').slice(0, 10),
+      cta_url: v.cta_url ?? '', cta_label_fr: v.cta_label_fr ?? '', cta_label_ar: v.cta_label_ar ?? '',
     })
   }
 
@@ -259,6 +262,15 @@ export function VideosClient() {
               {L('Relu par (pharmacien / médecin)', input('reviewed_by'))}
               {L('Date de relecture', input('reviewed_at', { type: 'date' }))}
               {L('Statut', <select className="adm-input" value={form.statut} onChange={(e) => set('statut', e.target.value as Form['statut'])}><option value="brouillon">Brouillon (invisible)</option><option value="publie">Publiée sur le site</option></select>)}
+            </div>
+            <div style={{ border: '1px dashed var(--adm-line)', borderRadius: 10, padding: 12, display: 'grid', gap: 10 }}>
+              <strong style={{ fontSize: 13 }}>Lien cliquable (bouton sous la vidéo et légende Facebook)</strong>
+              <div className="adm-fields">
+                {L('Adresse du lien (https)', input('cta_url', { style: mono, placeholder: 'https://www.dzair-pharma.net/alertes' }))}
+                {L('Texte du bouton (français)', input('cta_label_fr', { placeholder: 'Voir les alertes sur DwaDZ' }))}
+                {L('نص الزر (بالعربية)', input('cta_label_ar', { dir: 'rtl', placeholder: 'اطلع على التنبيهات في DwaDZ' }))}
+              </div>
+              <small style={{ color: 'var(--adm-muted)' }}>Un lien ne peut pas être cliquable dans le fichier vidéo lui-même (ni sur un Réel) : il l’est ici, sur la page de la vidéo, et dans la légende Facebook (avec suivi de provenance utm_*).</small>
             </div>
             {L('Sources (une par ligne : ANSM, RCP, OMS…) — obligatoires pour publier', <textarea className="adm-input" rows={3} value={form.sources} onChange={(e) => set('sources', e.target.value)} />)}
 

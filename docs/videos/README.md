@@ -104,6 +104,15 @@ node docs/videos/animation/render.mjs dci --stills 3,15   # images fixes pour co
   **Limites** : un clone reproduit ta voix mais lit un texte arabe ; un mot dialectal (تاع, زوج…) peut sortir trop « standard » → l'écrire
   comme tu le prononces dans `say`. Les échantillons et les textes sont envoyés au service choisi (ElevenLabs, ou Microsoft pour le mode 3) :
   ne cloner que sa propre voix, et ne mettre que du contenu destiné à être public. Les fichiers audio de `voix/` ne sont pas versionnés.
+- **Épisodes « par spécification »** (les 11 vidéos 4 à 14) : un fichier `animation/episodes/<nom>.js` ne contient que des données : pour chaque phrase, le texte arabe
+  (= texte lu), sa traduction française, l'illustration (`card`, `warn`, `list`, `steps`, `compare`, `search`, `logo`) et l'humeur de la mascotte, plus les métadonnées du site
+  (`meta`) et la couverture (`cover`). Les durées se déduisent du texte (≈ 11 caractères par seconde). Moteur : `animation/lib/build.js` ; pour un nouvel épisode, copier un fichier existant.
+  `node animation/render.mjs <nom>` rend la vidéo ; `node animation/meta.mjs > metadonnees-episodes.md` régénère les métadonnées à saisir dans l'admin.
+- **Réglage retenu à l'écoute (variante E de `tester_accent.py`)** : modèle `eleven_v3` + lexique complet, désormais **par défaut** dans `voice.py` pour la voix clonée. `./generer_voix.sh -f` régénère toutes les vidéos avec ces réglages.
+- **Accent et prononciation** : le clone lit l'arabe standard avec l'accent de son échantillon. Pour un accent plus proche du tien : (1) clone-toi à partir d'un échantillon en **arabe standard**
+  (`animation/voix/ENREGISTREMENT_FUSHA.md`) ; (2) `voice.py … --lexique p` écrit en lettres latines les noms à P (paracétamol, Doliprane, ibuprofène, aspirine) pour obtenir un vrai P, `--lexique complet`
+  pour tous les noms de médicaments (`voix/lexique_*.json`, modifiables) ; (3) `python3 animation/tester_accent.py` compare 5 réglages à l'oreille avant de choisir.
+- **Toutes les voix d'un coup** : `animation/generer_voix.sh` (ElevenLabs) génère `out/<épisode>.clone.mp4` pour chaque épisode qui n'en a pas encore.
 - **Couverture** : `node docs/videos/animation/cover.mjs` produit `out/couverture-dci-verticale.jpg` (image d'aperçu du site, zone utile centrale) et `out/couverture-dci-partage.jpg` (1200×630, Facebook). Pour une autre vidéo, adapter les textes et l'illustration dans `cover.html`.
 - **Police** : Cairo 800 (SIL OFL), incluse dans `animation/fonts/`. Le rendu arabe a été vérifié.
 - Les marques utilisées dans les dessins sont à valider `[A]` avant publication.
@@ -117,6 +126,7 @@ Le site a une page publique `/videos` (liste) et `/videos/<identifiant>` (lecteu
 **Mise en route (une seule fois)**
 1. Fusionner la branche, laisser Vercel déployer.
 2. Appliquer la migration : `psql "$DATABASE_URL" -f sql/37_videos.sql`
+   Puis, pour le **lien cliquable** (bouton sous la vidéo + légende Facebook, avec UTM) : `psql "$DATABASE_URL" -f sql/38_videos_cta.sql`. Un lien n'est jamais cliquable *dans* la vidéo ou le Reel : il est affiché en fin de vidéo et cliquable sur le site et dans la légende.
 3. Stockage des fichiers (recommandé) : dans Vercel, **Storage → Create → Blob**, puis « Connect to project » : `BLOB_READ_WRITE_TOKEN` est
    ajouté tout seul ; redéployer. Sans cela, l'admin accepte quand même l'**adresse https** d'un MP4 déjà hébergé.
 4. Facebook (facultatif) : les variables `FACEBOOK_PAGE_ID` et `FACEBOOK_PAGE_ACCESS_TOKEN` déjà utilisées pour les publications suffisent.

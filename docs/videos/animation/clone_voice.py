@@ -36,5 +36,8 @@ finally:
 if r.status_code != 200:
     sys.exit(f"ElevenLabs a refusé la requête (HTTP {r.status_code}) : {r.text[:400]}")
 vid = r.json()["voice_id"]
-(HERE / "voix" / "voice_id.txt").write_text(vid + "\n")
+f = HERE / "voix" / "voice_id.txt"
+if f.exists() and f.read_text().strip() != vid:  # garde l'ancien identifiant pour pouvoir y revenir (voix/voice_id.<ancien>.txt)
+    (HERE / "voix" / f"voice_id.ancien_{f.read_text().strip()[:8]}.txt").write_text(f.read_text())
+f.write_text(vid + "\n")
 print("Voix clonée. voice_id =", vid, "(enregistré dans voix/voice_id.txt)")

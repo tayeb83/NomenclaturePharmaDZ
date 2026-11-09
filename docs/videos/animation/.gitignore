@@ -4,4 +4,4 @@ voix/*.m4a
 voix/*.mp3
 voix/*.ogg
 voix/*.webm
-voix/voice_id.txt
+voix/voice_id*.txt

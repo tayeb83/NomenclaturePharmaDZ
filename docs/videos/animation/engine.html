@@ -35,7 +35,9 @@ function load(src) {
   return new Promise((ok) => { const s = document.createElement("script"); s.src = src; s.onload = ok; document.head.appendChild(s); });
 }
 async function boot() {
+  await load("lib/spec.js"); // aides pour les épisodes « par spécification »
   await load("episodes/" + q.get("ep") + ".js");
+  if (window.SPEC) await load("lib/build.js");
   EP = window.EP;
   const svg = document.getElementById("s");
   EP.init(svg, H);
@@ -44,6 +46,7 @@ async function boot() {
   subAr = H.el("text", { x: 540, "text-anchor": "middle", direction: "rtl", fill: "#fff", "font-size": 62 }, subG);
   subFr = H.el("text", { x: 540, "text-anchor": "middle", fill: "#ffe08a", "font-size": 42 }, subG);
   await document.fonts.ready;
+  if (EP.afterFonts) await EP.afterFonts();
   window.renderAt = (t) => {
     EP.update(t, H);
     const cur = EP.subs.find((s) => t >= s.start && t < s.end);
