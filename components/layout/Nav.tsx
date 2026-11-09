@@ -13,6 +13,8 @@ type NavLink = {
   label: string
   /** Additional path prefixes that should also mark this link as active. */
   match?: string[]
+  /** Path prefixes that must NOT mark this link as active (owned by another link). */
+  exclude?: string[]
 }
 type NavDropdown = {
   type: 'dropdown'
@@ -22,8 +24,9 @@ type NavDropdown = {
 }
 type NavItem = NavLink | NavDropdown
 
-function isActiveHref(pathname: string, href: string, match?: string[]) {
+function isActiveHref(pathname: string, href: string, match?: string[], exclude?: string[]) {
   if (pathname === href) return true
+  if ((exclude || []).some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`))) return false
   return (match || []).some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`))
 }
 
@@ -57,7 +60,13 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
         type: 'link',
         href: '/outils',
         label: fr ? 'Outils' : 'الأدوات',
+        exclude: ['/outils/comparateur-medicaments'],
         match: ['/outils', '/comparateur', '/veille', '/medicaments-critiques', '/classes-therapeutiques'],
+      },
+      {
+        type: 'link',
+        href: '/outils/comparateur-medicaments',
+        label: fr ? 'Comparateur' : 'المقارنة',
       },
       {
         type: 'dropdown',
@@ -65,7 +74,6 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
         label: fr ? 'Plus' : 'المزيد',
         links: [
           { href: '/specialites', label: fr ? '🗂️ Spécialités' : '🗂️ التخصصات' },
-          { href: '/outils/comparateur-medicaments', label: fr ? '⚖️ Comparateur de deux médicaments' : '⚖️ مقارنة بين دواءين' },
           { href: '/substitution', label: fr ? '♻️ Substitution générique' : '♻️ الاستبدال الجنيس' },
           { href: '/pharmacies', label: fr ? '📍 Annuaire des pharmacies' : '📍 دليل الصيدليات' },
           { href: '/graphe', label: fr ? '🕸️ Graphes' : '🕸️ الرسوم البيانية' },
@@ -107,7 +115,7 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
         <ul className={`site-nav-tabs${open ? ' open' : ''}`} role="tablist">
           {navItems.map(item => {
             if (item.type === 'link') {
-              const isActive = isActiveHref(pathname, item.href, item.match)
+              const isActive = isActiveHref(pathname, item.href, item.match, item.exclude)
               return (
                 <li key={item.href} className="site-nav-item">
                   <Link

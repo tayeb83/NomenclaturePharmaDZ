@@ -211,36 +211,37 @@ export function translateStabilite(value: string | null | undefined): string | n
 
 // ─── Motif de retrait ─────────────────────────────────────────
 /**
- * Motifs de retrait : une valeur est composée d'une ou plusieurs clauses (séparées par « ; », « / »,
- * « - » ou « et »). Chaque clause doit correspondre à une règle connue, sinon `null` (texte d'origine).
+ * Motifs de retrait (saisis en majuscules, formulations variables) : la valeur est découpée en
+ * clauses (« ; », « / », « , », « - », « et »), chacune traduite par la première règle à
+ * mots-clés qui lui correspond (texte plié : minuscules, sans accents). Si une clause n'a aucune
+ * règle, on retourne `null` et la valeur d'origine reste affichée.
  */
 const MOTIF_RULES: [RegExp, string][] = [
-  [/^non renouvellement( de la decision d.?enregistrement| de l.?enregistrement| de l.?amm)?$/, 'عدم تجديد قرار التسجيل'],
-  [/^(retrait|demande de retrait) (du marche )?(a|sur) la demande (du titulaire|du laboratoire|du fabricant|de l.?exploitant)( de la decision d.?enregistrement)?$/, 'سحب بطلب من صاحب التسجيل'],
-  [/^retrait (du marche )?(a|sur) la demande( de l.?operateur)?$/, 'سحب بطلب من المتعامل'],
-  [/^arret (de |de la )?commercialisation( du produit)?$/, 'توقف تسويق المنتج'],
-  [/^arret de commercialisation (du produit )?(dans le pays d.?origine|au niveau du pays d.?origine)$/, 'توقف التسويق في بلد المنشأ'],
-  [/^(retrait|interdiction) (du produit )?(du marche )?(dans|du|au niveau du) pays d.?origine$/, 'سحب المنتج من سوق بلد المنشأ'],
-  [/^retrait du marche du pays d.?origine$/, 'سحب المنتج من سوق بلد المنشأ'],
-  [/^produit (non|jamais) commercialise( pendant la duree de validite)?$/, 'منتج غير مسوَّق خلال مدة الصلاحية'],
-  [/^non commercialisation( du produit)?( pendant la duree de validite)?$/, 'عدم تسويق المنتج خلال مدة الصلاحية'],
-  [/^dossier de renouvellement non conforme$/, 'ملف التجديد غير مطابق'],
-  [/^cessation d.?activite( du titulaire| du laboratoire)?$/, 'توقف نشاط صاحب التسجيل'],
-  [/^fin de validite( de l.?enregistrement| de la decision d.?enregistrement)?$/, 'انتهاء صلاحية التسجيل'],
-  [/^transfert de l.?enregistrement( vers un autre titulaire)?$/, 'تحويل التسجيل إلى صاحب تسجيل آخر'],
-  [/^interdiction d.?importation$/, 'منع الاستيراد'],
-  [/^interdiction (de|d.?)(commercialisation|vente)$/, 'منع التسويق'],
-  [/^interdiction$/, 'منع'],
-  [/^cooperation$/, 'التعاون'],
-  [/^fin de (la )?cooperation$/, 'نهاية التعاون'],
-  [/^non precise$/, 'غير محدد'],
+  [/non renouvellement|renouvellement.*(non|absence)|absence de renouvellement/, 'عدم تجديد التسجيل'],
+  [/renouvellement.*non conforme|dossier.*non conforme/, 'ملف التجديد غير مطابق'],
+  [/interdiction.*import|import.*interdi/, 'منع الاستيراد'],
+  [/interdiction.*(commercialisation|vente)/, 'منع التسويق'],
+  [/(pays d.?origine|pays de provenance|pays d.?exportation).*(retrait|arret|interdi|suspen)|(retrait|arret|interdi|suspen).*(pays d.?origine|pays de provenance|pays d.?exportation)/, 'سحب المنتج أو توقف تسويقه في بلد المنشأ'],
+  [/pays d.?origine/, 'مرتبط ببلد المنشأ'],
+  [/demande.*(titulaire|laboratoire|fabricant|exploitant|operateur|detenteur)|(titulaire|laboratoire|operateur).*demande/, 'سحب بطلب من صاحب التسجيل'],
+  [/non commercialis|jamais commercialis|pas (ete )?commercialis/, 'عدم تسويق المنتج'],
+  [/arret.*commercialisation|cessation.*commercialisation|commercialisation.*(arret|cesse)/, 'توقف تسويق المنتج'],
+  [/raisons? commerciales?|motifs? commerciaux?|commercial/, 'لأسباب تجارية'],
+  [/cooperation/, 'في إطار التعاون'],
+  [/interdiction/, 'منع'],
+  [/pharmacovigilance|effets? indesirables?|securite|toxicite|risque/, 'لأسباب تتعلق بالسلامة'],
+  [/qualite|defaut|contamination|lot non conforme/, 'عيب في الجودة'],
+  [/cessation d.?activite|fermeture/, 'توقف نشاط صاحب التسجيل'],
+  [/fin de validite|expiration|expire/, 'انتهاء صلاحية التسجيل'],
+  [/transfert/, 'تحويل التسجيل إلى صاحب تسجيل آخر'],
+  [/non precise|non renseigne|^$/, 'غير محدد'],
 ]
 
 const normMotif = (s: string) => fold(s).replace(/[’‘`´]/g, "'").replace(/\s+/g, ' ').replace(/[.]+$/, '').trim()
 
 export function translateMotif(value: string | null | undefined): string | null {
   if (!value?.trim()) return null
-  const clauses = normMotif(value).split(/\s*(?:;|\/|\s-\s|\set\s)\s*/).filter(Boolean)
+  const clauses = normMotif(value).split(/\s*(?:;|\/|,|\s-\s|\set\s)\s*/).filter(Boolean)
   if (!clauses.length) return null
   const out: string[] = []
   for (const c of clauses) {
