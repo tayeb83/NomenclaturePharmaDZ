@@ -211,37 +211,66 @@ export function translateStabilite(value: string | null | undefined): string | n
 
 // ─── Motif de retrait ─────────────────────────────────────────
 /**
- * Motifs de retrait (saisis en majuscules, formulations variables) : la valeur est découpée en
- * clauses (« ; », « / », « , », « - », « et »), chacune traduite par la première règle à
- * mots-clés qui lui correspond (texte plié : minuscules, sans accents). Si une clause n'a aucune
- * règle, on retourne `null` et la valeur d'origine reste affichée.
+ * Motifs de retrait de la nomenclature MIPH (saisis en majuscules). Traduction par :
+ *  1. correspondance exacte avec les motifs connus ;
+ *  2. forme composée « RETRAIT PAR <auteur> POUR <raison> » ;
+ *  3. à défaut, règles à mots-clés clause par clause.
+ * Si rien ne correspond, `null` : la valeur d'origine reste affichée.
  */
+const MOTIFS_EXACTS: Record<string, string> = {
+  "retrait par le msprh pour interdiction d'importation": 'سحب من طرف وزارة الصحة بسبب منع الاستيراد',
+  'retrait par le detenteur pour motif commercial': 'سحب من طرف حائز القرار لأسباب تجارية',
+  'produit non commercialise et decision non renouvelee': 'منتج غير مسوَّق وقرار تسجيل غير مجدَّد',
+  'retrait par le msprh pour interdiction du laboratoire': 'سحب من طرف وزارة الصحة بسبب منع المخبر',
+  "retrait par le detenteur dans le pays d'origine": 'سحب من طرف حائز القرار في بلد المنشأ',
+  'retrait apres transfert de detenteur': 'سحب بعد تحويل الحيازة إلى حائز آخر',
+  'retrait par le detenteur pour arret de la cooperation': 'سحب من طرف حائز القرار لتوقف التعاون',
+  'arret de commercialisation': 'توقف التسويق',
+}
+
+const MOTIF_AUTEURS: [RegExp, string][] = [
+  [/^retrait par le msprh/, 'سحب من طرف وزارة الصحة'],
+  [/^retrait par le (detenteur|titulaire|laboratoire)/, 'سحب من طرف حائز القرار'],
+]
+const MOTIF_RAISONS: [RegExp, string][] = [
+  [/interdiction d.?importation/, 'بسبب منع الاستيراد'],
+  [/interdiction du laboratoire/, 'بسبب منع المخبر'],
+  [/motifs? commerciau?x?|raisons? commerciales?/, 'لأسباب تجارية'],
+  [/arret de la cooperation/, 'لتوقف التعاون'],
+  [/arret de (la )?commercialisation/, 'لتوقف التسويق'],
+  [/transfert/, 'بعد تحويل الحيازة'],
+  [/pays d.?origine/, 'في بلد المنشأ'],
+]
+
+/** Règles de repli, par mots-clés, appliquées clause par clause. */
 const MOTIF_RULES: [RegExp, string][] = [
-  [/non renouvellement|renouvellement.*(non|absence)|absence de renouvellement/, 'عدم تجديد التسجيل'],
-  [/renouvellement.*non conforme|dossier.*non conforme/, 'ملف التجديد غير مطابق'],
+  [/non renouvel/, 'عدم تجديد التسجيل'],
   [/interdiction.*import|import.*interdi/, 'منع الاستيراد'],
-  [/interdiction.*(commercialisation|vente)/, 'منع التسويق'],
-  [/(pays d.?origine|pays de provenance|pays d.?exportation).*(retrait|arret|interdi|suspen)|(retrait|arret|interdi|suspen).*(pays d.?origine|pays de provenance|pays d.?exportation)/, 'سحب المنتج أو توقف تسويقه في بلد المنشأ'],
   [/pays d.?origine/, 'مرتبط ببلد المنشأ'],
-  [/demande.*(titulaire|laboratoire|fabricant|exploitant|operateur|detenteur)|(titulaire|laboratoire|operateur).*demande/, 'سحب بطلب من صاحب التسجيل'],
-  [/non commercialis|jamais commercialis|pas (ete )?commercialis/, 'عدم تسويق المنتج'],
-  [/arret.*commercialisation|cessation.*commercialisation|commercialisation.*(arret|cesse)/, 'توقف تسويق المنتج'],
-  [/raisons? commerciales?|motifs? commerciaux?|commercial/, 'لأسباب تجارية'],
-  [/cooperation/, 'في إطار التعاون'],
-  [/interdiction/, 'منع'],
-  [/pharmacovigilance|effets? indesirables?|securite|toxicite|risque/, 'لأسباب تتعلق بالسلامة'],
-  [/qualite|defaut|contamination|lot non conforme/, 'عيب في الجودة'],
-  [/cessation d.?activite|fermeture/, 'توقف نشاط صاحب التسجيل'],
-  [/fin de validite|expiration|expire/, 'انتهاء صلاحية التسجيل'],
+  [/non commercialis|jamais commercialis/, 'عدم تسويق المنتج'],
+  [/arret.*commercialisation/, 'توقف التسويق'],
+  [/commercial/, 'لأسباب تجارية'],
+  [/cooperation/, 'التعاون'],
   [/transfert/, 'تحويل التسجيل إلى صاحب تسجيل آخر'],
-  [/non precise|non renseigne|^$/, 'غير محدد'],
+  [/pharmacovigilance|effets? indesirables?|securite/, 'لأسباب تتعلق بالسلامة'],
+  [/qualite|defaut/, 'عيب في الجودة'],
+  [/non precise|non renseigne/, 'غير محدد'],
 ]
 
 const normMotif = (s: string) => fold(s).replace(/[’‘`´]/g, "'").replace(/\s+/g, ' ').replace(/[.]+$/, '').trim()
 
 export function translateMotif(value: string | null | undefined): string | null {
   if (!value?.trim()) return null
-  const clauses = normMotif(value).split(/\s*(?:;|\/|,|\s-\s|\set\s)\s*/).filter(Boolean)
+  const v = normMotif(value)
+  if (v in MOTIFS_EXACTS) return MOTIFS_EXACTS[v]
+
+  const auteur = MOTIF_AUTEURS.find(([re]) => re.test(v))
+  if (auteur) {
+    const raison = MOTIF_RAISONS.find(([re]) => re.test(v))
+    if (raison) return `${auteur[1]} ${raison[1]}`
+  }
+
+  const clauses = v.split(/\s*(?:;|\/|,|\s-\s|\set\s)\s*/).filter(Boolean)
   if (!clauses.length) return null
   const out: string[] = []
   for (const c of clauses) {
