@@ -10,6 +10,7 @@
  */
 
 import type { Lang } from './i18n'
+import { displayField } from './translate-fields'
 
 export type FaqItem = { question: string; answer: string }
 
@@ -67,7 +68,7 @@ export function buildMedicamentFaq(med: FaqMed, equivalents: Equivalent[], lang:
     med.date_final && (ar ? `تاريخ الانتهاء ${med.date_final}` : `échéance : ${med.date_final}`)].filter(Boolean)
   if (med.source === 'retrait') {
     const when = med.date_retrait ? (ar ? ` (تاريخ السحب: ${med.date_retrait})` : ` (date de retrait : ${med.date_retrait})`) : ''
-    const why = med.motif_retrait ? (ar ? `. السبب: ${med.motif_retrait}` : `. Motif : ${med.motif_retrait}`) : ''
+    const why = med.motif_retrait ? (ar ? `. السبب: ${displayField('motif', med.motif_retrait, 'ar')}` : `. Motif : ${med.motif_retrait}`) : ''
     items.push(ar
       ? { question: `هل ${nom} ما زال مسجلا في الجزائر؟`, answer: `لا، سُحب ${nom} من التسمية الوطنية${when}${why}. راجعوا البدائل المسجلة بنفس المادة الفعالة.` }
       : { question: `${nom} est-il encore enregistré en Algérie ?`, answer: `Non, ${nom} a été retiré de la nomenclature nationale${when}${why}. Consultez les équivalents encore enregistrés avec la même substance active.` })

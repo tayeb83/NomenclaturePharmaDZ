@@ -96,7 +96,7 @@ function buildResume(
     if (med.source === 'retrait') {
       phrases.push(
         `تم سحب هذا الدواء من التسمية الوطنية للمنتجات الصيدلانية${med.date_retrait ? ` بتاريخ ${med.date_retrait}` : ''}` +
-        `${med.motif_retrait ? ` للسبب التالي : ${med.motif_retrait}` : ''}.`
+        `${med.motif_retrait ? ` للسبب التالي : ${displayField('motif', med.motif_retrait, 'ar')}` : ''}.`
       )
     } else if (med.source === 'non_renouvele') {
       phrases.push('لم يتم تجديد رخصة التسويق (AMM) الخاصة بهذا الدواء : فهو لم يعد مسجلا في التسمية الجارية.')
@@ -412,7 +412,7 @@ export async function MedicamentDetail(
           {/* Alerte retrait */}
           {isRetrait && med.motif_retrait && (
             <div className="alert-banner error" style={{ borderColor: motifColor(med.motif_retrait), color: motifColor(med.motif_retrait), background: '#fef2f2', marginBottom: 24 }}>
-              <strong>{pickLang(lang, { fr: 'Motif de retrait :', ar: 'سبب السحب :' })}</strong> {med.motif_retrait}
+              <strong>{pickLang(lang, { fr: 'Motif de retrait :', ar: 'سبب السحب :' })}</strong> {displayField('motif', med.motif_retrait, lang)}
               {med.date_retrait && <span style={{ marginLeft: 12, fontWeight: 400, color: '#7f1d1d' }}>({med.date_retrait})</span>}
             </div>
           )}
@@ -514,7 +514,7 @@ export async function MedicamentDetail(
                   {isRetrait && (
                     <>
                       <Row label={pickLang(lang, { fr: 'Date de retrait', ar: 'تاريخ السحب' })} value={med.date_retrait} />
-                      <Row label={pickLang(lang, { fr: 'Motif de retrait', ar: 'سبب السحب' })} value={med.motif_retrait} />
+                      <Row label={pickLang(lang, { fr: 'Motif de retrait', ar: 'سبب السحب' })} value={displayField('motif', med.motif_retrait, lang)} />
                     </>
                   )}
                   {med.is_new_vs_previous === true && (
