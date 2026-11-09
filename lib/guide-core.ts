@@ -665,6 +665,13 @@ export function normaliserDosage(raw: string | null | undefined, nbSubstances = 
   if (!brut || /^(?:-+|n\/?a|neant|\/)$/i.test(brut)) {
     return { id: 'non-precise', libelle: 'Non précisé', cle: '', tri: null, famille: 3, composants: 0, reconnu: true, alerte: null, complement: null }
   }
+  // Nombre seul sans unité, entre 0 et 1 : pourcentage converti en fraction par l'export Excel de la nomenclature
+  // (« 0,02 » = 2 %, « 0,0005 » = 0,05 %). Validé sur la nomenclature MIPH ; l'écriture d'origine reste dans `complement`.
+  const fraction = /^0?[.,]\d+$/.test(brut) ? parseFloat(brut.replace(',', '.')) : NaN
+  if (fraction > 0 && fraction < 1) {
+    const pct = analyserDosage(`${String(Number((fraction * 100).toPrecision(6))).replace('.', ',')} %`, nbSubstances)
+    if (pct) return { ...pct, complement: `valeur Excel « ${brut} » lue comme pourcentage` }
+  }
   const direct = analyserDosage(brut, nbSubstances)
   if (direct) return { ...direct, complement: null }
   // « 10MG/ML (50MG/5ML) », « 2MG/5ML OU 0,40MG/ML » : la première écriture fait foi, l'équivalence est écartée
