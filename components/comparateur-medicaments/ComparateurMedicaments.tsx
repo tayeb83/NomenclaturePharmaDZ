@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 import { CASBAH as C } from '@/lib/garde-ornaments'
 import { formatPpa } from '@/lib/ppa-format'
+import { medicamentPath } from '@/lib/medicament-url'
 import { InteractionsAnsmSection } from '@/components/drug/InteractionsAnsmSection'
 import type { Comparaison, CoteComparaison, FicheComparee } from '@/lib/comparateur-medicaments'
 import { Choix } from './Choix'
@@ -103,7 +104,7 @@ export function ComparateurMedicaments() {
       prix = t.moinsCher(moins.nom_marque, formatPpa(Math.round(d * 100) / 100, lang), `${Math.round((d / plus.ppa!) * 100)} %`)
     } else if (fa.ppa == null || fb.ppa == null) prix = t.sansPrix
   }
-  const hrefFiche = (f: FicheComparee) => `/${lang === 'ar' ? 'ar/' : ''}medicament/${f.source}/${f.id}`
+  const hrefFiche = (f: FicheComparee) => medicamentPath(f.source, f.id, f, lang)
 
   const note: React.CSSProperties = { margin: 0, padding: '10px 14px', background: 'white', border: `1px solid ${C.creamEdge}`, borderInlineStart: `4px solid ${C.brass}`, borderRadius: 8, fontSize: 14.5, lineHeight: 1.7, color: C.ink }
   const libelle = (s: Selection) => (s.type === 'marque' ? s.nom_marque : s.dci)
