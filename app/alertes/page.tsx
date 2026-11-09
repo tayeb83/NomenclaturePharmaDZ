@@ -1,4 +1,4 @@
-import { getRetraitsPaged, getRetraitsCount, getAllRetraitAnnees, getNonRenouveles, getNonRenouvelesCount, getMotifStats } from '@/lib/queries'
+import { getRetraitsPaged, getRetraitsCount, getAllRetraitAnnees, getNonRenouveles, getNonRenouvelesCount, getMotifStats, getAllMotifs } from '@/lib/queries'
 import { AlertesClient } from './AlertesClient'
 import type { Metadata } from 'next'
 
@@ -17,20 +17,22 @@ function parsePage(v?: string) {
   return Number.isFinite(n) && n > 0 ? n : 1
 }
 
-export default async function AlertesPage({ searchParams }: { searchParams: { annee?: string; page?: string; npage?: string; q?: string } }) {
+export default async function AlertesPage({ searchParams }: { searchParams: { annee?: string; page?: string; npage?: string; q?: string; motif?: string | string[] } }) {
   const anneeParsed = Number.parseInt(searchParams.annee || '', 10)
   const annee = Number.isFinite(anneeParsed) ? anneeParsed : null
   const q = (searchParams.q || '').trim().slice(0, 100)
+  const motifs = [searchParams.motif ?? []].flat().map(m => m.trim().slice(0, 300)).filter(Boolean).slice(0, 20)
   const page = parsePage(searchParams.page)
   const npage = parsePage(searchParams.npage)
 
-  const [retraits, total, annees, nonRenouveles, totalNonRenouveles, motifStatsRaw] = await Promise.all([
-    getRetraitsPaged(annee, PAGE_SIZE, (page - 1) * PAGE_SIZE, q),
-    getRetraitsCount(annee, q),
+  const [retraits, total, annees, nonRenouveles, totalNonRenouveles, motifStatsRaw, motifOptions] = await Promise.all([
+    getRetraitsPaged(annee, PAGE_SIZE, (page - 1) * PAGE_SIZE, q, motifs),
+    getRetraitsCount(annee, q, motifs),
     getAllRetraitAnnees(),
     getNonRenouveles(PAGE_SIZE, (npage - 1) * PAGE_SIZE, q),
     getNonRenouvelesCount(q),
     getMotifStats(),
+    getAllMotifs(),
   ])
   const motifStats: [string, number][] = motifStatsRaw.map(r => [r.motif, parseInt(r.n)])
 
@@ -42,6 +44,8 @@ export default async function AlertesPage({ searchParams }: { searchParams: { an
       annee={annee}
       annees={annees}
       q={q}
+      motifs={motifs}
+      motifOptions={motifOptions}
       page={page}
       totalPages={Math.max(1, Math.ceil(total / PAGE_SIZE))}
       total={total}
