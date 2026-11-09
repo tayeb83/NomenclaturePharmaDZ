@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
 import { hasAdminRole } from '@/lib/admin-auth'
 import { NOMENCLATURE_TAG } from '@/lib/medicament-cache'
+import { invaliderGuideIndex } from '@/lib/guide'
 import { getPool } from '@/lib/db'
 import {
   parseNomenclatureFile,
@@ -382,6 +383,8 @@ export async function POST(req: NextRequest) {
     // sans cette invalidation, la nouvelle nomenclature mettrait jusqu'à 24 h à
     // apparaître sur le site.
     revalidateTag(NOMENCLATURE_TAG)
+    // Index de la recherche guidée (Lab) : reconstruit à la prochaine requête de cette instance.
+    invaliderGuideIndex()
 
     return NextResponse.json({
       success: true,
