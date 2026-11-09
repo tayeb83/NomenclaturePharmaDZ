@@ -1456,24 +1456,37 @@ function likeContains(q: string): string {
   return `%${q.trim().replace(/[\\%_]/g, m => `\\${m}`)}%`
 }
 
-/** Retraits paginés, avec filtres optionnels : année de retrait et recherche texte (accents ignorés). */
-export async function getRetraitsPaged(annee: number | null, limit: number, offset: number, q = ''): Promise<Retrait[]> {
+/** Clause WHERE commune des retraits : année, motifs (plusieurs), recherche sur nom de marque / DCI. */
+const RETRAITS_WHERE = `
+  ($1::INT IS NULL OR EXTRACT(YEAR FROM r.date_retrait) = $1)
+  AND (cardinality($2::TEXT[]) = 0 OR COALESCE(r.motif_retrait, 'Non précisé') = ANY($2::TEXT[]))
+  AND ($3 = '' OR UNACCENT(CONCAT_WS(' ', r.dci, r.nom_marque)) ILIKE UNACCENT($4))
+`
+
+/** Retraits paginés ; filtres optionnels : année, motifs (liste), recherche médicament / DCI (accents ignorés). */
+export async function getRetraitsPaged(annee: number | null, limit: number, offset: number, q = '', motifs: string[] = []): Promise<Retrait[]> {
   return query<Retrait>(`
     SELECT * FROM retraits r
-    WHERE ($1::INT IS NULL OR EXTRACT(YEAR FROM r.date_retrait) = $1)
-      AND ($2 = '' OR UNACCENT(CONCAT_WS(' ', r.n_enreg, r.dci, r.nom_marque, r.forme, r.dosage, r.labo, r.pays, r.motif_retrait)) ILIKE UNACCENT($3))
+    WHERE ${RETRAITS_WHERE}
     ORDER BY r.date_retrait DESC NULLS LAST, r.id DESC
-    LIMIT $4 OFFSET $5
-  `, [annee, q.trim(), likeContains(q), limit, offset])
+    LIMIT $5 OFFSET $6
+  `, [annee, motifs, q.trim(), likeContains(q), limit, offset])
 }
 
-export async function getRetraitsCount(annee: number | null, q = ''): Promise<number> {
+export async function getRetraitsCount(annee: number | null, q = '', motifs: string[] = []): Promise<number> {
   const row = await queryOne<{ n: string }>(`
-    SELECT COUNT(*)::TEXT AS n FROM retraits r
-    WHERE ($1::INT IS NULL OR EXTRACT(YEAR FROM r.date_retrait) = $1)
-      AND ($2 = '' OR UNACCENT(CONCAT_WS(' ', r.n_enreg, r.dci, r.nom_marque, r.forme, r.dosage, r.labo, r.pays, r.motif_retrait)) ILIKE UNACCENT($3))
-  `, [annee, q.trim(), likeContains(q)])
+    SELECT COUNT(*)::TEXT AS n FROM retraits r WHERE ${RETRAITS_WHERE}
+  `, [annee, motifs, q.trim(), likeContains(q)])
   return row ? parseInt(row.n) : 0
+}
+
+/** Tous les motifs de retrait distincts, avec leur effectif (pour le filtre à choix multiples). */
+export async function getAllMotifs(): Promise<{ motif: string; n: number }[]> {
+  const rows = await query<{ motif: string; n: string }>(`
+    SELECT COALESCE(motif_retrait, 'Non précisé') AS motif, COUNT(*)::TEXT AS n
+    FROM retraits GROUP BY 1 ORDER BY COUNT(*) DESC, 1
+  `)
+  return rows.map(r => ({ motif: r.motif, n: parseInt(r.n) }))
 }
 
 export async function getLastRetraits(limit = 3): Promise<Retrait[]> {
@@ -1501,7 +1514,7 @@ export async function getMotifStats() {
 export async function getNonRenouveles(limit = 50, offset = 0, q = ''): Promise<NonRenouvele[]> {
   return query<NonRenouvele>(`
     SELECT * FROM non_renouveles n
-    WHERE ($1 = '' OR UNACCENT(CONCAT_WS(' ', n.n_enreg, n.dci, n.nom_marque, n.forme, n.dosage, n.labo, n.pays)) ILIKE UNACCENT($2))
+    WHERE ($1 = '' OR UNACCENT(CONCAT_WS(' ', n.dci, n.nom_marque)) ILIKE UNACCENT($2))
     ORDER BY n.date_final DESC NULLS LAST, n.id DESC
     LIMIT $3 OFFSET $4
   `, [q.trim(), likeContains(q), limit, offset])
@@ -1510,7 +1523,7 @@ export async function getNonRenouveles(limit = 50, offset = 0, q = ''): Promise<
 export async function getNonRenouvelesCount(q = ''): Promise<number> {
   const row = await queryOne<{ n: string }>(`
     SELECT COUNT(*)::TEXT AS n FROM non_renouveles n
-    WHERE ($1 = '' OR UNACCENT(CONCAT_WS(' ', n.n_enreg, n.dci, n.nom_marque, n.forme, n.dosage, n.labo, n.pays)) ILIKE UNACCENT($2))
+    WHERE ($1 = '' OR UNACCENT(CONCAT_WS(' ', n.dci, n.nom_marque)) ILIKE UNACCENT($2))
   `, [q.trim(), likeContains(q)])
   return row ? parseInt(row.n) : 0
 }

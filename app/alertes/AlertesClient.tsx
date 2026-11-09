@@ -7,12 +7,13 @@ import { PrintButton } from '@/components/ui/PrintButton'
 import { GlossarySection } from '@/components/ui/GlossarySection'
 import { displayField } from '@/lib/translate-fields'
 
-type Params = { annee: number | null; q: string; page: number; npage: number }
+type Params = { annee: number | null; q: string; motifs: string[]; page: number; npage: number }
 
 function hrefFor(p: Params, hash: string) {
   const params = new URLSearchParams()
   if (p.annee) params.set('annee', String(p.annee))
   if (p.q) params.set('q', p.q)
+  p.motifs.forEach(m => params.append('motif', m))
   if (p.page > 1) params.set('page', String(p.page))
   if (p.npage > 1) params.set('npage', String(p.npage))
   const qs = params.toString()
@@ -38,6 +39,8 @@ export function AlertesClient({
   annee,
   annees,
   q,
+  motifs,
+  motifOptions,
   page,
   totalPages,
   total,
@@ -51,6 +54,8 @@ export function AlertesClient({
   annee: number | null
   annees: number[]
   q: string
+  motifs: string[]
+  motifOptions: { motif: string; n: number }[]
   page: number
   totalPages: number
   total: number
@@ -60,7 +65,8 @@ export function AlertesClient({
 }) {
   const { lang } = useLanguage()
   const t = (fr: string, ar: string) => lang === 'ar' ? ar : fr
-  const cur: Params = { annee, q, page, npage }
+  const cur: Params = { annee, q, motifs, page, npage }
+  const hasFilter = !!(q || annee || motifs.length)
 
   const chipStyle = (active: boolean): React.CSSProperties => ({
     padding: '6px 14px', borderRadius: 20, fontSize: 12.5, fontWeight: 700,
@@ -110,44 +116,66 @@ export function AlertesClient({
                 {t('Liste complète, du retrait le plus récent au plus ancien', 'القائمة الكاملة، من الأحدث إلى الأقدم')}
               </div>
 
-              {/* Recherche dans la liste des alertes */}
-              <form action="/alertes" method="get" role="search" style={{ display: 'flex', gap: 8, margin: '12px 0 0', flexWrap: 'wrap' }}>
-                {annee && <input type="hidden" name="annee" value={annee} />}
-                <input
-                  type="search"
-                  name="q"
-                  defaultValue={q}
-                  maxLength={100}
-                  placeholder={t('Rechercher : nom, DCI, laboratoire, motif…', 'بحث: الاسم، DCI، المخبر، السبب…')}
-                  aria-label={t('Rechercher dans les alertes', 'البحث في التنبيهات')}
-                  style={{ flex: '1 1 240px', padding: '9px 14px', borderRadius: 8, border: '1.5px solid #e2e8f0', fontSize: 14 }}
-                />
-                <button type="submit" style={{ background: '#991b1b', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 18px', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
-                  {t('Rechercher', 'بحث')}
-                </button>
-                {q && (
-                  <Link href={hrefFor({ annee, q: '', page: 1, npage: 1 }, 'retraits')} style={{ ...chipStyle(false), alignSelf: 'center' }}>
-                    ✕ {t('Effacer', 'مسح')}
-                  </Link>
-                )}
+              {/* Recherche (médicament / DCI) + filtres année et motifs */}
+              <form action="/alertes" method="get" role="search" style={{ display: 'flex', flexDirection: 'column', gap: 10, margin: '12px 0 16px' }}>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <input
+                    type="search"
+                    name="q"
+                    defaultValue={q}
+                    maxLength={100}
+                    placeholder={t('Rechercher un médicament ou une DCI…', 'بحث عن دواء أو DCI…')}
+                    aria-label={t('Rechercher un médicament ou une DCI', 'البحث عن دواء أو DCI')}
+                    style={{ flex: '1 1 240px', padding: '9px 14px', borderRadius: 8, border: '1.5px solid #e2e8f0', fontSize: 14 }}
+                  />
+                  <select
+                    name="annee"
+                    defaultValue={annee ?? ''}
+                    aria-label={t('Année de retrait', 'سنة السحب')}
+                    style={{ padding: '9px 12px', borderRadius: 8, border: '1.5px solid #e2e8f0', fontSize: 14, background: 'white' }}
+                  >
+                    <option value="">{t('Toutes les années', 'كل السنوات')}</option>
+                    {annees.map(a => <option key={a} value={a}>{a}</option>)}
+                  </select>
+                  <details style={{ position: 'relative' }}>
+                    <summary style={{ padding: '9px 14px', borderRadius: 8, border: '1.5px solid #e2e8f0', fontSize: 14, background: 'white', cursor: 'pointer', listStyle: 'none', userSelect: 'none' }}>
+                      {motifs.length
+                        ? t(`Motifs (${motifs.length} sélectionné${motifs.length > 1 ? 's' : ''})`, `الأسباب (${motifs.length} محدد)`)
+                        : t('Tous les motifs', 'كل الأسباب')} ▾
+                    </summary>
+                    <div style={{
+                      position: 'absolute', zIndex: 20, top: 'calc(100% + 4px)', insetInlineStart: 0, width: 'min(440px, 86vw)',
+                      maxHeight: 320, overflowY: 'auto', background: 'white', border: '1.5px solid #e2e8f0', borderRadius: 10,
+                      padding: 10, boxShadow: '0 8px 24px rgba(15,23,42,.12)',
+                    }}>
+                      {motifOptions.map(o => (
+                        <label key={o.motif} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '6px 4px', fontSize: 13, lineHeight: 1.4, cursor: 'pointer' }}>
+                          <input type="checkbox" name="motif" value={o.motif} defaultChecked={motifs.includes(o.motif)} style={{ marginTop: 3 }} />
+                          <span style={{ flex: 1 }}>{displayField('motif', o.motif, lang)}</span>
+                          <span style={{ color: '#0369a1', fontWeight: 700 }}>{o.n}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </details>
+                </div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <button type="submit" style={{ background: '#991b1b', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 18px', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                    {t('Filtrer', 'تصفية')}
+                  </button>
+                  {hasFilter && (
+                    <Link href="/alertes#retraits" style={chipStyle(false)}>
+                      ✕ {t('Réinitialiser', 'إعادة تعيين')}
+                    </Link>
+                  )}
+                </div>
               </form>
-              {q && (
-                <div className="section-sub" style={{ marginTop: 8 }}>
-                  {t(`« ${q} » : ${total} retrait(s) et ${nTotal} AMM non renouvelée(s)`, `«${q}»: ${total} سحب و ${nTotal} AMM غير مجددة`)}
+              {hasFilter && (
+                <div className="section-sub" style={{ marginBottom: 12 }}>
+                  {motifs.length > 0
+                    ? t(`${total} retrait(s) correspondant aux filtres`, `${total} سحب مطابق للتصفية`)
+                    : t(`${total} retrait(s) et ${nTotal} AMM non renouvelée(s) correspondant aux filtres`, `${total} سحب و ${nTotal} AMM غير مجددة مطابقة للتصفية`)}
                 </div>
               )}
-
-              {/* Filtre par année de retrait */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '12px 0 16px' }}>
-                <Link href={hrefFor({ annee: null, q, page: 1, npage }, 'retraits')} style={chipStyle(annee === null)}>
-                  {t('Toutes les années', 'كل السنوات')}
-                </Link>
-                {annees.map(a => (
-                  <Link key={a} href={hrefFor({ annee: a, q, page: 1, npage }, 'retraits')} style={chipStyle(annee === a)}>
-                    {a}
-                  </Link>
-                ))}
-              </div>
 
               {retraits.length === 0 && (
                 <div className="empty-state" style={{ padding: '24px 0' }}>
@@ -187,7 +215,7 @@ export function AlertesClient({
                 </div>
               )}
 
-              <div style={{ marginTop: 36 }}>
+              {motifs.length === 0 && <div style={{ marginTop: 36 }}>
                 <div id="non-renouveles" className="section-title" style={{ scrollMarginTop: 90 }}>
                   ⚠️ {t(`AMM non renouvelées (${nTotal})`, `AMM غير مجددة (${nTotal})`)}
                 </div>
@@ -232,7 +260,7 @@ export function AlertesClient({
                     </Link>
                   </div>
                 )}
-              </div>
+              </div>}
             </div>
 
             <div>
