@@ -35,6 +35,53 @@ test('forme : les abréviations de la nomenclature rejoignent la forme écrite e
   }
 })
 
+test('forme : écritures relevées dans la nomenclature réelle (audit)', () => {
+  const cas: [string, string][] = [
+    ['GELLULE GASTRO RESISTANTE', 'Gélule gastro-résistante'],
+    ['GELULES GASTO-RESISTANTE', 'Gélule gastro-résistante'],
+    ['GELULE A MICRO-GRANULES GASTRO-RESISTANTS', 'Gélule gastro-résistante'],
+    ['MICROGRANULE EN GELLULE LIBERATION PROLONGEE', 'Gélule à libération prolongée'],
+    ['GELULE GASTRO-RESISTANTE CONTENANT DES MINI-COMPRIMES', 'Gélule gastro-résistante'],
+    ['CAPSULE DURE', 'Gélule'],
+    ['MICRO-GRANULE A LIBERATION PROLONGEE  EN SACHET', 'Granulés à libération prolongée'],
+    ['COMPRIME EFFERVESSANT', 'Comprimé effervescent'],
+    ['COMRIME PELLICULE', 'Comprimé pelliculé'],
+    ['COMPRIME QUADRI-SECABLE', 'Comprimé quadrisécable'],
+    ['POUDRE POUR SUSPENSSION BUVABLE EN SACHET DOSE', 'Poudre pour suspension buvable'],
+    ['SOLUTION INJECTABLE. S/C EN SERINGUE PRE-REMPLIE', 'Solution injectable'],
+    ['SOL P/PERF I/V', 'Solution pour perfusion'],
+    ['SOLUTION INJECTABLE SC ET INTRAVASCULAIRE EN SERING. PREREMPL.', 'Solution injectable'],
+    ['POUDRE LYOPHILISEE POUR SOLUTION A DILUER POUR PERFUSION IV', 'Poudre pour solution à diluer pour perfusion'],
+    ['LYOPH. P. SOL. INJ. IV', 'Poudre pour solution injectable'],
+    ['LYOPH. ORAL SUBLINGUAL', 'Lyophilisat oral'],
+    ['CONC. A DILUER P. PERF. IV', 'Solution à diluer pour perfusion'],
+    ['SOLVANT POUR PREPARATION INJECTABLE', 'Solvant pour préparation injectable'],
+    ['POUDRE LYOPHILISEE POUR PREPARATION INJECTABLE EN PERFUSION INTRAVEINEUSE', 'Poudre pour solution pour perfusion'],
+    ['SUSPENSION BUVABLE GTTES', 'Suspension buvable en gouttes'],
+    ['SUSP.OR.', 'Suspension buvable'],
+    ['PDRE.OR.', 'Poudre orale'],
+    ['AMP.BUV.', 'Solution buvable'],
+    ['DRG.', 'Comprimé enrobé'],
+    ['GAZ POUR INHALATION', 'Gaz pour inhalation'],
+    ['LIQUIDE. P. INHAL. PAR VAPEUR', 'Liquide pour inhalation par vapeur'],
+    ['Solution concentrEe pour HEmodialyse', 'Solution concentrée pour hémodialyse'],
+    ['SOL. P. DIALYSE PERITONEALE', 'Solution pour dialyse péritonéale'],
+    ['EMULSION FLUIDE POUR APPLICATION LOCALE (LAIT DERMIQUE)', 'Émulsion pour application cutanée'],
+    ['LAIT EN POUDRE POUR ENFANT EN BAS AGE ET ENFANT DE 1 A 14 ANS', 'Lait en poudre'],
+    ['SYSTEME DE DIFFUSION INTRA-UTERIN', 'Système de diffusion intra-utérin'],
+    ['SUPPOSITOIRE VAGINALE', 'Suppositoire vaginal'],
+  ]
+  for (const [brut, fr] of cas) {
+    const f = normaliserForme(brut)
+    assert.equal(f.fr, fr, brut)
+    assert.ok(f.reconnu, brut)
+  }
+  assert.equal(normaliserForme('SUPPOSITOIRE VAGINALE').voie, 'vaginale')
+  assert.equal(normaliserForme('SPRAY INHAL. BUCCALE').voie, 'inhalee')
+  assert.equal(normaliserForme('COMPRIME A SUCER OU A CROQUER').voie, 'orale-solide')
+  assert.equal(normaliserForme('COMPRIME A SUCER').voie, 'buccale')
+})
+
 test('forme : la voie distingue ce qui se ressemble', () => {
   assert.equal(normaliserForme('GEL').voie, 'cutanee')
   assert.equal(normaliserForme('GEL BUVABLE').voie, 'orale-liquide')
@@ -69,12 +116,34 @@ test('dosage : unités ramenées à la base, écritures équivalentes regroupée
   memeCle('500MG', '500 mg')
   memeCle('0,5G', '500 MG')
   memeCle('1G', '1000 MG')
-  memeCle('250MG/5ML', '50 MG/ML')
+  memeCle('50MG/ML', '50 MG/1 ML')
+  memeCle('10MG/ML (50MG/5ML)', '10 MG/ML') // l'équivalence entre parenthèses est écartée
+  memeCle('2MG/5ML OU 0,40MG/ML', '2 MG/5 ML')
+  memeCle('1G/FL. DE PDRE.', '1 G') // quantité par contenant = quantité de la présentation
+  memeCle('500MG/SACHET', '500 MG')
+  memeCle('80MG**', '80 MG')
   memeCle('100.000UI', '100 000 UI')
   memeCle('200µG/DOSE', '200MCG/DOSE')
   memeCle('1G/125MG', '1 g + 125 mg', 2)
   memeCle('500/62,5MG', '500 MG/62,5 MG', 2)
   assert.notEqual(normaliserDosage('2,4%').id, normaliserDosage('24 MG/ML').id) // % : m/m ou m/v, jamais converti
+})
+
+test('dosage : le volume du dénominateur est gardé (une seringue n’est pas une autre)', () => {
+  const id = (d: string) => normaliserDosage(d).id
+  assert.notEqual(id('40MG/0,4ML'), id('80MG/0,8ML'))
+  assert.notEqual(id('4000 UI/0,4 ML'), id('6000 UI/0,6 ML'))
+  assert.notEqual(id('250MG/5ML'), id('50MG/ML'))
+  assert.notEqual(id('100MG/2ML'), id('250MG/5ML'))
+  // le tri suit la concentration
+  assert.equal(normaliserDosage('250MG/5ML').tri, 50)
+  assert.equal(normaliserDosage('10MG/ML (50MG/5ML)').complement, '(50MG/5ML)')
+  assert.equal(normaliserDosage('1G/FL. DE PDRE.').libelle, '1 g/flacon')
+  assert.equal(normaliserDosage('20µG/80µL').cle, '0.02mg/0.08ml')
+  assert.equal(normaliserDosage('1MG/FL. DE PDRE. (50KUI/FL. DE PDRE.)').libelle, '1 mg/flacon')
+  assert.equal(normaliserDosage('70°').libelle, '70°')
+  // nombre sans unité : jamais interprété
+  assert.equal(normaliserDosage('0,02').reconnu, false)
 })
 
 test('dosage : libellés canoniques', () => {
@@ -92,8 +161,8 @@ test('dosage : libellés canoniques', () => {
 test('dosage : « / » sépare deux composants ou introduit une concentration selon la DCI', () => {
   assert.equal(normaliserDosage('1G/125MG', 2).composants, 2)
   assert.equal(normaliserDosage('20MG/G', 1).composants, 1)
-  assert.equal(normaliserDosage('20MG/G', 1).cle, '20mg/g')
-  assert.equal(normaliserDosage('5 G/100 G', 1).cle, '50mg/g')
+  assert.equal(normaliserDosage('20MG/G', 1).cle, '20mg/1g')
+  assert.equal(normaliserDosage('5 G/100 G', 1).cle, '5000mg/100g')
   assert.equal(normaliserDosage('1G/125MG', 1).alerte, '2 quantités pour une seule substance')
   assert.equal(normaliserDosage('500 MG', 2).alerte, '1 quantité(s) pour 2 substances')
 })
@@ -101,9 +170,13 @@ test('dosage : « / » sépare deux composants ou introduit une concentration se
 test('dosage : tri numérique et valeurs non lisibles', () => {
   assert.ok(normaliserDosage('500 MG').tri! < normaliserDosage('1 G').tri!)
   assert.equal(normaliserDosage('1.250 MG').tri, 1.25) // point décimal hors unité d'activité
-  const x = normaliserDosage('10 MG (BASE)')
+  const base = normaliserDosage('10 MG (BASE)')
+  assert.equal(base.libelle, '10 mg')
+  assert.equal(base.complement, '(BASE)')
+  const x = normaliserDosage('AMP. DE 5ML')
   assert.equal(x.reconnu, false)
-  assert.equal(x.libelle, '10 MG (BASE)')
+  assert.equal(x.libelle, 'AMP. DE 5ML')
+  assert.equal(normaliserDosage('PURETE ≥ 99.50%').reconnu, false)
   assert.equal(normaliserDosage('').id, 'non-precise')
   assert.equal(normaliserDosage('-').id, 'non-precise')
 })
@@ -159,10 +232,24 @@ test('les écritures différentes d’une même valeur ne forment qu’une optio
   assert.deepEqual(r.options.voie!.map(o => [o.id, o.n]), [['orale-solide', 3], ['orale-liquide', 3], ['injectable', 1]])
   assert.equal(r.options.forme!.find(o => o.libelle === 'Gélule')!.n, 2)
   assert.equal(r.options.dosage!.find(o => o.libelle === '250 mg/5 ml')!.n, 2)
+  assert.equal(r.options.forme!.find(o => o.libelle === 'Poudre pour solution injectable')!.n, 1)
   // DCI fusionnée et composants réalignés : « 1 g + 125 mg » = « 125 mg + 1 g » quand la DCI est inversée
   const aug = guider(idx, { dci: DCI_AUG })
   assert.equal(aug.total, 2)
   assert.equal(aug.options.dosage!.length, 1)
+})
+
+test('le libellé d’un dosage vient des écritures de la DCI, jamais d’une autre', () => {
+  const i2 = construireIndex([
+    L('ENOXAPARINE', 'SOL. INJ.', '4000 UI/0,4 ML', 'LOVENOX 4000'),
+    L('ENOXAPARINE', 'SOL. INJ.', '4000UI/0.4ML', 'ENOXA 4000'),
+    L('AUTRE', 'SOL. INJ.', '4 000 UI/0,4 ML', 'X1'),
+    L('AUTRE', 'SOL. INJ.', '4 000 UI/0,4 ML', 'X2'),
+    L('AUTRE', 'SOL. INJ.', '4 000 UI/0,4 ML', 'X3'),
+  ])
+  const r = guider(i2, { dci: normaliserDci('ENOXAPARINE').id })
+  assert.equal(r.options.dosage!.length, 1)
+  assert.equal(r.options.dosage![0].libelle, '4000 UI/0,4 ml')
 })
 
 test('règle 2 : une étape à valeur unique est remplie d’office', () => {

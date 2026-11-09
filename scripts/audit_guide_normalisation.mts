@@ -53,7 +53,7 @@ const feuilleFormes = [...formes].sort((a, b) => b[1].n - a[1].n).map(([brut, { 
 const feuilleDosages = [...dosages].sort((a, b) => b[1].n - a[1].n).map(([k, { n, v }]) => ({
   'Dosage (nomenclature)': k.split('|')[0], 'Substances dans la DCI': Number(k.split('|')[1]), Fiches: n,
   'Libellé normalisé': v.libelle, 'Clé de regroupement': v.cle, Identifiant: v.id,
-  Reconnu: v.reconnu ? 'oui' : 'NON', Alerte: v.alerte ?? '', 'Correction proposée': '',
+  Reconnu: v.reconnu ? 'oui' : 'NON', Alerte: v.alerte ?? '', 'Équivalence écartée': v.complement ?? '', 'Correction proposée': '',
 }))
 
 // Regroupements : une valeur normalisée qui rassemble plusieurs écritures d'origine
@@ -69,7 +69,7 @@ for (const [axe, brut, norm] of [
   }
   for (const [id, ecritures] of m) {
     if (ecritures.size < 2) continue
-    const lib = axe === 'forme' ? idx.libelles.forme.get(id)!.fr : idx.libelles.dosage.get(id)!.fr
+    const lib = axe === 'forme' ? idx.libelles.forme.get(id)!.fr : [...ecritures].sort((a, b) => b[1] - a[1])[0][0]
     regroupements.push({
       Axe: axe, 'Valeur normalisée': lib, Identifiant: id, Écritures: ecritures.size,
       Fiches: [...ecritures.values()].reduce((a, b) => a + b, 0),

@@ -91,9 +91,12 @@ Tests : `npm run test:demandes`.
 - Parcours DCI → voie → forme → dosage → présentations. Moteur et normalisation dans `lib/guide-core.ts`
   (sans base, testable seul), index en mémoire dans `lib/guide.ts`, route `GET /api/lab/guide`. Pas encore d'interface.
 - **Normalisation** : abréviations de forme développées (« COMP. PELL. » → « Comprimé pelliculé ») et libellés proches
-  des Standard Terms EDQM ; voie déduite de la forme (orale solide, orale liquide, injectable…) ; dosages ramenés aux
-  unités de base (« 0,5G » = « 500 MG », « 250 MG/5 ML » = « 50 MG/ML ») ; DCI composées identiques quel que soit
-  l'ordre ou le séparateur. Une valeur qui contient un mot inconnu n'est jamais rapprochée : elle garde son écriture.
+  des Standard Terms EDQM, fautes de frappe courantes comprises (« GELLULE », « SUSPENSSION ») ; voie déduite de la
+  forme (orale solide, orale liquide, injectable…) ; dosages ramenés aux unités de base (« 0,5G » = « 500 MG »,
+  « 1G/FL. DE PDRE. » = « 1 G »), la première écriture faisant foi (« 10MG/ML (50MG/5ML) » = « 10 MG/ML »). Le volume
+  d'un dénominateur est gardé : « 40 MG/0,4 ML » ≠ « 80 MG/0,8 ML » (une seringue n'est pas l'autre). DCI composées
+  identiques quel que soit l'ordre ou le séparateur. Une valeur qui contient un mot inconnu, ou un nombre sans unité
+  (« 0,02 »), n'est jamais rapprochée : elle garde son écriture.
 - Route : `?q=amox` (première étape : DCI, substance ou marque), puis `?dci=amoxicilline&voie=orale-liquide&…`
   avec les identifiants renvoyés dans `options`. Une étape à valeur unique est remplie d'office (`auto`), un choix
   incompatible est retiré (`ignores`), aucune option ne mène à zéro résultat. Filtres `statut=f|i`, `labo`, `lang=ar`.
