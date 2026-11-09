@@ -87,6 +87,20 @@ précise que DwaDZ met en relation, ne vend rien et ne garantit aucun stock.
 `NEXT_PUBLIC_FACEBOOK_PAGE_URL` (bouton « Nous écrire sur Facebook » sur `/demandes`).
 Tests : `npm run test:demandes`.
 
+### 🧭 Recherche guidée (Lab, en préparation)
+- Parcours DCI → voie → forme → dosage → présentations. Moteur et normalisation dans `lib/guide-core.ts`
+  (sans base, testable seul), index en mémoire dans `lib/guide.ts`, route `GET /api/lab/guide`. Pas encore d'interface.
+- **Normalisation** : abréviations de forme développées (« COMP. PELL. » → « Comprimé pelliculé ») et libellés proches
+  des Standard Terms EDQM ; voie déduite de la forme (orale solide, orale liquide, injectable…) ; dosages ramenés aux
+  unités de base (« 0,5G » = « 500 MG », « 250 MG/5 ML » = « 50 MG/ML ») ; DCI composées identiques quel que soit
+  l'ordre ou le séparateur. Une valeur qui contient un mot inconnu n'est jamais rapprochée : elle garde son écriture.
+- Route : `?q=amox` (première étape : DCI, substance ou marque), puis `?dci=amoxicilline&voie=orale-liquide&…`
+  avec les identifiants renvoyés dans `options`. Une étape à valeur unique est remplie d'office (`auto`), un choix
+  incompatible est retiré (`ignores`), aucune option ne mène à zéro résultat. Filtres `statut=f|i`, `labo`, `lang=ar`.
+- Audit à relire après chaque import : `DATABASE_URL=... npx tsx scripts/audit_guide_normalisation.mts` produit
+  `data/guide/audit_normalisation.xlsx` (formes et dosages non reconnus, regroupements, DCI fusionnées).
+  Les mots manquants s'ajoutent au vocabulaire `MOTS_FORME`. Tests : `npm run test:guide`.
+
 ### 🕸️ Graphe de connaissances (recherche)
 - `scripts/kg_export.py` exporte la nomenclature en **RDF/Turtle** (spécialités, substances, ATC en SKOS fr/en/ar,
   laboratoires, pays, retraits, interactions ANSM réifiées) et calcule des **indicateurs** (dépendance à
