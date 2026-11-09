@@ -126,6 +126,7 @@ Le site a une page publique `/videos` (liste) et `/videos/<identifiant>` (lecteu
 **Mise en route (une seule fois)**
 1. Fusionner la branche, laisser Vercel déployer.
 2. Appliquer la migration : `psql "$DATABASE_URL" -f sql/37_videos.sql`
+   Puis, pour le **lien cliquable** (bouton sous la vidéo + légende Facebook, avec UTM) : `psql "$DATABASE_URL" -f sql/38_videos_cta.sql`. Un lien n'est jamais cliquable *dans* la vidéo ou le Reel : il est affiché en fin de vidéo et cliquable sur le site et dans la légende.
 3. Stockage des fichiers (recommandé) : dans Vercel, **Storage → Create → Blob**, puis « Connect to project » : `BLOB_READ_WRITE_TOKEN` est
    ajouté tout seul ; redéployer. Sans cela, l'admin accepte quand même l'**adresse https** d'un MP4 déjà hébergé.
 4. Facebook (facultatif) : les variables `FACEBOOK_PAGE_ID` et `FACEBOOK_PAGE_ACCESS_TOKEN` déjà utilisées pour les publications suffisent.

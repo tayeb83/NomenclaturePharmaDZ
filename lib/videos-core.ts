@@ -25,6 +25,10 @@ export type VideoInput = {
   statut: VideoStatut
   reviewed_by: string | null
   reviewed_at: string | null
+  /** Bouton d'appel à l'action sous la vidéo et lien de la légende Facebook (facultatif). */
+  cta_url: string | null
+  cta_label_fr: string | null
+  cta_label_ar: string | null
 }
 
 export const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
@@ -63,6 +67,17 @@ export function srtToVtt(raw: string): string {
     if (cue) out.push(`${timing}\n${cue}`)
   }
   return out.length ? `WEBVTT\n\n${out.join('\n\n')}\n` : ''
+}
+
+/** Ajoute des paramètres utm_* (suivi de provenance) à un lien, sans écraser ceux qui existent déjà. */
+export function withUtm(url: string, utm: { source: string; medium: string; campaign: string }): string {
+  try {
+    const u = new URL(url)
+    if (!u.searchParams.has('utm_source')) {
+      u.searchParams.set('utm_source', utm.source); u.searchParams.set('utm_medium', utm.medium); u.searchParams.set('utm_campaign', utm.campaign)
+    }
+    return u.toString()
+  } catch { return url }
 }
 
 export function countCues(vtt: string | null | undefined): number {
@@ -104,6 +119,9 @@ export function validateVideo(input: any): Validation {
   const vtt_fr = s(input?.vtt_fr) ? srtToVtt(String(input.vtt_fr)) : null
   if (s(input?.vtt_ar) && !vtt_ar) return { ok: false, error: 'Sous-titres arabes illisibles (SRT ou VTT attendu).' }
   if (s(input?.vtt_fr) && !vtt_fr) return { ok: false, error: 'Sous-titres français illisibles (SRT ou VTT attendu).' }
+  const cta_url = s(input?.cta_url) || null
+  if (cta_url && !isHttpsUrl(cta_url)) return { ok: false, error: "L'adresse du bouton doit commencer par https://" }
+  const cta_label_fr = s(input?.cta_label_fr).slice(0, 80) || null, cta_label_ar = s(input?.cta_label_ar).slice(0, 80) || null
   const tags = (Array.isArray(input?.tags) ? input.tags : String(input?.tags ?? '').split(','))
     .map((t: unknown) => String(t).trim().replace(/^#/, '')).filter(Boolean).slice(0, 12)
   const value: VideoInput = {
@@ -112,6 +130,7 @@ export function validateVideo(input: any): Validation {
     video_url, poster_url, sous_titres_incrustes: incrustes, vtt_ar, vtt_fr,
     duree_sec: duree === null ? null : Math.round(duree), tags, sources: s(input?.sources), statut,
     reviewed_by: s(input?.reviewed_by) || null, reviewed_at: s(input?.reviewed_at) || null,
+    cta_url, cta_label_fr, cta_label_ar,
   }
   if (statut === 'publie') {
     if (!video_url) return { ok: false, error: 'Publication impossible sans fichier vidéo.' }
@@ -122,7 +141,7 @@ export function validateVideo(input: any): Validation {
   return { ok: true, value }
 }
 
-type Publie = Pick<VideoInput, 'slug' | 'titre_ar' | 'titre_fr' | 'description_ar' | 'description_fr' | 'video_url' | 'poster_url' | 'duree_sec'> & { published_at?: string | null }
+type Publie = Pick<VideoInput, 'slug' | 'titre_ar' | 'titre_fr' | 'description_ar' | 'description_fr' | 'video_url' | 'poster_url' | 'duree_sec'> & { published_at?: string | null; cta_url?: string | null; cta_label_fr?: string | null; cta_label_ar?: string | null }
 
 /** Données structurées schema.org pour Google. */
 export function videoJsonLd(v: Publie, appUrl: string, lang: 'fr' | 'ar') {
@@ -142,12 +161,14 @@ export function videoJsonLd(v: Publie, appUrl: string, lang: 'fr' | 'ar') {
   }
 }
 
-/** Légende Facebook : titre, résumé, lien, hashtags (arabe, avec le français en dessous). */
+/** Légende Facebook : titre, résumé, lien du bouton (avec suivi utm), lien de la page, hashtags (arabe, avec le français en dessous). Les liens d'une légende sont cliquables sur Facebook. */
 export function facebookCaption(v: Publie & { tags?: string[] }, appUrl: string): string {
   const tags = ['DwaDZ', 'صيدلة', 'الجزائر', ...(v.tags ?? [])].filter((t, i, a) => a.indexOf(t) === i).slice(0, 6).map((t) => `#${t.replace(/\s+/g, '')}`)
+  const cta = v.cta_url ? withUtm(v.cta_url, { source: 'facebook', medium: 'video', campaign: v.slug }) : null
   return [
     v.titre_ar, v.description_ar, '',
     v.titre_fr, v.description_fr, '',
+    ...(cta ? [`👉 ${v.cta_label_ar || v.cta_label_fr || 'DwaDZ'} :`, cta, ''] : []),
     `🔗 ${appUrl}/videos/${v.slug}`, tags.join(' '),
   ].filter((l, i, a) => l !== '' || (a[i - 1] !== '' && i > 0)).join('\n').trim()
 }

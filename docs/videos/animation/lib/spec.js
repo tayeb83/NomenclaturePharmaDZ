@@ -14,6 +14,7 @@ window.V = {
   search: (q, res) => ({ k: "search", q, res }),
   cform: (a, b, res) => ({ k: "cmpform", a, b, res }),   // formulaire « deux médicaments » puis carte de résultat {c, i, t, f}
   logo: () => ({ k: "logo" }),
+  link: (url, t, f) => ({ k: "link", url, t, f }),   // carte « lien dans la description » avec l'adresse affichée en grand (le lien cliquable est sur la page de la vidéo et dans la légende)
   // Capture d'écran réelle : zoom animé de la région `from` vers `to` ([x, y, largeur, hauteur] en pixels de l'image), surlignage `hl` (liste de rectangles).
   shot: (img, iw, ih, to, hl, from, fh) => ({ k: "shot", img, iw, ih, to, hl: hl || [], from, fh }), // fh : hauteur du cadre (900 par défaut ; moins pour une image très large)
 };

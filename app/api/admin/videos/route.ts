@@ -37,6 +37,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ ok: true, id })
   } catch (err: any) {
     const hint = tableHint(err); if (hint) return hint
+    if (err?.code === '42703') return NextResponse.json({ error: 'Colonne absente : appliquez sql/38_videos_cta.sql' }, { status: 500 })
     if (err?.code === 'NOT_FOUND') return NextResponse.json({ error: 'Vidéo introuvable' }, { status: 404 })
     if (err?.code === '23505') return NextResponse.json({ error: 'Cet identifiant est déjà utilisé.' }, { status: 409 })
     if (err?.code === '23514') return NextResponse.json({ error: 'Refusé par la base : publication sans fichier, relecteur ou sources.' }, { status: 400 })

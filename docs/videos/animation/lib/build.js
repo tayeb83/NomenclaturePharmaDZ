@@ -93,6 +93,14 @@
           world.setAttribute("transform", `translate(${CX - cx * z} ${CY - cy * z}) scale(${z})`);
           hls.forEach((r, j) => r.setAttribute("stroke-opacity", outCubic(prog(u, 1.2 + j * 0.3, 1.7 + j * 0.3)) * (0.75 + 0.25 * Math.sin(u * 6))));
         };
+      } else if (k === "link") { // adresse affichée en grand : on ne peut pas cliquer dans une vidéo, mais on peut la retenir (le lien cliquable est dans la description)
+        const cd = el("g", {}, g0); el("rect", { x: -450, y: -310, width: 900, height: 620, rx: 64, fill: "#102f3b", stroke: "#ffd166", "stroke-width": 12 }, cd);
+        const ic = el("g", {}, cd); emoji(ic, "🔗", 190, -170);
+        ar(cd, v.t || "الرابط في وصف الفيديو", 64, 20, "#ffd166", 0, 820); fr(cd, v.f || "Lien dans la description", 38, 82, "#ffe08a", 0, 820);
+        el("rect", { x: -420, y: 140, width: 840, height: 100, rx: 50, fill: "#fff" }, cd);
+        txt(cd, v.url, { x: 0, y: 207, "text-anchor": "middle", fill: "#0f4c5c", "font-size": 44 }); FIT.push([cd.lastChild, 780]);
+        const hand = el("g", {}, g0); emoji(hand, "👇", 130);
+        sc.tick = (u) => { const s = outBack(prog(u, 0.1, 0.8)); place(cd, 540, 780, s, 0, s ? 1 : 0); place(ic, 0, 0, 1 + Math.sin(u * 4) * 0.04, Math.sin(u * 3) * 4, 1); place(hand, 540, 1215 + Math.abs(Math.sin(u * 4)) * 22, 1, 0, outCubic(prog(u, 0.9, 1.4))); };
       } else if (k === "warn") {
         const w = el("g", {}, g0); emoji(w, v.icon || "⚠️", 300);
         const b = el("g", {}, g0); el("rect", { x: -450, y: -80, width: 900, height: 200, rx: 50, fill: v.c || "#e03131" }, b); ar(b, v.t || "", 70, 20, "#fff", 0, 840); if (v.f) fr(b, v.f, 38, 82, "#fff", 0, 840);

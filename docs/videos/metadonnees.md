@@ -15,6 +15,7 @@ image d'aperçu = `couverture-<vidéo>-verticale.jpg` (le fichier `…-partage.j
 - **الوصف بالعربية** :
   لماذا يحمل الدواء الواحد عدة أسماء؟ في أقل من دقيقة، افهم الفرق بين الاسم التجاري والـ DCI، وهي المادة الفعالة نفسها مهما اختلف المخبر. ولتجنّب تناول المادة نفسها مرتين، تحقق دائمًا من الـ DCI قبل الشراء واسأل الصيدلي. فيديو بالعربية مع ترجمة فرنسية.
 - **Étiquettes** : DwaDZ, DCI, الدواء, الباراسيتامول
+- **Lien cliquable (admin → « Lien cliquable »)** : https://www.dzair-pharma.net/recherche?q=PARACETAMOL&mode=dci · bouton : « Voir sur DwaDZ » / « شاهد في DwaDZ »
 - **Sources** :
   ```
   OMS : programme des dénominations communes internationales (DCI) pour les substances pharmaceutiques
@@ -33,6 +34,7 @@ image d'aperçu = `couverture-<vidéo>-verticale.jpg` (le fichier `…-partage.j
 - **الوصف بالعربية** :
   لكل دواء رمز يصنّفه: ATC، أي التصنيف التشريحي العلاجي الكيميائي الذي تضعه منظمة الصحة العالمية. مع مثال الباراسيتامول (N02BE01)، تعرّف في أقل من دقيقة على كيفية قراءة هذا الرمز خانةً خانة: الجهاز المعني، ثم نوع العلاج، ثم العائلة الكيميائية. فيديو بالعربية مع ترجمة فرنسية.
 - **Étiquettes** : DwaDZ, ATC, OMS, الدواء
+- **Lien cliquable (admin → « Lien cliquable »)** : https://www.dzair-pharma.net/recherche · bouton : « Voir sur DwaDZ » / « شاهد في DwaDZ »
 - **Sources** :
   ```
   OMS : système de classification anatomique, thérapeutique et chimique (ATC)
@@ -51,6 +53,7 @@ image d'aperçu = `couverture-<vidéo>-verticale.jpg` (le fichier `…-partage.j
 - **الوصف بالعربية** :
   قد يغيّر تناول دواءين معًا مفعول أحدهما أو يزيد المخاطر. في أقل من دقيقة، تعرّف على مستويات الخطورة الأربعة التي تعتمدها الوكالة الفرنسية للأدوية (ANSM): مضاد استطباب، جمع غير موصى به، احتياطات الاستعمال، ويؤخذ بعين الاعتبار، مع مثال لكل مستوى. لا تغيّر علاجك بمفردك، واسأل الطبيب أو الصيدلي. فيديو بالعربية مع ترجمة فرنسية.
 - **Étiquettes** : DwaDZ, ANSM, الدواء, التفاعلات
+- **Lien cliquable (admin → « Lien cliquable »)** : https://www.dzair-pharma.net/outils/comparateur-medicaments · bouton : « Voir sur DwaDZ » / « شاهد في DwaDZ »
 - **Sources** :
   ```
   ANSM : Thesaurus des interactions médicamenteuses, septembre 2023 (https://ansm.sante.fr/uploads/2024/06/07/20230915-thesaurus-interactions-medicamenteuses-septembre-2023.pdf)

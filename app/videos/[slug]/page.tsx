@@ -3,7 +3,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
-import { getPublishedVideo, getPublishedVtts, listPublishedVideos, videoJsonLd, vttToLines, formatDuree } from '@/lib/videos'
+import { getPublishedVideo, getPublishedVtts, listPublishedVideos, videoJsonLd, vttToLines, formatDuree, withUtm } from '@/lib/videos'
 import ShareBar from '@/components/drug/ShareBar'
 import { hashtagsArticle, ligneSuivre, texteACopier } from '@/lib/article-share'
 
@@ -69,6 +69,17 @@ export default async function VideoPage({ params }: { params: { slug: string } }
           </div>
           {v.duree_sec ? <p style={{ textAlign: 'center', color: '#64748b', fontSize: 13, marginTop: -8 }}>{formatDuree(v.duree_sec)}</p> : null}
           {description && <p style={{ fontSize: 16, lineHeight: 1.8, color: '#334155', direction: lang === 'ar' ? 'rtl' : 'ltr' }}>{description}</p>}
+
+          {v.cta_url && (
+            <p style={{ textAlign: 'center', margin: '4px 0 20px' }}>
+              <a
+                href={withUtm(v.cta_url, { source: 'site', medium: 'video', campaign: v.slug })}
+                style={{ display: 'inline-block', background: '#0f4c5c', color: '#fff', padding: '12px 26px', borderRadius: 999, fontWeight: 800, fontSize: 16, textDecoration: 'none', border: '2px solid #ffd166' }}
+              >
+                👉 {(lang === 'ar' ? v.cta_label_ar || v.cta_label_fr : v.cta_label_fr || v.cta_label_ar) || pickLang(lang, { fr: 'Essayer sur DwaDZ', ar: 'جرّب في DwaDZ' })}
+              </a>
+            </p>
+          )}
 
           <ShareBar
             url={url} title={titre} text={`${titre}\n${description}`.trim()} lang={lang} hashtags={hashtags}

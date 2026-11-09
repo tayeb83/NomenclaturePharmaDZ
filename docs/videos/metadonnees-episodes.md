@@ -1,4 +1,4 @@
-# Métadonnées des vidéos 4 à 14 pour l'admin (Admin → Vidéos → « + Nouvelle »)
+# Métadonnées des vidéos 4 à 18 pour l'admin (Admin → Vidéos → « + Nouvelle »)
 
 Généré par `node docs/videos/animation/meta.mjs` à partir de chaque épisode. Rappels : « Relu par » = nom d'une personne qui a **réellement** relu la vidéo ; laisser « sous-titres incrustés » coché ;
 image d'aperçu = `couverture-<épisode>-verticale.jpg` (le fichier `…-partage.jpg`, 1200×630, sert à la main sur Facebook). Le fichier vidéo est `<épisode>.clone.mp4`.
@@ -298,4 +298,53 @@ image d'aperçu = `couverture-<épisode>-verticale.jpg` (le fichier `…-partage
   Thesaurus des interactions médicamenteuses de l'ANSM, septembre 2023
   ```
 - **À vérifier avant publication** : Captures du site réel, au moment de la capture : la fiche indique une validité d'enregistrement échue (4 juin 2024) et la recherche signale « retiré (1) » : ne pas présenter TELFAST comme disponible sans vérifier son statut actuel avant publication. Exemple pédagogique, pas un conseil de substitution : relecture par un pharmacien.
+
+---------------------------------------------------------------------------------------------------
+
+## 17 — Cialis ou Tadalafil ? Nom de marque et DCI  (fichier : cialis.clone.mp4 · couverture : couverture-cialis-verticale.jpg · 48 s)
+
+- **Identifiant** : `cialis-ou-tadalafil-marque-et-dci` · **N° d'épisode** : 17
+- **Titre français** : Cialis ou Tadalafil ? Nom de marque et DCI
+- **العنوان بالعربية** : الفرق بين Cialis و Tadalafil؟
+- **Description française** :
+  ```text
+  Cialis et Tadalafil, est-ce le même médicament ? Cialis est un nom commercial choisi par le laboratoire ; Tadalafil est la DCI, la dénomination commune internationale de la substance active. Sur DwaDZ, la fiche affiche la DCI au-dessus du nom commercial, avec le code ATC (G04BE08). Cherche par DCI pour retrouver tous les médicaments contenant la même substance : https://www.dzair-pharma.net/recherche?q=TADALAFIL&mode=dci . Vidéo en arabe, sous-titrée en français.
+  ```
+- **الوصف بالعربية** :
+  ```text
+  هل Cialis وTadalafil دواء واحد؟ Cialis اسم تجاري يختاره المخبر، أما Tadalafil فهو الاسم الدولي المشترك (DCI) للمادة الفعالة. في DwaDZ تظهر المادة الفعالة فوق الاسم التجاري مع رمز ATC. ابحث بالمادة الفعالة لتجد كل الأدوية التي تحتوي عليها. فيديو بالعربية مع ترجمة فرنسية.
+  ```
+- **Étiquettes** : DwaDZ, DCI, الاسم_التجاري, TADALAFIL
+- **Lien cliquable (admin → « Lien cliquable »)** : https://www.dzair-pharma.net/recherche?q=TADALAFIL&mode=dci · bouton FR : « Chercher TADALAFIL par DCI » · bouton AR : « ابحث عن TADALAFIL بالمادة الفعالة »
+- **Sources** :
+  ```text
+  Fiche CIALIS sur DwaDZ (nomenclature nationale, MIPH) : DCI TADALAFIL, ATC G04BE08
+  OMS : dénominations communes internationales (DCI)
+  Classification ATC (OMS)
+  ```
+- **À vérifier avant publication** : La capture montre CIALIS avec le statut « retiré » (MSPRH, interdiction d'importation, 2011-05-08) : la vidéo ne parle pas de disponibilité ; vérifier le statut actuel sur la fiche avant publication. Relecture par un pharmacien.
+
+---------------------------------------------------------------------------------------------------
+
+## 18 — Alertes : médicaments retirés, motifs et années  (fichier : alertes.clone.mp4 · couverture : couverture-alertes-verticale.jpg · 60 s)
+
+- **Identifiant** : `alertes-retraits-medicaments-dwadz` · **N° d'épisode** : 18
+- **Titre français** : Alertes : médicaments retirés, motifs et années
+- **العنوان بالعربية** : التنبيهات: الأدوية المسحوبة وأسباب السحب والسنوات
+- **Description française** :
+  ```text
+  La page Alertes de DwaDZ liste les médicaments retirés du marché algérien, du plus récent au plus ancien, d'après les sources officielles du MIPH. Chaque fiche indique le motif (par exemple : retrait par le MSPRH pour interdiction d'importation, retrait par le détenteur pour motif commercial, produit non commercialisé et décision non renouvelée) et la date. Filtre par année, par motif, ou cherche un nom ou une DCI : https://www.dzair-pharma.net/alertes . Un retrait n'est pas forcément lié à la sécurité du médicament : ne jamais délivrer un médicament de cette liste, en cas de doute consulte les sources officielles. Vidéo en arabe, sous-titrée en français.
+  ```
+- **الوصف بالعربية** :
+  ```text
+  صفحة التنبيهات في DwaDZ تعرض الأدوية المسحوبة من السوق الجزائرية، من الأحدث إلى الأقدم، حسب المصادر الرسمية لوزارة الصناعة الصيدلانية. كل بطاقة تبين سبب السحب وتاريخه، مثل: سحب من وزارة الصحة بسبب منع الاستيراد، أو سحب من حائز القرار لأسباب تجارية، أو منتج غير مسوّق وقرار غير مجدد. يمكنك التصفية حسب السنة أو السبب، أو البحث باسم الدواء أو المادة الفعالة. ليس كل سحب مرتبطًا بسلامة الدواء. فيديو بالعربية مع ترجمة فرنسية.
+  ```
+- **Étiquettes** : DwaDZ, تنبيهات, الأدوية_المسحوبة
+- **Lien cliquable (admin → « Lien cliquable »)** : https://www.dzair-pharma.net/alertes · bouton FR : « Voir les alertes sur DwaDZ » · bouton AR : « شاهد التنبيهات في DwaDZ »
+- **Sources** :
+  ```text
+  Page Alertes de DwaDZ, données des médicaments retirés (nomenclature nationale, MIPH)
+  Avertissement officiel de la page : ne pas délivrer un médicament de la liste ; en cas de doute consulter les sources officielles du MIPH
+  ```
+- **À vérifier avant publication** : Les chiffres (824, 803, 501…) sont ceux de la capture à sa date (total 2679) : mettre à jour avant publication. Les 8 motifs affichés ne totalisent pas 2679 (les autres sont non listés). Les années ne sont visibles que dans le filtre : aucun chiffre par année n'est cité. Un retrait n'est pas forcément un problème de sécurité. Relecture par un pharmacien.
 

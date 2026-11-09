@@ -4,7 +4,7 @@
  */
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { countCues, facebookCaption, formatDuree, isHttpsUrl, slugify, srtToVtt, validateVideo, videoJsonLd, vttToLines } from '../../lib/videos-core.ts'
+import { countCues, facebookCaption, formatDuree, isHttpsUrl, slugify, srtToVtt, validateVideo, videoJsonLd, vttToLines, withUtm } from '../../lib/videos-core.ts'
 
 const SRT = '﻿1\r\n00:00:00,000 --> 00:00:04,000\r\nلماذا يملك الدواء الواحد\r\nعدة أسماء؟\r\n\r\n2\r\n00:00:04,000 --> 00:00:08,000\r\nهذه أسماء تجارية\r\n'
 
@@ -86,4 +86,29 @@ test('durée, JSON-LD et légende Facebook', () => {
   assert.ok(cap.includes('https://s.dz/videos/dci'))
   assert.ok(cap.includes('#DwaDZ') && cap.includes('#ATC'))
   assert.ok(cap.indexOf('ع') < cap.indexOf('T'))
+})
+
+test('bouton d\u2019appel à l\u2019action : https exigé, libellés facultatifs', () => {
+  const ok = validateVideo({ ...base, cta_url: 'https://www.dzair-pharma.net/alertes', cta_label_fr: 'Voir les alertes' })
+  assert.ok(ok.ok)
+  if (ok.ok) { assert.equal(ok.value.cta_url, 'https://www.dzair-pharma.net/alertes'); assert.equal(ok.value.cta_label_ar, null) }
+  assert.equal(validateVideo({ ...base, cta_url: 'http://x.com/a' }).ok, false)
+  const vide = validateVideo(base)
+  assert.ok(vide.ok); if (vide.ok) assert.equal(vide.value.cta_url, null)
+})
+
+test('utm : ajoutés sans écraser un suivi existant ; lien invalide renvoyé tel quel', () => {
+  assert.equal(withUtm('https://s.dz/alertes', { source: 'facebook', medium: 'video', campaign: 'alertes' }), 'https://s.dz/alertes?utm_source=facebook&utm_medium=video&utm_campaign=alertes')
+  assert.equal(withUtm('https://s.dz/r?q=TADALAFIL&mode=dci', { source: 'site', medium: 'video', campaign: 'x' }), 'https://s.dz/r?q=TADALAFIL&mode=dci&utm_source=site&utm_medium=video&utm_campaign=x')
+  assert.equal(withUtm('https://s.dz/a?utm_source=mail', { source: 'facebook', medium: 'video', campaign: 'x' }), 'https://s.dz/a?utm_source=mail')
+  assert.equal(withUtm('pas un lien', { source: 'a', medium: 'b', campaign: 'c' }), 'pas un lien')
+})
+
+test('légende Facebook : lien du bouton cliquable avec suivi, avant le lien de la page', () => {
+  const v = { slug: 'alertes', titre_ar: 'ع', titre_fr: 'T', description_ar: 'وصف', description_fr: 'Desc', video_url: 'https://x.com/a.mp4', poster_url: null, duree_sec: 60, cta_url: 'https://s.dz/alertes', cta_label_fr: 'Voir les alertes', cta_label_ar: 'اطلع على التنبيهات' }
+  const cap = facebookCaption(v, 'https://s.dz')
+  assert.ok(cap.includes('https://s.dz/alertes?utm_source=facebook&utm_medium=video&utm_campaign=alertes'))
+  assert.ok(cap.indexOf('utm_source') < cap.indexOf('https://s.dz/videos/alertes'))
+  assert.ok(cap.includes('اطلع على التنبيهات'))
+  assert.ok(!facebookCaption({ ...v, cta_url: null }, 'https://s.dz').includes('utm_'))
 })
