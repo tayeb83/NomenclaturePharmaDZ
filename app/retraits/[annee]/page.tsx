@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { getRetraitsByAnnee, getAllRetraitAnnees } from '@/lib/queries'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
 import { medicamentPath } from '@/lib/medicament-url'
+import { displayField } from '@/lib/translate-fields'
 import { PrintButton } from '@/components/ui/PrintButton'
 import { GlossarySection } from '@/components/ui/GlossarySection'
 import { AdInContent } from '@/components/ads/AdBanner'
@@ -154,7 +155,7 @@ export default async function RetraitsAnneePage({ params }: { params: { annee: s
             {motifGroups.map(([motif, items]) => (
               <div key={motif} style={{ marginBottom: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 600, color: motifColor(motif), marginBottom: 4 }}>
-                  <span style={{ flex: 1, paddingRight: 8 }}>{motif}</span>
+                  <span style={{ flex: 1, paddingRight: 8 }}>{displayField('motif', motif, lang)}</span>
                   <span style={{ color: motifColor(motif), flexShrink: 0 }}>{items.length}</span>
                 </div>
                 <div style={{ height: 5, background: '#f1f5f9', borderRadius: 4 }}>
@@ -172,7 +173,7 @@ export default async function RetraitsAnneePage({ params }: { params: { annee: s
                 borderLeft: `4px solid ${motifColor(motif)}`,
                 paddingLeft: 12, marginBottom: 12,
               }}>
-                {motif} <span style={{ fontWeight: 400, color: '#475569', fontSize: 12 }}>({items.length})</span>
+                {displayField('motif', motif, lang)} <span style={{ fontWeight: 400, color: '#475569', fontSize: 12 }}>({items.length})</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
                 {items.map(med => (

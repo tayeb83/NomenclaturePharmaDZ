@@ -1,4 +1,4 @@
-import { getRetraitsPaged, getRetraitsCount, getAllRetraitAnnees, getNonRenouveles, getMotifStats } from '@/lib/queries'
+import { getRetraitsPaged, getRetraitsCount, getAllRetraitAnnees, getNonRenouveles, getNonRenouvelesCount, getMotifStats } from '@/lib/queries'
 import { AlertesClient } from './AlertesClient'
 import type { Metadata } from 'next'
 
@@ -12,18 +12,24 @@ export const metadata: Metadata = {
 }
 export const dynamic = 'force-dynamic'
 
-export default async function AlertesPage({ searchParams }: { searchParams: { annee?: string; page?: string } }) {
+function parsePage(v?: string) {
+  const n = Number.parseInt(v || '1', 10)
+  return Number.isFinite(n) && n > 0 ? n : 1
+}
+
+export default async function AlertesPage({ searchParams }: { searchParams: { annee?: string; page?: string; npage?: string; q?: string } }) {
   const anneeParsed = Number.parseInt(searchParams.annee || '', 10)
   const annee = Number.isFinite(anneeParsed) ? anneeParsed : null
+  const q = (searchParams.q || '').trim().slice(0, 100)
+  const page = parsePage(searchParams.page)
+  const npage = parsePage(searchParams.npage)
 
-  const pageParsed = Number.parseInt(searchParams.page || '1', 10)
-  const page = Number.isFinite(pageParsed) && pageParsed > 0 ? pageParsed : 1
-
-  const [retraits, total, annees, nonRenouveles, motifStatsRaw] = await Promise.all([
-    getRetraitsPaged(annee, PAGE_SIZE, (page - 1) * PAGE_SIZE),
-    getRetraitsCount(annee),
+  const [retraits, total, annees, nonRenouveles, totalNonRenouveles, motifStatsRaw] = await Promise.all([
+    getRetraitsPaged(annee, PAGE_SIZE, (page - 1) * PAGE_SIZE, q),
+    getRetraitsCount(annee, q),
     getAllRetraitAnnees(),
-    getNonRenouveles(50),
+    getNonRenouveles(PAGE_SIZE, (npage - 1) * PAGE_SIZE, q),
+    getNonRenouvelesCount(q),
     getMotifStats(),
   ])
   const motifStats: [string, number][] = motifStatsRaw.map(r => [r.motif, parseInt(r.n)])
@@ -35,9 +41,13 @@ export default async function AlertesPage({ searchParams }: { searchParams: { an
       motifStats={motifStats}
       annee={annee}
       annees={annees}
+      q={q}
       page={page}
       totalPages={Math.max(1, Math.ceil(total / PAGE_SIZE))}
       total={total}
+      npage={npage}
+      nTotalPages={Math.max(1, Math.ceil(totalNonRenouveles / PAGE_SIZE))}
+      nTotal={totalNonRenouveles}
     />
   )
 }

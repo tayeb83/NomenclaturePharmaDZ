@@ -16,7 +16,7 @@ function buildWhatsAppUrl(drug: SearchResult, type: string, lang: 'fr' | 'ar'): 
   let msg = ''
   if (type === 'retrait') {
     msg = `🚨 *${lang === 'ar' ? 'سحب' : 'RETRAIT'} — ${drug.nom_marque}* (${drug.dci})\n`
-    if (drug.motif_retrait) msg += `${lang === 'ar' ? 'السبب' : 'Motif'} : ${drug.motif_retrait}\n`
+    if (drug.motif_retrait) msg += `${lang === 'ar' ? 'السبب' : 'Motif'} : ${displayField('motif', drug.motif_retrait, lang)}\n`
     if (drug.date_retrait) msg += `${lang === 'ar' ? 'التاريخ' : 'Date'} : ${drug.date_retrait}\n`
   } else if (type === 'non_renouvele') {
     msg = `⚠️ *${lang === 'ar' ? 'عدم تجديد رخصة AMM' : 'AMM non renouvelée'} — ${drug.nom_marque}* (${drug.dci})\n`
@@ -136,7 +136,7 @@ export function DrugCard({
 
       {isRetrait && drug.motif_retrait && (
         <div className="drug-alert retrait">
-          ⚠️ {drug.motif_retrait}
+          ⚠️ {displayField('motif', drug.motif_retrait, lang)}
           {drug.date_retrait && <span style={{ fontWeight: 400, color: '#991b1b', marginLeft: 8 }}>({drug.date_retrait})</span>}
         </div>
       )}

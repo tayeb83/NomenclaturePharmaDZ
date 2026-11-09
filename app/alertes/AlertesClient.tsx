@@ -5,13 +5,18 @@ import { DrugCard } from '@/components/drug/DrugCard'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 import { PrintButton } from '@/components/ui/PrintButton'
 import { GlossarySection } from '@/components/ui/GlossarySection'
+import { displayField } from '@/lib/translate-fields'
 
-function pageHref(annee: number | null, page: number) {
+type Params = { annee: number | null; q: string; page: number; npage: number }
+
+function hrefFor(p: Params, hash: string) {
   const params = new URLSearchParams()
-  if (annee) params.set('annee', String(annee))
-  if (page > 1) params.set('page', String(page))
+  if (p.annee) params.set('annee', String(p.annee))
+  if (p.q) params.set('q', p.q)
+  if (p.page > 1) params.set('page', String(p.page))
+  if (p.npage > 1) params.set('npage', String(p.npage))
   const qs = params.toString()
-  return `/alertes${qs ? `?${qs}` : ''}#retraits`
+  return `/alertes${qs ? `?${qs}` : ''}#${hash}`
 }
 
 /** Numéros de pages à afficher : 1 … autour de la page courante … dernière */
@@ -32,21 +37,30 @@ export function AlertesClient({
   motifStats,
   annee,
   annees,
+  q,
   page,
   totalPages,
   total,
+  npage,
+  nTotalPages,
+  nTotal,
 }: {
   retraits: any[]
   nonRenouveles: any[]
   motifStats: [string, number][]
   annee: number | null
   annees: number[]
+  q: string
   page: number
   totalPages: number
   total: number
+  npage: number
+  nTotalPages: number
+  nTotal: number
 }) {
   const { lang } = useLanguage()
   const t = (fr: string, ar: string) => lang === 'ar' ? ar : fr
+  const cur: Params = { annee, q, page, npage }
 
   const chipStyle = (active: boolean): React.CSSProperties => ({
     padding: '6px 14px', borderRadius: 20, fontSize: 12.5, fontWeight: 700,
@@ -96,13 +110,40 @@ export function AlertesClient({
                 {t('Liste complète, du retrait le plus récent au plus ancien', 'القائمة الكاملة، من الأحدث إلى الأقدم')}
               </div>
 
+              {/* Recherche dans la liste des alertes */}
+              <form action="/alertes" method="get" role="search" style={{ display: 'flex', gap: 8, margin: '12px 0 0', flexWrap: 'wrap' }}>
+                {annee && <input type="hidden" name="annee" value={annee} />}
+                <input
+                  type="search"
+                  name="q"
+                  defaultValue={q}
+                  maxLength={100}
+                  placeholder={t('Rechercher : nom, DCI, laboratoire, motif…', 'بحث: الاسم، DCI، المخبر، السبب…')}
+                  aria-label={t('Rechercher dans les alertes', 'البحث في التنبيهات')}
+                  style={{ flex: '1 1 240px', padding: '9px 14px', borderRadius: 8, border: '1.5px solid #e2e8f0', fontSize: 14 }}
+                />
+                <button type="submit" style={{ background: '#991b1b', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 18px', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                  {t('Rechercher', 'بحث')}
+                </button>
+                {q && (
+                  <Link href={hrefFor({ annee, q: '', page: 1, npage: 1 }, 'retraits')} style={{ ...chipStyle(false), alignSelf: 'center' }}>
+                    ✕ {t('Effacer', 'مسح')}
+                  </Link>
+                )}
+              </form>
+              {q && (
+                <div className="section-sub" style={{ marginTop: 8 }}>
+                  {t(`« ${q} » : ${total} retrait(s) et ${nTotal} AMM non renouvelée(s)`, `«${q}»: ${total} سحب و ${nTotal} AMM غير مجددة`)}
+                </div>
+              )}
+
               {/* Filtre par année de retrait */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '12px 0 16px' }}>
-                <Link href={pageHref(null, 1)} style={chipStyle(annee === null)}>
+                <Link href={hrefFor({ annee: null, q, page: 1, npage }, 'retraits')} style={chipStyle(annee === null)}>
                   {t('Toutes les années', 'كل السنوات')}
                 </Link>
                 {annees.map(a => (
-                  <Link key={a} href={pageHref(a, 1)} style={chipStyle(annee === a)}>
+                  <Link key={a} href={hrefFor({ annee: a, q, page: 1, npage }, 'retraits')} style={chipStyle(annee === a)}>
                     {a}
                   </Link>
                 ))}
@@ -121,7 +162,7 @@ export function AlertesClient({
               {totalPages > 1 && (
                 <div className="pagination">
                   <Link
-                    href={pageHref(annee, Math.max(1, page - 1))}
+                    href={hrefFor({ ...cur, page: Math.max(1, page - 1) }, 'retraits')}
                     className="page-btn"
                     style={page <= 1 ? { pointerEvents: 'none', opacity: 0.4 } : undefined}
                     aria-disabled={page <= 1}
@@ -131,12 +172,12 @@ export function AlertesClient({
                   {pageNumbers(page, totalPages).map((p, i) => p === '…' ? (
                     <span key={`e${i}`} className="page-btn" style={{ pointerEvents: 'none', border: 'none', background: 'transparent' }}>…</span>
                   ) : (
-                    <Link key={p} href={pageHref(annee, p)} className={`page-btn${p === page ? ' active' : ''}`}>
+                    <Link key={p} href={hrefFor({ ...cur, page: p }, 'retraits')} className={`page-btn${p === page ? ' active' : ''}`}>
                       {p}
                     </Link>
                   ))}
                   <Link
-                    href={pageHref(annee, Math.min(totalPages, page + 1))}
+                    href={hrefFor({ ...cur, page: Math.min(totalPages, page + 1) }, 'retraits')}
                     className="page-btn"
                     style={page >= totalPages ? { pointerEvents: 'none', opacity: 0.4 } : undefined}
                     aria-disabled={page >= totalPages}
@@ -147,8 +188,8 @@ export function AlertesClient({
               )}
 
               <div style={{ marginTop: 36 }}>
-                <div id="non-renouveles" className="section-title">
-                  ⚠️ {t(`AMM non renouvelées (${nonRenouveles.length} affichés)`, `AMM غير مجددة (${nonRenouveles.length} معروض)`)}
+                <div id="non-renouveles" className="section-title" style={{ scrollMarginTop: 90 }}>
+                  ⚠️ {t(`AMM non renouvelées (${nTotal})`, `AMM غير مجددة (${nTotal})`)}
                 </div>
                 <div className="section-sub">
                   {t(
@@ -156,9 +197,41 @@ export function AlertesClient({
                     'تصاريح طرح في السوق منتهية دون تجديد'
                   )}
                 </div>
+                {nonRenouveles.length === 0 && (
+                  <div className="empty-state" style={{ padding: '24px 0' }}>
+                    {t('Aucune AMM non renouvelée trouvée.', 'لا توجد AMM غير مجددة.')}
+                  </div>
+                )}
                 {nonRenouveles.map(d => (
                   <DrugCard key={d.id} drug={{ ...d, source: 'non_renouvele', similarity_score: 1, annee: null, date_retrait: null, motif_retrait: null } as any} type="non_renouvele" />
                 ))}
+                {nTotalPages > 1 && (
+                  <div className="pagination">
+                    <Link
+                      href={hrefFor({ ...cur, npage: Math.max(1, npage - 1) }, 'non-renouveles')}
+                      className="page-btn"
+                      style={npage <= 1 ? { pointerEvents: 'none', opacity: 0.4 } : undefined}
+                      aria-disabled={npage <= 1}
+                    >
+                      ← {t('Précédent', 'السابق')}
+                    </Link>
+                    {pageNumbers(npage, nTotalPages).map((p, i) => p === '…' ? (
+                      <span key={`n${i}`} className="page-btn" style={{ pointerEvents: 'none', border: 'none', background: 'transparent' }}>…</span>
+                    ) : (
+                      <Link key={p} href={hrefFor({ ...cur, npage: p }, 'non-renouveles')} className={`page-btn${p === npage ? ' active' : ''}`}>
+                        {p}
+                      </Link>
+                    ))}
+                    <Link
+                      href={hrefFor({ ...cur, npage: Math.min(nTotalPages, npage + 1) }, 'non-renouveles')}
+                      className="page-btn"
+                      style={npage >= nTotalPages ? { pointerEvents: 'none', opacity: 0.4 } : undefined}
+                      aria-disabled={npage >= nTotalPages}
+                    >
+                      {t('Suivant', 'التالي')} →
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -169,7 +242,7 @@ export function AlertesClient({
                 {motifStats.map(([motif, count]) => (
                   <div key={motif} style={{ marginBottom: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 600, color: '#334155', marginBottom: 4 }}>
-                      <span style={{ flex: 1, paddingRight: 8, lineHeight: 1.4 }}>{motif}</span>
+                      <span style={{ flex: 1, paddingRight: 8, lineHeight: 1.4 }}>{displayField('motif', motif, lang)}</span>
                       <span style={{ color: '#0369a1', flexShrink: 0 }}>{count}</span>
                     </div>
                     <div style={{ height: 4, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden' }}>

@@ -65,6 +65,7 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
         label: fr ? 'Plus' : 'المزيد',
         links: [
           { href: '/specialites', label: fr ? '🗂️ Spécialités' : '🗂️ التخصصات' },
+          { href: '/outils/comparateur-medicaments', label: fr ? '⚖️ Comparateur de deux médicaments' : '⚖️ مقارنة بين دواءين' },
           { href: '/substitution', label: fr ? '♻️ Substitution générique' : '♻️ الاستبدال الجنيس' },
           { href: '/pharmacies', label: fr ? '📍 Annuaire des pharmacies' : '📍 دليل الصيدليات' },
           { href: '/graphe', label: fr ? '🕸️ Graphes' : '🕸️ الرسوم البيانية' },

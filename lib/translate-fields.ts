@@ -209,8 +209,50 @@ export function translateStabilite(value: string | null | undefined): string | n
   return plural(Number(m[1]), DURATIONS[m[2]])
 }
 
+// ─── Motif de retrait ─────────────────────────────────────────
+/**
+ * Motifs de retrait : une valeur est composée d'une ou plusieurs clauses (séparées par « ; », « / »,
+ * « - » ou « et »). Chaque clause doit correspondre à une règle connue, sinon `null` (texte d'origine).
+ */
+const MOTIF_RULES: [RegExp, string][] = [
+  [/^non renouvellement( de la decision d.?enregistrement| de l.?enregistrement| de l.?amm)?$/, 'عدم تجديد قرار التسجيل'],
+  [/^(retrait|demande de retrait) (du marche )?(a|sur) la demande (du titulaire|du laboratoire|du fabricant|de l.?exploitant)( de la decision d.?enregistrement)?$/, 'سحب بطلب من صاحب التسجيل'],
+  [/^retrait (du marche )?(a|sur) la demande( de l.?operateur)?$/, 'سحب بطلب من المتعامل'],
+  [/^arret (de |de la )?commercialisation( du produit)?$/, 'توقف تسويق المنتج'],
+  [/^arret de commercialisation (du produit )?(dans le pays d.?origine|au niveau du pays d.?origine)$/, 'توقف التسويق في بلد المنشأ'],
+  [/^(retrait|interdiction) (du produit )?(du marche )?(dans|du|au niveau du) pays d.?origine$/, 'سحب المنتج من سوق بلد المنشأ'],
+  [/^retrait du marche du pays d.?origine$/, 'سحب المنتج من سوق بلد المنشأ'],
+  [/^produit (non|jamais) commercialise( pendant la duree de validite)?$/, 'منتج غير مسوَّق خلال مدة الصلاحية'],
+  [/^non commercialisation( du produit)?( pendant la duree de validite)?$/, 'عدم تسويق المنتج خلال مدة الصلاحية'],
+  [/^dossier de renouvellement non conforme$/, 'ملف التجديد غير مطابق'],
+  [/^cessation d.?activite( du titulaire| du laboratoire)?$/, 'توقف نشاط صاحب التسجيل'],
+  [/^fin de validite( de l.?enregistrement| de la decision d.?enregistrement)?$/, 'انتهاء صلاحية التسجيل'],
+  [/^transfert de l.?enregistrement( vers un autre titulaire)?$/, 'تحويل التسجيل إلى صاحب تسجيل آخر'],
+  [/^interdiction d.?importation$/, 'منع الاستيراد'],
+  [/^interdiction (de|d.?)(commercialisation|vente)$/, 'منع التسويق'],
+  [/^interdiction$/, 'منع'],
+  [/^cooperation$/, 'التعاون'],
+  [/^fin de (la )?cooperation$/, 'نهاية التعاون'],
+  [/^non precise$/, 'غير محدد'],
+]
+
+const normMotif = (s: string) => fold(s).replace(/[’‘`´]/g, "'").replace(/\s+/g, ' ').replace(/[.]+$/, '').trim()
+
+export function translateMotif(value: string | null | undefined): string | null {
+  if (!value?.trim()) return null
+  const clauses = normMotif(value).split(/\s*(?:;|\/|\s-\s|\set\s)\s*/).filter(Boolean)
+  if (!clauses.length) return null
+  const out: string[] = []
+  for (const c of clauses) {
+    const rule = MOTIF_RULES.find(([re]) => re.test(c))
+    if (!rule) return null
+    if (!out.includes(rule[1])) out.push(rule[1])
+  }
+  return out.join('، ')
+}
+
 // ─── Affichage ────────────────────────────────────────────────
-export type FieldKind = 'forme' | 'dosage' | 'conditionnement' | 'liste' | 'prescription' | 'stabilite'
+export type FieldKind = 'forme' | 'dosage' | 'conditionnement' | 'liste' | 'prescription' | 'stabilite' | 'motif'
 
 const TRANSLATORS: Record<FieldKind, (v: string | null | undefined) => string | null> = {
   forme: translateForme,
@@ -219,6 +261,7 @@ const TRANSLATORS: Record<FieldKind, (v: string | null | undefined) => string | 
   liste: translateListe,
   prescription: translatePrescription,
   stabilite: translateStabilite,
+  motif: translateMotif,
 }
 
 /**
