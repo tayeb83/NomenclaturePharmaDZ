@@ -62,22 +62,22 @@ export const voieParId = (id: string) => VOIES.find(v => v.id === id)
 const MOTS_FORME: Record<string, string> = {}
 const vocab = (concept: string, mots: string) => { for (const m of mots.split(' ')) MOTS_FORME[m] = concept }
 // formes de base
-vocab('comprime', 'comp comps compr cp cpr cpe cps comprime comprimes cprime')
-vocab('gelule', 'gle gles glle gelule gelules gel_')
+vocab('comprime', 'comp comps compr cp cpr cpe cps comprime comprimes cprime comprim2 comrime comrpime comprimpe coprime')
+vocab('gelule', 'gle gles glle gelule gelules gellule gellules gel_')
 vocab('capsule', 'caps capsule capsules')
-vocab('solution', 'sol solu solut solute solutes solution solutions')
-vocab('suspension', 'susp suspens suspension suspensions')
+vocab('solution', 'sol solu solut solute solutes solution solutions siolution solotion')
+vocab('suspension', 'susp sus suspens suspension suspensions suspenssion')
 vocab('emulsion', 'emul emuls emulsion emulsions')
-vocab('poudre', 'pdre pdr pd poud poudre poudres')
-vocab('lyophilisat', 'lyoph lyophilisat lyophilisats lyophilise lyophilisee')
-vocab('granules', 'gran granul granule granules granulee granulees')
+vocab('poudre', 'pdre pdr pd poud poudre poudres poudrecpour')
+vocab('lyophilisat', 'lyoph lyop lyo lyophi lyphilisee lyophilisat lyophilisats lyophilise lyophilisee lyophilisees lyophiulisat lyophilat lyophilis2e')
+vocab('granules', 'gran granul granule granules granulee granulees microgranule microgranules micrgles')
 vocab('sirop', 'sir sirop sirops')
 vocab('suppositoire', 'sup supp suppo suppos suppositoire suppositoires')
 vocab('ovule', 'ov ovule ovules')
 vocab('creme', 'crm creme cremes')
 vocab('pommade', 'pom pomm pommade pommades')
 vocab('gel', 'gel gels')
-vocab('collyre', 'coll collyre collyres')
+vocab('collyre', 'coll colly collyre collyres')
 vocab('gouttes', 'gtt gtte gttes gte goutte gouttes')
 vocab('lotion', 'lot lotion lotions')
 vocab('shampooing', 'shampooing shampoing shamp')
@@ -90,16 +90,32 @@ vocab('aerosol', 'aer aero aerosol aerosols pressurise pressurisee')
 vocab('dispositif', 'dispositif dispositifs patch patchs timbre timbres')
 vocab('implant', 'implant implants')
 vocab('lavement', 'lavement lavements')
-vocab('sachet', 'sach sachet sachets')
-vocab('solvant', 'solv solvant solvants')
+vocab('sachet', 'sach sachet sachets stick sticks')
+vocab('solvant', 'solv solvt solvant solvants')
 vocab('vernis', 'vernis')
 vocab('film', 'film films')
 vocab('gomme', 'gomme gommes chewing gum')
+vocab('lait', 'lait laits')
+vocab('gaz', 'gaz')
+vocab('liquide', 'liquide liquides')
+vocab('vapeur', 'vapeur')
+vocab('hemodialyse', 'hemodialyse')
+vocab('hemofiltration', 'hemofiltration')
+vocab('dialyse', 'dialyse')
+vocab('peritoneale', 'peritoneale peritoneal')
+vocab('irrigation', 'irrigation')
+vocab('vesicale', 'vesicale vesical')
+vocab('systeme', 'systeme systemes')
+vocab('uterin', 'uterin uterine intrauterin intrauterine')
+vocab('preparation', 'preparation preparations')
+vocab('mini', 'mini')
+vocab('dure', 'dure dures')
 // qualificatifs
 vocab('pellicule', 'pell pel pellic pellicul pellicule pellicules pelliculee pelliculees')
-vocab('enrobe', 'enr enrob enrobe enrobes enrobee enrobees drag dragee dragees')
-vocab('secable', 'sec secab secable secables quadrisecable')
-vocab('effervescent', 'eff efferv effervesc effervescent effervescente effervescents effervescentes')
+vocab('enrobe', 'enr enro enrob enrobe enrobes enrobee enrobees drag drg dragee dragees')
+vocab('secable', 'sec secab secable secables')
+vocab('quadrisecable', 'quadrisecable quadrisecables')
+vocab('effervescent', 'eff efferv effervesc effervescent effervescente effervescents effervescentes effervessant effervessante')
 vocab('dispersible', 'disp dispers dispersible dispersibles')
 vocab('orodispersible', 'orodisp orodispersible orodispersibles lyoc')
 vocab('croquer', 'croquer croq masticable masticables macher')
@@ -109,29 +125,34 @@ vocab('gastroresistant', 'gastroresistant gastroresistante gastroresistants gast
 vocab('lp', 'lp')
 vocab('lm', 'lm')
 vocab('molle', 'molle molles mou')
-vocab('injectable', 'inj inject injectable injectables injection injections iv im sc')
-vocab('perfusion', 'perf perfusion perfusions perfusable')
-vocab('concentre', 'conc concentre concentree diluer')
-vocab('buvable', 'buv buvable buvables')
-vocab('orale', 'oral orale oraux orales os')
+vocab('injectable', 'inj inject injectable injectables injection injections iv im sc intravasculaire peridurale intravitreenne intravitreene medullaire lesionnelle intralesionnelle perilesionnelle parenteral parenterale intrathecale')
+vocab('perfusion', 'perf perfusion perfusions perfusable perfeusion perfusin')
+vocab('concentre', 'conc concentre concentree diluer dil dilier')
+vocab('buvable', 'buv buvable buvables buvale buvabe')
+vocab('orale', 'oral orale oraux orales os or')
 vocab('inhalation', 'inhal inhalation inhalations inhale inhalee inhalateur nebul nebulisation nebuliseur')
-vocab('pulverisation', 'pulv pulveris pulverisation pulverisations spray sprays nebuliseur_')
+vocab('pulverisation', 'pulv pulveris pulverisation pulverisations spray sprays spyay')
 vocab('nasal', 'nas nasal nasale nasaux nasales')
 vocab('ophtalmique', 'opht ophtal ophtalm ophtalmique ophtalmiques oculaire oculaires')
 vocab('auriculaire', 'auric auriculaire auriculaires otique otiques')
-vocab('vaginal', 'vag vaginal vaginale vaginaux vaginales')
-vocab('rectal', 'rect rectal rectale rectaux rectales')
+vocab('vaginal', 'gynecologique vag vaginal vaginale vaginaux vaginales')
+vocab('rectal', 'rec rect rectal rectale rectaux rectales')
 vocab('cutane', 'derm dermique dermiques cutane cutanee cutanes cutanees cut externe local locale topique')
 vocab('transdermique', 'transd transderm transdermique transdermiques')
 vocab('buccal', 'buccal buccale buccaux buccales bucco gingival gingivale oromuqueux oromuqueuse')
-vocab('application', 'application applications')
+vocab('application', 'app appl appli applic application applications')
 // mots vides : liaisons, contenants, publics, sucre (sans incidence sur la forme)
 vocab('', 'a au aux de d du des en et ou la le les l p par pour avec sans usage voie forme sucre edulcore edulcoree '
   + 'adulte adultes enfant enfants nourrisson nourrissons pediatrique pediatriques ped nour '
   + 'amp ampoule ampoules fl flac flacon flacons ser seringue seringues prerempli preremplie preremplies stylo stylos '
   + 'pre rempli remplie remplies cartouche cartouches poche poches tube tubes unidose unidoses multidose multidoses recipient monodose monodoses '
   + 'b bte boite plaquette plq dose doses '
-  + 'ml mg g l ui kg mcg')
+  + 'ml mg g l ui kg mcg '
+  + 'sering prerempl remlie preremlie carpule carpules vial contenant contenants dans un une unique sterile '
+  + 'fluide moussant moussante lipophile hydrophile epaisse hydroalcoolique filmogene bicouche menthe '
+  + 'adolescents adolescent femmes femme enceinte enceintes age ans an bas mois sur lente profonde continue '
+  + 'ongles medicamenteux huileuse huileux aqueuse aqueux gout jours ds bouchon doseur gradue pou '
+  + 'reconstitution reconstituer diffusion administration dialyseur stylo9 por poiur per intr intra sauf enterale dentaire')
 
 type Genre = 'm' | 'f' | 'mp' | 'fp'
 const accord = (g: Genre, m: string, f: string, mp = m + 's', fp = f + 's') => (g === 'm' ? m : g === 'f' ? f : g === 'mp' ? mp : fp)
@@ -151,16 +172,21 @@ export type FormeNorm = {
 /** Pré-traitements sur la chaîne pliée : expressions de plusieurs mots → un concept. */
 function preparerForme(s: string): string {
   return s
-    .replace(/gastro\s*[-.]?\s*r[eé]?s(?:ist)?\w*/g, ' gastroresistant ')
+    .replace(/gastr?o?\s*[-.]?\s*r[eé]?s(?:ist)?\w*/g, ' gastroresistant ')
     .replace(/\bg\s*\.?\s*r\b\.?/g, ' gastroresistant ')
-    .replace(/\blib\w*\.?\s+prol\w*\.?/g, ' lp ')
+    .replace(/\bmicro\s*-?\s*granul\w*/g, ' microgranules ')
+    .replace(/\bmini\s*-?\s*comprim\w*/g, ' mini ')
+    .replace(/\bquadri\s*-?\s*secab\w*/g, ' quadrisecable ')
+    .replace(/\bgastro\s*-?\s*(?:enter|intest)\w*/g, ' ')
+    .replace(/\bdiffusion\s+lente\b/g, ' lp ')
+    .replace(/\blib\w*\.?\s+pro\w*\.?/g, ' lp ')
     .replace(/\blib\w*\.?\s+modif\w*\.?/g, ' lm ')
     .replace(/\blib\w*\.?\s+(?:imm\w*|rapide)\.?/g, ' ')
     .replace(/\b(?:a\s+)?action\s+prolongee\b/g, ' lp ')
     .replace(/\bretard\b/g, ' lp ')
     .replace(/\bl\s*\.?\s*p\b\.?/g, ' lp ')
     .replace(/\bsous[\s-]*cutan\w*/g, ' sc ')
-    .replace(/\b([sie])\s*\.\s*([cmv])\b\.?/g, ' $1$2 ')
+    .replace(/\b([sie])\s*[./]\s*([cmv])\b\.?/g, ' $1$2 ')
     .replace(/\bintra[\s-]*(?:veineu|musculair)\w*/g, ' iv ')
     .replace(/\ba\s+diluer\b/g, ' concentre ')
     .replace(/\bbain\s+de\s+bouche\b/g, ' bain bouche ')
@@ -189,6 +215,14 @@ const FORME_AR: Record<string, string> = {
   'comprimé': 'قرص',
   'comprimé pelliculé': 'قرص مغلف بغشاء رقيق',
   'comprimé pelliculé sécable': 'قرص مغلف بغشاء رقيق قابل للشطر',
+  'comprimé quadrisécable': 'قرص قابل للشطر إلى أربعة',
+  'comprimé pelliculé quadrisécable': 'قرص مغلف بغشاء رقيق قابل للشطر إلى أربعة',
+  'poudre pour solution à diluer pour perfusion': 'مسحوق لمحلول مركز للتسريب',
+  'suppositoire vaginal': 'تحميلة مهبلية',
+  'gaz pour inhalation': 'غاز للاستنشاق',
+  'lait en poudre': 'حليب مجفف',
+  'solution pour hémodialyse': 'محلول لغسيل الكلى',
+  'solution concentrée pour hémodialyse': 'محلول مركز لغسيل الكلى',
   'comprimé enrobé': 'قرص ملبس',
   'comprimé sécable': 'قرص قابل للشطر',
   'comprimé effervescent': 'قرص فوار',
@@ -263,7 +297,10 @@ function construireForme(c: Set<string>): { fr: string; base: string } | null {
   const destination = (): string | null => {
     // « … pour <destination> » d'une poudre, d'un lyophilisat ou de granulés
     const liquide = has('suspension') ? 'suspension' : has('emulsion') ? 'émulsion' : has('solution') ? 'solution' : null
-    if (has('perfusion')) return liquide && liquide !== 'solution' ? `${liquide} pour perfusion` : 'solution pour perfusion'
+    if (has('perfusion')) {
+      if (liquide && liquide !== 'solution') return `${liquide} pour perfusion`
+      return has('concentre') ? 'solution à diluer pour perfusion' : 'solution pour perfusion'
+    }
     if (has('injectable')) return `${liquide ?? 'solution'} injectable`
     if (has('inhalation')) return liquide ? `${liquide} pour inhalation` : null
     if (has('buvable') || (liquide && has('orale'))) return `${liquide ?? 'solution'} buvable`
@@ -279,6 +316,29 @@ function construireForme(c: Set<string>): { fr: string; base: string } | null {
   const gastro = (g: Genre) => (has('gastroresistant') ? accord(g, 'gastro-résistant', 'gastro-résistante') : null)
   const join = (...p: (string | null | false)[]) => p.filter(Boolean).join(' ')
 
+  // Formes particulières, à identifier avant les poudres et les solutions
+  if (has('lait')) return has('poudre') ? { fr: 'lait en poudre', base: 'lait' } : { fr: 'émulsion pour application cutanée', base: 'emulsion' }
+  if (has('gaz')) return { fr: 'gaz pour inhalation', base: 'gaz' }
+  if (has('liquide') && (has('inhalation') || has('vapeur'))) return { fr: 'liquide pour inhalation par vapeur', base: 'liquide' }
+  if (has('hemodialyse')) return { fr: has('concentre') ? 'solution concentrée pour hémodialyse' : 'solution pour hémodialyse', base: 'solution' }
+  if (has('hemofiltration')) return { fr: 'solution pour hémofiltration', base: 'solution' }
+  if (has('dialyse') && has('peritoneale')) return { fr: 'solution pour dialyse péritonéale', base: 'solution' }
+  if (has('irrigation')) return { fr: has('vesicale') ? 'solution pour irrigation vésicale' : 'solution pour irrigation', base: 'solution' }
+  if (has('systeme')) {
+    if (has('uterin')) return { fr: 'système de diffusion intra-utérin', base: 'systeme' }
+    if (has('vaginal')) return { fr: 'système de diffusion vaginal', base: 'systeme' }
+    return null
+  }
+  if (has('preparation') && has('injectable') && !has('poudre') && !has('lyophilisat')) {
+    return { fr: has('solvant') ? 'solvant pour préparation injectable' : 'solution pour préparation injectable', base: 'solvant' }
+  }
+  // Gélule contenant des microgranules ou des mini-comprimés : la forme est la gélule (Standard Terms EDQM)
+  if (has('gelule') && (has('granules') || has('mini')) && !has('inhalation')) {
+    return { fr: join('gélule', gastro('f'), liberation('f')), base: 'gelule' }
+  }
+  // Capsule dure = gélule (EDQM)
+  if (has('capsule') && has('dure') && !has('inhalation')) return { fr: join('gélule', gastro('f'), liberation('f')), base: 'gelule' }
+
   // Poudre / lyophilisat / granulés pour …
   for (const [k, nom, g] of [['poudre', 'poudre', 'f'], ['lyophilisat', 'lyophilisat', 'm'], ['granules', 'granulés', 'mp']] as const) {
     if (!has(k)) continue
@@ -286,7 +346,9 @@ function construireForme(c: Set<string>): { fr: string; base: string } | null {
       return { fr: has('gelule') || has('capsule') ? 'poudre pour inhalation en gélule' : 'poudre pour inhalation', base: k }
     }
     const dest = destination()
-    if (dest) return { fr: `${nom}${has('solvant') ? ' et solvant' : ''} pour ${dest}`, base: k }
+    // un lyophilisat parentéral est une « poudre pour … » dans les Standard Terms ; seul le lyophilisat oral garde son nom
+    const nomFinal = k === 'lyophilisat' && dest && /injectable|perfusion/.test(dest) ? 'poudre' : nom
+    if (dest) return { fr: `${nomFinal}${has('solvant') ? ' et solvant' : ''} pour ${dest}`, base: k }
     if (k === 'poudre') {
       if (has('cutane') || has('application')) return { fr: 'poudre pour application cutanée', base: k }
       if (has('orale') || has('sachet') || has('buvable')) return { fr: 'poudre orale', base: k }
@@ -306,7 +368,8 @@ function construireForme(c: Set<string>): { fr: string; base: string } | null {
       : has('sucer') ? 'à sucer'
       : null
     const enrobage = has('pellicule') ? 'pelliculé' : has('enrobe') ? 'enrobé' : null
-    return { fr: join('comprimé', type, enrobage, has('secable') && 'sécable', gastro('m'), liberation('m')), base: 'comprime' }
+    const secable = has('quadrisecable') ? 'quadrisécable' : has('secable') ? 'sécable' : null
+    return { fr: join('comprimé', type, enrobage, secable, gastro('m'), liberation('m')), base: 'comprime' }
   }
   if (has('gelule') && !has('gel')) {
     if (has('inhalation')) return { fr: 'poudre pour inhalation en gélule', base: 'gelule' }
@@ -318,7 +381,7 @@ function construireForme(c: Set<string>): { fr: string; base: string } | null {
     return { fr: join(has('molle') ? 'capsule molle' : 'capsule', gastro('f'), liberation('f')), base: 'capsule' }
   }
   if (has('sirop')) return { fr: 'sirop', base: 'sirop' }
-  if (has('suppositoire')) return { fr: 'suppositoire', base: 'suppositoire' }
+  if (has('suppositoire')) return { fr: has('vaginal') ? 'suppositoire vaginal' : 'suppositoire', base: 'suppositoire' }
   if (has('ovule')) return { fr: 'ovule', base: 'ovule' }
   if (has('lavement')) return { fr: 'lavement', base: 'lavement' }
   if (has('dispositif') || has('transdermique')) return { fr: 'dispositif transdermique', base: 'dispositif' }
@@ -348,26 +411,28 @@ function construireForme(c: Set<string>): { fr: string; base: string } | null {
   if (has('shampooing')) return { fr: 'shampooing', base: 'shampooing' }
 
   if (has('collyre')) {
-    if (has('suspension')) return { fr: 'collyre en suspension', base: 'collyre' }
-    if (has('solution')) return { fr: 'collyre en solution', base: 'collyre' }
+    if (has('suspension')) return { fr: join('collyre en suspension', liberation('m')), base: 'collyre' }
+    if (has('solution')) return { fr: join('collyre en solution', liberation('m')), base: 'collyre' }
     return { fr: 'collyre', base: 'collyre' }
   }
   if (has('gouttes')) {
     if (has('auriculaire')) return { fr: 'gouttes auriculaires', base: 'gouttes' }
     if (has('nasal')) return { fr: 'gouttes nasales', base: 'gouttes' }
     if (has('ophtalmique')) return { fr: 'collyre en solution', base: 'gouttes' }
+    if (has('suspension')) return { fr: 'suspension buvable en gouttes', base: 'gouttes' }
     if (has('buvable') || has('orale') || has('solution')) return { fr: 'solution buvable en gouttes', base: 'gouttes' }
     return { fr: 'gouttes', base: 'gouttes' }
   }
   if (has('pulverisation') || has('aerosol')) {
     const liquide = has('suspension') ? 'suspension' : 'solution'
     if (has('nasal')) return { fr: `${liquide} pour pulvérisation nasale`, base: 'pulverisation' }
+    // « inhalation buccale », « aérosol buccal » : inhalation par la bouche, pas une pulvérisation buccale
+    if (has('inhalation') || has('aerosol')) return { fr: has('aerosol') && !has('solution') && !has('suspension') ? 'aérosol' : `${liquide} pour inhalation en flacon pressurisé`, base: 'pulverisation' }
     if (has('buccal')) return { fr: `${liquide} pour pulvérisation buccale`, base: 'pulverisation' }
     if (has('cutane')) return { fr: `${liquide} pour pulvérisation cutanée`, base: 'pulverisation' }
-    if (has('inhalation') || has('aerosol')) return { fr: has('aerosol') && !has('solution') && !has('suspension') ? 'aérosol' : `${liquide} pour inhalation en flacon pressurisé`, base: 'pulverisation' }
     return { fr: `${liquide} pour pulvérisation`, base: 'pulverisation' }
   }
-  if (has('solution') || has('suspension') || has('emulsion')) {
+  if (has('solution') || has('suspension') || has('emulsion') || (has('concentre') && has('perfusion'))) {
     const liquide = has('suspension') ? 'suspension' : has('emulsion') ? 'émulsion' : 'solution'
     const concentre = has('concentre') && liquide === 'solution'
     if (has('perfusion')) return { fr: concentre ? 'solution à diluer pour perfusion' : `${liquide} pour perfusion`, base: liquide }
@@ -387,6 +452,8 @@ function construireForme(c: Set<string>): { fr: string; base: string } | null {
     return { fr: join(liquide, lieu, has('gouttes') && lieu === 'buvable' && 'en gouttes'), base: liquide }
   }
   if (has('bain_bouche')) return { fr: 'solution pour bain de bouche', base: 'solution' }
+  if (has('enrobe')) return { fr: 'comprimé enrobé', base: 'comprime' } // « DRG. » : dragée
+  if (has('buvable')) return { fr: 'solution buvable', base: 'solution' } // « AMP. BUV. » : ampoule buvable
   return null
 }
 
@@ -402,8 +469,8 @@ function voieDe(c: Set<string>, fr: string | null): VoieId {
   if (has('vaginal') || has('ovule')) return 'vaginale'
   if (has('rectal') || has('suppositoire') || has('lavement')) return 'rectale'
   if (has('transdermique') || has('dispositif')) return 'transdermique'
-  if (has('collutoire') || has('bain_bouche') || has('buccal') || has('pastille') || has('sublingual') || has('sucer') || has('gomme')) return 'buccale'
-  if (/buvable|^sirop/.test(f) || has('sirop') || (has('gouttes') && (has('buvable') || has('orale')))) return 'orale-liquide'
+  if (has('collutoire') || has('bain_bouche') || has('buccal') || has('pastille') || has('sublingual') || (has('sucer') && !has('croquer')) || has('gomme')) return 'buccale'
+  if (/buvable|^sirop|^lait en poudre/.test(f) || has('sirop') || (has('gouttes') && (has('buvable') || has('orale')))) return 'orale-liquide'
   if (has('cutane') || has('application') || has('creme') || has('pommade') || has('lotion') || has('shampooing') || has('pate') || has('mousse') || has('vernis') || (has('gel') && !has('buvable'))) return 'cutanee'
   if (has('comprime') || has('gelule') || has('capsule') || has('granules') || /^poudre orale|^lyophilisat oral|^film/.test(f) || (has('poudre') && (has('orale') || has('sachet')))) return 'orale-solide'
   return 'autre'
@@ -430,31 +497,39 @@ export function normaliserForme(raw: string | null | undefined): FormeNorm {
 // Dosages
 // ═══════════════════════════════════════════════════════════════
 
-type Unite = 'mg' | 'g' | 'µg' | 'ng' | 'kg' | 'ml' | 'l' | 'cl' | 'ui' | 'mui' | '%' | 'mmol' | 'meq' | 'dose' | 'goutte' | 'pulv' | 'cm2' | 'h'
+type Contenant = 'flacon' | 'sachet' | 'stick' | 'ampoule' | 'seringue' | 'stylo' | 'cp' | 'gelule'
+type Unite = 'mg' | 'g' | 'µg' | 'ng' | 'kg' | 'ml' | 'l' | 'cl' | 'µl' | 'ui' | 'mui' | 'kui' | '%' | 'deg' | 'ir' | 'mmol' | 'meq'
+  | 'dose' | 'goutte' | 'pulv' | 'cm2' | 'h' | Contenant
 
 const UNITES: Record<string, Unite> = {
   mg: 'mg', milligramme: 'mg', milligrammes: 'mg',
   g: 'g', gr: 'g', gramme: 'g', grammes: 'g',
   'µg': 'µg', mcg: 'µg', ug: 'µg', microgramme: 'µg', microgrammes: 'µg', gamma: 'µg', gammas: 'µg',
   ng: 'ng', nanogramme: 'ng', nanogrammes: 'ng', kg: 'kg',
-  ml: 'ml', millilitre: 'ml', millilitres: 'ml', l: 'l', litre: 'l', litres: 'l', cl: 'cl',
-  ui: 'ui', iu: 'ui', u: 'ui', unite: 'ui', unites: 'ui', mui: 'mui',
-  '%': '%', mmol: 'mmol', meq: 'meq',
+  ml: 'ml', millilitre: 'ml', millilitres: 'ml', l: 'l', litre: 'l', litres: 'l', cl: 'cl', 'µl': 'µl', ul: 'µl',
+  ui: 'ui', iu: 'ui', u: 'ui', unite: 'ui', unites: 'ui', mui: 'mui', kui: 'kui',
+  '%': '%', '°': 'deg', ir: 'ir', mmol: 'mmol', meq: 'meq',
   dose: 'dose', doses: 'dose', goutte: 'goutte', gouttes: 'goutte', gtt: 'goutte',
   pulv: 'pulv', pulverisation: 'pulv', pulverisations: 'pulv', bouffee: 'pulv', bouffees: 'pulv', actuation: 'pulv', inhalation: 'pulv',
   cm2: 'cm2', 'cm²': 'cm2', h: 'h', heure: 'h', heures: 'h',
+  // contenants : jetons posés par lireQuantites (« 1G/FL. DE PDRE. » → 1 g par flacon)
+  cflacon: 'flacon', csachet: 'sachet', cstick: 'stick', campoule: 'ampoule', cseringue: 'seringue', cstylo: 'stylo', ccp: 'cp', cgelule: 'gelule',
 }
+const CONTENANTS = new Set<Unite>(['flacon', 'sachet', 'stick', 'ampoule', 'seringue', 'stylo', 'cp', 'gelule'])
 /** Facteur vers l'unité de base de la même dimension. */
-const BASE: Record<Unite, [Unite, number]> = {
+const BASE: Record<Unite, [string, number]> = {
   mg: ['mg', 1], g: ['mg', 1000], 'µg': ['mg', 0.001], ng: ['mg', 1e-6], kg: ['mg', 1e6],
-  ml: ['ml', 1], l: ['ml', 1000], cl: ['ml', 10],
-  ui: ['ui', 1], mui: ['ui', 1e6], '%': ['%', 1], mmol: ['mmol', 1], meq: ['meq', 1],
+  ml: ['ml', 1], l: ['ml', 1000], cl: ['ml', 10], 'µl': ['ml', 0.001],
+  ui: ['ui', 1], mui: ['ui', 1e6], kui: ['ui', 1000], '%': ['%', 1], deg: ['deg', 1], ir: ['ir', 1], mmol: ['mmol', 1], meq: ['meq', 1],
   dose: ['dose', 1], goutte: ['goutte', 1], pulv: ['pulv', 1], cm2: ['cm2', 1], h: ['h', 1],
+  flacon: ['flacon', 1], sachet: ['sachet', 1], stick: ['stick', 1], ampoule: ['ampoule', 1], seringue: ['seringue', 1],
+  stylo: ['stylo', 1], cp: ['cp', 1], gelule: ['gelule', 1],
 }
-const DENOMINATEURS = new Set<Unite>(['ml', 'l', 'cl', 'dose', 'goutte', 'pulv', 'cm2', 'h'])
+const DENOMINATEURS = new Set<Unite>(['ml', 'l', 'cl', 'µl', 'dose', 'goutte', 'pulv', 'cm2', 'h', ...CONTENANTS])
 const AFFICHAGE: Record<Unite, string> = {
-  mg: 'mg', g: 'g', 'µg': 'µg', ng: 'ng', kg: 'kg', ml: 'ml', l: 'l', cl: 'cl', ui: 'UI', mui: 'M UI', '%': '%',
-  mmol: 'mmol', meq: 'mEq', dose: 'dose', goutte: 'goutte', pulv: 'pulvérisation', cm2: 'cm²', h: 'h',
+  mg: 'mg', g: 'g', 'µg': 'µg', ng: 'ng', kg: 'kg', ml: 'ml', l: 'l', cl: 'cl', 'µl': 'µl', ui: 'UI', mui: 'M UI', kui: 'k UI',
+  '%': '%', deg: '°', ir: 'IR', mmol: 'mmol', meq: 'mEq', dose: 'dose', goutte: 'goutte', pulv: 'pulvérisation', cm2: 'cm²', h: 'h',
+  flacon: 'flacon', sachet: 'sachet', stick: 'stick', ampoule: 'ampoule', seringue: 'seringue', stylo: 'stylo', cp: 'comprimé', gelule: 'gélule',
 }
 
 type Quantite = { v: number; u: Unite | null }
@@ -464,16 +539,22 @@ export type DosageNorm = {
   id: string
   /** écriture canonique de cette ligne : « 250 mg/5 ml », « 1 g + 125 mg », « 2,4 % » */
   libelle: string
-  /** clé de regroupement, unités de base : « 50mg/ml », « 1000mg+125mg » */
+  /**
+   * clé de regroupement, unités de base. Le volume du dénominateur est conservé : « 40 mg/0,4 ml » et
+   * « 80 mg/0,8 ml » sont deux présentations (une seringue n'est pas l'autre), « 250 mg/5 ml » ≠ « 50 mg/ml ».
+   * Une quantité par contenant (« 1 g/flacon ») rejoint la quantité seule (« 1 g »).
+   */
   cle: string
   /** valeur de tri : premier composant en unité de base, par unité de dénominateur */
   tri: number | null
-  /** 0 masse/activité, 1 concentration, 2 pourcentage, 3 non reconnu */
+  /** 0 masse/activité, 1 concentration, 2 pourcentage ou degré, 3 non reconnu */
   famille: number
   composants: number
   reconnu: boolean
   /** incohérence relevée (nombre de quantités ≠ nombre de substances) */
   alerte: string | null
+  /** équivalence écartée de la clé (« (50MG/5ML) », « OU 0,05% »), gardée pour l'audit */
+  complement: string | null
 }
 
 const nombreFr = (n: number) => {
@@ -485,16 +566,23 @@ const nombreFr = (n: number) => {
 const nombreCle = (n: number) => String(Number(n.toPrecision(6)))
 const idDosage = (cle: string) => slugify(cle.replace(/\//g, ' par ').replace(/\+/g, ' plus ').replace(/%/g, ' pct').replace(/\./g, '-'))
 
+const CONTENANT_RE = /\/\s*(fl|flac|flacons?|sachets?(?:\s*-?\s*doses?)?|sticks?|amp|ampoules?|seringues?|stylos?|cp|comprimes?|gelules?)\b\.?(?:\s*(?:de|d)\s*\.?\s*(?:pdre|poudre|lyoph|lyophilisat|conc|concentre|solution|sol)\b\.?)?/g
+const CONTENANT_JETON: [RegExp, string][] = [
+  [/^fl/, 'cflacon'], [/^sachet/, 'csachet'], [/^stick/, 'cstick'], [/^amp/, 'campoule'], [/^seringue/, 'cseringue'],
+  [/^stylo/, 'cstylo'], [/^c(?:p|omprime)/, 'ccp'], [/^gelule/, 'cgelule'],
+]
+
 function lireQuantites(raw: string): { items: (Quantite | '/' | '+')[]; ok: boolean } {
-  let s = fold(raw).replace(/μ/g, 'µ')
+  let s = fold(raw).replace(/μ/g, 'µ').replace(/\*+/g, ' ')
   s = s.replace(/\b[mpwv]\s*\/\s*[mpwv]\b/g, ' ') // « % m/m », « p/v »
+  s = s.replace(CONTENANT_RE, (_, c: string) => ` / ${CONTENANT_JETON.find(([re]) => re.test(c))![1]} `)
   // séparateurs de milliers : espace (« 100 000 UI ») ; point seulement devant une unité d'activité
   // (« 100.000 UI ») ou sur plusieurs groupes (« 1.000.000 ») — « 1.250 MG » est lu comme un décimal (1,25 mg)
   s = s.replace(/\b([1-9]\d{0,2})((?: \d{3})+)(?![\d,.])/g, (_, a: string, rest: string) => a + rest.replace(/ /g, ''))
-  s = s.replace(/\b([1-9]\d{0,2})((?:\.\d{3}){2,}|\.\d{3}(?=\s*(?:m\s*)?(?:ui|u|iu)\b))(?![\d,])/g, (_, a: string, rest: string) => a + rest.replace(/\./g, ''))
+  s = s.replace(/\b([1-9]\d{0,2})((?:\.\d{3}){2,}|\.\d{3}(?=\s*(?:[mk]\s*)?(?:ui|u|iu)\b))(?![\d,])/g, (_, a: string, rest: string) => a + rest.replace(/\./g, ''))
   s = s.replace(/(\d),(\d)/g, '$1.$2')
-  s = s.replace(/\bm\s*ui\b|\bmillions?\s+(?:d\s*')?ui\b/g, ' mui ')
-  const toks = s.match(/\d+(?:\.\d+)?|[a-zµ²%]+|[/+;,]|\S/g) ?? []
+  s = s.replace(/\bm\s*ui\b|\bmillions?\s+(?:d\s*')?ui\b/g, ' mui ').replace(/\bk\s*ui\b/g, ' kui ')
+  const toks = s.match(/\d+(?:\.\d+)?|[a-zµ²%°]+|[/+;,]|\S/g) ?? []
   const items: (Quantite | '/' | '+')[] = []
   for (const t of toks) {
     if (/^\d/.test(t)) { items.push({ v: parseFloat(t), u: null }); continue }
@@ -513,29 +601,20 @@ function lireQuantites(raw: string): { items: (Quantite | '/' | '+')[]; ok: bool
   return { items, ok: true }
 }
 
-/**
- * @param nbSubstances nombre de substances de la DCI : distingue « 1 g/125 mg » (deux composants)
- *                     de « 20 mg/g » (une concentration).
- */
-export function normaliserDosage(raw: string | null | undefined, nbSubstances = 1): DosageNorm {
-  const brut = (raw ?? '').replace(/\s+/g, ' ').trim()
-  if (!brut || /^(?:-+|n\/?a|neant|\/)$/i.test(brut)) {
-    return { id: 'non-precise', libelle: 'Non précisé', cle: '', tri: null, famille: 3, composants: 0, reconnu: true, alerte: null }
-  }
-  const nonReconnu = (): DosageNorm => ({ id: `x-${slugify(brut)}`, libelle: brut, cle: `x:${fold(brut)}`, tri: null, famille: 3, composants: 0, reconnu: false, alerte: null })
+function analyserDosage(brut: string, nbSubstances: number): Omit<DosageNorm, 'complement'> | null {
   const { items, ok } = lireQuantites(brut)
-  if (!ok || !items.length) return nonReconnu()
+  if (!ok || !items.length) return null
   // structure : quantité (sep quantité)*
   const qs: Quantite[] = []
   const seps: ('/' | '+')[] = []
   for (let i = 0; i < items.length; i++) {
     const it = items[i]
-    if (i % 2 === 0) { if (typeof it !== 'object') return nonReconnu(); qs.push(it) }
-    else { if (typeof it === 'object') return nonReconnu(); seps.push(it) }
+    if (i % 2 === 0) { if (typeof it !== 'object') return null; qs.push(it) }
+    else { if (typeof it === 'object') return null; seps.push(it) }
   }
-  if (seps.length !== qs.length - 1) return nonReconnu()
-  // dénominateur : dernière quantité, introduite par « / », d'une unité de volume, de dose… ou d'une
-  // masse en g quand les numérateurs couvrent déjà toutes les substances (« 20 mg/g », « 5 g/100 g »)
+  if (seps.length !== qs.length - 1) return null
+  // dénominateur : dernière quantité, introduite par « / », d'une unité de volume, de dose, d'un contenant… ou
+  // d'une masse en g quand les numérateurs couvrent déjà toutes les substances (« 20 mg/g », « 5 g/100 g »)
   let denom: Quantite | null = null
   const last = qs[qs.length - 1]
   if (qs.length > 1 && seps[seps.length - 1] === '/' && last.u) {
@@ -547,34 +626,54 @@ export function normaliserDosage(raw: string | null | undefined, nbSubstances = 
   for (let i = nums.length - 1; i >= 0; i--) {
     if (!nums[i].u) {
       const suiv = nums.slice(i + 1).find(q => q.u)
-      if (!suiv) return nonReconnu()
+      if (!suiv) return null
       nums[i].u = suiv.u
     }
   }
-  if (nums.some(q => q.u && DENOMINATEURS.has(q.u) && q.u !== 'h')) return nonReconnu()
+  if (nums.some(q => q.u && DENOMINATEURS.has(q.u) && q.u !== 'h')) return null
   const units = nums.map(q => q.u as Unite)
   const base = nums.map(q => q.v * BASE[q.u as Unite][1])
-  // dénominateur : volume en ml, masse en g ; une durée reste telle quelle (« 5 mg/24 h » ≠ « 0,2 mg/h » à l'étiquette)
+  const contenant = denom && CONTENANTS.has(denom.u as Unite) && denom.v === 1
+  // dénominateur de la clé : quantité gardée (ml, g, heures…) ; un contenant unitaire disparaît de la clé
   let d = 1
-  let dUnite: string | null = null
-  if (denom) {
+  let dCle = ''
+  if (denom && !contenant) {
     const u = denom.u as Unite
-    if (u === 'h') { dUnite = `${nombreCle(denom.v)}h` }
-    else if (u === 'g' || u === 'kg') { d = denom.v * (u === 'kg' ? 1000 : 1); dUnite = 'g' }
-    else { d = denom.v * BASE[u][1]; dUnite = BASE[u][0] }
+    const [bu, f] = u === 'g' || u === 'kg' ? ['g', u === 'kg' ? 1000 : 1] : BASE[u]
+    d = denom.v * f
+    dCle = `/${nombreCle(d)}${bu}`
   }
-  const cle = nums.map((q, i) => `${nombreCle(base[i] / d)}${BASE[units[i]][0]}`).join('+') + (dUnite ? `/${dUnite}` : '')
-  const parties = nums.map(q => `${nombreFr(q.v)} ${AFFICHAGE[q.u as Unite]}`)
-  let libelle = parties.join(' + ')
+  const cle = nums.map((q, i) => `${nombreCle(base[i])}${BASE[units[i]][0]}`).join('+') + dCle
+  let libelle = nums.map(q => `${nombreFr(q.v)} ${AFFICHAGE[q.u as Unite]}`).join(' + ').replace(/ °/g, '°')
   if (denom) {
     const den = `${denom.v === 1 ? '' : nombreFr(denom.v) + ' '}${AFFICHAGE[denom.u as Unite]}`
     libelle = nums.length > 1 ? `${libelle} par ${den}` : `${libelle}/${den}`
   }
-  const famille = units[0] === '%' ? 2 : denom ? 1 : 0
+  const famille = units[0] === '%' || units[0] === 'deg' ? 2 : denom && !contenant ? 1 : 0
   const alerte = nbSubstances > 1 && nums.length !== nbSubstances
     ? `${nums.length} quantité(s) pour ${nbSubstances} substances`
     : nbSubstances === 1 && nums.length > 1 ? `${nums.length} quantités pour une seule substance` : null
   return { id: idDosage(cle), libelle, cle, tri: base[0] / d, famille, composants: nums.length, reconnu: true, alerte }
+}
+
+/**
+ * @param nbSubstances nombre de substances de la DCI : distingue « 1 g/125 mg » (deux composants)
+ *                     de « 20 mg/g » (une concentration).
+ */
+export function normaliserDosage(raw: string | null | undefined, nbSubstances = 1): DosageNorm {
+  const brut = (raw ?? '').replace(/\s+/g, ' ').trim()
+  if (!brut || /^(?:-+|n\/?a|neant|\/)$/i.test(brut)) {
+    return { id: 'non-precise', libelle: 'Non précisé', cle: '', tri: null, famille: 3, composants: 0, reconnu: true, alerte: null, complement: null }
+  }
+  const direct = analyserDosage(brut, nbSubstances)
+  if (direct) return { ...direct, complement: null }
+  // « 10MG/ML (50MG/5ML) », « 2MG/5ML OU 0,40MG/ML » : la première écriture fait foi, l'équivalence est écartée
+  const m = brut.match(/^(.+?)\s*(\(.*|\bOU\b.*)$/i)
+  if (m) {
+    const principal = analyserDosage(m[1].replace(/\*+/g, '').trim(), nbSubstances)
+    if (principal) return { ...principal, complement: m[2].trim() }
+  }
+  return { id: `x-${slugify(brut)}`, libelle: brut, cle: `x:${fold(brut)}`, tri: null, famille: 3, composants: 0, reconnu: false, alerte: null, complement: null }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -586,6 +685,7 @@ export type DciNorm = { id: string; libelle: string; substances: string[] }
 export function normaliserDci(raw: string | null | undefined): DciNorm {
   const libelle = (raw ?? '')
     .toUpperCase()
+    .replace(/\*+/g, '')
     .replace(/\s+/g, ' ')
     .replace(/\s*\+\s*/g, ' + ')
     .replace(/([A-ZÀ-Ü)]{2,})\s*\/\s*(?=[A-ZÀ-Ü(]{2,})/g, '$1 + ')
@@ -623,7 +723,10 @@ export type Presentation = LigneNomenclature & {
 type Libelle = { fr: string; ar: string | null; tri?: number | null; famille?: number }
 export type GuideIndex = {
   presentations: Presentation[]
-  /** libellé retenu par axe et par identifiant : la variante d'écriture la plus fréquente */
+  /**
+   * libellé retenu par axe et par identifiant : la variante d'écriture la plus fréquente. Pour le dosage, la clé
+   * est « dci|dosage » : le libellé est choisi parmi les écritures de la DCI, jamais emprunté à une autre.
+   */
   libelles: Record<Critere, Map<string, Libelle>>
   /** pour la recherche de la première étape : mots pliés de la DCI et des marques */
   dciTexte: Map<string, { dci: string; marques: Set<string> }>
@@ -678,7 +781,7 @@ export function construireIndex(lignes: LigneNomenclature[]): GuideIndex {
     const v = voieParId(forme.voie)!
     compter('voie', v.id, { fr: v.fr, ar: v.ar })
     compter('forme', forme.id, { fr: forme.fr, ar: forme.ar })
-    compter('dosage', dosage.id, { fr: dosage.libelle, ar: null, tri: dosage.tri, famille: dosage.famille })
+    compter('dosage', cleLibelle('dosage', dosage.id, dci.id), { fr: dosage.libelle, ar: null, tri: dosage.tri, famille: dosage.famille })
     compter('statut', statut, STATUTS[statut])
     compter('labo', labo, { fr: laboNom || 'Non précisé', ar: null })
     let t = dciTexte.get(dci.id)
@@ -723,14 +826,17 @@ export type GuideReponse = {
   presentations: Presentation[]
 }
 
+/** Clé de la table des libellés : le dosage est propre à chaque DCI. */
+const cleLibelle = (c: Critere, id: string, dci: string) => (c === 'dosage' ? `${dci}|${id}` : id)
+
 const correspond = (p: Presentation, sel: Selection, sauf?: Critere) =>
   CRITERES.every(c => c === sauf || !sel[c] || p.axes[c] === sel[c])
 
-function compterOptions(idx: GuideIndex, rows: Presentation[], c: Critere, lang: 'fr' | 'ar'): Option[] {
+function compterOptions(idx: GuideIndex, rows: Presentation[], c: Critere, dci: string, lang: 'fr' | 'ar'): Option[] {
   const n = new Map<string, number>()
   for (const p of rows) n.set(p.axes[c], (n.get(p.axes[c]) ?? 0) + 1)
   const opts: Option[] = [...n].map(([id, k]) => {
-    const l = idx.libelles[c].get(id)!
+    const l = idx.libelles[c].get(cleLibelle(c, id, dci))!
     const o: Option = { id, libelle: l.fr, libelle_ar: l.ar, n: k }
     if (c === 'voie') { const v = voieParId(id)!; o.courant = lang === 'ar' ? v.courant_ar : v.courant_fr }
     return o
@@ -738,7 +844,7 @@ function compterOptions(idx: GuideIndex, rows: Presentation[], c: Critere, lang:
   if (c === 'voie') return opts.sort((a, b) => VOIE_RANG.get(a.id as VoieId)! - VOIE_RANG.get(b.id as VoieId)!)
   if (c === 'dosage') {
     return opts.sort((a, b) => {
-      const la = idx.libelles.dosage.get(a.id)!, lb = idx.libelles.dosage.get(b.id)!
+      const la = idx.libelles.dosage.get(cleLibelle(c, a.id, dci))!, lb = idx.libelles.dosage.get(cleLibelle(c, b.id, dci))!
       return (la.famille ?? 3) - (lb.famille ?? 3) || (la.tri ?? Infinity) - (lb.tri ?? Infinity) || a.libelle.localeCompare(b.libelle, 'fr', { numeric: true })
     })
   }
@@ -812,13 +918,13 @@ export function guider(idx: GuideIndex, demande: Selection, lang: 'fr' | 'ar' = 
   const options: GuideReponse['options'] = {}
   for (const c of CRITERES) {
     if (c === 'dci') continue
-    options[c] = compterOptions(idx, deLaDci.filter(p => correspond(p, sel, c)), c, lang)
+    options[c] = compterOptions(idx, deLaDci.filter(p => correspond(p, sel, c)), c, sel.dci, lang)
   }
   const selection: GuideReponse['selection'] = {}
   for (const c of CRITERES) {
     const id = sel[c]
     if (!id) continue
-    const l = idx.libelles[c].get(id)!
+    const l = idx.libelles[c].get(cleLibelle(c, id, sel.dci))!
     selection[c] = { id, libelle: l.fr, libelle_ar: l.ar }
   }
   const presentations = deLaDci
