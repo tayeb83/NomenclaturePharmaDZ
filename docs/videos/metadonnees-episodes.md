@@ -348,3 +348,28 @@ image d'aperçu = `couverture-<épisode>-verticale.jpg` (le fichier `…-partage
   ```
 - **À vérifier avant publication** : Les chiffres (824, 803, 501…) sont ceux de la capture à sa date (total 2679) : mettre à jour avant publication. Les 8 motifs affichés ne totalisent pas 2679 (les autres sont non listés). Les années ne sont visibles que dans le filtre : aucun chiffre par année n'est cité. Un retrait n'est pas forcément un problème de sécurité. Relecture par un pharmacien.
 
+---------------------------------------------------------------------------------------------------
+
+## 19 — Recherche guidée : trouver un médicament pas à pas avec DwaDZ  (fichier : guidee.clone.mp4 · couverture : couverture-guidee-verticale.jpg · 81 s)
+
+- **Identifiant** : `recherche-guidee-dwadz` · **N° d'épisode** : 19
+- **Titre français** : Recherche guidée : trouver un médicament pas à pas avec DwaDZ
+- **العنوان بالعربية** : البحث الموجَّه: اعثر على دوائك خطوة بخطوة مع DwaDZ
+- **Description française** :
+  ```text
+  Tu ne connais pas le nom exact du médicament ? La recherche guidée de DwaDZ te pose les bonnes questions dans l'ordre : substance (ou marque), voie d'administration, forme, dosage. À chaque étape, seuls les choix qui existent vraiment dans la nomenclature algérienne sont proposés, et la liste de présentations se réduit. Les codes EDQM (forme, voie) et UCUM (unité du dosage) s'affichent à chaque résultat. Essaie-la : https://www.dzair-pharma.net/lab/guide . Elle aide à retrouver une présentation ; elle ne remplace ni l'ordonnance ni l'avis du médecin ou du pharmacien. Vidéo en arabe, sous-titrée en français.
+  ```
+- **الوصف بالعربية** :
+  ```text
+  لا تعرف الاسم الدقيق للدواء؟ البحث الموجَّه في DwaDZ يطرح عليك الأسئلة بالترتيب: المادة الفعالة (أو الاسم التجاري)، ثم طريقة الاستعمال، ثم الشكل، ثم الجرعة. في كل خطوة تظهر فقط الخيارات الموجودة فعلًا في المدوّنة الوطنية الجزائرية، وتتقلص قائمة العروض. وتظهر مع كل نتيجة رموز EDQM وUCUM. هذه الأداة تساعد على إيجاد العرض المطلوب، ولا تغني عن الوصفة أو رأي الطبيب أو الصيدلي. فيديو بالعربية مع ترجمة فرنسية.
+  ```
+- **Étiquettes** : DwaDZ, البحث_الموجه, EDQM, UCUM, الدواء
+- **Lien cliquable (admin → « Lien cliquable »)** : https://www.dzair-pharma.net/lab/guide · bouton FR : « Essayer la recherche guidée » · bouton AR : « جرّب البحث الموجَّه »
+- **Sources** :
+  ```text
+  Recherche guidée DwaDZ (/lab/guide), données de la nomenclature nationale des produits pharmaceutiques (MIPH)
+  EDQM Standard Terms (forme pharmaceutique, voie d'administration)
+  UCUM (Unified Code for Units of Measure)
+  ```
+- **À vérifier avant publication** : Captures du site réel : l'exemple « amo » (amoxicilline + acide clavulanique, sirop) et les nombres de présentations (15, 12, 8, 13…) changent à chaque mise à jour de la nomenclature : aucun nombre n'est cité dans la voix. La vidéo ne donne aucune posologie. Relecture par un pharmacien.
+

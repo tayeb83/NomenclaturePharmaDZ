@@ -1,0 +1,41 @@
+// « Recherche guidée » : trouver un médicament pas à pas (substance, voie, forme, dosage). Captures du VRAI site (assets/guidee/*.jpg, interface arabe sauf l'accueil).
+const { card, warn, list, steps, it, cmp, search, cform, logo, hook, shot, link } = V
+const A = (n, w, h) => (to, hl, from) => shot(`assets/guidee/${n}.jpg`, w, h, to, hl, from, 560)
+const accueil = A("accueil", 2000, 791), amo = A("amo", 2000, 1144), voie = A("voie", 2000, 1144), forme = A("forme", 2000, 1144)
+window.SPEC = {
+  meta: { slug: "recherche-guidee-dwadz", n: 19, titreFr: "Recherche guidée : trouver un médicament pas à pas avec DwaDZ", titreAr: "البحث الموجَّه: اعثر على دوائك خطوة بخطوة مع DwaDZ",
+    descFr: "Tu ne connais pas le nom exact du médicament ? La recherche guidée de DwaDZ te pose les bonnes questions dans l'ordre : substance (ou marque), voie d'administration, forme, dosage. À chaque étape, seuls les choix qui existent vraiment dans la nomenclature algérienne sont proposés, et la liste de présentations se réduit. Les codes EDQM (forme, voie) et UCUM (unité du dosage) s'affichent à chaque résultat. Essaie-la : https://www.dzair-pharma.net/lab/guide . Elle aide à retrouver une présentation ; elle ne remplace ni l'ordonnance ni l'avis du médecin ou du pharmacien. Vidéo en arabe, sous-titrée en français.",
+    descAr: "لا تعرف الاسم الدقيق للدواء؟ البحث الموجَّه في DwaDZ يطرح عليك الأسئلة بالترتيب: المادة الفعالة (أو الاسم التجاري)، ثم طريقة الاستعمال، ثم الشكل، ثم الجرعة. في كل خطوة تظهر فقط الخيارات الموجودة فعلًا في المدوّنة الوطنية الجزائرية، وتتقلص قائمة العروض. وتظهر مع كل نتيجة رموز EDQM وUCUM. هذه الأداة تساعد على إيجاد العرض المطلوب، ولا تغني عن الوصفة أو رأي الطبيب أو الصيدلي. فيديو بالعربية مع ترجمة فرنسية.",
+    tags: ["DwaDZ", "البحث_الموجه", "EDQM", "UCUM", "الدواء"],
+    cta: { url: "https://www.dzair-pharma.net/lab/guide", fr: "Essayer la recherche guidée", ar: "جرّب البحث الموجَّه" },
+    sources: ["Recherche guidée DwaDZ (/lab/guide), données de la nomenclature nationale des produits pharmaceutiques (MIPH)", "EDQM Standard Terms (forme pharmaceutique, voie d'administration)", "UCUM (Unified Code for Units of Measure)"],
+    verifier: "Captures du site réel : l'exemple « amo » (amoxicilline + acide clavulanique, sirop) et les nombres de présentations (15, 12, 8, 13…) changent à chaque mise à jour de la nomenclature : aucun nombre n'est cité dans la voix. La vidéo ne donne aucune posologie. Relecture par un pharmacien." },
+  cover: { ar: "البحث الموجَّه", fr: ["Recherche guidée :", "pas à pas"], subAr: "المادة، الطريقة، الشكل، الجرعة", subFr: "Substance, voie, forme, dosage", icons: ["🧭", "💊"], c: "#4dabf7" },
+  segments: [
+    seg("لا تعرف الاسم الدقيق للدواء؟|جرّب البحث الموجَّه", "Tu ne connais pas le nom exact ?|Essaie la recherche guidée", hook("🧭", "البحث الموجَّه", "Recherche guidée"), "think",
+      "لا تعرف الاسم الدقيق للدواء؟ جرب البحث الموجه"),
+    seg("في الصفحة الرئيسية اختر|«بحث موجَّه» من بين ثلاثة أنماط", "Sur l'accueil, choisis|« Recherche guidée » parmi trois modes", accueil([380, 40, 1060, 630], [[683, 109, 355, 83]]), "happy",
+      "في الصفحة الرئيسية اختر بحث موجه من بين ثلاثة أنماط"),
+    seg("أربع خطوات: المادة الفعالة، ثم طريقة الاستعمال،|ثم الشكل، ثم الجرعة", "Quatre étapes : substance, voie,|forme, puis dosage", accueil([330, 215, 1000, 595], [[540, 377, 742, 56], [636, 459, 550, 86]], [380, 40, 1060, 630]), "happy",
+      "أربع خطوات: المادة الفعالة، ثم طريقة الاستعمال، ثم الشكل، ثم الجرعة"),
+    seg("الخطوة الأولى: اكتب جزءًا من اسم المادة|أو الاسم التجاري", "Étape 1 : tape une partie du nom|de la substance ou de la marque", amo([960, 90, 960, 570], [[286, 343, 1580, 98]], [286, 90, 1620, 964]), "happy",
+      "الخطوة الأولى: اكتب جزءا من اسم المادة أو الاسم التجاري"),
+    seg("تظهر المواد المطابقة،|وبجانب كل مادة عدد عروضها", "Les substances correspondantes apparaissent,|avec leur nombre de présentations", amo([340, 460, 1530, 684], [[340, 475, 1525, 165], [340, 650, 1525, 120], [340, 782, 1525, 120]], [960, 90, 960, 570]), "happy",
+      "تظهر المواد المطابقة، وبجانب كل مادة عدد عروضها"),
+    seg("الخطوة الثانية: كيف يُستعمل؟|للبلع، أو للشرب، أو حقنة…", "Étape 2 : comment se prend-il ?|à avaler, à boire, injection…", voie([900, 330, 1000, 595], [[1485, 400, 383, 172], [1085, 400, 381, 172]]), "happy",
+      "الخطوة الثانية: كيف يستعمل؟ للبلع، أو للشرب، أو حقنة"),
+    seg("الخطوة الثالثة: الشكل الصيدلاني،|مثل مسحوق لمعلق للشرب", "Étape 3 : la forme pharmaceutique,|par exemple poudre pour suspension buvable", forme([900, 20, 1100, 656], [[1240, 42, 276, 86]]), "happy",
+      "الخطوة الثالثة: الشكل الصيدلاني، مثل مسحوق لمعلق للشرب"),
+    seg("الخطوة الرابعة: الجرعة،|وتظهر الجرعات الموجودة فعلًا فقط", "Étape 4 : le dosage,|uniquement ceux qui existent vraiment", forme([1060, 300, 860, 512], [[1485, 405, 383, 130], [1085, 405, 381, 130]], [900, 20, 1100, 656]), "happy",
+      "الخطوة الرابعة: الجرعة، وتظهر الجرعات الموجودة فعلا فقط"),
+    Object.assign(seg("وتتقلص القائمة مع كل اختيار،|وتظهر رموز EDQM وUCUM لكل عرض", "La liste se réduit à chaque choix,|avec les codes EDQM et UCUM pour chaque présentation", forme([300, 640, 900, 504], [[329, 984, 545, 40]], [1060, 300, 860, 512]), "happy",
+      "وتتقلص القائمة مع كل اختيار، وتظهر رموز EDQM وUCUM لكل عرض"), { d: 7.5 }),
+    seg("وإذا وُجد خيار واحد فقط،|تُملأ الخطوة تلقائيًا بإطار ذهبي", "S'il n'y a qu'un seul choix,|l'étape est remplie d'office (liseré doré)", forme([900, 20, 1100, 656], [[1240, 42, 276, 86], [1420, 185, 486, 34]], [300, 640, 900, 504]), "think",
+      "وإذا وجد خيار واحد فقط، تملأ الخطوة تلقائيا بإطار ذهبي"),
+    seg("هذه الأداة تساعدك على إيجاد العرض المطلوب،|ولا تعطي جرعة ولا تغني عن الطبيب أو الصيدلي", "L'outil aide à retrouver une présentation ;|il ne donne aucune posologie", card("👩‍⚕️", "لا تغني عن الطبيب أو الصيدلي", "Aucune posologie, aucun conseil médical", COL.ok), "think",
+      "هذه الأداة تساعدك على إيجاد العرض المطلوب، ولا تعطي جرعة، ولا تغني عن الطبيب أو الصيدلي"),
+    seg("جرّب البحث الموجَّه الآن على DwaDZ.|الرابط في وصف الفيديو", "Essaie la recherche guidée sur DwaDZ.|Lien dans la description", link("dzair-pharma.net/lab/guide", "الرابط في وصف الفيديو", "Lien dans la description"), "happy",
+      "جرب البحث الموجه الآن على DwaDZ. الرابط في وصف الفيديو"),
+    seg("معلومة عامة، ولا تغني عن|رأي الطبيب أو الصيدلي", "Information générale : elle ne remplace pas|l'avis du médecin ou du pharmacien", logo()),
+  ],
+}
