@@ -134,7 +134,7 @@ export default async function RecherchePage({
       <div className="page-header">
         <div className="container">
           <h1>🔍 Recherche de médicaments</h1>
-          <p>Recherche simple, recherche avancée (conditions ET / OU) et filtres par voie, forme et dosage.</p>
+          <p>Une recherche, des filtres par voie, forme et dosage, et des conditions avancées (ET / OU) au besoin.</p>
         </div>
       </div>
       <div className="page-body">
