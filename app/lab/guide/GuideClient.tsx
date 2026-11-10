@@ -193,6 +193,9 @@ export function GuideClient({ embedded = false, basePath, extraParams }: { embed
             <section className="guide-accueil">
               <label className="guide-question" htmlFor="guide-saisie">{t('Quelle substance ou quelle marque ?', 'أي مادة فعالة أو أي اسم تجاري؟')}</label>
               <p className="guide-aide">{t('Un parcours en quatre temps : substance, voie, forme, dosage. Le nom de marque fonctionne aussi.', 'مسار من أربع خطوات: المادة، الطريقة، الشكل، الجرعة. الاسم التجاري يصلح أيضًا.')}</p>
+              <Link className="guide-mode-emploi" href={`/articles/recherche-guidee-medicament-algerie-mode-emploi${ar ? '-ar' : ''}`}>
+                📖 {t('Mode d’emploi avec exemples', 'دليل الاستعمال مع أمثلة')}
+              </Link>
               <div className="search-bar guide-saisie">
                 <span className="search-bar-icon" aria-hidden>🔎</span>
                 <input

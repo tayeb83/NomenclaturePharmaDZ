@@ -48,6 +48,7 @@ export interface QcmQuestion {
 }
 
 import { ARTICLES_GRAPHES } from './articles-graphes'
+import { ARTICLES_GUIDE } from './articles-guide'
 
 export const ARTICLES: Article[] = [
   {
@@ -1348,6 +1349,7 @@ export const ARTICLES: Article[] = [
     ],
   },
   ...ARTICLES_GRAPHES,
+  ...ARTICLES_GUIDE,
 ]
 
 export function getArticleBySlug(slug: string): Article | undefined {
