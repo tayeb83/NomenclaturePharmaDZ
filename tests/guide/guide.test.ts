@@ -142,8 +142,19 @@ test('dosage : le volume du dénominateur est gardé (une seringue n’est pas u
   assert.equal(normaliserDosage('20µG/80µL').cle, '0.02mg/0.08ml')
   assert.equal(normaliserDosage('1MG/FL. DE PDRE. (50KUI/FL. DE PDRE.)').libelle, '1 mg/flacon')
   assert.equal(normaliserDosage('70°').libelle, '70°')
-  // nombre sans unité : jamais interprété
-  assert.equal(normaliserDosage('0,02').reconnu, false)
+  // nombre seul entre 0 et 1 : pourcentage converti en fraction par l'export Excel
+  const memeQue = (a: string, b: string) => assert.equal(normaliserDosage(a).id, normaliserDosage(b).id, `${a} ≠ ${b}`)
+  memeQue('0,02', '2 %')
+  memeQue('0.02', '2%')
+  memeQue('0,0005', '0,05 %')
+  memeQue('0,00127', '0,127 %')
+  assert.equal(normaliserDosage('0,02').libelle, '2 %')
+  assert.equal(normaliserDosage('0,009').libelle, '0,9 %')
+  assert.match(normaliserDosage('0,02').complement!, /Excel/)
+  // un nombre sans unité ≥ 1, ou une quantité sans unité, reste non interprété
+  assert.equal(normaliserDosage('5').reconnu, false)
+  assert.equal(normaliserDosage('1,5').reconnu, false)
+  assert.equal(normaliserDosage('0.5 ML').reconnu, false)
 })
 
 test('dosage : libellés canoniques', () => {

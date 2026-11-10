@@ -95,8 +95,9 @@ Tests : `npm run test:demandes`.
   forme (orale solide, orale liquide, injectable…) ; dosages ramenés aux unités de base (« 0,5G » = « 500 MG »,
   « 1G/FL. DE PDRE. » = « 1 G »), la première écriture faisant foi (« 10MG/ML (50MG/5ML) » = « 10 MG/ML »). Le volume
   d'un dénominateur est gardé : « 40 MG/0,4 ML » ≠ « 80 MG/0,8 ML » (une seringue n'est pas l'autre). DCI composées
-  identiques quel que soit l'ordre ou le séparateur. Une valeur qui contient un mot inconnu, ou un nombre sans unité
-  (« 0,02 »), n'est jamais rapprochée : elle garde son écriture.
+  identiques quel que soit l'ordre ou le séparateur. Un nombre seul entre 0 et 1 (« 0,02 ») est un pourcentage converti
+  par l'export Excel : il est lu « 2 % » (mention dans l'audit). Une valeur qui contient un mot inconnu n'est jamais
+  rapprochée : elle garde son écriture.
 - Route : `?q=amox` (première étape : DCI, substance ou marque), puis `?dci=amoxicilline&voie=orale-liquide&…`
   avec les identifiants renvoyés dans `options`. Une étape à valeur unique est remplie d'office (`auto`), un choix
   incompatible est retiré (`ignores`), aucune option ne mène à zéro résultat. Filtres `statut=f|i`, `labo`, `lang=ar`.
