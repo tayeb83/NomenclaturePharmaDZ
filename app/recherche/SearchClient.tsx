@@ -8,6 +8,8 @@ import { AdInContent } from '@/components/ads/AdBanner'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 import { SuggestionList } from '@/components/search/SuggestionList'
 import { useSuggestions } from '@/components/search/useSuggestions'
+// Types seulement : le code de normalisation reste côté serveur (il est lourd pour un bundle navigateur).
+import type { Facette, Facettes, FacetteSel } from '@/lib/facettes'
 
 type AdvancedSearchCondition = {
   field: string
@@ -56,6 +58,14 @@ function hasAdvancedFilters(advanced: AdvancedSearchCondition[]) {
   return advanced.some((condition) => condition.value?.trim())
 }
 
+const FACETTES_VIDES: Facettes = { voie: [], forme: [], dosage: [], origine: [] }
+const GROUPES_FACETTES: Array<{ id: Facette; fr: string; ar: string }> = [
+  { id: 'voie', fr: 'Voie', ar: 'طريقة الاستعمال' },
+  { id: 'forme', fr: 'Forme', ar: 'الشكل' },
+  { id: 'dosage', fr: 'Dosage', ar: 'الجرعة' },
+  { id: 'origine', fr: 'Origine', ar: 'المصدر' },
+]
+
 function buildSearchParams(
   q: string,
   scope: string,
@@ -65,6 +75,7 @@ function buildSearchParams(
   advanced: AdvancedSearchCondition[],
   algerieOnly: boolean,
   dciMode = false,
+  fac: FacetteSel = {},
 ) {
   const params = new URLSearchParams()
   if (q.trim()) params.set('q', q)
@@ -74,6 +85,7 @@ function buildSearchParams(
   if (activeOnly) params.set('activeOnly', '1')
   if (algerieOnly) params.set('algerieOnly', '1')
   if (dciMode) params.set('mode', 'dci')
+  for (const f of ['voie', 'forme', 'dosage', 'origine'] as const) if (fac[f]) params.set(f, fac[f]!)
   if (hasAdvancedFilters(advanced)) params.set('advanced', JSON.stringify(advanced))
   return params
 }
@@ -103,6 +115,10 @@ export function SearchClient({
   initialAlgerieOnly,
   initialDciMode = false,
   initialAdvancedOpen = false,
+  initialFacettes = FACETTES_VIDES,
+  initialFacSel = {},
+  initialTotal = 0,
+  initialTronque = false,
   basePath = '/recherche',
 }: {
   initialQuery: string
@@ -118,6 +134,12 @@ export function SearchClient({
   initialDciMode?: boolean
   /** Panneau « Recherche avancée » ouvert d'emblée (lien ?avancee=1, ou filtres déjà posés). */
   initialAdvancedOpen?: boolean
+  /** Facettes calculées côté serveur sur tout le lot de résultats (voie, forme, dosage, origine). */
+  initialFacettes?: Facettes
+  initialFacSel?: FacetteSel
+  /** Lignes qui respectent les facettes, avant troncature de la liste affichée. */
+  initialTotal?: number
+  initialTronque?: boolean
   basePath?: string
 }) {
   const { lang } = useLanguage()
@@ -151,6 +173,12 @@ export function SearchClient({
   const [advanced, setAdvanced] = useState<AdvancedSearchCondition[]>(initialAdvanced.length ? initialAdvanced : [{ field: 'dci', operator: 'contains', value: '', bool: 'AND' }])
   const [results, setResults] = useState<SearchResult[]>(initialResults)
   const [fuzzyInfo, setFuzzyInfo] = useState<FuzzyInfo>(initialFuzzyInfo ?? NO_FUZZY)
+  const [facettes, setFacettes] = useState<Facettes>(initialFacettes)
+  const [facSel, setFacSel] = useState<FacetteSel>(initialFacSel)
+  const [totalServeur, setTotalServeur] = useState(initialTotal)
+  const [tronque, setTronque] = useState(initialTronque)
+  // Lue par syncUrl et search sans les re-créer à chaque clic sur une facette.
+  const facRef = useRef<FacetteSel>(initialFacSel)
   const [loading, setLoading] = useState(false)
   const [selectedPays, setSelectedPays] = useState('')
   const [selectedLaboFacet, setSelectedLaboFacet] = useState('')
@@ -178,34 +206,60 @@ export function SearchClient({
   }, [])
 
   const syncUrl = useCallback((nextQ: string, nextScope: string, nextLabo: string, nextSubstance: string, nextActiveOnly: boolean, nextAdvanced: AdvancedSearchCondition[], nextAlgerieOnly: boolean) => {
-    const params = buildSearchParams(nextQ, nextScope, nextLabo, nextSubstance, nextActiveOnly, nextAdvanced, nextAlgerieOnly, dciModeRef.current)
+    const params = buildSearchParams(nextQ, nextScope, nextLabo, nextSubstance, nextActiveOnly, nextAdvanced, nextAlgerieOnly, dciModeRef.current, facRef.current)
     startTransition(() => {
       router.replace(`${basePath}${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false })
     })
   }, [router, startTransition, basePath])
 
   const search = useCallback(async (q: string, s: string, l: string, sub: string, active: boolean, adv: AdvancedSearchCondition[]) => {
-    if (!q.trim() && !l.trim() && !sub.trim() && !hasAdvancedFilters(adv)) { setResults([]); setFuzzyInfo(NO_FUZZY); return }
+    if (!q.trim() && !l.trim() && !sub.trim() && !hasAdvancedFilters(adv)) { setResults([]); setFuzzyInfo(NO_FUZZY); setFacettes(FACETTES_VIDES); setTotalServeur(0); return }
     setLoading(true)
     try {
-      const params = buildSearchParams(q, s, l, sub, active, adv, false, dciModeRef.current)
+      const params = buildSearchParams(q, s, l, sub, active, adv, false, dciModeRef.current, facRef.current)
       const res = await fetch(`/api/search?${params.toString()}`)
       const data = await res.json()
       setResults(data.results || [])
+      setFacettes(data.facettes ?? FACETTES_VIDES)
+      setTotalServeur(data.total ?? (data.results || []).length)
+      setTronque(Boolean(data.tronque))
+      // le serveur retire les choix devenus impossibles : on s'aligne sur ce qu'il a réellement appliqué
+      if (data.selection) { facRef.current = data.selection; setFacSel(data.selection) }
       setFuzzyInfo(data.fuzzy ? { fuzzy: true, matchedTerm: data.matchedTerm ?? null, synonymTerm: data.synonymTerm ?? null } : NO_FUZZY)
     } catch {
       setResults([])
       setFuzzyInfo(NO_FUZZY)
+      setFacettes(FACETTES_VIDES)
     } finally { setLoading(false) }
   }, [])
 
   function handleInput(val: string, dci = false) {
     dciModeRef.current = dci
+    // une nouvelle saisie repart d'une liste entière : les choix de facettes de la précédente n'ont plus de sens
+    facRef.current = {}
+    setFacSel({})
     setQuery(val)
     syncUrl(val, scope, labo, substance, activeOnly, advanced, algerieOnly)
     const effAdv = effectiveAdvanced(advanced, algerieOnly)
     if (val.length >= 2 || labo || substance || hasAdvancedFilters(effAdv)) search(val, scope, labo, substance, activeOnly, effAdv)
     else if (val.length === 0) setResults([])
+  }
+
+  function handleFacette(groupe: Facette, id: string) {
+    const next: FacetteSel = { ...facRef.current }
+    if (next[groupe] === id) delete next[groupe]
+    else next[groupe] = id
+    facRef.current = next
+    setFacSel(next)
+    syncUrl(query, scope, labo, substance, activeOnly, advanced, algerieOnly)
+    search(query, scope, labo, substance, activeOnly, effectiveAdvanced(advanced, algerieOnly))
+  }
+
+  function clearFacettes() {
+    facRef.current = {}
+    setFacSel({})
+    syncUrl(query, scope, labo, substance, activeOnly, advanced, algerieOnly)
+    search(query, scope, labo, substance, activeOnly, effectiveAdvanced(advanced, algerieOnly))
   }
 
   function handleScope(s: string) {
@@ -508,6 +562,56 @@ export function SearchClient({
         <div className="search-count">
           {filteredResults.length === 0 ? (lang === 'ar' ? 'لا توجد نتائج' : 'Aucun résultat') : `${filteredResults.length} ${lang === 'ar' ? 'نتيجة' : 'résultat(s) trouvés'}`}
           {results.length !== filteredResults.length && ` (${results.length} ${lang === 'ar' ? 'إجمالي' : 'total'})`}
+          {totalServeur > results.length && (
+            <span style={{ color: '#64748b' }}>
+              {lang === 'ar' ? ` — عرض ${results.length} من ${totalServeur}، ضيّق النتائج بالواجهات أدناه` : ` — ${results.length} affichés sur ${totalServeur} : affinez avec les facettes ci-dessous`}
+            </span>
+          )}
+        </div>
+      )}
+
+      {!loading && (results.length > 0 || Object.keys(facSel).length > 0) && GROUPES_FACETTES.some(g => facettes[g.id].length > 1 || facSel[g.id]) && (
+        <div className="facettes-moteur" style={{ marginBottom: 14, border: '1px solid #bfdbfe', borderRadius: 10, padding: 12, background: '#f0f7ff' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#1e3a8a' }}>
+              {lang === 'ar' ? 'ضيّق حسب الاستعمال والشكل والجرعة' : 'Affiner par voie, forme et dosage'}
+            </div>
+            {Object.keys(facSel).length > 0 && (
+              <button type="button" onClick={clearFacettes} style={{ background: 'none', border: 0, color: '#1d4ed8', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}>
+                {lang === 'ar' ? 'مسح الاختيارات' : 'Effacer les choix'}
+              </button>
+            )}
+          </div>
+          <div style={{ display: 'grid', gap: 9 }}>
+            {GROUPES_FACETTES.map(g => {
+              const options = facettes[g.id]
+              if (options.length === 0 || (options.length === 1 && !facSel[g.id])) return null
+              return (
+                <div key={g.id} role="group" aria-label={lang === 'ar' ? g.ar : g.fr} style={{ display: 'flex', gap: 7, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <strong style={{ fontSize: 12, color: '#475569', minWidth: 64 }}>{lang === 'ar' ? g.ar : g.fr}</strong>
+                  {options.map(o => {
+                    const actif = facSel[g.id] === o.id
+                    return (
+                      <button
+                        key={`${g.id}-${o.id}`}
+                        type="button"
+                        aria-pressed={actif}
+                        onClick={() => handleFacette(g.id, o.id)}
+                        style={{ padding: '5px 10px', borderRadius: 999, border: actif ? '1.5px solid #1d4ed8' : '1px solid #cbd5e1', background: actif ? '#dbeafe' : '#fff', cursor: 'pointer', fontSize: 12.5, fontWeight: actif ? 700 : 400 }}
+                      >
+                        {g.id === 'origine' && o.id === 'f' ? '🇩🇿 ' : ''}{lang === 'ar' && o.libelle_ar ? o.libelle_ar : o.libelle} <span style={{ color: '#64748b', fontFamily: 'monospace', fontSize: 11.5 }}>{o.n}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )
+            })}
+          </div>
+          {tronque && (
+            <p style={{ margin: '10px 0 0', fontSize: 12, color: '#64748b' }}>
+              {lang === 'ar' ? 'الأعداد محسوبة على أول 300 نتيجة. دقّق البحث لرؤية الباقي.' : 'Compteurs calculés sur les 300 premiers résultats. Précisez la recherche pour voir le reste.'}
+            </p>
+          )}
         </div>
       )}
 

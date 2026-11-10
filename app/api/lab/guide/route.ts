@@ -15,6 +15,7 @@ import { getClientIp, rateLimit } from '@/lib/rate-limit'
 import { getGuideIndex } from '@/lib/guide'
 import { CRITERES, guider, type Selection } from '@/lib/guide-core'
 import { medicamentPath } from '@/lib/medicament-url'
+import { refuserSiPasLab } from '@/lib/lab-access'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,6 +24,8 @@ const LIMIT_MAX = 100
 const ID_VALIDE = /^[a-z0-9-]{1,160}$/
 
 export async function GET(req: NextRequest) {
+  const refus = refuserSiPasLab(req)
+  if (refus) return refus
   const retry = rateLimit(`lab-guide:${getClientIp(req)}`, 120, 60_000)
   if (retry !== null) {
     return NextResponse.json({ error: 'Trop de requêtes. Réessayez dans un instant.' }, { status: 429, headers: { 'Retry-After': String(retry) } })
@@ -71,10 +74,14 @@ export async function GET(req: NextRequest) {
       pays: p.pays ?? null,
       statut: p.statut ?? null,
       forme_norm: p.norm.forme.fr,
+      forme_ar: p.norm.forme.ar,
+      forme_edqm: p.norm.forme.edqm ? { code: p.norm.forme.edqm.code, relation: p.norm.forme.edqm.relation } : null,
       dosage_norm: p.norm.dosage.libelle,
+      dosage_ar: p.norm.dosage.libelle_ar,
+      dosage_ucum: { quantites: p.norm.dosage.quantites, denominateur: p.norm.dosage.denominateur },
     })),
   }
   return NextResponse.json(body, {
-    headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400' },
+    headers: { 'Cache-Control': 'private, max-age=300' },
   })
 }

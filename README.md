@@ -87,9 +87,30 @@ précise que DwaDZ met en relation, ne vend rien et ne garantit aucun stock.
 `NEXT_PUBLIC_FACEBOOK_PAGE_URL` (bouton « Nous écrire sur Facebook » sur `/demandes`).
 Tests : `npm run test:demandes`.
 
-### 🧭 Recherche guidée (Lab, en préparation)
+### 🧭 Recherche guidée (Lab : `/lab/guide`)
 - Parcours DCI → voie → forme → dosage → présentations. Moteur et normalisation dans `lib/guide-core.ts`
-  (sans base, testable seul), index en mémoire dans `lib/guide.ts`, route `GET /api/lab/guide`. Pas encore d'interface.
+  (sans base, testable seul), index en mémoire dans `lib/guide.ts`, route `GET /api/lab/guide`.
+- **Onglet Lab** (`/lab`) : regroupe les fonctions à l'essai — recherche guidée, terminologies, facettes. **Réservé aux
+  sessions admin** (`lib/lab-access.ts`) : l'onglet n'apparaît pas dans la navigation des autres visiteurs, `/lab`,
+  `/lab/guide`, `/terminologies`, `/api/lab/guide` et `/api/terminologies/atc` leur répondent 404. Pour l'ouvrir à tous :
+  retirer `exigerLab()` des pages, `refuserSiPasLab()` des routes et la condition `isAdmin` de `components/layout/Nav.tsx`.
+  Les facettes de `/recherche` et les codes EDQM/UCUM de la fiche sont, eux, publics (sans lien pour les non-admin).
+- **Facettes dans la recherche** (`/recherche`, `/api/search`) : voie, forme, dosage et origine, calculés côté serveur
+  sur un lot de 300 résultats (`lib/recherche-facettes.ts`, `lib/facettes.ts`), pas seulement sur les 30 ou 60 lignes
+  affichées. Le compteur d'un groupe ignore son propre choix ; un choix devenu impossible est retiré. Paramètres
+  `?voie=…&forme=…&dosage=…&origine=f|i` (identifiants de la recherche guidée) ; réponse : `facettes`, `selection`,
+  `ignores`, `total`, `tronque`. Une nouvelle saisie remet les choix à zéro. Les facettes pays, labo, ATC, année et
+  substance existantes restent calculées dans le navigateur sur les lignes affichées.
+- **Fiche médicament** : à côté de la forme, de la voie, de la méthode d'administration et du dosage, le code EDQM ou
+  UCUM (lien vers `/terminologies` pour l'admin seulement, `nofollow`) ; le code ATC renvoie à la classe. Une correction manuelle de
+  `forme_edqm_mapping` et une traduction `relu` de `edqm_termes` priment sur le calcul. Sans la migration 39, la fiche
+  affiche le calcul du dépôt.
+- **Page Terminologies** (`/terminologies`) : formes, voies, méthodes EDQM, unités UCUM et classification ATC (tous
+  niveaux, par pages de 100 via `/api/terminologies/atc`), en français, anglais et arabe, avec l'état de relecture de
+  l'arabe et le nombre de médicaments par terme. État dans l'URL (`?onglet=ucum&code=mg`).
+- Interface « pastilles » (`app/lab/guide/GuideClient.tsx`, FR/AR) : chaque choix devient une pastille qu'on rouvre ou
+  retire ; l'état est l'URL, donc un lien se partage. Case « Codes EDQM et UCUM » pour les professionnels.
+  Page réservée à l'admin tant que la fonction est à l'essai.
 - **Normalisation** : abréviations de forme développées (« COMP. PELL. » → « Comprimé pelliculé ») et libellés proches
   des Standard Terms EDQM, fautes de frappe courantes comprises (« GELLULE », « SUSPENSSION ») ; voie déduite de la
   forme (orale solide, orale liquide, injectable…) ; dosages ramenés aux unités de base (« 0,5G » = « 500 MG »,
@@ -101,8 +122,25 @@ Tests : `npm run test:demandes`.
 - Route : `?q=amox` (première étape : DCI, substance ou marque), puis `?dci=amoxicilline&voie=orale-liquide&…`
   avec les identifiants renvoyés dans `options`. Une étape à valeur unique est remplie d'office (`auto`), un choix
   incompatible est retiré (`ignores`), aucune option ne mène à zéro résultat. Filtres `statut=f|i`, `labo`, `lang=ar`.
+- **Terminologies** : chaque forme porte son Standard Term **EDQM** (`lib/edqm.ts`) avec la nature du lien — `exact`,
+  `plus-large` (« comprimé pelliculé sécable » → « Comprimé pelliculé ») ou `proche` (à confirmer) ; jamais de code
+  sans terme sûr. Les 426 formes et 82 voies (anglais, français) viennent du paquet FHIR CH-Term :
+  `npx tsx scripts/build_edqm_terms.mts <dossier package>` régénère `lib/edqm-data.ts`. Les Standard Terms restent la
+  propriété de l'EDQM. L'arabe n'existe pas à la source : `lib/edqm-ar.ts` porte nos traductions par code, en brouillon
+  tant que le code n'est pas dans `EDQM_AR_RELUS`. Chaque dosage porte ses quantités en **UCUM** (`lib/ucum.ts`,
+  `mg`, `mL`, `[iU]`…) : de quoi produire un `Ratio` FHIR.
+- **Référentiel en base** (`sql/39_terminologies.sql`) : `edqm_termes` (426 formes, 82 voies, 19 méthodes
+  d'administration ; anglais, français, arabe avec `ar_statut`), `ucum_unites`, `forme_edqm_mapping` (écriture de forme
+  → terme EDQM, comme `dci_atc_mapping`) et `medicament_terminologie` (par fiche : forme, voies et méthode EDQM, unités
+  UCUM du dosage). Vue de consultation : `v_medicament_terminologie`.
+  `DATABASE_URL=... npx tsx scripts/sync_terminologies.mts --apply` (sans `--apply` : simulation) ; un import de
+  nomenclature depuis l'admin relance la synchronisation. Une ligne de `forme_edqm_mapping` passée en
+  `source = 'manual'` et une traduction passée en `ar_statut = 'relu'` ne sont jamais écrasées. Les voies écrites dans
+  la forme (« IV/IM », « S/C ») sont reconnues ; « injectable » sans précision n'en reçoit aucune. La méthode
+  d'administration est déduite par nos règles, à valider.
 - Audit à relire après chaque import : `DATABASE_URL=... npx tsx scripts/audit_guide_normalisation.mts` produit
-  `data/guide/audit_normalisation.xlsx` (formes et dosages non reconnus, regroupements, DCI fusionnées).
+  `data/guide/audit_normalisation.xlsx` (formes et dosages non reconnus, regroupements, DCI fusionnées, codes EDQM et
+  UCUM, feuille « Anomalies » des corrections à proposer sur la nomenclature, feuille de relecture de l'arabe).
   Les mots manquants s'ajoutent au vocabulaire `MOTS_FORME`. Tests : `npm run test:guide`.
 
 ### 🕸️ Graphe de connaissances (recherche)

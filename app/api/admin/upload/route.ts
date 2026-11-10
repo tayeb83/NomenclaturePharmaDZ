@@ -3,6 +3,7 @@ import { revalidateTag } from 'next/cache'
 import { hasAdminRole } from '@/lib/admin-auth'
 import { NOMENCLATURE_TAG } from '@/lib/medicament-cache'
 import { invaliderGuideIndex } from '@/lib/guide'
+import { synchroniserTerminologies } from '@/lib/terminologies'
 import { getPool } from '@/lib/db'
 import {
   parseNomenclatureFile,
@@ -385,6 +386,13 @@ export async function POST(req: NextRequest) {
     revalidateTag(NOMENCLATURE_TAG)
     // Index de la recherche guidée (Lab) : reconstruit à la prochaine requête de cette instance.
     invaliderGuideIndex()
+    // Référentiel terminologique : relie les nouvelles fiches à l'EDQM et à l'UCUM (sql/39_terminologies.sql).
+    // Sans la migration, ou en cas d'échec, l'import reste valide : `npx tsx scripts/sync_terminologies.mts --apply`.
+    try {
+      await synchroniserTerminologies()
+    } catch (e) {
+      console.error('[upload] synchronisation des terminologies impossible', e)
+    }
 
     return NextResponse.json({
       success: true,

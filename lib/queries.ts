@@ -2262,6 +2262,74 @@ async function hasAtcTables(): Promise<boolean> {
   return codes && mapping
 }
 
+export type AtcReferentielLigne = {
+  code: string
+  parent_code: string | null
+  niveau: number
+  label_fr: string | null
+  label_en: string | null
+  label_ar: string | null
+  /** DCI de la nomenclature mappées sous ce code */
+  dci_count: number
+  /** fiches de la nomenclature dont la DCI est mappée sous ce code */
+  medicaments: number
+}
+
+/**
+ * Page « Terminologies » : liste des codes ATC (tous niveaux), filtrable et paginée.
+ * `utilises` ne garde que les codes qui ont au moins une DCI de la nomenclature en dessous (le code lui-même ou un
+ * descendant) ; ces codes sont obtenus en prenant les préfixes de chaque code niveau 5 (longueurs 1, 3, 4, 5, 7),
+ * ce qui évite un LIKE par ligne de atc_codes.
+ */
+export async function listAtcPourReferentiel(opts: {
+  niveau?: number
+  q?: string
+  code?: string
+  utilises?: boolean
+  offset?: number
+  limit?: number
+}): Promise<{ rows: AtcReferentielLigne[]; total: number; disponible: boolean }> {
+  if (!await hasAtcTables()) return { rows: [], total: 0, disponible: false }
+  try {
+    const ar = await atcLabelAr('a')
+    const limit = Math.min(Math.max(opts.limit ?? 100, 1), 200)
+    const offset = Math.max(opts.offset ?? 0, 0)
+    const params: any[] = []
+    const where: string[] = []
+    if (opts.niveau && opts.niveau >= 1 && opts.niveau <= 5) { params.push(opts.niveau); where.push(`a.niveau = $${params.length}`) }
+    if (opts.code) { params.push(opts.code.toUpperCase().trim()); where.push(`a.code = $${params.length}`) }
+    const q = opts.q?.trim()
+    if (q) {
+      params.push(`%${q}%`)
+      const n = params.length
+      where.push(`(a.code ILIKE $${n} OR UNACCENT(COALESCE(a.label_fr, '')) ILIKE UNACCENT($${n}) OR UNACCENT(COALESCE(a.label_en, '')) ILIKE UNACCENT($${n}) OR COALESCE(${ar}, '') ILIKE $${n})`)
+    }
+    const cte = opts.utilises
+      ? `WITH used AS (
+           SELECT DISTINCT unnest(ARRAY[left(code_atc, 1), left(code_atc, 3), left(code_atc, 4), left(code_atc, 5), left(code_atc, 7)]) AS code
+           FROM dci_atc_mapping
+         )`
+      : ''
+    if (opts.utilises) where.push(`a.code IN (SELECT code FROM used)`)
+    const clause = where.length ? `WHERE ${where.join(' AND ')}` : ''
+    const total = await queryOne<{ n: number }>(`${cte} SELECT COUNT(*)::INT AS n FROM atc_codes a ${clause}`, params)
+    const rows = await query<AtcReferentielLigne>(`
+      ${cte}
+      SELECT
+        a.code, a.parent_code, a.niveau, a.label_fr, a.label_en, ${ar} AS label_ar,
+        (SELECT COUNT(DISTINCT m.dci) FROM dci_atc_mapping m WHERE m.code_atc LIKE a.code || '%')::INT AS dci_count,
+        (SELECT COUNT(*) FROM enregistrements e JOIN dci_atc_mapping m ON m.dci = e.dci WHERE m.code_atc LIKE a.code || '%')::INT AS medicaments
+      FROM atc_codes a
+      ${clause}
+      ORDER BY a.code
+      LIMIT ${limit} OFFSET ${offset}
+    `, params)
+    return { rows, total: total?.n ?? rows.length, disponible: true }
+  } catch {
+    return { rows: [], total: 0, disponible: false }
+  }
+}
+
 /** Les 14 groupes anatomiques (niveau 1), avec le nombre de DCI mappées */
 export async function getAtcRootsWithCounts(): Promise<AtcNavNode[]> {
   if (!await hasAtcTables()) return []

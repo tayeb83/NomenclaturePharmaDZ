@@ -1,4 +1,5 @@
-import { searchMedicamentsTolerant, type TolerantSearchResponse } from '@/lib/queries'
+import { rechercheAvecFacettes, type RechercheFacettes } from '@/lib/recherche-facettes'
+import { facettesDepuisParams, type FacetteSel } from '@/lib/facettes'
 import type { SearchResult } from '@/lib/db-types'
 import { SearchClient } from './SearchClient'
 import type { Metadata } from 'next'
@@ -65,12 +66,14 @@ type SearchFilters = {
   dciMode?: boolean
 }
 
-async function searchDrugs(query: string, scope: string, filters: SearchFilters): Promise<TolerantSearchResponse> {
+const FACETTES_VIDES = { voie: [], forme: [], dosage: [], origine: [] }
+
+async function searchDrugs(query: string, scope: string, filters: SearchFilters, choix: FacetteSel): Promise<RechercheFacettes> {
   const hasAdvanced = (filters.advanced || []).some((condition) => condition.value?.trim())
   if (!query.trim() && !filters.labo?.trim() && !filters.substance?.trim() && !hasAdvanced) {
-    return { results: [], fuzzy: false, matchedTerm: null, synonymTerm: null }
+    return { results: [], fuzzy: false, matchedTerm: null, synonymTerm: null, total: 0, tronque: false, facettes: FACETTES_VIDES, selection: {}, ignores: [] }
   }
-  return searchMedicamentsTolerant(query, scope, 60, filters)
+  return rechercheAvecFacettes(query, scope, 60, filters, choix)
 }
 
 function parseAdvanced(advancedRaw: string | undefined): AdvancedSearchCondition[] {
@@ -87,7 +90,7 @@ function parseAdvanced(advancedRaw: string | undefined): AdvancedSearchCondition
 export default async function RecherchePage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; scope?: string; labo?: string; substance?: string; activeOnly?: string; advanced?: string; algerieOnly?: string; avancee?: string; mode?: string }>
+  searchParams: Promise<{ q?: string; scope?: string; labo?: string; substance?: string; activeOnly?: string; advanced?: string; algerieOnly?: string; avancee?: string; mode?: string; voie?: string; forme?: string; dosage?: string; origine?: string }>
 }) {
   const resolvedSearchParams = await searchParams
   const query = resolvedSearchParams.q || ''
@@ -104,12 +107,21 @@ export default async function RecherchePage({
       : advanced,
   }
 
+  const choixFacettes = facettesDepuisParams(n => (resolvedSearchParams as Record<string, string | undefined>)[n])
   let results: SearchResult[] = []
+  let facettes: RechercheFacettes['facettes'] = FACETTES_VIDES
+  let selectionFacettes: FacetteSel = {}
+  let totalFacettes = 0
+  let tronque = false
   let fuzzyInfo: { fuzzy: boolean; matchedTerm: string | null; synonymTerm: string | null } = { fuzzy: false, matchedTerm: null, synonymTerm: null }
   let searchError = false
   try {
-    const response = await searchDrugs(query, scope, filters)
+    const response = await searchDrugs(query, scope, filters, choixFacettes)
     results = response.results
+    facettes = response.facettes
+    selectionFacettes = response.selection
+    totalFacettes = response.total
+    tronque = response.tronque
     fuzzyInfo = { fuzzy: response.fuzzy, matchedTerm: response.matchedTerm, synonymTerm: response.synonymTerm }
   } catch {
     searchError = true
@@ -141,6 +153,10 @@ export default async function RecherchePage({
             initialAdvanced={advanced}
             initialAlgerieOnly={algerieOnly}
             initialDciMode={Boolean(filters.dciMode)}
+            initialFacettes={facettes}
+            initialFacSel={selectionFacettes}
+            initialTotal={totalFacettes}
+            initialTronque={tronque}
             initialAdvancedOpen={resolvedSearchParams.avancee === '1'}
           />
         </div>
