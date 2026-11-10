@@ -1,6 +1,5 @@
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
-import { exigerLab } from '@/lib/lab-access'
 import { GuideClient } from './GuideClient'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
@@ -17,7 +16,6 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 export default function GuidePage() {
-  exigerLab()
   return (
     <Suspense fallback={null}>
       <GuideClient />

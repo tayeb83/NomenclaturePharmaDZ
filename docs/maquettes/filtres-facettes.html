@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Maquettes — filtres de la recherche</title>
+<style>
+:root{--navy:#12233f;--blue:#1d4e9e;--blue-l:#e4edf7;--brass:#b98425;--s100:#f1f5f9;--s200:#e2e8f0;--s500:#64748b;--s600:#475569;--s900:#0f172a;--green:#d1fae5}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:#f1f4f4;color:var(--s900)}
+header{background:var(--navy);color:#fff;padding:18px 24px}header h1{margin:0;font-size:20px}header p{margin:4px 0 0;color:#cbd5e1;font-size:14px}
+.sel{display:flex;gap:8px;flex-wrap:wrap;padding:14px 24px;background:#fff;border-bottom:1px solid var(--s200);position:sticky;top:0;z-index:5}
+.sel button{border:1.5px solid var(--s200);background:#fff;border-radius:10px;padding:8px 14px;font:inherit;font-weight:600;cursor:pointer}
+.sel button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+main{max-width:980px;margin:0 auto;padding:20px 16px 60px}
+.var{display:none}.var.on{display:block}
+.note{background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:10px;padding:10px 14px;font-size:14px;margin-bottom:16px}
+.note b{color:#78350f}
+.bar{background:#fff;border:2px solid var(--s200);border-radius:14px;padding:14px 16px;font-size:16px;margin-bottom:14px;box-shadow:0 2px 10px rgba(15,23,42,.06)}
+.chip{display:inline-flex;gap:7px;align-items:center;border:1.5px solid var(--s200);background:#fff;border-radius:999px;padding:6px 12px;font-size:14px;cursor:pointer;white-space:nowrap}
+.chip i{font-style:normal;font:11.5px monospace;color:var(--s500);background:var(--s100);border-radius:999px;padding:0 6px}
+.chip.on{background:var(--blue);border-color:var(--blue);color:#fff}.chip.on i{background:#fff;color:var(--blue)}
+.chip.more{border-style:dashed;color:var(--blue);background:none}
+.card{background:#fff;border:1px solid var(--s200);border-radius:14px;padding:14px;margin-bottom:10px}
+.card b.t{color:var(--navy)}.card small{color:var(--s500);display:block;margin-top:2px}
+.code{display:inline-block;font:11.5px monospace;padding:0 8px;border-radius:6px;background:var(--blue-l);color:var(--blue);margin-top:6px;margin-inline-end:6px}.code.u{background:#dcf1ef;color:#17706c}
+.count{font-size:14px;margin:14px 0 8px;color:var(--s600)}.count b{font-size:18px;color:var(--navy)}
+/* A */
+.fa{background:linear-gradient(180deg,#f3f8ff,#eaf2fd);border:1px solid #b9d0ee;border-radius:14px;padding:14px;margin-bottom:14px;display:grid;gap:10px}
+.fa h4{margin:0;color:var(--blue);font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;display:flex;justify-content:space-between}
+.fa h4 a{text-transform:none;letter-spacing:0;font-size:13px;color:var(--s600)}
+.ra{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.ra>strong{min-width:64px;font-size:13px;color:var(--s600)}
+/* B */
+.lay{display:grid;grid-template-columns:250px 1fr;gap:18px;align-items:start}
+.side{background:#fff;border:1px solid #b9d0ee;border-radius:14px;padding:6px 14px;box-shadow:0 2px 8px rgba(29,78,158,.1)}
+.side h4{margin:10px 0 4px;color:var(--blue);font-size:12.5px;letter-spacing:.06em;text-transform:uppercase}
+.acc{border-top:1px solid var(--s200);padding:10px 0}.acc:first-of-type{border-top:0}
+.acc>summary{cursor:pointer;font-weight:700;color:var(--navy);list-style:none;display:flex;justify-content:space-between}
+.acc>summary::after{content:"▾";color:var(--s500)}.acc[open]>summary::after{content:"▴"}
+.opt{display:flex;justify-content:space-between;gap:8px;padding:5px 0;font-size:14px;cursor:pointer}.opt input{margin-right:8px;accent-color:var(--blue)}.opt i{font:11.5px monospace;color:var(--s500)}
+.fbtn{display:none;width:100%;margin-bottom:12px;background:var(--blue);color:#fff;border:0;border-radius:12px;padding:12px;font:inherit;font-weight:700}
+@media(max-width:760px){.lay{grid-template-columns:1fr}.side{display:none}.fbtn{display:block}}
+/* C */
+.bc{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:linear-gradient(180deg,#f3f8ff,#eaf2fd);border:1px solid #b9d0ee;border-radius:14px;padding:10px 12px;margin-bottom:10px}
+.bc em{font-style:normal;font-weight:700;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);padding-inline:4px}
+.pb{border:1.5px solid #b9d0ee;background:#fff;border-radius:999px;padding:7px 13px;font:inherit;font-weight:600;font-size:14px;cursor:pointer}.pb.on{background:var(--blue);color:#fff;border-color:var(--blue)}.pb.o{background:var(--blue-l);color:var(--blue);border-color:var(--blue)}
+.pan{background:#fff;border:1px solid var(--blue);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.pan .ra{margin-top:8px}
+/* D */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.tile{background:#fff;border:2px solid var(--s200);border-radius:14px;padding:12px;text-align:center;cursor:pointer}
+.tile span{font-size:26px;display:block}.tile b{display:block;margin-top:4px;color:var(--navy);font-size:14.5px}.tile small{color:var(--s500)}
+.tile.on{border-color:var(--blue);background:var(--blue-l)}
+.row2{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+</style></head><body>
+<header><h1>Maquettes — où et comment afficher les filtres ?</h1><p>Données d'exemple : recherche « amoxicilline ». Choisissez une variante ci-dessous, cliquez pour tester, regardez aussi en mode téléphone (réduisez la fenêtre).</p></header>
+<div class="sel" id="sel"></div>
+<main>
+
+<section class="var on" id="v0">
+<div class="note"><b>A · Pastilles toujours visibles.</b> Chaque critère a sa ligne avec ses 6 choix les plus fréquents, sans rien ouvrir. « +N » déplie le reste. Le plus visible, mais prend de la hauteur (≈ 4 lignes).</div>
+<div class="bar">🔍 amoxicilline</div>
+<div class="fa">
+<h4>Affiner les résultats <a href="#">Tout effacer</a></h4>
+<div class="ra"><strong>Voie</strong><span class="chip on">Orale liquide <i>70</i></span><span class="chip">Orale solide <i>156</i></span><span class="chip">Injectable <i>10</i></span><span class="chip">Rectale <i>58</i></span></div>
+<div class="ra"><strong>Forme</strong><span class="chip">Comprimé <i>72</i></span><span class="chip">Poudre p. susp. buvable <i>29</i></span><span class="chip">Gélule <i>27</i></span><span class="chip">Solution buvable <i>20</i></span><span class="chip">Comp. sécable <i>17</i></span><span class="chip more">+ 28</span></div>
+<div class="ra"><strong>Dosage</strong><span class="chip">500 mg <i>56</i></span><span class="chip">1000 mg <i>23</i></span><span class="chip">250 mg/5 ml <i>9</i></span><span class="chip">125 mg/5 ml <i>7</i></span><span class="chip more">+ 40</span></div>
+<div class="ra"><strong>Origine</strong><span class="chip">🇩🇿 Fabriqué en Algérie <i>247</i></span><span class="chip">Importé <i>53</i></span></div>
+</div>
+<div class="count"><b>42</b> résultats</div>
+<div class="card"><b class="t">CLAMOXYL</b><small>Poudre pour suspension buvable · 250 mg/5 ml · SAIDAL 🇩🇿</small><span class="code">EDQM 10219000</span><span class="code u">UCUM 250 mg / 5 mL</span></div>
+</section>
+
+<section class="var" id="v1">
+<div class="note"><b>B · Colonne latérale.</b> Sur ordinateur, les filtres restent à gauche en permanence, comme sur un site marchand, avec cases à cocher. Sur téléphone : un gros bouton « Filtrer » qui ouvre la même colonne. Le plus familier, et la liste des résultats reste visible à côté.</div>
+<button class="fbtn">⚙ Filtrer (2)</button>
+<div class="bar">🔍 amoxicilline</div>
+<div class="lay"><aside class="side"><h4>Filtrer</h4>
+<details class="acc" open><summary>Voie</summary><label class="opt"><span><input type="checkbox" checked>Orale liquide</span><i>70</i></label><label class="opt"><span><input type="checkbox">Orale solide</span><i>156</i></label><label class="opt"><span><input type="checkbox">Injectable</span><i>10</i></label><label class="opt"><span><input type="checkbox">Rectale</span><i>58</i></label></details>
+<details class="acc" open><summary>Forme</summary><label class="opt"><span><input type="checkbox">Comprimé</span><i>72</i></label><label class="opt"><span><input type="checkbox" checked>Poudre p. susp. buvable</span><i>29</i></label><label class="opt"><span><input type="checkbox">Gélule</span><i>27</i></label><a href="#" style="font-size:13.5px;color:var(--blue)">Voir les 31 autres</a></details>
+<details class="acc"><summary>Dosage</summary><label class="opt"><span><input type="checkbox">500 mg</span><i>56</i></label></details>
+<details class="acc"><summary>Origine</summary><label class="opt"><span><input type="checkbox">🇩🇿 Algérie</span><i>247</i></label></details>
+</aside><div><div class="count" style="margin-top:0"><b>42</b> résultats</div>
+<div class="card"><b class="t">CLAMOXYL</b><small>Poudre pour suspension buvable · 250 mg/5 ml · SAIDAL 🇩🇿</small><span class="code">EDQM 10219000</span><span class="code u">UCUM 250 mg / 5 mL</span></div>
+<div class="card"><b class="t">AMOXYPEN</b><small>Poudre pour suspension buvable · 125 mg/5 ml</small></div></div></div>
+</section>
+
+<section class="var" id="v2">
+<div class="note"><b>C · Barre + panneau ouvert (version actuelle, renforcée).</b> Une barre teintée avec un menu par critère ; le panneau du premier critère (Voie) est ouvert d'emblée. Compact, mais il faut un clic pour voir Forme et Dosage.</div>
+<div class="bar">🔍 amoxicilline</div>
+<div class="bc"><em>≡ Filtrer</em><button class="pb on">Voie : Orale liquide</button><button class="pb o">Forme ▴</button><button class="pb">Dosage</button><button class="pb">Origine</button><button class="pb" style="border-style:dashed;background:none">+ Plus de filtres</button></div>
+<div class="pan"><strong>Forme</strong> <small style="color:var(--s500)">34</small>
+<div class="ra"><span class="chip on">✓ Poudre pour suspension buvable <i>29</i></span><span class="chip">Comprimé <i>72</i></span><span class="chip">Gélule <i>27</i></span><span class="chip">Solution buvable <i>20</i></span><span class="chip more">Voir les 16 autres</span></div></div>
+<div class="count"><b>42</b> résultats</div>
+<div class="card"><b class="t">CLAMOXYL</b><small>Poudre pour suspension buvable · 250 mg/5 ml</small></div>
+</section>
+
+<section class="var" id="v3">
+<div class="note"><b>D · Voie en grandes tuiles + menus.</b> La voie (« ça se prend comment ? ») est la décision n°1 : elle devient 4 grosses tuiles avec icône et compteur, toujours visibles. Forme, dosage et origine restent en pastilles-menus dessous. Très lisible, surtout sur téléphone.</div>
+<div class="bar">🔍 amoxicilline</div>
+<div class="tiles"><div class="tile on"><span>🥄</span><b>À boire</b><small>70 présentations</small></div><div class="tile"><span>💊</span><b>À avaler</b><small>156 présentations</small></div><div class="tile"><span>💉</span><b>Injectable</b><small>10 présentations</small></div><div class="tile"><span>🔹</span><b>Rectale</b><small>58 présentations</small></div></div>
+<div class="row2"><button class="pb o">Forme ▾</button><button class="pb">Dosage ▾</button><button class="pb">Origine ▾</button><button class="pb" style="border-style:dashed;background:none">+ Plus de filtres</button></div>
+<div class="count"><b>42</b> résultats</div>
+<div class="card"><b class="t">CLAMOXYL</b><small>Poudre pour suspension buvable · 250 mg/5 ml</small></div>
+</section>
+</main>
+<script>
+const names=['A · Pastilles visibles','B · Colonne latérale','C · Barre + panneau','D · Tuiles de voie'];
+const sel=document.getElementById('sel');
+names.forEach((n,i)=>{const b=document.createElement('button');b.textContent=n;b.className=i?'':'on';b.onclick=()=>{document.querySelectorAll('.var').forEach((v,j)=>v.classList.toggle('on',i===j));[...sel.children].forEach((c,j)=>c.classList.toggle('on',i===j))};sel.appendChild(b)});
+document.querySelectorAll('.chip,.tile').forEach(c=>c.addEventListener('click',()=>{if(c.classList.contains('more'))return;c.classList.toggle('on')}));
+</script></body></html>

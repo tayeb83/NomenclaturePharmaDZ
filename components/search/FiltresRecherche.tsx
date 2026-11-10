@@ -30,7 +30,8 @@ export function FiltresRecherche({
   onClear: () => void
   ar: boolean
 }) {
-  const [ouvert, setOuvert] = useState<string | null>(null)
+  // Premier critère ouvert d'emblée : les choix sont visibles sans cliquer.
+  const [ouvert, setOuvert] = useState<string | null>(principaux[0]?.id ?? null)
   const [plus, setPlus] = useState(false)
   const [filtre, setFiltre] = useState('')
   const [toutVoir, setToutVoir] = useState(false)

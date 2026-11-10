@@ -123,7 +123,7 @@ export function SearchClient({
   initialDciMode = false,
   initialAdvancedOpen = false,
   initialOnglet = 'simple',
-  guideDispo = false,
+  guideDispo = true,
   initialFacettes = FACETTES_VIDES,
   initialFacSel = {},
   initialTotal = 0,
@@ -144,7 +144,7 @@ export function SearchClient({
   /** Panneau « Recherche avancée » ouvert d'emblée (lien ?avancee=1, ou filtres déjà posés). */
   initialAdvancedOpen?: boolean
   initialOnglet?: Onglet
-  /** Onglet « Guidée » proposé (Lab, réservé à l'admin tant que la fonction est à l'essai). */
+  /** Onglet « Guidée » proposé. */
   guideDispo?: boolean
   /** Facettes calculées côté serveur sur tout le lot de résultats (voie, forme, dosage, origine). */
   initialFacettes?: Facettes
@@ -485,7 +485,7 @@ export function SearchClient({
         {onglets.map(o => (
           <button key={o.id} type="button" role="tab" aria-selected={onglet === o.id} className={`rech-onglet${onglet === o.id ? ' actif' : ''}`} onClick={() => changerOnglet(o.id)}>
             <span aria-hidden>{o.icone}</span> {ar ? o.ar : o.fr}
-            {o.id === 'guidee' && <em className="rech-onglet-lab">Lab</em>}
+            {o.id === 'guidee' && <em className="rech-onglet-lab">{ar ? 'جديد' : 'Nouveau'}</em>}
           </button>
         ))}
       </div>

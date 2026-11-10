@@ -1,7 +1,6 @@
 import { rechercheAvecFacettes, type RechercheFacettes } from '@/lib/recherche-facettes'
 import { facettesDepuisParams, type FacetteSel } from '@/lib/facettes'
 import type { SearchResult } from '@/lib/db-types'
-import { labAccessible } from '@/lib/lab-access'
 import { SearchClient } from './SearchClient'
 import type { Metadata } from 'next'
 
@@ -94,8 +93,7 @@ export default async function RecherchePage({
   searchParams: Promise<{ q?: string; scope?: string; labo?: string; substance?: string; activeOnly?: string; advanced?: string; algerieOnly?: string; avancee?: string; onglet?: string; mode?: string; voie?: string; forme?: string; dosage?: string; origine?: string }>
 }) {
   const resolvedSearchParams = await searchParams
-  const guideDispo = labAccessible()
-  const ongletGuide = guideDispo && resolvedSearchParams.onglet === 'guide'
+  const ongletGuide = resolvedSearchParams.onglet === 'guide'
   const query = resolvedSearchParams.q || ''
   const scope = resolvedSearchParams.scope || 'all'
   const advanced = parseAdvanced(resolvedSearchParams.advanced)
@@ -163,7 +161,6 @@ export default async function RecherchePage({
             initialTronque={tronque}
             initialAdvancedOpen={resolvedSearchParams.avancee === '1'}
             initialOnglet={ongletGuide ? 'guidee' : 'simple'}
-            guideDispo={guideDispo}
           />
         </div>
       </div>

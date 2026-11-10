@@ -1,6 +1,6 @@
 /**
  * DwaDZ — Accès au Lab : réservé aux sessions admin (n'importe quel rôle) tant que les fonctions sont à l'essai.
- * Pages (`/lab`, `/lab/guide`, `/terminologies`) : 404 pour les autres visiteurs ; routes d'API : 404 JSON.
+ * Reste au Lab : `/lab` et `/terminologies`. La recherche guidée est ouverte à tous. Pages : 404 pour les autres visiteurs ; routes d'API : 404 JSON.
  * Un 404 plutôt qu'un 403 : rien n'indique aux autres visiteurs que ces pages existent.
  */
 

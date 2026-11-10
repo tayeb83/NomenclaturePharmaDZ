@@ -1186,3 +1186,8 @@ a.termino-code:hover { text-decoration: underline; }
 }
 
 .rech-indice { display: flex; align-items: center; gap: 9px; padding: 11px 14px; background: #fff; border: 1.5px dashed var(--slate-200); border-radius: 12px; font-size: 14px; color: var(--slate-600); }
+
+/* Filtres plus visibles : barre teintée et titre marqué */
+.filtres-barre { background: linear-gradient(180deg, #f3f8ff, #eaf2fd); border-color: #b9d0ee; box-shadow: 0 2px 8px rgba(29,78,158,.10); }
+.filtres-titre { color: var(--blue); font-size: 12.5px; }
+.filtre-bouton { background: #fff; border-color: #b9d0ee; font-weight: 600; }

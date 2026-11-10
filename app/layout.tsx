@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Nav } from '@/components/layout/Nav'
-import { LabProvider } from '@/components/layout/LabProvider'
 import { Footer } from '@/components/layout/Footer'
 import { BackBar } from '@/components/layout/BackBar'
 import { LanguageProvider } from '@/components/i18n/LanguageProvider'
@@ -145,14 +144,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body suppressHydrationWarning>
         <LanguageProvider initialLang={initialLang}>
-          <LabProvider actif={isAdmin}>
           <Nav currentVersion={currentVersion} isAdmin={isAdmin} />
           <BackBar />
           <main className="main-content">
             {children}
           </main>
           <Footer />
-          </LabProvider>
           <PWAManager />
           <PageVisitTracker />
         </LanguageProvider>

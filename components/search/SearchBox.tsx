@@ -3,7 +3,6 @@
 import { useRouter } from 'next/navigation'
 import { useCallback, useState } from 'react'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
-import { useLab } from '@/components/layout/LabProvider'
 import { SuggestionList } from './SuggestionList'
 import { useSuggestions } from './useSuggestions'
 
@@ -16,7 +15,6 @@ export function SearchBox() {
   const { lang } = useLanguage()
   const router = useRouter()
   const [q, setQ] = useState('')
-  const lab = useLab()
   const go = useCallback((text: string, dci = false) => {
     const v = text.trim()
     // Une substance choisie : toutes ses présentations par ordre alphabétique (mode=dci)
@@ -45,13 +43,11 @@ export function SearchBox() {
         )}
       </form>
       <div className="home-modes">
-        {lab && (
-          <a className="home-mode guidee" href="/recherche?onglet=guide">
-            <span aria-hidden>🧭</span>
-            <span><b>{lang === 'ar' ? 'البحث الموجَّه' : 'Recherche guidée'}</b><small>{lang === 'ar' ? 'المادة ← الطريقة ← الشكل ← الجرعة' : 'Substance → voie → forme → dosage'}</small></span>
-            <em>Lab</em>
-          </a>
-        )}
+        <a className="home-mode guidee" href="/recherche?onglet=guide">
+          <span aria-hidden>🧭</span>
+          <span><b>{lang === 'ar' ? 'البحث الموجَّه' : 'Recherche guidée'}</b><small>{lang === 'ar' ? 'المادة ← الطريقة ← الشكل ← الجرعة' : 'Substance → voie → forme → dosage'}</small></span>
+          <em>{lang === 'ar' ? 'جديد' : 'Nouveau'}</em>
+        </a>
         <a className="home-mode" href="/recherche?avancee=1">
           <span aria-hidden>⚙️</span>
           <span><b>{lang === 'ar' ? 'بحث متقدم' : 'Recherche avancée'}</b><small>{lang === 'ar' ? 'شروط و/أو، الجرعة، السنة…' : 'Conditions ET / OU, dosage, année…'}</small></span>
