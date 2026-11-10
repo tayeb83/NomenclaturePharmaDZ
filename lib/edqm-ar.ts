@@ -6,8 +6,8 @@
  * pharmacien arabophone. Un code relu s'ajoute à EDQM_AR_RELUS ; l'interface peut alors retirer la mention
  * « ترجمة قيد المراجعة », comme pour les interactions ANSM.
  *
- * Seuls les termes rencontrés dans la nomenclature algérienne sont traduits. tests/guide vérifie que chaque
- * code existe dans lib/edqm-data.ts.
+ * Seuls les termes rencontrés dans la nomenclature algérienne sont traduits (formes, voies), plus les
+ * 19 méthodes d'administration. tests/guide vérifie que chaque code existe dans lib/edqm-data.ts.
  */
 
 export const EDQM_AR: Record<string, string> = {
@@ -109,6 +109,50 @@ export const EDQM_AR: Record<string, string> = {
   '11404000': 'محلول لغسيل الكلى',
   '11405000': 'محلول مركز لغسيل الكلى',
   '11502000': 'محلول لغسل المثانة',
+  // ── voies d'administration
+  '20001000': 'عن طريق الأذن',
+  '20003000': 'على الجلد',
+  '20009000': 'فوق الجافية',
+  '20015000': 'غسيل الكلى',
+  '20020000': 'عن طريق الاستنشاق',
+  '20024000': 'داخل المفصل',
+  '20032000': 'داخل الآفة',
+  '20035000': 'عن طريق العضل',
+  '20038000': 'داخل الصفاق',
+  '20042000': 'داخل القناة الشوكية',
+  '20044000': 'داخل الرحم',
+  '20045000': 'عن طريق الوريد',
+  '20046000': 'داخل المثانة',
+  '20047000': 'داخل الجسم الزجاجي للعين',
+  '20049000': 'عن طريق الأنف',
+  '20051000': 'عن طريق العين',
+  '20053000': 'عن طريق الفم',
+  '20054000': 'على الغشاء المخاطي للفم',
+  '20061000': 'عن طريق الشرج',
+  '20066000': 'تحت الجلد',
+  '20067000': 'تحت اللسان',
+  '20070000': 'عبر الجلد',
+  '20072000': 'عن طريق المهبل',
+  // ── méthodes d'administration
+  '0004': 'إعطاء',
+  '0005': 'وضع موضعي',
+  '0006': 'استحمام',
+  '0007': 'مضغ',
+  '0008': 'غرغرة',
+  '0009': 'تسريب',
+  '0010': 'استنشاق',
+  '0011': 'حقن',
+  '0012': 'إدخال',
+  '0013': 'تقطير',
+  '0014': 'تفكك في الفم',
+  '0015': 'شطف أو غسل',
+  '0017': 'رش',
+  '0018': 'مص',
+  '0019': 'بلع',
+  '0020': 'غير محدد',
+  '0111': 'حرق',
+  '0112': 'غسيل الكلى',
+  '0113': 'زرع',
 }
 
 /** Codes dont la traduction arabe a été relue. */

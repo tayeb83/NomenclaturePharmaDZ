@@ -11,7 +11,7 @@
  * Sans terme sûr, pas de lien : jamais un code inventé.
  */
 
-import { EDQM_FORMES, EDQM_VOIES, type EdqmLigne } from './edqm-data.ts'
+import { EDQM_FORMES, EDQM_METHODES, EDQM_VOIES, type EdqmLigne } from './edqm-data.ts'
 import { EDQM_AR, EDQM_AR_RELUS } from './edqm-ar.ts'
 
 export { EDQM_SYSTEM, EDQM_SOURCE } from './edqm-data.ts'
@@ -36,11 +36,15 @@ const terme = ([code, en, fr]: EdqmLigne): EdqmTerme =>
   ({ code, en, fr, ar: EDQM_AR[code] ?? null, ar_relu: EDQM_AR_RELUS.has(code) })
 const FORMES = new Map(EDQM_FORMES.map(l => [l[0], terme(l)]))
 const VOIES = new Map(EDQM_VOIES.map(l => [l[0], terme(l)]))
+const METHODES = new Map(EDQM_METHODES.map(l => [l[0], terme(l)]))
 const FORME_PAR_LIBELLE = new Map<string, EdqmTerme>()
 for (const t of FORMES.values()) if (t.fr && !FORME_PAR_LIBELLE.has(plier(t.fr))) FORME_PAR_LIBELLE.set(plier(t.fr), t)
 
 export const edqmForme = (code: string) => FORMES.get(code) ?? null
 export const edqmVoie = (code: string) => VOIES.get(code) ?? null
+export const edqmMethode = (code: string) => METHODES.get(code) ?? null
+/** Les trois listes, pour l'import en base (lib/terminologies.ts). */
+export const edqmListes = () => ({ forme: [...FORMES.values()], voie: [...VOIES.values()], methode: [...METHODES.values()] })
 export const edqmFormes = () => [...FORMES.values()]
 
 /** Synonymes d'usage en Algérie et en France → terme officiel (libellés pliés). */

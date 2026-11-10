@@ -5,15 +5,19 @@
  */
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { EDQM_FORMES, EDQM_VOIES } from '../../lib/edqm-data.ts'
+import { EDQM_FORMES, EDQM_METHODES, EDQM_VOIES } from '../../lib/edqm-data.ts'
 import { EDQM_AR, EDQM_AR_RELUS } from '../../lib/edqm-ar.ts'
-import { edqmForme, edqmVoie, lierForme } from '../../lib/edqm.ts'
+import { edqmForme, edqmListes, edqmMethode, edqmVoie, lierForme } from '../../lib/edqm.ts'
 import { UNITES_INFO } from '../../lib/ucum.ts'
 import { VOIES, normaliserDosage, normaliserForme } from '../../lib/guide-core.ts'
 
 test('EDQM : données générées cohérentes', () => {
   assert.equal(EDQM_FORMES.length, 426)
   assert.equal(EDQM_VOIES.length, 82)
+  assert.equal(EDQM_METHODES.length, 19)
+  // les trois listes n'ont aucun code en commun : une seule table en base (edqm_termes)
+  const l = edqmListes()
+  assert.equal(new Set([...l.forme, ...l.voie, ...l.methode].map(t => t.code)).size, 426 + 82 + 19)
   for (const liste of [EDQM_FORMES, EDQM_VOIES]) {
     const codes = new Set(liste.map(l => l[0]))
     assert.equal(codes.size, liste.length, 'codes en double')
@@ -27,7 +31,7 @@ test('EDQM : données générées cohérentes', () => {
 })
 
 test('EDQM : chaque traduction arabe porte sur un code existant', () => {
-  for (const code of Object.keys(EDQM_AR)) assert.ok(edqmForme(code), `code inconnu : ${code}`)
+  for (const code of Object.keys(EDQM_AR)) assert.ok(edqmForme(code) ?? edqmVoie(code) ?? edqmMethode(code), `code inconnu : ${code}`)
   for (const code of EDQM_AR_RELUS) assert.ok(EDQM_AR[code], `relu sans traduction : ${code}`)
 })
 
@@ -94,4 +98,31 @@ test('UCUM : codes des unités et quantités d’un dosage', () => {
   assert.deepEqual(normaliserDosage('200µG/DOSE').denominateur, { valeur: 1, unite: 'dose', ucum: '{dose}' })
   assert.deepEqual(normaliserDosage('0,02').quantites, [{ valeur: 2, unite: '%', ucum: '%' }])
   assert.deepEqual(normaliserDosage('AMP. DE 5ML').quantites, [])
+})
+
+test('voies et méthode d’administration EDQM d’une forme', () => {
+  const v = (f: string) => normaliserForme(f).voies_edqm.map(c => edqmVoie(c)!.en)
+  const m = (f: string) => { const c = normaliserForme(f).methode_edqm; return c ? edqmMethode(c)!.en : null }
+  // voies écrites dans la forme
+  assert.deepEqual(v('SOLUTION INJECTABLE IM/IV'), ['Intravenous use', 'Intramuscular use'])
+  assert.deepEqual(v('SOLUTION INJECTABLE. S/C EN SERINGUE PRE-REMPLIE'), ['Subcutaneous use'])
+  assert.deepEqual(v('SOL P/PERF I/V'), ['Intravenous use'])
+  assert.deepEqual(v('SOLUTION INJECTABLE IV OU PERIDURALE'), ['Intravenous use', 'Epidural use'])
+  // « injectable » sans précision : aucune voie n'est supposée
+  assert.deepEqual(v('SOLUTION INJECTABLE'), [])
+  // sinon, la voie du groupe
+  assert.deepEqual(v('COMP. PELL.'), ['Oral use'])
+  assert.deepEqual(v('COLLYRE EN SOLUTION'), ['Ocular use'])
+  assert.deepEqual(v('COMPRIME SUBLINGUAL'), ['Sublingual use'])
+  assert.deepEqual(v('SOLUTION POUR HEMODIALYSE'), ['Haemodialysis'])
+  assert.equal(m('COMP. PELL.'), 'Swallowing')
+  assert.equal(m('COMPRIME A CROQUER'), 'Chewing')
+  assert.equal(m('COMPRIME ORODISPERSIBLE'), 'Orodispersion')
+  assert.equal(m('SOL P/PERF I/V'), 'Infusion')
+  assert.equal(m('SOLUTION INJECTABLE'), 'Injection')
+  assert.equal(m('COLLYRE EN SOLUTION'), 'Instillation')
+  assert.equal(m('SUPPOSITOIRE'), 'Insertion')
+  assert.equal(m('SPRAY NASAL'), 'Spraying')
+  assert.equal(m('CREME'), 'Application')
+  assert.equal(m('FORME BIZARRE'), null)
 })

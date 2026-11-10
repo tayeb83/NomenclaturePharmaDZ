@@ -1,7 +1,8 @@
 /**
  * FICHIER GÉNÉRÉ par scripts/build_edqm_terms.mts — ne pas modifier à la main.
  *
- * Standard Terms EDQM : formes pharmaceutiques (426) et voies d'administration (82).
+ * Standard Terms EDQM : formes pharmaceutiques (426), voies d'administration (82)
+ * et méthodes d'administration (19).
  * Source : paquet FHIR ch.fhir.ig.ch-term 3.3.0 (HL7 Suisse) — Valueset Pharmaceutical Dose Form from EDQM, PDF, export20.5.2021, see https://standardterms.edqm.eu/#
  *
  * Les Standard Terms sont la propriété de la Direction européenne de la qualité du médicament & soins de santé
@@ -528,4 +529,26 @@ export const EDQM_VOIES: EdqmLigne[] = [
   ["20084000", "Intracorneal use", "Voie intracornéenne"],
   ["20086000", "Intraputaminal use", null],
   ["20087000", "Extrapleural use", "Voie extrapleural"],
+]
+
+export const EDQM_METHODES: EdqmLigne[] = [
+  ["0004", "Administration", "Administration"],
+  ["0005", "Application", "Application"],
+  ["0006", "Bathing", "Baigner"],
+  ["0007", "Chewing", "Mâcher"],
+  ["0008", "Gargling", "Se gargariser"],
+  ["0009", "Infusion", "Perfusion"],
+  ["0010", "Inhalation", "Inhalation"],
+  ["0011", "Injection", "Injection"],
+  ["0012", "Insertion", "Insertion"],
+  ["0013", "Instillation", "Instillation"],
+  ["0014", "Orodispersion", "Orodispersion"],
+  ["0015", "Rinsing/washing", "Rincer/Laver"],
+  ["0017", "Spraying", "Pulvériser"],
+  ["0018", "Sucking", "Sucer"],
+  ["0019", "Swallowing", "Avaler"],
+  ["0020", "Not specified", "Non spécifié"],
+  ["0111", "Burning", "Brûler"],
+  ["0112", "Dialysis", "Dialyse"],
+  ["0113", "Implantation", "Implantation"],
 ]

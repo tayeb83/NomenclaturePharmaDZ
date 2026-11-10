@@ -190,6 +190,13 @@ export type FormeNorm = {
   edqm: { code: string; en: string; fr: string | null; relation: EdqmRelation } | null
   /** fautes de frappe corrigées en lisant la forme : « GELLULE → GELULE » (pour l'audit des anomalies) */
   fautes: string[]
+  /**
+   * voies d'administration EDQM (codes 200xxxxx) : celles que la forme écrit (« IV/IM », « S/C »), sinon celle du
+   * groupe de voie. Vide quand rien ne permet de trancher (« solution injectable » sans précision).
+   */
+  voies_edqm: string[]
+  /** méthode d'administration EDQM (codes 00xx), déduite de la forme par nos règles ; null si incertaine */
+  methode_edqm: string | null
 }
 
 /** Pré-traitements sur la chaîne pliée : expressions de plusieurs mots → un concept. */
@@ -449,23 +456,82 @@ function voieDe(c: Set<string>, fr: string | null): VoieId {
 
 const capitaliser = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
+/** Voies écrites en toutes lettres ou en abrégé dans la forme : motif (sur la forme pliée) → code EDQM. */
+const VOIES_ECRITES: [RegExp, string][] = [
+  [/\bi\s*[./]?\s*v\b|intra[\s-]*veineu|\bperf/, '20045000'], // intraveineuse (une perfusion l'est)
+  [/\bi\s*[./]?\s*m\b|intra[\s-]*muscul/, '20035000'], // intramusculaire
+  [/\bs\s*[./]?\s*c\b|sous[\s-]*cutan/, '20066000'], // sous-cutanée
+  [/peridural/, '20009000'],
+  [/intra[\s-]*thecal/, '20042000'],
+  [/intra[\s-]*vitre/, '20047000'],
+  [/intra[\s-]*lesion/, '20032000'],
+  [/intra[\s-]*articul/, '20024000'],
+]
+
+function voiesEdqmDe(brut: string, voie: VoieId, c: Set<string>): string[] {
+  const f = fold(brut)
+  if (voie === 'injectable') {
+    if (c.has('implant')) return ['20066000']
+    return VOIES_ECRITES.filter(([re]) => re.test(f)).map(([, code]) => code)
+  }
+  if (c.has('hemodialyse') || c.has('hemofiltration')) return ['20015000']
+  if (c.has('dialyse') && c.has('peritoneale')) return ['20038000']
+  if (c.has('irrigation') && c.has('vesicale')) return ['20046000']
+  if (c.has('systeme') && c.has('uterin')) return ['20044000']
+  if (c.has('sublingual')) return ['20067000']
+  const code = voieParId(voie)?.edqm
+  return code ? [code] : []
+}
+
+/** Méthode d'administration EDQM, par règles simples sur la voie et la forme. À faire valider. */
+function methodeEdqmDe(voie: VoieId, c: Set<string>, fr: string): string | null {
+  const f = fold(fr)
+  if (c.has('hemodialyse') || c.has('hemofiltration') || c.has('dialyse')) return '0112'
+  if (c.has('implant')) return '0113'
+  switch (voie) {
+    case 'injectable': return /perfusion/.test(f) ? '0009' : '0011'
+    case 'orale-solide':
+      if (c.has('orodispersible')) return '0014'
+      if (c.has('croquer') || c.has('gomme')) return '0007'
+      return '0019'
+    case 'orale-liquide': return '0019'
+    case 'inhalee': return '0010'
+    case 'cutanee': case 'transdermique': return '0005'
+    case 'ophtalmique': case 'auriculaire': case 'nasale':
+      if (/pulverisation/.test(f)) return '0017'
+      return /collyre|gouttes|solution|suspension/.test(f) ? '0013' : '0005'
+    case 'rectale': case 'vaginale':
+      return /suppositoire|ovule|comprime|capsule|systeme/.test(f) ? '0012' : '0005'
+    case 'buccale':
+      if (/bain de bouche/.test(f)) return '0015'
+      if (/gargarisme/.test(f)) return '0008'
+      if (c.has('sucer') || c.has('pastille')) return '0018'
+      if (/pulverisation/.test(f)) return '0017'
+      return c.has('sublingual') ? '0014' : '0005'
+    default: return null
+  }
+}
+
 export function normaliserForme(raw: string | null | undefined): FormeNorm {
   const brut = (raw ?? '').replace(/\s+/g, ' ').trim()
-  if (!brut) return { id: 'non-precisee', fr: 'Non précisée', ar: 'غير محدد', voie: 'autre', reconnu: true, inconnus: [], edqm: null, fautes: [] }
+  if (!brut) {
+    return { id: 'non-precisee', fr: 'Non précisée', ar: 'غير محدد', voie: 'autre', reconnu: true, inconnus: [], edqm: null, fautes: [], voies_edqm: [], methode_edqm: null }
+  }
   const { concepts, inconnus, fautes } = motsForme(brut)
   const canon = inconnus.length ? null : construireForme(concepts)
   const voie = voieDe(concepts, canon?.fr ?? null)
+  const voies_edqm = voiesEdqmDe(brut, voie, concepts)
   if (!canon) {
     // Rien n'est rapproché : la forme garde son écriture d'origine.
     const fr = capitaliser(brut.toLowerCase())
-    return { id: `x-${slugify(brut)}`, fr, ar: translateForme(brut), voie, reconnu: false, inconnus, edqm: null, fautes }
+    return { id: `x-${slugify(brut)}`, fr, ar: translateForme(brut), voie, reconnu: false, inconnus, edqm: null, fautes, voies_edqm, methode_edqm: null }
   }
   const lien = lierForme(canon.fr)
   const edqm = lien ? { code: lien.code, en: lien.en, fr: lien.fr, relation: lien.relation } : null
   // Lien exact : le libellé affiché est le terme officiel EDQM (« Gel oral », « Patch transdermique »).
   const fr = lien?.relation === 'exact' && lien.fr ? lien.fr : capitaliser(canon.fr)
   const ar = (lien?.relation === 'exact' ? lien.ar : null) ?? FORME_AR[canon.fr] ?? translateForme(canon.fr)
-  return { id: slugify(fr), fr, ar, voie, reconnu: true, inconnus: [], edqm, fautes }
+  return { id: slugify(fr), fr, ar, voie, reconnu: true, inconnus: [], edqm, fautes, voies_edqm, methode_edqm: methodeEdqmDe(voie, concepts, canon.fr) }
 }
 
 // ═══════════════════════════════════════════════════════════════

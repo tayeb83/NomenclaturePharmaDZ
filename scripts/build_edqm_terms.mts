@@ -6,7 +6,7 @@
  *   npx tsx scripts/build_edqm_terms.mts ./package
  *
  * Pourquoi CH-Term : le site EDQM demande un compte, alors que ce paquet public porte les codes et les
- * libellés officiels (jeux de valeurs edqm-pharmaceuticaldoseform et edqm-routeofadministration).
+ * libellés officiels (jeux de valeurs edqm-pharmaceuticaldoseform, edqm-routeofadministration et edqm-administrationmethod).
  * Les Standard Terms restent la propriété de l'EDQM (Conseil de l'Europe) : voir l'en-tête du fichier généré.
  *
  * Nettoyages appliqués, signalés à l'écran :
@@ -50,12 +50,14 @@ function lire(fichier: string): { termes: Terme[]; description: string } {
 
 const formes = lire('ValueSet-edqm-pharmaceuticaldoseform.json')
 const voies = lire('ValueSet-edqm-routeofadministration.json')
+const methodes = lire('ValueSet-edqm-administrationmethod.json')
 const ligne = (t: Terme) => `  [${JSON.stringify(t.code)}, ${JSON.stringify(t.en)}, ${JSON.stringify(t.fr)}],`
 
 const out = `/**
  * FICHIER GÉNÉRÉ par scripts/build_edqm_terms.mts — ne pas modifier à la main.
  *
- * Standard Terms EDQM : formes pharmaceutiques (${formes.termes.length}) et voies d'administration (${voies.termes.length}).
+ * Standard Terms EDQM : formes pharmaceutiques (${formes.termes.length}), voies d'administration (${voies.termes.length})
+ * et méthodes d'administration (${methodes.termes.length}).
  * Source : paquet FHIR ${pkg.name} ${pkg.version} (HL7 Suisse) — ${formes.description}
  *
  * Les Standard Terms sont la propriété de la Direction européenne de la qualité du médicament & soins de santé
@@ -77,6 +79,10 @@ ${formes.termes.map(ligne).join('\n')}
 export const EDQM_VOIES: EdqmLigne[] = [
 ${voies.termes.map(ligne).join('\n')}
 ]
+
+export const EDQM_METHODES: EdqmLigne[] = [
+${methodes.termes.map(ligne).join('\n')}
+]
 `
 writeFileSync(new URL('../lib/edqm-data.ts', import.meta.url), out)
-console.log(`lib/edqm-data.ts : ${formes.termes.length} formes, ${voies.termes.length} voies (${pkg.name} ${pkg.version})`)
+console.log(`lib/edqm-data.ts : ${formes.termes.length} formes, ${voies.termes.length} voies, ${methodes.termes.length} méthodes (${pkg.name} ${pkg.version})`)

@@ -111,6 +111,15 @@ Tests : `npm run test:demandes`.
   propriété de l'EDQM. L'arabe n'existe pas à la source : `lib/edqm-ar.ts` porte nos traductions par code, en brouillon
   tant que le code n'est pas dans `EDQM_AR_RELUS`. Chaque dosage porte ses quantités en **UCUM** (`lib/ucum.ts`,
   `mg`, `mL`, `[iU]`…) : de quoi produire un `Ratio` FHIR.
+- **Référentiel en base** (`sql/39_terminologies.sql`) : `edqm_termes` (426 formes, 82 voies, 19 méthodes
+  d'administration ; anglais, français, arabe avec `ar_statut`), `ucum_unites`, `forme_edqm_mapping` (écriture de forme
+  → terme EDQM, comme `dci_atc_mapping`) et `medicament_terminologie` (par fiche : forme, voies et méthode EDQM, unités
+  UCUM du dosage). Vue de consultation : `v_medicament_terminologie`.
+  `DATABASE_URL=... npx tsx scripts/sync_terminologies.mts --apply` (sans `--apply` : simulation) ; un import de
+  nomenclature depuis l'admin relance la synchronisation. Une ligne de `forme_edqm_mapping` passée en
+  `source = 'manual'` et une traduction passée en `ar_statut = 'relu'` ne sont jamais écrasées. Les voies écrites dans
+  la forme (« IV/IM », « S/C ») sont reconnues ; « injectable » sans précision n'en reçoit aucune. La méthode
+  d'administration est déduite par nos règles, à valider.
 - Audit à relire après chaque import : `DATABASE_URL=... npx tsx scripts/audit_guide_normalisation.mts` produit
   `data/guide/audit_normalisation.xlsx` (formes et dosages non reconnus, regroupements, DCI fusionnées, codes EDQM et
   UCUM, feuille « Anomalies » des corrections à proposer sur la nomenclature, feuille de relecture de l'arabe).
