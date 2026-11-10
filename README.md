@@ -102,12 +102,15 @@ Tests : `npm run test:demandes`.
   `?voie=…&forme=…&dosage=…&origine=f|i` (identifiants de la recherche guidée) ; réponse : `facettes`, `selection`,
   `ignores`, `total`, `tronque`. Une nouvelle saisie remet les choix à zéro. Les facettes pays, labo, ATC, année et
   substance existantes restent calculées dans le navigateur sur les lignes affichées.
-- **Onglets de `/recherche`** : Recherche (simple), Avancée (conditions ET / OU) et Guidée (URL
-  `/recherche?onglet=guide`, la page `/lab/guide` reste disponible). Les filtres (voie, forme,
-  dosage, origine, puis pays, labo, statut, année, ATC, substance sous « Plus de filtres ») forment une colonne latérale
-  toujours visible sur ordinateur, avec cases à cocher et blocs repliables (`components/search/FiltresRecherche.tsx`) ; sur
-  téléphone, un bouton « Filtrer » ouvre cette colonne en tiroir. Les choix actifs s'affichent en pastilles retirables.
-  Elle est la même dans les onglets Recherche et Avancée. Dans la recherche guidée, les codes EDQM (forme, voie) et UCUM (dosage) sont toujours affichés.
+- **`/recherche`** : deux onglets, Recherche et Guidée (`/recherche?onglet=guide`, la page `/lab/guide` reste disponible).
+  La recherche avancée n'est plus un onglet : le bouton « Conditions avancées » ouvre, dans la recherche normale, le
+  panneau de conditions ET / OU (`?avancee=1` l'ouvre d'emblée) ; les filtres latéraux s'appliquent aux deux. Filtres :
+  voie, forme, dosage, origine, puis pays, labo, statut, année, ATC, substance sous « Plus de filtres » — colonne
+  latérale sur ordinateur, tiroir sur téléphone, cases à cocher, blocs repliables, choix actifs en pastilles
+  (`components/search/FiltresRecherche.tsx`). Dans la recherche guidée, les codes EDQM (forme, voie) et UCUM (dosage)
+  sont toujours affichés.
+- **Accueil** (`components/search/SearchBox.tsx`) : trois onglets — Médicament, Recherche guidée, Pharmacie de garde
+  (bouton « Près de moi » vers `/garde`, liste des wilayas vers `/pharmacie-de-garde/<wilaya>`, lien vers les communes).
 - **Fiche médicament** : à côté de la forme, de la voie, de la méthode d'administration et du dosage, le code EDQM ou
   UCUM (lien vers `/terminologies` pour l'admin seulement, `nofollow`) ; le code ATC renvoie à la classe. Une correction manuelle de
   `forme_edqm_mapping` et une traduction `relu` de `edqm_termes` priment sur le calcul. Sans la migration 39, la fiche

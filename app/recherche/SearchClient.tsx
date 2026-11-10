@@ -16,7 +16,7 @@ import type { Facette, Facettes, FacetteSel } from '@/lib/facettes'
 // Recherche guidée (Lab) : chargée seulement quand on ouvre l'onglet.
 const GuideClient = dynamic(() => import('@/app/lab/guide/GuideClient').then(m => m.GuideClient), { ssr: false })
 
-type Onglet = 'simple' | 'avancee' | 'guidee'
+type Onglet = 'simple' | 'guidee'
 
 type AdvancedSearchCondition = {
   field: string
@@ -203,9 +203,9 @@ export function SearchClient({
   const router = useRouter()
   const [, startTransition] = useTransition()
   const inputRef = useRef<HTMLInputElement>(null)
-  const [onglet, setOnglet] = useState<Onglet>(
-    initialOnglet === 'guidee' && guideDispo ? 'guidee' : (initialAdvancedOpen || hasAdvancedFilters(initialAdvanced) || initialOnglet === 'avancee') ? 'avancee' : 'simple',
-  )
+  const [onglet, setOnglet] = useState<Onglet>(initialOnglet === 'guidee' && guideDispo ? 'guidee' : 'simple')
+  // Conditions avancées : un panneau de la recherche normale (mêmes filtres latéraux), ouvert si des conditions existent
+  const [advancedOpen, setAdvancedOpen] = useState(initialAdvancedOpen || hasAdvancedFilters(initialAdvanced))
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -473,9 +473,9 @@ export function SearchClient({
 
   const onglets: Array<{ id: Onglet; icone: string; fr: string; ar: string }> = [
     { id: 'simple', icone: '🔍', fr: 'Recherche', ar: 'بحث' },
-    { id: 'avancee', icone: '⚙️', fr: 'Avancée', ar: 'متقدم' },
     ...(guideDispo ? [{ id: 'guidee' as Onglet, icone: '🧭', fr: 'Guidée', ar: 'موجَّه' }] : []),
   ]
+  const nbConditions = advanced.filter(c => c.value?.trim()).length
   const aDesCriteres = Boolean(query || labo || substance || hasAdvancedFilters(advanced))
   const afficherFiltres = (results.length > 0 || Object.keys(facSel).length > 0) && (groupesPrincipaux.length > 0 || groupesSecondaires.length > 0)
 
@@ -540,13 +540,16 @@ export function SearchClient({
             <input type="checkbox" checked={activeOnly} onChange={(e) => handleActiveOnly(e.target.checked)} />
             <span>{ar ? 'الأدوية النشطة فقط' : 'Médicaments actifs uniquement'}</span>
           </label>
+          <button type="button" className={`rech-csv${advancedOpen ? ' actif' : ''}`} aria-expanded={advancedOpen} onClick={() => setAdvancedOpen(!advancedOpen)}>
+            ⚙ {ar ? 'شروط متقدمة' : 'Conditions avancées'}{nbConditions > 0 && <span className="fl-badge" style={{ marginInlineStart: 6 }}>{nbConditions}</span>}
+          </button>
           <button type="button" className="rech-csv" onClick={exportCsv} disabled={!results.length}>⬇ {ar ? 'تصدير CSV' : 'Exporter en CSV'}</button>
         </div>
       </div>
 
-      {onglet === 'avancee' && (
+      {advancedOpen && (
         <section className="rech-avancee" aria-label={ar ? 'بحث متقدم' : 'Recherche avancée'}>
-          <p className="rech-avancee-aide">{ar ? 'اجمع عدة شروط بالمنطق «و» / «أو» على كل خصائص الدواء.' : 'Combinez plusieurs conditions (ET / OU) sur toutes les propriétés du médicament.'}</p>
+          <p className="rech-avancee-aide">{ar ? 'اجمع عدة شروط بالمنطق «و» / «أو» على كل خصائص الدواء. تظهر المرشحات الجانبية كما في البحث العادي.' : 'Combinez plusieurs conditions (ET / OU) sur toutes les propriétés ; les filtres latéraux s’appliquent aussi.'}</p>
           <div style={{ display: 'grid', gap: 10 }}>
             {advanced.map((condition, index) => {
               const type = getFieldType(condition.field)
