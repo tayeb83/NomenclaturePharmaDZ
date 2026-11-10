@@ -90,24 +90,26 @@ Tests : `npm run test:demandes`.
 ### 🧭 Recherche guidée (Lab : `/lab/guide`)
 - Parcours DCI → voie → forme → dosage → présentations. Moteur et normalisation dans `lib/guide-core.ts`
   (sans base, testable seul), index en mémoire dans `lib/guide.ts`, route `GET /api/lab/guide`.
-- **Onglet Lab** (`/lab`) : regroupe les fonctions à l'essai — recherche guidée, terminologies, facettes. **Réservé aux
+- **Onglet Lab** (`/lab`) : regroupe les fonctions à l'essai — terminologies, accès à la recherche guidée. **Réservé aux
   sessions admin** (`lib/lab-access.ts`) : l'onglet n'apparaît pas dans la navigation des autres visiteurs, `/lab`,
-  `/lab/guide`, `/terminologies`, `/api/lab/guide` et `/api/terminologies/atc` leur répondent 404. Pour l'ouvrir à tous :
-  retirer `exigerLab()` des pages, `refuserSiPasLab()` des routes et la condition `isAdmin` de `components/layout/Nav.tsx`.
-  Les facettes de `/recherche` sont publiques ; les codes EDQM/UCUM de la fiche et l'onglet « Guidée » sont réservés à l'admin.
+  `/terminologies` et `/api/terminologies/atc` leur répondent 404. La **recherche guidée est ouverte à tous** : carte sur
+  l'accueil, onglet « Guidée » de `/recherche`, page `/lab/guide`, route `GET /api/lab/guide` (limitée en débit).
+  Les facettes de `/recherche` et les codes EDQM/UCUM de la fiche sont publics ; le lien vers `/terminologies` n'est
+  affiché qu'à l'admin.
 - **Facettes dans la recherche** (`/recherche`, `/api/search`) : voie, forme, dosage et origine, calculés côté serveur
   sur un lot de 300 résultats (`lib/recherche-facettes.ts`, `lib/facettes.ts`), pas seulement sur les 30 ou 60 lignes
   affichées. Le compteur d'un groupe ignore son propre choix ; un choix devenu impossible est retiré. Paramètres
   `?voie=…&forme=…&dosage=…&origine=f|i` (identifiants de la recherche guidée) ; réponse : `facettes`, `selection`,
   `ignores`, `total`, `tronque`. Une nouvelle saisie remet les choix à zéro. Les facettes pays, labo, ATC, année et
   substance existantes restent calculées dans le navigateur sur les lignes affichées.
-- **Onglets de `/recherche`** : Recherche (simple), Avancée (conditions ET / OU) et Guidée (Lab, visible des seules
-  sessions admin ; URL `/recherche?onglet=guide`, la page `/lab/guide` reste disponible). Les filtres (voie, forme,
-  dosage, origine, puis pays, labo, statut, année, ATC, substance sous « Plus de filtres ») forment une barre de menus avec
-  un seul panneau ouvert à la fois (`components/search/FiltresRecherche.tsx`) ; les choix actifs s'affichent en pastilles
-  retirables. Dans la recherche guidée, les codes EDQM (forme, voie) et UCUM (dosage) sont toujours affichés.
-- **Fiche médicament** : pour le public, le code ATC seul (renvoie à la classe), comme avant. Pour l'admin (Lab), à côté de
-  la forme, de la voie, de la méthode d'administration et du dosage, le code EDQM ou UCUM (lien vers `/terminologies`, `nofollow`). Une correction manuelle de
+- **Onglets de `/recherche`** : Recherche (simple), Avancée (conditions ET / OU) et Guidée (URL
+  `/recherche?onglet=guide`, la page `/lab/guide` reste disponible). Les filtres (voie, forme,
+  dosage, origine, puis pays, labo, statut, année, ATC, substance sous « Plus de filtres ») forment une colonne latérale
+  toujours visible sur ordinateur, avec cases à cocher et blocs repliables (`components/search/FiltresRecherche.tsx`) ; sur
+  téléphone, un bouton « Filtrer » ouvre cette colonne en tiroir. Les choix actifs s'affichent en pastilles retirables.
+  Elle est la même dans les onglets Recherche et Avancée. Dans la recherche guidée, les codes EDQM (forme, voie) et UCUM (dosage) sont toujours affichés.
+- **Fiche médicament** : à côté de la forme, de la voie, de la méthode d'administration et du dosage, le code EDQM ou
+  UCUM (lien vers `/terminologies` pour l'admin seulement, `nofollow`) ; le code ATC renvoie à la classe. Une correction manuelle de
   `forme_edqm_mapping` et une traduction `relu` de `edqm_termes` priment sur le calcul. Sans la migration 39, la fiche
   affiche le calcul du dépôt.
 - **Page Terminologies** (`/terminologies`) : formes, voies, méthodes EDQM, unités UCUM et classification ATC (tous
