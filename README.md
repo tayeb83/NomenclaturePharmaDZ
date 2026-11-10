@@ -87,9 +87,12 @@ précise que DwaDZ met en relation, ne vend rien et ne garantit aucun stock.
 `NEXT_PUBLIC_FACEBOOK_PAGE_URL` (bouton « Nous écrire sur Facebook » sur `/demandes`).
 Tests : `npm run test:demandes`.
 
-### 🧭 Recherche guidée (Lab, en préparation)
+### 🧭 Recherche guidée (Lab : `/lab/guide`)
 - Parcours DCI → voie → forme → dosage → présentations. Moteur et normalisation dans `lib/guide-core.ts`
-  (sans base, testable seul), index en mémoire dans `lib/guide.ts`, route `GET /api/lab/guide`. Pas encore d'interface.
+  (sans base, testable seul), index en mémoire dans `lib/guide.ts`, route `GET /api/lab/guide`.
+- Interface « pastilles » (`app/lab/guide/GuideClient.tsx`, FR/AR) : chaque choix devient une pastille qu'on rouvre ou
+  retire ; l'état est l'URL, donc un lien se partage. Case « Codes EDQM et UCUM » pour les professionnels.
+  Pages `/lab` et `/lab/guide` hors index et hors menu tant que la fonction est à l'essai.
 - **Normalisation** : abréviations de forme développées (« COMP. PELL. » → « Comprimé pelliculé ») et libellés proches
   des Standard Terms EDQM, fautes de frappe courantes comprises (« GELLULE », « SUSPENSSION ») ; voie déduite de la
   forme (orale solide, orale liquide, injectable…) ; dosages ramenés aux unités de base (« 0,5G » = « 500 MG »,
