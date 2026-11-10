@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useTransition, useCallback, useRef, useEffect, useMemo } from 'react'
+import { Suspense, useState, useTransition, useCallback, useRef, useEffect, useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import type { SearchResult } from '@/lib/db-types'
 import { DrugCard } from '@/components/drug/DrugCard'
@@ -8,8 +9,14 @@ import { AdInContent } from '@/components/ads/AdBanner'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 import { SuggestionList } from '@/components/search/SuggestionList'
 import { useSuggestions } from '@/components/search/useSuggestions'
+import { FiltresRecherche, type GroupeFiltre, type OptionFiltre } from '@/components/search/FiltresRecherche'
 // Types seulement : le code de normalisation reste côté serveur (il est lourd pour un bundle navigateur).
 import type { Facette, Facettes, FacetteSel } from '@/lib/facettes'
+
+// Recherche guidée (Lab) : chargée seulement quand on ouvre l'onglet.
+const GuideClient = dynamic(() => import('@/app/lab/guide/GuideClient').then(m => m.GuideClient), { ssr: false })
+
+type Onglet = 'simple' | 'avancee' | 'guidee'
 
 type AdvancedSearchCondition = {
   field: string
@@ -115,6 +122,8 @@ export function SearchClient({
   initialAlgerieOnly,
   initialDciMode = false,
   initialAdvancedOpen = false,
+  initialOnglet = 'simple',
+  guideDispo = false,
   initialFacettes = FACETTES_VIDES,
   initialFacSel = {},
   initialTotal = 0,
@@ -134,6 +143,9 @@ export function SearchClient({
   initialDciMode?: boolean
   /** Panneau « Recherche avancée » ouvert d'emblée (lien ?avancee=1, ou filtres déjà posés). */
   initialAdvancedOpen?: boolean
+  initialOnglet?: Onglet
+  /** Onglet « Guidée » proposé (Lab, réservé à l'admin tant que la fonction est à l'essai). */
+  guideDispo?: boolean
   /** Facettes calculées côté serveur sur tout le lot de résultats (voie, forme, dosage, origine). */
   initialFacettes?: Facettes
   initialFacSel?: FacetteSel
@@ -191,7 +203,9 @@ export function SearchClient({
   const router = useRouter()
   const [, startTransition] = useTransition()
   const inputRef = useRef<HTMLInputElement>(null)
-  const [advancedOpen, setAdvancedOpen] = useState(initialAdvancedOpen || hasAdvancedFilters(initialAdvanced))
+  const [onglet, setOnglet] = useState<Onglet>(
+    initialOnglet === 'guidee' && guideDispo ? 'guidee' : (initialAdvancedOpen || hasAdvancedFilters(initialAdvanced) || initialOnglet === 'avancee') ? 'avancee' : 'simple',
+  )
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -232,6 +246,16 @@ export function SearchClient({
       setFacettes(FACETTES_VIDES)
     } finally { setLoading(false) }
   }, [])
+
+  function changerOnglet(next: Onglet) {
+    if (next === onglet) return
+    setOnglet(next)
+    if (next === 'guidee') {
+      startTransition(() => { router.replace(`${basePath}?onglet=guide`, { scroll: false }) })
+      return
+    }
+    syncUrl(query, scope, labo, substance, activeOnly, advanced, algerieOnly)
+  }
 
   function handleInput(val: string, dci = false) {
     dciModeRef.current = dci
@@ -418,9 +442,58 @@ export function SearchClient({
 
   const sg = useSuggestions(query, s => handleInput(s.label, s.kind === 'dci'))
 
+  const ar = lang === 'ar'
+  const optsLocales = (entries: [string, number][], label?: (v: string) => string): OptionFiltre[] =>
+    entries.map(([v, n]) => ({ id: v, label: label ? label(v) : v, n }))
+  const pickLocal = (courant: string, set: (v: string) => void) => (id: string) => set(courant === id ? '' : id)
+
+  const groupesPrincipaux: GroupeFiltre[] = GROUPES_FACETTES
+    .filter(g => facettes[g.id].length > 1 || facSel[g.id])
+    .map(g => ({
+      id: g.id,
+      titre: ar ? g.ar : g.fr,
+      actif: facSel[g.id],
+      options: facettes[g.id].map(o => ({ id: o.id, label: ar && o.libelle_ar ? o.libelle_ar : o.libelle, n: o.n, drapeau: g.id === 'origine' && o.id === 'f' ? '🇩🇿 ' : undefined })),
+      onPick: (id: string) => handleFacette(g.id, id),
+    }))
+
+  const groupesSecondaires: GroupeFiltre[] = ([
+    { id: 'pays', titre: ar ? 'البلد' : 'Pays', options: optsLocales(facets.pays), actif: selectedPays, onPick: pickLocal(selectedPays, setSelectedPays) },
+    { id: 'labo', titre: ar ? 'المخبر' : 'Laboratoire', options: optsLocales(facets.labo), actif: selectedLaboFacet, onPick: pickLocal(selectedLaboFacet, setSelectedLaboFacet) },
+    { id: 'source', titre: ar ? 'الحالة' : 'Statut', options: optsLocales(facets.source, v => SOURCE_LABELS[v as SearchResult['source']][lang]), actif: selectedSource, onPick: pickLocal(selectedSource, setSelectedSource) },
+    { id: 'annee', titre: ar ? 'السنة' : 'Année', options: optsLocales(facets.annee), actif: selectedAnnee, onPick: pickLocal(selectedAnnee, setSelectedAnnee) },
+    { id: 'atc', titre: 'ATC', options: optsLocales(facets.atc), actif: selectedAtc, onPick: pickLocal(selectedAtc, setSelectedAtc) },
+    { id: 'substance', titre: ar ? 'المادة' : 'Substance', options: optsLocales(facets.substance), actif: selectedSubstanceFacet, onPick: pickLocal(selectedSubstanceFacet, setSelectedSubstanceFacet) },
+  ] as GroupeFiltre[]).filter(g => g.options.length > 1 || g.actif)
+
+  function clearTout() {
+    setSelectedPays(''); setSelectedLaboFacet(''); setSelectedSource(''); setSelectedAnnee(''); setSelectedAtc(''); setSelectedSubstanceFacet('')
+    if (Object.keys(facRef.current).length) clearFacettes()
+  }
+
+  const onglets: Array<{ id: Onglet; icone: string; fr: string; ar: string }> = [
+    { id: 'simple', icone: '🔍', fr: 'Recherche', ar: 'بحث' },
+    { id: 'avancee', icone: '⚙️', fr: 'Avancée', ar: 'متقدم' },
+    ...(guideDispo ? [{ id: 'guidee' as Onglet, icone: '🧭', fr: 'Guidée', ar: 'موجَّه' }] : []),
+  ]
+  const aDesCriteres = Boolean(query || labo || substance || hasAdvancedFilters(advanced))
+  const afficherFiltres = !loading && (results.length > 0 || Object.keys(facSel).length > 0) && (groupesPrincipaux.length > 0 || groupesSecondaires.length > 0)
+
   return (
     <>
-      <div className="search-bar">
+      <div className="rech-onglets" role="tablist" aria-label={ar ? 'أنماط البحث' : 'Modes de recherche'} dir={ar ? 'rtl' : 'ltr'}>
+        {onglets.map(o => (
+          <button key={o.id} type="button" role="tab" aria-selected={onglet === o.id} className={`rech-onglet${onglet === o.id ? ' actif' : ''}`} onClick={() => changerOnglet(o.id)}>
+            <span aria-hidden>{o.icone}</span> {ar ? o.ar : o.fr}
+            {o.id === 'guidee' && <em className="rech-onglet-lab">Lab</em>}
+          </button>
+        ))}
+      </div>
+
+      {onglet === 'guidee' ? (
+        <Suspense fallback={null}><GuideClient embedded basePath={basePath} extraParams={{ onglet: 'guide' }} /></Suspense>
+      ) : (<>
+      <div className="search-bar rech-barre">
         <span className="search-bar-icon">🔍</span>
         <input
           ref={inputRef}
@@ -436,266 +509,136 @@ export function SearchClient({
           aria-autocomplete="list"
           aria-activedescendant={sg.active >= 0 ? `search-sg-${sg.active}` : undefined}
           autoComplete="off"
-          placeholder={lang === 'ar' ? 'بحث شامل: DCI، الاسم التجاري، الشكل، الجرعة، المخبر...' : 'Recherche simple sur tout: DCI, marque, forme, dosage, labo...'}
+          placeholder={ar ? 'بحث شامل: DCI، الاسم التجاري، الشكل، الجرعة، المخبر...' : 'DCI, marque, forme, dosage, labo…'}
           autoFocus
         />
-        <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#475569', fontFamily: 'monospace', background: '#f1f5f9', padding: '2px 6px', borderRadius: 4, pointerEvents: 'none', userSelect: 'none' }}>/</span>
+        <kbd className="rech-raccourci" aria-hidden>/</kbd>
         {sg.open && sg.items.length > 0 && (
           <SuggestionList id="search-sg" items={sg.items} active={sg.active} lang={lang} onPick={sg.pick} onHover={sg.setActive} />
         )}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
-        <label style={{ display: 'inline-flex', gap: 8, alignItems: 'center', fontSize: 13, fontWeight: 600, color: '#334155' }}>
-          <input
-            type="checkbox"
-            checked={activeOnly}
-            onChange={(e) => handleActiveOnly(e.target.checked)}
-          />
-          {lang === 'ar' ? 'فقط الأدوية النشطة (المسجلة)' : 'Uniquement médicaments actifs (enregistrés)'}
-        </label>
-        <button
-          onClick={exportCsv}
-          disabled={!results.length}
-          style={{ padding: '7px 12px', borderRadius: 20, border: '1px solid #bfdbfe', background: results.length ? '#dbeafe' : '#f1f5f9', cursor: results.length ? 'pointer' : 'not-allowed', fontSize: 12, fontWeight: 600 }}
-        >{lang === 'ar' ? 'تصدير CSV' : 'Extraire CSV'}</button>
-      </div>
-
-      <div className="filter-tabs">
-        {SCOPES.map(s => (
+      <div className="rech-options">
+        <div className="filter-tabs">
+          {SCOPES.map(s => (
+            <button
+              key={s.value}
+              className={`filter-tab${scope === s.value ? ' active' : ''}`}
+              onClick={() => handleScope(s.value)}
+            >{s.label}</button>
+          ))}
           <button
-            key={s.value}
-            className={`filter-tab${scope === s.value ? ' active' : ''}`}
-            onClick={() => handleScope(s.value)}
-          >{s.label}</button>
-        ))}
-        <button
-          className={`filter-tab${algerieOnly ? ' active' : ''}`}
-          onClick={() => handleAlgerieOnly(!algerieOnly)}
-          title={lang === 'ar' ? 'عرض الأدوية المصنّعة في الجزائر فقط (F)' : 'Afficher uniquement les médicaments fabriqués en Algérie (statut F)'}
-        >
-          🇩🇿 {lang === 'ar' ? 'مصنوع في الجزائر' : 'Fabriqué en Algérie'}
-        </button>
+            className={`filter-tab${algerieOnly ? ' active' : ''}`}
+            onClick={() => handleAlgerieOnly(!algerieOnly)}
+            title={ar ? 'عرض الأدوية المصنّعة في الجزائر فقط (F)' : 'Afficher uniquement les médicaments fabriqués en Algérie (statut F)'}
+          >
+            🇩🇿 {ar ? 'مصنوع في الجزائر' : 'Fabriqué en Algérie'}
+          </button>
+        </div>
+        <div className="rech-outils">
+          <label className="rech-interrupteur">
+            <input type="checkbox" checked={activeOnly} onChange={(e) => handleActiveOnly(e.target.checked)} />
+            <span>{ar ? 'الأدوية النشطة فقط' : 'Médicaments actifs uniquement'}</span>
+          </label>
+          <button type="button" className="rech-csv" onClick={exportCsv} disabled={!results.length}>⬇ {ar ? 'تصدير CSV' : 'Exporter en CSV'}</button>
+        </div>
       </div>
 
-      <details open={advancedOpen} onToggle={e => setAdvancedOpen((e.currentTarget as HTMLDetailsElement).open)} style={{ marginBottom: 16, border: '1px solid #e2e8f0', borderRadius: 10, padding: 12, background: '#f8fafc' }}>
-        <summary style={{ cursor: 'pointer', fontWeight: 700, color: '#334155' }}>{lang === 'ar' ? 'بحث متقدم (منطقي)' : 'Recherche avancée (booléenne)'}</summary>
-        <div style={{ marginTop: 12, display: 'grid', gap: 10 }}>
-          {advanced.map((condition, index) => {
-            const type = getFieldType(condition.field)
-            const operators = type === 'number' ? NUMBER_OPERATORS : TEXT_OPERATORS
-            return (
-              <div key={`advanced-${index}`} style={{ display: 'grid', gridTemplateColumns: index === 0 ? '1fr 1fr 1.2fr auto' : '90px 1fr 1fr 1.2fr auto', gap: 8 }}>
-                {index > 0 && (
-                  <select
-                    value={condition.bool || 'AND'}
-                    onChange={(e) => updateAdvanced(index, { bool: e.target.value as 'AND' | 'OR' })}
-                    style={{ width: '100%', padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 13 }}
-                  >
-                    <option value="AND">{lang === 'ar' ? 'و' : 'ET'}</option>
-                    <option value="OR">{lang === 'ar' ? 'أو' : 'OU'}</option>
+      {onglet === 'avancee' && (
+        <section className="rech-avancee" aria-label={ar ? 'بحث متقدم' : 'Recherche avancée'}>
+          <p className="rech-avancee-aide">{ar ? 'اجمع عدة شروط بالمنطق «و» / «أو» على كل خصائص الدواء.' : 'Combinez plusieurs conditions (ET / OU) sur toutes les propriétés du médicament.'}</p>
+          <div style={{ display: 'grid', gap: 10 }}>
+            {advanced.map((condition, index) => {
+              const type = getFieldType(condition.field)
+              const operators = type === 'number' ? NUMBER_OPERATORS : TEXT_OPERATORS
+              return (
+                <div key={`advanced-${index}`} className={`rech-condition${index === 0 ? ' premiere' : ''}`}>
+                  {index > 0 && (
+                    <select className="rech-champ" value={condition.bool || 'AND'} onChange={(e) => updateAdvanced(index, { bool: e.target.value as 'AND' | 'OR' })}>
+                      <option value="AND">{ar ? 'و' : 'ET'}</option>
+                      <option value="OR">{ar ? 'أو' : 'OU'}</option>
+                    </select>
+                  )}
+                  <select className="rech-champ" value={condition.field} onChange={(e) => updateAdvanced(index, { field: e.target.value })}>
+                    {ADVANCED_FIELDS.map((field) => <option key={field.value} value={field.value}>{field.label}</option>)}
                   </select>
-                )}
-
-                <select value={condition.field} onChange={(e) => updateAdvanced(index, { field: e.target.value })} style={{ width: '100%', padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 13 }}>
-                  {ADVANCED_FIELDS.map((field) => (
-                    <option key={field.value} value={field.value}>{field.label}</option>
-                  ))}
-                </select>
-
-                <select value={condition.operator} onChange={(e) => updateAdvanced(index, { operator: e.target.value })} style={{ width: '100%', padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 13 }}>
-                  {operators.map((operator) => (
-                    <option key={operator.value} value={operator.value}>{operator.label[lang]}</option>
-                  ))}
-                </select>
-
-                {NO_VALUE_OPERATORS.has(condition.operator) ? (
-                  <div style={{ display: 'flex', alignItems: 'center', padding: '9px 10px', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, color: '#94a3b8', background: '#f8fafc', fontStyle: 'italic' }}>
-                    {lang === 'ar' ? '(بدون قيمة)' : '(sans valeur)'}
-                  </div>
-                ) : (
-                  <input
-                    type={type === 'number' ? 'number' : 'text'}
-                    value={condition.value}
-                    onChange={(e) => updateAdvanced(index, { value: e.target.value })}
-                    placeholder={type === 'number' ? 'ex: 500' : (lang === 'ar' ? 'القيمة المراد البحث عنها' : 'valeur à rechercher')}
-                    style={{ width: '100%', padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 13 }}
-                  />
-                )}
-
-                <button onClick={() => removeAdvancedCondition(index)} style={{ border: '1px solid #fecaca', color: '#b91c1c', background: '#fff1f2', borderRadius: 8, padding: '0 10px', cursor: 'pointer', fontWeight: 700 }} title={lang === 'ar' ? 'حذف الشرط' : 'Supprimer la condition'}>
-                  ✕
-                </button>
-              </div>
-            )
-          })}
-
-          <div>
-            <button onClick={addAdvancedCondition} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
-              + {lang === 'ar' ? 'إضافة شرط' : 'Ajouter une condition'}
-            </button>
+                  <select className="rech-champ" value={condition.operator} onChange={(e) => updateAdvanced(index, { operator: e.target.value })}>
+                    {operators.map((operator) => <option key={operator.value} value={operator.value}>{operator.label[lang]}</option>)}
+                  </select>
+                  {NO_VALUE_OPERATORS.has(condition.operator) ? (
+                    <div className="rech-champ sans-valeur">{ar ? '(بدون قيمة)' : '(sans valeur)'}</div>
+                  ) : (
+                    <input
+                      className="rech-champ"
+                      type={type === 'number' ? 'number' : 'text'}
+                      value={condition.value}
+                      onChange={(e) => updateAdvanced(index, { value: e.target.value })}
+                      placeholder={type === 'number' ? 'ex: 500' : (ar ? 'القيمة المراد البحث عنها' : 'valeur à rechercher')}
+                    />
+                  )}
+                  <button type="button" className="rech-condition-x" onClick={() => removeAdvancedCondition(index)} title={ar ? 'حذف الشرط' : 'Supprimer la condition'} aria-label={ar ? 'حذف الشرط' : 'Supprimer la condition'}>✕</button>
+                </div>
+              )
+            })}
           </div>
-        </div>
-      </details>
+          <button type="button" className="page-btn" onClick={addAdvancedCondition} style={{ marginTop: 12 }}>+ {ar ? 'إضافة شرط' : 'Ajouter une condition'}</button>
+        </section>
+      )}
 
       {loading && (
         <div className="loading-spinner">
-          <div className="spinner" /> {lang === 'ar' ? 'جاري البحث...' : 'Recherche en cours...'}
+          <div className="spinner" /> {ar ? 'جاري البحث...' : 'Recherche en cours...'}
         </div>
       )}
 
       {!loading && fuzzyInfo.fuzzy && results.length > 0 && (
-        <div style={{ background: '#fffbeb', border: '1.5px solid #fde68a', borderRadius: 10, padding: '12px 16px', marginBottom: 14, color: '#92400e', fontSize: 13.5 }}>
+        <div className="rech-astuce">
           {fuzzyInfo.matchedTerm ? (
-            lang === 'ar'
+            ar
               ? <>💡 لم يتم العثور على &laquo;{query}&raquo; في التسمية — نعرض نتائج المادة الفعالة <strong>{fuzzyInfo.matchedTerm}</strong>{fuzzyInfo.synonymTerm ? <> (الاسم الشائع: {fuzzyInfo.synonymTerm})</> : null}.</>
               : <>💡 &laquo;{query}&raquo; n&apos;est pas dans la nomenclature — résultats pour la substance <strong>{fuzzyInfo.matchedTerm}</strong>{fuzzyInfo.synonymTerm ? <> (nom courant : {fuzzyInfo.synonymTerm})</> : null}.</>
           ) : (
-            lang === 'ar'
+            ar
               ? <>💡 لا توجد نتيجة مطابقة تمامًا لـ &laquo;{query}&raquo; — نعرض أقرب النتائج (تصحيح إملائي/صوتي).</>
               : <>💡 Aucun résultat exact pour &laquo;&nbsp;{query}&nbsp;&raquo; — voici les résultats les plus proches (correction orthographique/phonétique).</>
           )}
         </div>
       )}
 
-      {!loading && (query || labo || substance || hasAdvancedFilters(advanced)) && (
+      {afficherFiltres && (
+        <FiltresRecherche
+          ar={ar}
+          principaux={groupesPrincipaux}
+          secondaires={groupesSecondaires}
+          onClear={clearTout}
+          textes={ar
+            ? { filtres: 'تصفية', plus: '+ مزيد من المرشحات', moins: 'إخفاء', effacer: 'مسح الكل', chercher: 'بحث في القائمة…', autres: n => `عرض ${n} أخرى`, aucun: 'لا شيء', actifs: 'المرشحات النشطة' }
+            : { filtres: 'Filtrer', plus: '+ Plus de filtres', moins: 'Moins de filtres', effacer: 'Tout effacer', chercher: 'Chercher dans la liste…', autres: n => `Voir les ${n} autres`, aucun: 'Aucun choix', actifs: 'Filtres actifs' }}
+        />
+      )}
+
+      {!loading && aDesCriteres && (
         <div className="search-count">
-          {filteredResults.length === 0 ? (lang === 'ar' ? 'لا توجد نتائج' : 'Aucun résultat') : `${filteredResults.length} ${lang === 'ar' ? 'نتيجة' : 'résultat(s) trouvés'}`}
-          {results.length !== filteredResults.length && ` (${results.length} ${lang === 'ar' ? 'إجمالي' : 'total'})`}
+          {filteredResults.length === 0 ? (ar ? 'لا توجد نتائج' : 'Aucun résultat') : <><b>{filteredResults.length}</b> {ar ? 'نتيجة' : filteredResults.length > 1 ? 'résultats' : 'résultat'}</>}
+          {results.length !== filteredResults.length && ` (${results.length} ${ar ? 'إجمالي' : 'au total'})`}
           {totalServeur > results.length && (
-            <span style={{ color: '#64748b' }}>
-              {lang === 'ar' ? ` — عرض ${results.length} من ${totalServeur}، ضيّق النتائج بالواجهات أدناه` : ` — ${results.length} affichés sur ${totalServeur} : affinez avec les facettes ci-dessous`}
+            <span className="search-count-note">
+              {ar ? ` — عرض ${results.length} من ${totalServeur}، ضيّق النتائج بالمرشحات` : ` · ${results.length} affichés sur ${totalServeur} : affinez avec les filtres`}
             </span>
           )}
-        </div>
-      )}
-
-      {!loading && (results.length > 0 || Object.keys(facSel).length > 0) && GROUPES_FACETTES.some(g => facettes[g.id].length > 1 || facSel[g.id]) && (
-        <div className="facettes-moteur" style={{ marginBottom: 14, border: '1px solid #bfdbfe', borderRadius: 10, padding: 12, background: '#f0f7ff' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#1e3a8a' }}>
-              {lang === 'ar' ? 'ضيّق حسب الاستعمال والشكل والجرعة' : 'Affiner par voie, forme et dosage'}
-            </div>
-            {Object.keys(facSel).length > 0 && (
-              <button type="button" onClick={clearFacettes} style={{ background: 'none', border: 0, color: '#1d4ed8', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}>
-                {lang === 'ar' ? 'مسح الاختيارات' : 'Effacer les choix'}
-              </button>
-            )}
-          </div>
-          <div style={{ display: 'grid', gap: 9 }}>
-            {GROUPES_FACETTES.map(g => {
-              const options = facettes[g.id]
-              if (options.length === 0 || (options.length === 1 && !facSel[g.id])) return null
-              return (
-                <div key={g.id} role="group" aria-label={lang === 'ar' ? g.ar : g.fr} style={{ display: 'flex', gap: 7, flexWrap: 'wrap', alignItems: 'center' }}>
-                  <strong style={{ fontSize: 12, color: '#475569', minWidth: 64 }}>{lang === 'ar' ? g.ar : g.fr}</strong>
-                  {options.map(o => {
-                    const actif = facSel[g.id] === o.id
-                    return (
-                      <button
-                        key={`${g.id}-${o.id}`}
-                        type="button"
-                        aria-pressed={actif}
-                        onClick={() => handleFacette(g.id, o.id)}
-                        style={{ padding: '5px 10px', borderRadius: 999, border: actif ? '1.5px solid #1d4ed8' : '1px solid #cbd5e1', background: actif ? '#dbeafe' : '#fff', cursor: 'pointer', fontSize: 12.5, fontWeight: actif ? 700 : 400 }}
-                      >
-                        {g.id === 'origine' && o.id === 'f' ? '🇩🇿 ' : ''}{lang === 'ar' && o.libelle_ar ? o.libelle_ar : o.libelle} <span style={{ color: '#64748b', fontFamily: 'monospace', fontSize: 11.5 }}>{o.n}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              )
-            })}
-          </div>
-          {tronque && (
-            <p style={{ margin: '10px 0 0', fontSize: 12, color: '#64748b' }}>
-              {lang === 'ar' ? 'الأعداد محسوبة على أول 300 نتيجة. دقّق البحث لرؤية الباقي.' : 'Compteurs calculés sur les 300 premiers résultats. Précisez la recherche pour voir le reste.'}
-            </p>
+          {tronque && Object.keys(facSel).length === 0 && (
+            <span className="search-count-note">{ar ? ' · الأعداد على أول 300 نتيجة' : ' · compteurs sur les 300 premiers résultats'}</span>
           )}
         </div>
       )}
+      </>)}
 
-      {!loading && results.length > 0 && (
-        <div style={{ marginBottom: 18, border: '1px solid #e2e8f0', borderRadius: 10, padding: 12, background: '#f8fafc' }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 10 }}>
-            {lang === 'ar' ? 'الواجهات (Facettes) لتضييق النتائج' : 'Facettes pour affiner les résultats'}
-          </div>
-          <div style={{ display: 'grid', gap: 10 }}>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              <strong style={{ fontSize: 12, color: '#475569', minWidth: 58 }}>{lang === 'ar' ? 'البلد' : 'Pays'}</strong>
-              {facets.pays.slice(0, 8).map(([value, count]) => (
-                <button
-                  key={`facet-pays-${value}`}
-                  onClick={() => setSelectedPays(selectedPays === value ? '' : value)}
-                  style={{ padding: '6px 10px', borderRadius: 999, border: selectedPays === value ? '1px solid #2563eb' : '1px solid #cbd5e1', background: selectedPays === value ? '#dbeafe' : '#fff', cursor: 'pointer', fontSize: 12 }}
-                >{value} ({count})</button>
-              ))}
-            </div>
-
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              <strong style={{ fontSize: 12, color: '#475569', minWidth: 58 }}>{lang === 'ar' ? 'المخبر' : 'Labo'}</strong>
-              {facets.labo.slice(0, 8).map(([value, count]) => (
-                <button
-                  key={`facet-labo-${value}`}
-                  onClick={() => setSelectedLaboFacet(selectedLaboFacet === value ? '' : value)}
-                  style={{ padding: '6px 10px', borderRadius: 999, border: selectedLaboFacet === value ? '1px solid #2563eb' : '1px solid #cbd5e1', background: selectedLaboFacet === value ? '#dbeafe' : '#fff', cursor: 'pointer', fontSize: 12 }}
-                >{value} ({count})</button>
-              ))}
-            </div>
-
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              <strong style={{ fontSize: 12, color: '#475569', minWidth: 58 }}>{lang === 'ar' ? 'البيانات' : 'Données'}</strong>
-              {facets.source.map(([value, count]) => (
-                <button
-                  key={`facet-source-${value}`}
-                  onClick={() => setSelectedSource(selectedSource === value ? '' : value)}
-                  style={{ padding: '6px 10px', borderRadius: 999, border: selectedSource === value ? '1px solid #2563eb' : '1px solid #cbd5e1', background: selectedSource === value ? '#dbeafe' : '#fff', cursor: 'pointer', fontSize: 12 }}
-                >{SOURCE_LABELS[value as SearchResult['source']][lang]} ({count})</button>
-              ))}
-            </div>
-
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              <strong style={{ fontSize: 12, color: '#475569', minWidth: 58 }}>{lang === 'ar' ? 'السنة' : 'Année'}</strong>
-              {facets.annee.slice(0, 8).map(([value, count]) => (
-                <button
-                  key={`facet-annee-${value}`}
-                  onClick={() => setSelectedAnnee(selectedAnnee === value ? '' : value)}
-                  style={{ padding: '6px 10px', borderRadius: 999, border: selectedAnnee === value ? '1px solid #2563eb' : '1px solid #cbd5e1', background: selectedAnnee === value ? '#dbeafe' : '#fff', cursor: 'pointer', fontSize: 12 }}
-                >{value} ({count})</button>
-              ))}
-            </div>
-
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              <strong style={{ fontSize: 12, color: '#475569', minWidth: 58 }}>ATC</strong>
-              {facets.atc.slice(0, 8).map(([value, count]) => (
-                <button
-                  key={`facet-atc-${value}`}
-                  onClick={() => setSelectedAtc(selectedAtc === value ? '' : value)}
-                  style={{ padding: '6px 10px', borderRadius: 999, border: selectedAtc === value ? '1px solid #2563eb' : '1px solid #cbd5e1', background: selectedAtc === value ? '#dbeafe' : '#fff', cursor: 'pointer', fontSize: 12 }}
-                >{value} ({count})</button>
-              ))}
-            </div>
-
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              <strong style={{ fontSize: 12, color: '#475569', minWidth: 58 }}>{lang === 'ar' ? 'المادة' : 'Substance'}</strong>
-              {facets.substance.slice(0, 8).map(([value, count]) => (
-                <button
-                  key={`facet-substance-${value}`}
-                  onClick={() => setSelectedSubstanceFacet(selectedSubstanceFacet === value ? '' : value)}
-                  style={{ padding: '6px 10px', borderRadius: 999, border: selectedSubstanceFacet === value ? '1px solid #2563eb' : '1px solid #cbd5e1', background: selectedSubstanceFacet === value ? '#dbeafe' : '#fff', cursor: 'pointer', fontSize: 12 }}
-                >{value} ({count})</button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {!loading && filteredResults.slice(0, 3).map((d, i) => (
+      {onglet !== 'guidee' && !loading && filteredResults.slice(0, 3).map((d, i) => (
         <DrugCard key={`${d.source}-${d.id}-${i}`} drug={d} type={d.source} onOpen={() => trackResultOpen(d)} />
       ))}
       {/* Pub après les 3 premiers résultats : la recherche n'en affichait aucune. */}
-      {!loading && filteredResults.length > 3 && <AdInContent style={{ margin: '16px auto' }} />}
-      {!loading && filteredResults.slice(3).map((d, i) => (
+      {onglet !== 'guidee' && !loading && filteredResults.length > 3 && <AdInContent style={{ margin: '16px auto' }} />}
+      {onglet !== 'guidee' && !loading && filteredResults.slice(3).map((d, i) => (
         <DrugCard key={`${d.source}-${d.id}-${i + 3}`} drug={d} type={d.source} onOpen={() => trackResultOpen(d)} />
       ))}
     </>

@@ -282,8 +282,9 @@ export async function MedicamentDetail(
     getInteractionsVers(med.dci).catch(() => []),
     // Interactions du Thesaurus ANSM pour la substance de la fiche (jamais pour un médicament retiré)
     med.source === 'retrait' ? Promise.resolve(null) : getInteractionsAnsm(med.dci, lang).catch(() => null),
-    // Forme, voies et méthode EDQM, unités UCUM : jamais bloquant pour la fiche
-    getCachedTerminologieFiche(med.forme, med.dosage, med.dci).catch(() => null),
+    // Forme, voies et méthode EDQM, unités UCUM : au Lab seulement (admin) ; le public voit le code ATC, comme avant.
+    // Jamais bloquant pour la fiche.
+    lienLab ? getCachedTerminologieFiche(med.forme, med.dosage, med.dci).catch(() => null) : Promise.resolve(null),
   ])
   const monographie = hasContent(monographieRaw) ? monographieRaw : null
   // Page « famille de marque » : proposée seulement si elle regroupe plusieurs
