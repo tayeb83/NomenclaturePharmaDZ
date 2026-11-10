@@ -585,6 +585,13 @@ export function SearchClient({
         </section>
       )}
 
+      {!loading && !aDesCriteres && (
+        <p className="rech-indice">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden><path d="M4 6h16M7 12h10M10 18h4" /></svg>
+          {ar ? 'بعد البحث، تظهر مرشحات «الطريقة والشكل والجرعة والمصدر» هنا لتضييق النتائج.' : 'Après une recherche, la barre « Filtrer » apparaît ici : voie, forme, dosage, origine, pour affiner les résultats.'}
+        </p>
+      )}
+
       {loading && (
         <div className="loading-spinner">
           <div className="spinner" /> {ar ? 'جاري البحث...' : 'Recherche en cours...'}
