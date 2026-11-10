@@ -39,9 +39,12 @@ export function SearchBox() {
 
   return (
     <div className="home-search-wrap">
-      <div className="rech-onglets home-onglets" role="tablist" aria-label={t('Que cherchez-vous ?', 'عمّ تبحث؟')}>
+      <p className="home-question" id="home-question">
+        {t('Que cherchez-vous ?', 'عمّ تبحث؟')} <span>{t('Choisissez un mode', 'اختر نمط البحث')}</span>
+      </p>
+      <div className="home-seg" role="tablist" aria-labelledby="home-question">
         {onglets.map(o => (
-          <button key={o.id} type="button" role="tab" aria-selected={mode === o.id} className={`rech-onglet${mode === o.id ? ' actif' : ''}`} onClick={() => setMode(o.id)}>
+          <button key={o.id} type="button" role="tab" aria-selected={mode === o.id} className={mode === o.id ? 'actif' : ''} onClick={() => setMode(o.id)}>
             <span aria-hidden>{o.icone}</span> {ar ? o.ar : o.fr}
           </button>
         ))}

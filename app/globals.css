@@ -1210,3 +1210,33 @@ a.home-mode-aide:hover { text-decoration: underline; }
 .home-garde-form { flex: 1; min-width: 200px; display: flex; }
 .home-garde-form select { flex: 1; min-width: 0; padding: 0 12px; border: 2px solid var(--slate-200); border-radius: 12px; font: inherit; font-size: 15px; background: #fff; color: var(--slate-900); cursor: pointer; }
 .home-garde-form select:focus { outline: none; border-color: var(--blue); }
+
+/* Accueil : hero centré, choix du mode de recherche (variante B) */
+@media (min-width: 761px) {
+  .home-hero .hero-grid { grid-template-columns: minmax(0, 1fr); }
+  .home-hero .hero-niche { display: none; }
+}
+.home-hero .hero-content { text-align: center; }
+.home-hero .hero h1, .home-hero h1 { margin-inline: auto; max-width: 760px; }
+.home-hero .hero-lead, .home-hero .hero-content > p { margin-inline: auto; }
+.home-hero .hero-eyebrow { justify-content: center; }
+.home-search-wrap { max-width: 700px; margin-inline: auto; text-align: start; }
+.home-search-chips { justify-content: center; margin-inline: auto; }
+.home-hero-cta { justify-content: center; }
+.home-question { text-align: center; font-weight: 700; color: var(--navy); font-size: 16px; margin: 0 0 10px !important; max-width: none !important; }
+.home-question span { font-weight: 400; color: var(--slate-500); }
+.home-question span::before { content: '— '; }
+.home-seg { display: flex; width: fit-content; max-width: 100%; margin: 0 auto 16px; background: #fff; border: 2px solid var(--slate-200); border-radius: 999px; padding: 4px; gap: 2px; box-shadow: 0 2px 8px rgba(15,23,42,.08); }
+.home-seg button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 0; background: none; border-radius: 999px; padding: 11px 20px; font: inherit; font-size: 15px; font-weight: 600; color: var(--slate-600); cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
+.home-seg button:hover { color: var(--navy); background: var(--slate-100); }
+.home-seg button.actif { background: var(--blue); color: #fff; box-shadow: 0 3px 8px rgba(29,78,158,.35); }
+.home-mode-aide { text-align: center; }
+.home-panneau { text-align: center; }
+.home-etapes, .home-garde { justify-content: center; }
+@media (max-width: 700px) {
+  .home-seg { flex-direction: column; width: 100%; border-radius: 20px; }
+  .home-seg button { padding: 12px 16px; }
+}
+.home-panneau p, .home-mode-aide { max-width: none; margin-inline: auto; }
+.home-panneau p { margin-bottom: 12px; }
+.home-mode-aide { margin-top: 10px; }

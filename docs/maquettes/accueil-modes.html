@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Maquettes — accueil : choisir son mode de recherche</title>
+<style>
+:root{--navy:#12233f;--blue:#1d4e9e;--blue-l:#e4edf7;--brass:#b98425;--s100:#f1f5f9;--s200:#e2e8f0;--s500:#64748b;--s600:#475569;--s700:#334155;--s900:#0f172a}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:#f1f4f4;color:var(--s900)}
+.top{background:var(--navy);color:#fff;padding:14px 20px}.top h1{margin:0;font-size:18px}.top p{margin:3px 0 0;color:#cbd5e1;font-size:13.5px}
+.sel{display:flex;gap:8px;flex-wrap:wrap;padding:12px 20px;background:#fff;border-bottom:1px solid var(--s200);position:sticky;top:0;z-index:9}
+.sel button{border:1.5px solid var(--s200);background:#fff;border-radius:10px;padding:8px 14px;font:inherit;font-weight:600;cursor:pointer}.sel button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.note{max-width:900px;margin:14px auto 0;padding:0 16px;font-size:14px;color:#92400e}.note div{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 14px}
+.var{display:none}.var.on{display:block}
+.hero{background:#e4edf7;margin-top:14px;padding:34px 16px 44px;text-align:center}
+.hero small.eb{display:inline-block;background:#fff;border:1px solid var(--s200);border-radius:999px;padding:3px 12px;font-size:12px;color:var(--s600);margin-bottom:12px}
+.hero h1{font:700 34px/1.2 Georgia,serif;color:var(--navy);margin:0 auto 8px;max-width:720px}
+.hero p.l{color:var(--s600);margin:0 auto 22px;max-width:560px}
+.wrap{max-width:680px;margin:0 auto;text-align:left}
+.q{font-weight:700;color:var(--navy);text-align:center;margin:0 0 10px;font-size:15px}
+.box{background:#fff;border:2px solid var(--blue);border-radius:16px;padding:8px;display:flex;gap:8px;box-shadow:0 8px 24px rgba(18,35,63,.1)}
+.box input{flex:1;border:0;outline:0;padding:12px;font-size:16px;background:none;min-width:0}.box button{border:0;background:var(--blue);color:#fff;border-radius:10px;padding:0 22px;font:700 15px system-ui}
+.panel{background:#fff;border:2px solid var(--blue);border-radius:16px;padding:18px;box-shadow:0 8px 24px rgba(18,35,63,.1);text-align:center}
+.panel p{margin:0 0 12px;color:var(--s700)}.btn{display:inline-block;background:var(--blue);color:#fff;border-radius:12px;padding:12px 22px;font-weight:700;text-decoration:none}
+/* A : trois grandes cartes */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:760px;margin:0 auto 14px}
+.card{background:#fff;border:2px solid var(--s200);border-radius:16px;padding:16px 10px;cursor:pointer;text-align:center;position:relative;transition:.15s}
+.card:hover{border-color:var(--blue);transform:translateY(-2px)}
+.card span{font-size:30px;display:block}.card b{display:block;margin-top:6px;color:var(--navy)}.card small{display:block;color:var(--s500);font-size:12.5px;margin-top:2px}
+.card.on{background:var(--navy);border-color:var(--navy);box-shadow:0 8px 20px rgba(18,35,63,.3)}.card.on b{color:#fff}.card.on small{color:#cbd5e1}
+.card.on::after{content:"";position:absolute;left:50%;bottom:-11px;margin-left:-9px;border:9px solid transparent;border-top-color:var(--navy);border-bottom:0}
+/* B : segmenté */
+.seg{display:inline-flex;background:#fff;border:2px solid var(--s200);border-radius:999px;padding:4px;gap:2px;margin-bottom:16px;box-shadow:0 2px 8px rgba(15,23,42,.08)}
+.seg button{border:0;background:none;border-radius:999px;padding:11px 20px;font:600 15px system-ui;color:var(--s600);cursor:pointer}.seg button.on{background:var(--blue);color:#fff;box-shadow:0 3px 8px rgba(29,78,158,.35)}
+.hint{font-size:12.5px;color:var(--s500);margin-top:8px}
+/* C : phrase */
+.phrase{font:700 22px Georgia,serif;color:var(--navy);margin-bottom:14px}
+.pills{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:16px}
+.pills label{cursor:pointer}.pills input{display:none}.pills span{display:inline-flex;gap:7px;align-items:center;background:#fff;border:2px solid var(--s200);border-radius:999px;padding:10px 18px;font-weight:600;color:var(--s700)}
+.pills input:checked+span{border-color:var(--blue);background:var(--blue-l);color:var(--blue);box-shadow:0 0 0 3px rgba(29,78,158,.15)}
+.pills span::before{content:"";width:16px;height:16px;border-radius:50%;border:2px solid var(--s500);flex:none}
+.pills input:checked+span::before{border-color:var(--blue);background:radial-gradient(var(--blue) 45%,#fff 50%)}
+/* D : trois blocs d'action */
+.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:860px;margin:0 auto}
+.act{background:#fff;border:2px solid var(--s200);border-radius:18px;padding:16px;text-align:left;transition:.15s}
+.act.on{border-color:var(--blue);box-shadow:0 10px 26px rgba(18,35,63,.14)}
+.act h3{margin:0 0 3px;color:var(--navy);font-size:16px}.act p{margin:0 0 10px;color:var(--s500);font-size:13px}
+.act .f{display:flex;border:1.5px solid var(--s200);border-radius:10px;overflow:hidden}.act .f input{flex:1;border:0;padding:9px;min-width:0;font:14px system-ui;outline:0}.act .f button{border:0;background:var(--blue);color:#fff;padding:0 12px;font-weight:700}
+.act select{width:100%;padding:9px;border:1.5px solid var(--s200);border-radius:10px;font:14px system-ui;background:#fff}
+.act .btn{padding:9px 14px;font-size:14px;width:100%;text-align:center}
+@media(max-width:700px){.cards,.trio{grid-template-columns:1fr}.hero h1{font-size:26px}.seg{display:flex;flex-direction:column;border-radius:20px;width:100%}.card span{display:inline;font-size:22px;margin-right:6px}.card{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px}.card small{display:none}.card.on::after{display:none}}
+</style></head><body>
+<div class="top"><h1>Maquettes — accueil : choisir son mode de recherche</h1><p>Les trois modes : médicament, recherche guidée, pharmacie de garde. Cliquez pour tester ; réduisez la fenêtre pour voir le téléphone.</p></div>
+<div class="sel" id="sel"></div>
+
+<section class="var on">
+<div class="note"><div><b>A · Trois grandes cartes.</b> Trois cartes centrées avec icône, titre et sous-titre ; la carte choisie se colore et une flèche pointe vers le panneau. C'est la plus évidente : on voit tout de suite qu'il y a trois portes d'entrée.</div></div>
+<div class="hero"><small class="eb">Nomenclature officielle · mise à jour du 12 nov.</small><h1>Trouvez un médicament ou une pharmacie de garde en Algérie</h1><p class="l">5 425 médicaments, leurs prix, les alertes de retrait et les pharmacies ouvertes.</p>
+<div class="cards" data-g="a"><div class="card on" data-m="0"><span>🔍</span><b>Un médicament</b><small>Nom, substance, labo</small></div><div class="card" data-m="1"><span>🧭</span><b>Pas à pas</b><small>Substance → forme → dosage</small></div><div class="card" data-m="2"><span>📍</span><b>Pharmacie de garde</b><small>Près de moi, par wilaya</small></div></div>
+<div class="wrap" data-p="a"></div></div></section>
+
+<section class="var">
+<div class="note"><div><b>B · Question + commutateur centré.</b> Une question « Que cherchez-vous ? » au-dessus d'un grand commutateur en pilule, centré. Plus sobre et plus compact que A, avec un message qui dit explicitement qu'on peut choisir.</div></div>
+<div class="hero"><small class="eb">Nomenclature officielle · mise à jour du 12 nov.</small><h1>Trouvez un médicament ou une pharmacie de garde en Algérie</h1><p class="l">5 425 médicaments, leurs prix, les alertes de retrait et les pharmacies ouvertes.</p>
+<p class="q">Que cherchez-vous ? <span style="font-weight:400;color:var(--s500)">— choisissez un mode</span></p>
+<div class="seg" data-g="b"><button class="on" data-m="0">🔍 Médicament</button><button data-m="1">🧭 Recherche guidée</button><button data-m="2">📍 Pharmacie de garde</button></div>
+<div class="wrap" data-p="b"></div></div></section>
+
+<section class="var">
+<div class="note"><div><b>C · Phrase à compléter.</b> « Je cherche… » suivi de trois choix à boutons radio bien visibles. Le plus explicite sur le fait qu'il faut choisir (cercles à cocher), un ton plus conversationnel.</div></div>
+<div class="hero"><small class="eb">Nomenclature officielle · mise à jour du 12 nov.</small><h1>Trouvez un médicament ou une pharmacie de garde en Algérie</h1><p class="l">5 425 médicaments, leurs prix, les alertes de retrait et les pharmacies ouvertes.</p>
+<div class="phrase">Je cherche…</div>
+<div class="pills" data-g="c"><label><input type="radio" name="c" checked data-m="0"><span>🔍 un médicament</span></label><label><input type="radio" name="c" data-m="1"><span>🧭 pas à pas, sans connaître le nom</span></label><label><input type="radio" name="c" data-m="2"><span>📍 une pharmacie de garde</span></label></div>
+<div class="wrap" data-p="c"></div></div></section>
+
+<section class="var">
+<div class="note"><div><b>D · Trois blocs, chacun avec son action.</b> Pas d'onglet à choisir : trois cartes côte à côte, chacune avec son propre champ ou bouton (barre de recherche, « Commencer », liste des wilayas). Zéro clic de plus, mais on voit trois choses à la fois et la barre de recherche est moins centrale.</div></div>
+<div class="hero"><small class="eb">Nomenclature officielle · mise à jour du 12 nov.</small><h1>Trouvez un médicament ou une pharmacie de garde en Algérie</h1><p class="l">5 425 médicaments, leurs prix, les alertes de retrait et les pharmacies ouvertes.</p>
+<div class="trio"><div class="act on"><h3>🔍 Un médicament</h3><p>Nom, substance active ou laboratoire</p><div class="f"><input placeholder="amoxicilline…"><button>OK</button></div></div>
+<div class="act"><h3>🧭 Pas à pas</h3><p>Substance, voie, forme, dosage</p><a class="btn">Commencer</a></div>
+<div class="act"><h3>📍 Pharmacie de garde</h3><p>Ouvertes maintenant</p><select><option>Choisir une wilaya…</option></select><a class="btn" style="margin-top:8px;background:var(--navy)">Près de moi</a></div></div></div></section>
+
+<script>
+const names=['A · Trois cartes','B · Commutateur centré','C · Phrase « Je cherche… »','D · Trois blocs d’action'];
+const sel=document.getElementById('sel');
+names.forEach((n,i)=>{const b=document.createElement('button');b.textContent=n;b.className=i?'':'on';b.onclick=()=>{document.querySelectorAll('.var').forEach((v,j)=>v.classList.toggle('on',i===j));[...sel.children].forEach((c,j)=>c.classList.toggle('on',i===j))};sel.appendChild(b)});
+const PANELS=[
+ '<div class="box"><input placeholder="Nom, substance active ou laboratoire…"><button>Rechercher</button></div><p class="hint" style="text-align:center">Filtrez ensuite par voie, forme, dosage, origine.</p>',
+ '<div class="panel"><p><b>Trouvez pas à pas</b>, sans connaître le nom exact.</p><a class="btn">🧭 Commencer la recherche guidée</a></div>',
+ '<div class="panel"><p><b>Quelle pharmacie est de garde ?</b></p><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"><a class="btn">📍 Près de moi</a><select style="padding:10px;border:2px solid var(--s200);border-radius:12px;font:15px system-ui"><option>Choisir une wilaya…</option></select></div></div>'];
+['a','b','c'].forEach(g=>{const p=document.querySelector('[data-p='+g+']');const set=m=>{p.innerHTML=PANELS[m]};set(0);
+ document.querySelectorAll('[data-g='+g+'] [data-m]').forEach(el=>el.addEventListener('click',()=>{const m=+el.dataset.m;set(m);document.querySelectorAll('[data-g='+g+'] [data-m]').forEach(x=>x.classList.toggle('on',x===el))}))});
+</script></body></html>
