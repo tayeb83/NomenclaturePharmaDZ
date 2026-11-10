@@ -17,6 +17,7 @@ import { displayName } from '@/lib/arabize'
 import { displayField } from '@/lib/translate-fields'
 import { atcLabel } from '@/lib/atc-label'
 import { getCachedTerminologieFiche } from '@/lib/terminologie-cache'
+import { labAccessible } from '@/lib/lab-access'
 import { lienTerminologie, type TermeFiche } from '@/lib/terminologie-fiche'
 import { medicamentPath, medicamentSlug } from '@/lib/medicament-url'
 import { lettreForNom, lettreLabel, lettrePath } from '@/lib/repertoire'
@@ -149,17 +150,23 @@ const RELATION_FICHE: Record<string, { fr: string; ar: string; signe: string }> 
 }
 
 /** Code EDQM ou UCUM à côté d'une valeur : lien vers la page des référentiels (nofollow : ~500 URLs de code, pas 11 000 fiches de plus à explorer). */
-function CodeChip({ kind, onglet, code, titre, relation, lang }: {
+function CodeChip({ kind, onglet, code, titre, relation, lang, lien }: {
   kind: 'EDQM' | 'UCUM'; onglet: 'formes' | 'voies' | 'methodes' | 'ucum'; code: string; titre: string; relation?: string; lang: Lang
+  /** La page des référentiels est au Lab (admin) : les autres visiteurs voient le code, sans lien. */
+  lien: boolean
 }) {
   const r = relation ? RELATION_FICHE[relation] : null
+  const titreComplet = [titre, r ? pickLang(lang, r) : null].filter(Boolean).join(' — ')
+  if (!lien) {
+    return <span className={`fiche-code ${kind === 'UCUM' ? 'ucum' : 'edqm'}`} dir="ltr" title={titreComplet}>{kind} {code}{r?.signe ?? ''}</span>
+  }
   return (
     <Link
       href={lienTerminologie(onglet, code)}
       rel="nofollow"
       className={`fiche-code ${kind === 'UCUM' ? 'ucum' : 'edqm'}`}
       dir="ltr"
-      title={[titre, r ? pickLang(lang, r) : null].filter(Boolean).join(' — ')}
+      title={titreComplet}
     >
       {kind} {code}{r?.signe ?? ''}
     </Link>
@@ -258,6 +265,7 @@ export async function MedicamentDetail(
   }
 
   const isRetrait = med.source === 'retrait'
+  const lienLab = labAccessible()
   const isNonRenouv = med.source === 'non_renouvele'
 
   const familleSlug = med.source === 'enregistrement' ? marqueSlug(med.nom_marque) : ''
@@ -506,7 +514,7 @@ export async function MedicamentDetail(
                     <Row label={pickLang(lang, { fr: 'Forme pharmaceutique', ar: 'الشكل الصيدلاني' })}>
                       {displayField('forme', med.forme, lang)}
                       {termino?.forme && (
-                        <> <CodeChip kind="EDQM" onglet="formes" code={termino.forme.code} titre={nomTerme(termino.forme, lang)} relation={termino.forme.relation} lang={lang} /></>
+                        <> <CodeChip kind="EDQM" onglet="formes" code={termino.forme.code} titre={nomTerme(termino.forme, lang)} relation={termino.forme.relation} lang={lang} lien={lienLab} /></>
                       )}
                     </Row>
                   )}
@@ -515,7 +523,7 @@ export async function MedicamentDetail(
                       {termino.voies.map((v, i) => (
                         <span key={v.code} className="fiche-terme">
                           {i > 0 && pickLang(lang, { fr: ' · ', ar: ' · ' })}
-                          {nomTerme(v, lang)} <CodeChip kind="EDQM" onglet="voies" code={v.code} titre={v.en} lang={lang} />
+                          {nomTerme(v, lang)} <CodeChip kind="EDQM" onglet="voies" code={v.code} titre={v.en} lang={lang} lien={lienLab} />
                         </span>
                       ))}
                     </Row>
@@ -523,7 +531,7 @@ export async function MedicamentDetail(
                   {termino?.methode && (
                     <Row label={pickLang(lang, { fr: "Méthode d'administration", ar: 'أسلوب الإعطاء' })}>
                       <span className="fiche-terme">
-                        {nomTerme(termino.methode, lang)} <CodeChip kind="EDQM" onglet="methodes" code={termino.methode.code} titre={termino.methode.en} lang={lang} />
+                        {nomTerme(termino.methode, lang)} <CodeChip kind="EDQM" onglet="methodes" code={termino.methode.code} titre={termino.methode.en} lang={lang} lien={lienLab} />
                       </span>
                     </Row>
                   )}
@@ -531,7 +539,7 @@ export async function MedicamentDetail(
                     <Row label={pickLang(lang, { fr: 'Dosage', ar: 'الجرعة' })}>
                       {displayField('dosage', med.dosage, lang)}
                       {termino && termino.unites.length > 0 && (
-                        <> {termino.unites.map(u => <span key={u.ucum}><CodeChip kind="UCUM" onglet="ucum" code={u.ucum} titre={pickLang(lang, { fr: u.symbole, ar: u.ar })} lang={lang} />{' '}</span>)}</>
+                        <> {termino.unites.map(u => <span key={u.ucum}><CodeChip kind="UCUM" onglet="ucum" code={u.ucum} titre={pickLang(lang, { fr: u.symbole, ar: u.ar })} lang={lang} lien={lienLab} />{' '}</span>)}</>
                       )}
                     </Row>
                   )}

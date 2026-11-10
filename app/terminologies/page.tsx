@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
+import { exigerLab } from '@/lib/lab-access'
 import { getListesTerminologies } from '@/lib/terminologies-page'
 import { TerminologiesClient } from './TerminologiesClient'
 
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 export default async function TerminologiesPage() {
+  exigerLab()
   const listes = await getListesTerminologies()
   return (
     <Suspense fallback={null}>

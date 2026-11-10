@@ -68,13 +68,13 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
         href: '/outils/comparateur-medicaments',
         label: fr ? 'Comparateur' : 'المقارنة',
       },
-      {
-        // Fonctions en cours d'essai (recherche guidée, terminologies) : isolées du reste du site
-        type: 'link',
+      // Fonctions en cours d'essai (recherche guidée, terminologies) : réservées à l'admin, absentes pour les autres
+      ...(isAdmin ? [{
+        type: 'link' as const,
         href: '/lab',
         label: fr ? '🧪 Lab' : '🧪 المختبر',
         match: ['/lab', '/terminologies'],
-      },
+      }] : []),
       {
         type: 'dropdown',
         id: 'plus',

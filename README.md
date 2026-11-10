@@ -90,8 +90,11 @@ Tests : `npm run test:demandes`.
 ### 🧭 Recherche guidée (Lab : `/lab/guide`)
 - Parcours DCI → voie → forme → dosage → présentations. Moteur et normalisation dans `lib/guide-core.ts`
   (sans base, testable seul), index en mémoire dans `lib/guide.ts`, route `GET /api/lab/guide`.
-- **Onglet Lab** (`/lab`, dans la navigation) : regroupe les fonctions à l'essai — recherche guidée, terminologies,
-  facettes. Les pages `/lab`, `/lab/guide` et `/terminologies` sont hors index.
+- **Onglet Lab** (`/lab`) : regroupe les fonctions à l'essai — recherche guidée, terminologies, facettes. **Réservé aux
+  sessions admin** (`lib/lab-access.ts`) : l'onglet n'apparaît pas dans la navigation des autres visiteurs, `/lab`,
+  `/lab/guide`, `/terminologies`, `/api/lab/guide` et `/api/terminologies/atc` leur répondent 404. Pour l'ouvrir à tous :
+  retirer `exigerLab()` des pages, `refuserSiPasLab()` des routes et la condition `isAdmin` de `components/layout/Nav.tsx`.
+  Les facettes de `/recherche` et les codes EDQM/UCUM de la fiche sont, eux, publics (sans lien pour les non-admin).
 - **Facettes dans la recherche** (`/recherche`, `/api/search`) : voie, forme, dosage et origine, calculés côté serveur
   sur un lot de 300 résultats (`lib/recherche-facettes.ts`, `lib/facettes.ts`), pas seulement sur les 30 ou 60 lignes
   affichées. Le compteur d'un groupe ignore son propre choix ; un choix devenu impossible est retiré. Paramètres
@@ -99,7 +102,7 @@ Tests : `npm run test:demandes`.
   `ignores`, `total`, `tronque`. Une nouvelle saisie remet les choix à zéro. Les facettes pays, labo, ATC, année et
   substance existantes restent calculées dans le navigateur sur les lignes affichées.
 - **Fiche médicament** : à côté de la forme, de la voie, de la méthode d'administration et du dosage, le code EDQM ou
-  UCUM (lien vers `/terminologies`, `nofollow`) ; le code ATC renvoie à la classe. Une correction manuelle de
+  UCUM (lien vers `/terminologies` pour l'admin seulement, `nofollow`) ; le code ATC renvoie à la classe. Une correction manuelle de
   `forme_edqm_mapping` et une traduction `relu` de `edqm_termes` priment sur le calcul. Sans la migration 39, la fiche
   affiche le calcul du dépôt.
 - **Page Terminologies** (`/terminologies`) : formes, voies, méthodes EDQM, unités UCUM et classification ATC (tous
@@ -107,7 +110,7 @@ Tests : `npm run test:demandes`.
   l'arabe et le nombre de médicaments par terme. État dans l'URL (`?onglet=ucum&code=mg`).
 - Interface « pastilles » (`app/lab/guide/GuideClient.tsx`, FR/AR) : chaque choix devient une pastille qu'on rouvre ou
   retire ; l'état est l'URL, donc un lien se partage. Case « Codes EDQM et UCUM » pour les professionnels.
-  Pages `/lab` et `/lab/guide` hors index et hors menu tant que la fonction est à l'essai.
+  Page réservée à l'admin tant que la fonction est à l'essai.
 - **Normalisation** : abréviations de forme développées (« COMP. PELL. » → « Comprimé pelliculé ») et libellés proches
   des Standard Terms EDQM, fautes de frappe courantes comprises (« GELLULE », « SUSPENSSION ») ; voie déduite de la
   forme (orale solide, orale liquide, injectable…) ; dosages ramenés aux unités de base (« 0,5G » = « 500 MG »,

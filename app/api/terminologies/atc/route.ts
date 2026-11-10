@@ -6,10 +6,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { listAtcPourReferentiel } from '@/lib/queries'
 import { getClientIp, rateLimit } from '@/lib/rate-limit'
+import { refuserSiPasLab } from '@/lib/lab-access'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
+  const refus = refuserSiPasLab(req)
+  if (refus) return refus
   const retry = rateLimit(`terminologies-atc:${getClientIp(req)}`, 90, 60_000)
   if (retry !== null) {
     return NextResponse.json({ error: 'Trop de requêtes. Réessayez dans un instant.' }, { status: 429, headers: { 'Retry-After': String(retry) } })
@@ -26,5 +29,5 @@ export async function GET(req: NextRequest) {
     offset: parseInt(sp.get('offset') || '0', 10) || 0,
     limit: parseInt(sp.get('limit') || '100', 10) || 100,
   })
-  return NextResponse.json(r, { headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400' } })
+  return NextResponse.json(r, { headers: { 'Cache-Control': 'private, max-age=300' } })
 }
