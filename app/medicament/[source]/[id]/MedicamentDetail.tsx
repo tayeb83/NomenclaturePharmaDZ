@@ -16,6 +16,8 @@ import { pickLang, type Lang } from '@/lib/i18n'
 import { displayName } from '@/lib/arabize'
 import { displayField } from '@/lib/translate-fields'
 import { atcLabel } from '@/lib/atc-label'
+import { getCachedTerminologieFiche } from '@/lib/terminologie-cache'
+import { lienTerminologie, type TermeFiche } from '@/lib/terminologie-fiche'
 import { medicamentPath, medicamentSlug } from '@/lib/medicament-url'
 import { lettreForNom, lettreLabel, lettrePath } from '@/lib/repertoire'
 import { medicalPageJsonLd, breadcrumbJsonLd, faqJsonLd } from '@/lib/schema'
@@ -140,6 +142,32 @@ function motifColor(m: string | null) {
   return '#6b7280'
 }
 
+const RELATION_FICHE: Record<string, { fr: string; ar: string; signe: string }> = {
+  exact: { fr: 'terme EDQM exact', ar: 'مصطلح EDQM مطابق', signe: '' },
+  'plus-large': { fr: 'terme EDQM plus large que la forme', ar: 'مصطلح EDQM أعم من الشكل', signe: ' ⊂' },
+  proche: { fr: 'terme EDQM proche, à confirmer', ar: 'مصطلح EDQM قريب، قيد التأكيد', signe: ' ≈' },
+}
+
+/** Code EDQM ou UCUM à côté d'une valeur : lien vers la page des référentiels (nofollow : ~500 URLs de code, pas 11 000 fiches de plus à explorer). */
+function CodeChip({ kind, onglet, code, titre, relation, lang }: {
+  kind: 'EDQM' | 'UCUM'; onglet: 'formes' | 'voies' | 'methodes' | 'ucum'; code: string; titre: string; relation?: string; lang: Lang
+}) {
+  const r = relation ? RELATION_FICHE[relation] : null
+  return (
+    <Link
+      href={lienTerminologie(onglet, code)}
+      rel="nofollow"
+      className={`fiche-code ${kind === 'UCUM' ? 'ucum' : 'edqm'}`}
+      dir="ltr"
+      title={[titre, r ? pickLang(lang, r) : null].filter(Boolean).join(' — ')}
+    >
+      {kind} {code}{r?.signe ?? ''}
+    </Link>
+  )
+}
+
+const nomTerme = (t: Pick<TermeFiche, 'fr' | 'en' | 'ar'>, lang: Lang) => (lang === 'ar' && t.ar ? t.ar : t.fr ?? t.en)
+
 function Row({ label, value, children }: { label: string; value?: string | null; children?: React.ReactNode }) {
   const content = children ?? value
   if (!content) return null
@@ -233,7 +261,7 @@ export async function MedicamentDetail(
   const isNonRenouv = med.source === 'non_renouvele'
 
   const familleSlug = med.source === 'enregistrement' ? marqueSlug(med.nom_marque) : ''
-  const [alternatifs, atcHierarchy, famille, insights, monographieRaw, ppa, rcps, interactionsVers, interactionsAnsm] = await Promise.all([
+  const [alternatifs, atcHierarchy, famille, insights, monographieRaw, ppa, rcps, interactionsVers, interactionsAnsm, termino] = await Promise.all([
     getCachedAlternatifsDCI(med.dci, 10),
     getCachedAtcHierarchyByDci(med.dci),
     familleSlug ? getCachedMedicamentsByMarque(familleSlug) : Promise.resolve([]),
@@ -246,6 +274,8 @@ export async function MedicamentDetail(
     getInteractionsVers(med.dci).catch(() => []),
     // Interactions du Thesaurus ANSM pour la substance de la fiche (jamais pour un médicament retiré)
     med.source === 'retrait' ? Promise.resolve(null) : getInteractionsAnsm(med.dci, lang).catch(() => null),
+    // Forme, voies et méthode EDQM, unités UCUM : jamais bloquant pour la fiche
+    getCachedTerminologieFiche(med.forme, med.dosage, med.dci).catch(() => null),
   ])
   const monographie = hasContent(monographieRaw) ? monographieRaw : null
   // Page « famille de marque » : proposée seulement si elle regroupe plusieurs
@@ -447,7 +477,7 @@ export async function MedicamentDetail(
                   <Row label={pickLang(lang, { fr: 'Code produit', ar: 'رمز المنتج' })} value={med.code} />
                   {med.code_atc && (
                     <Row label={pickLang(lang, { fr: 'Code ATC', ar: 'رمز ATC' })}>
-                      <span className="fiche-atc">{med.code_atc}</span>
+                      <Link href={`/classes-therapeutiques/${med.code_atc}`} className="fiche-atc" dir="ltr" title={pickLang(lang, { fr: 'Classe ATC', ar: 'الفئة ATC' })}>{med.code_atc}</Link>
                       {(med.atc_label_fr || med.atc_label_en) && <> – {atcLabel({ label_fr: med.atc_label_fr, label_en: med.atc_label_en, label_ar: med.atc_label_ar }, lang)}</>}
                     </Row>
                   )}
@@ -472,8 +502,39 @@ export async function MedicamentDetail(
               <section className="fiche-box">
                 <h2 className="fiche-box-title">{pickLang(lang, { fr: 'Conditionnement', ar: 'الخصائص' })}</h2>
                 <table className="fiche-table"><tbody>
-                  <Row label={pickLang(lang, { fr: 'Forme pharmaceutique', ar: 'الشكل الصيدلاني' })} value={displayField('forme', med.forme, lang) || null} />
-                  <Row label={pickLang(lang, { fr: 'Dosage', ar: 'الجرعة' })} value={displayField('dosage', med.dosage, lang) || null} />
+                  {med.forme && (
+                    <Row label={pickLang(lang, { fr: 'Forme pharmaceutique', ar: 'الشكل الصيدلاني' })}>
+                      {displayField('forme', med.forme, lang)}
+                      {termino?.forme && (
+                        <> <CodeChip kind="EDQM" onglet="formes" code={termino.forme.code} titre={nomTerme(termino.forme, lang)} relation={termino.forme.relation} lang={lang} /></>
+                      )}
+                    </Row>
+                  )}
+                  {termino && termino.voies.length > 0 && (
+                    <Row label={pickLang(lang, { fr: "Voie d'administration", ar: 'طريقة الإعطاء' })}>
+                      {termino.voies.map((v, i) => (
+                        <span key={v.code} className="fiche-terme">
+                          {i > 0 && pickLang(lang, { fr: ' · ', ar: ' · ' })}
+                          {nomTerme(v, lang)} <CodeChip kind="EDQM" onglet="voies" code={v.code} titre={v.en} lang={lang} />
+                        </span>
+                      ))}
+                    </Row>
+                  )}
+                  {termino?.methode && (
+                    <Row label={pickLang(lang, { fr: "Méthode d'administration", ar: 'أسلوب الإعطاء' })}>
+                      <span className="fiche-terme">
+                        {nomTerme(termino.methode, lang)} <CodeChip kind="EDQM" onglet="methodes" code={termino.methode.code} titre={termino.methode.en} lang={lang} />
+                      </span>
+                    </Row>
+                  )}
+                  {med.dosage && (
+                    <Row label={pickLang(lang, { fr: 'Dosage', ar: 'الجرعة' })}>
+                      {displayField('dosage', med.dosage, lang)}
+                      {termino && termino.unites.length > 0 && (
+                        <> {termino.unites.map(u => <span key={u.ucum}><CodeChip kind="UCUM" onglet="ucum" code={u.ucum} titre={pickLang(lang, { fr: u.symbole, ar: u.ar })} lang={lang} />{' '}</span>)}</>
+                      )}
+                    </Row>
+                  )}
                   {med.is_critical && (
                     <Row
                       label={pickLang(lang, { fr: 'Criticité', ar: 'الحرجية' })}

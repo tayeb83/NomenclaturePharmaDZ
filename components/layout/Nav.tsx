@@ -69,6 +69,13 @@ export function Nav({ currentVersion, isAdmin }: { currentVersion?: string | nul
         label: fr ? 'Comparateur' : 'المقارنة',
       },
       {
+        // Fonctions en cours d'essai (recherche guidée, terminologies) : isolées du reste du site
+        type: 'link',
+        href: '/lab',
+        label: fr ? '🧪 Lab' : '🧪 المختبر',
+        match: ['/lab', '/terminologies'],
+      },
+      {
         type: 'dropdown',
         id: 'plus',
         label: fr ? 'Plus' : 'المزيد',

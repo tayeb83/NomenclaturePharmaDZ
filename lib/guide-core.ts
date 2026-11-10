@@ -799,7 +799,7 @@ const STATUTS: Record<string, Libelle> = {
 }
 
 /** Réordonne les composants d'un dosage selon l'ordre alphabétique des substances (clé de la DCI). */
-function aligneSurDci(dos: DosageNorm, dci: DciNorm): DosageNorm {
+export function aligneSurDci(dos: DosageNorm, dci: DciNorm): DosageNorm {
   if (!dos.reconnu || dos.composants < 2 || dos.composants !== dci.substances.length) return dos
   const ordre = dci.substances.map((s, i) => [fold(s), i] as const).sort((a, b) => a[0].localeCompare(b[0])).map(x => x[1])
   if (ordre.every((v, i) => v === i)) return dos

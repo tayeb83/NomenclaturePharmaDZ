@@ -90,6 +90,21 @@ Tests : `npm run test:demandes`.
 ### 🧭 Recherche guidée (Lab : `/lab/guide`)
 - Parcours DCI → voie → forme → dosage → présentations. Moteur et normalisation dans `lib/guide-core.ts`
   (sans base, testable seul), index en mémoire dans `lib/guide.ts`, route `GET /api/lab/guide`.
+- **Onglet Lab** (`/lab`, dans la navigation) : regroupe les fonctions à l'essai — recherche guidée, terminologies,
+  facettes. Les pages `/lab`, `/lab/guide` et `/terminologies` sont hors index.
+- **Facettes dans la recherche** (`/recherche`, `/api/search`) : voie, forme, dosage et origine, calculés côté serveur
+  sur un lot de 300 résultats (`lib/recherche-facettes.ts`, `lib/facettes.ts`), pas seulement sur les 30 ou 60 lignes
+  affichées. Le compteur d'un groupe ignore son propre choix ; un choix devenu impossible est retiré. Paramètres
+  `?voie=…&forme=…&dosage=…&origine=f|i` (identifiants de la recherche guidée) ; réponse : `facettes`, `selection`,
+  `ignores`, `total`, `tronque`. Une nouvelle saisie remet les choix à zéro. Les facettes pays, labo, ATC, année et
+  substance existantes restent calculées dans le navigateur sur les lignes affichées.
+- **Fiche médicament** : à côté de la forme, de la voie, de la méthode d'administration et du dosage, le code EDQM ou
+  UCUM (lien vers `/terminologies`, `nofollow`) ; le code ATC renvoie à la classe. Une correction manuelle de
+  `forme_edqm_mapping` et une traduction `relu` de `edqm_termes` priment sur le calcul. Sans la migration 39, la fiche
+  affiche le calcul du dépôt.
+- **Page Terminologies** (`/terminologies`) : formes, voies, méthodes EDQM, unités UCUM et classification ATC (tous
+  niveaux, par pages de 100 via `/api/terminologies/atc`), en français, anglais et arabe, avec l'état de relecture de
+  l'arabe et le nombre de médicaments par terme. État dans l'URL (`?onglet=ucum&code=mg`).
 - Interface « pastilles » (`app/lab/guide/GuideClient.tsx`, FR/AR) : chaque choix devient une pastille qu'on rouvre ou
   retire ; l'état est l'URL, donc un lien se partage. Case « Codes EDQM et UCUM » pour les professionnels.
   Pages `/lab` et `/lab/guide` hors index et hors menu tant que la fonction est à l'essai.

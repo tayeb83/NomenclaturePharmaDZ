@@ -51,3 +51,28 @@ export const UNITES_INFO: Record<Unite, UniteInfo> = {
   cp: { symbole: 'comprimé', ucum: null, ar: 'قرص' },
   gelule: { symbole: 'gélule', ucum: null, ar: 'كبسولة' },
 }
+
+/** Noms des unités UCUM, par code : anglais (nom de la table UCUM) et français. */
+export const UCUM_NOMS: Record<string, { en: string; fr: string }> = {
+  mg: { en: 'milligram', fr: 'milligramme' },
+  g: { en: 'gram', fr: 'gramme' },
+  ug: { en: 'microgram', fr: 'microgramme' },
+  ng: { en: 'nanogram', fr: 'nanogramme' },
+  kg: { en: 'kilogram', fr: 'kilogramme' },
+  mL: { en: 'milliliter', fr: 'millilitre' },
+  L: { en: 'liter', fr: 'litre' },
+  cL: { en: 'centiliter', fr: 'centilitre' },
+  uL: { en: 'microliter', fr: 'microlitre' },
+  '[iU]': { en: 'international unit', fr: 'unité internationale' },
+  'M[iU]': { en: 'megainternational unit', fr: 'million d’unités internationales' },
+  'k[iU]': { en: 'kilointernational unit', fr: 'millier d’unités internationales' },
+  '%': { en: 'percent', fr: 'pour cent' },
+  '[IR]': { en: 'index of reactivity', fr: 'indice de réactivité' },
+  mmol: { en: 'millimole', fr: 'millimole' },
+  meq: { en: 'milliequivalent', fr: 'milliéquivalent' },
+  '{dose}': { en: 'dose (annotation)', fr: 'dose (annotation)' },
+  '[drp]': { en: 'drop', fr: 'goutte' },
+  '{actuation}': { en: 'actuation (annotation)', fr: 'pulvérisation (annotation)' },
+  cm2: { en: 'square centimeter', fr: 'centimètre carré' },
+  h: { en: 'hour', fr: 'heure' },
+}

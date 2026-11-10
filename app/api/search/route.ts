@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { searchMedicamentsTolerant } from '@/lib/queries'
+import { rechercheAvecFacettes } from '@/lib/recherche-facettes'
+import { facettesDepuisParams } from '@/lib/facettes'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -11,6 +12,8 @@ export async function GET(request: NextRequest) {
   const dciMode = searchParams.get('mode') === 'dci'
   const advancedRaw = searchParams.get('advanced') || '[]'
   const limit = Math.min(parseInt(searchParams.get('limit') || '30'), 80) // la liste d'une DCI est élargie côté requête
+  // Facettes : ?voie=…&forme=…&dosage=…&origine=f|i (identifiants renvoyés dans `facettes`)
+  const choixFacettes = facettesDepuisParams(n => searchParams.get(n))
 
   let advanced: Array<{ field: string; operator: string; value: string; bool?: 'AND' | 'OR' }> = []
   try {
@@ -26,7 +29,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { results, fuzzy, matchedTerm, synonymTerm } = await searchMedicamentsTolerant(q, scope, limit, { labo, substance, activeOnly, advanced, dciMode })
+    const { results, fuzzy, matchedTerm, synonymTerm, total, tronque, facettes, selection, ignores } =
+      await rechercheAvecFacettes(q, scope, limit, { labo, substance, activeOnly, advanced, dciMode }, choixFacettes)
     return NextResponse.json({
       results,
       count: results.length,
@@ -35,6 +39,13 @@ export async function GET(request: NextRequest) {
       fuzzy,
       matchedTerm,
       synonymTerm,
+      /** lignes qui respectent les facettes choisies, avant troncature à `limit` */
+      total,
+      /** le lot analysé est plein : les compteurs de facettes ne couvrent que les premiers résultats */
+      tronque,
+      facettes,
+      selection,
+      ignores,
       filters: { labo, substance, activeOnly, advanced },
     }, {
       headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' }
