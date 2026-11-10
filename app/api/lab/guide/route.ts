@@ -71,7 +71,11 @@ export async function GET(req: NextRequest) {
       pays: p.pays ?? null,
       statut: p.statut ?? null,
       forme_norm: p.norm.forme.fr,
+      forme_ar: p.norm.forme.ar,
+      forme_edqm: p.norm.forme.edqm ? { code: p.norm.forme.edqm.code, relation: p.norm.forme.edqm.relation } : null,
       dosage_norm: p.norm.dosage.libelle,
+      dosage_ar: p.norm.dosage.libelle_ar,
+      dosage_ucum: { quantites: p.norm.dosage.quantites, denominateur: p.norm.dosage.denominateur },
     })),
   }
   return NextResponse.json(body, {

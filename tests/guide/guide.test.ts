@@ -16,7 +16,7 @@ test('forme : les abréviations de la nomenclature rejoignent la forme écrite e
     ['Comprimé pelliculé', 'orale-solide', ['COMPRIME PELLICULE', 'COMP. PELL.', 'CP PELLICULE', 'COMP.PELLICULE', 'comprimé pelliculé']],
     ['Comprimé pelliculé sécable', 'orale-solide', ['COMP.PELL.SECABLE', 'CP PELLICULE SECABLE', 'COMPRIME SECABLE PELLICULE']],
     ['Gélule', 'orale-solide', ['GELULE', 'GLES', 'GELULES']],
-    ['Gélule gastro-résistante', 'orale-solide', ['GELULE GASTRO-RESISTANTE', 'GEL. GASTRO-RESIST.', 'GLE G.R.', 'GELULE GASTRORESISTANTE']],
+    ['Gélule gastrorésistante', 'orale-solide', ['GELULE GASTRO-RESISTANTE', 'GEL. GASTRO-RESIST.', 'GLE G.R.', 'GELULE GASTRORESISTANTE']],
     ['Poudre pour suspension buvable', 'orale-liquide', ['POUDRE POUR SUSPENSION BUVABLE', 'PDRE. P. SUSP. BUV.', 'PDRE P SUSP BUV']],
     ['Poudre et solvant pour solution injectable', 'injectable', ['PDRE ET SOLV. P. SOL. INJ.', 'POUDRE ET SOLVANT POUR SOLUTION INJECTABLE']],
     ['Solution injectable', 'injectable', ['SOL. INJ.', 'SOLUTION INJECTABLE', 'SOLUTION INJECTABLE EN AMPOULE', 'SOL. INJ. S.C.', 'SOL. INJ. EN SERINGUE PRE-REMPLIE']],
@@ -37,11 +37,11 @@ test('forme : les abréviations de la nomenclature rejoignent la forme écrite e
 
 test('forme : écritures relevées dans la nomenclature réelle (audit)', () => {
   const cas: [string, string][] = [
-    ['GELLULE GASTRO RESISTANTE', 'Gélule gastro-résistante'],
-    ['GELULES GASTO-RESISTANTE', 'Gélule gastro-résistante'],
-    ['GELULE A MICRO-GRANULES GASTRO-RESISTANTS', 'Gélule gastro-résistante'],
+    ['GELLULE GASTRO RESISTANTE', 'Gélule gastrorésistante'],
+    ['GELULES GASTO-RESISTANTE', 'Gélule gastrorésistante'],
+    ['GELULE A MICRO-GRANULES GASTRO-RESISTANTS', 'Gélule gastrorésistante'],
     ['MICROGRANULE EN GELLULE LIBERATION PROLONGEE', 'Gélule à libération prolongée'],
-    ['GELULE GASTRO-RESISTANTE CONTENANT DES MINI-COMPRIMES', 'Gélule gastro-résistante'],
+    ['GELULE GASTRO-RESISTANTE CONTENANT DES MINI-COMPRIMES', 'Gélule gastrorésistante'],
     ['CAPSULE DURE', 'Gélule'],
     ['MICRO-GRANULE A LIBERATION PROLONGEE  EN SACHET', 'Granulés à libération prolongée'],
     ['COMPRIME EFFERVESSANT', 'Comprimé effervescent'],
@@ -55,7 +55,7 @@ test('forme : écritures relevées dans la nomenclature réelle (audit)', () => 
     ['LYOPH. P. SOL. INJ. IV', 'Poudre pour solution injectable'],
     ['LYOPH. ORAL SUBLINGUAL', 'Lyophilisat oral'],
     ['CONC. A DILUER P. PERF. IV', 'Solution à diluer pour perfusion'],
-    ['SOLVANT POUR PREPARATION INJECTABLE', 'Solvant pour préparation injectable'],
+    ['SOLVANT POUR PREPARATION INJECTABLE', 'Solvant pour préparation parentérale'],
     ['POUDRE LYOPHILISEE POUR PREPARATION INJECTABLE EN PERFUSION INTRAVEINEUSE', 'Poudre pour solution pour perfusion'],
     ['SUSPENSION BUVABLE GTTES', 'Suspension buvable en gouttes'],
     ['SUSP.OR.', 'Suspension buvable'],
@@ -64,12 +64,12 @@ test('forme : écritures relevées dans la nomenclature réelle (audit)', () => 
     ['DRG.', 'Comprimé enrobé'],
     ['GAZ POUR INHALATION', 'Gaz pour inhalation'],
     ['LIQUIDE. P. INHAL. PAR VAPEUR', 'Liquide pour inhalation par vapeur'],
-    ['Solution concentrEe pour HEmodialyse', 'Solution concentrée pour hémodialyse'],
+    ['Solution concentrEe pour HEmodialyse', 'Solution à diluer pour hémodialyse'],
     ['SOL. P. DIALYSE PERITONEALE', 'Solution pour dialyse péritonéale'],
-    ['EMULSION FLUIDE POUR APPLICATION LOCALE (LAIT DERMIQUE)', 'Émulsion pour application cutanée'],
+    ['EMULSION FLUIDE POUR APPLICATION LOCALE (LAIT DERMIQUE)', 'Emulsion cutanée'],
     ['LAIT EN POUDRE POUR ENFANT EN BAS AGE ET ENFANT DE 1 A 14 ANS', 'Lait en poudre'],
     ['SYSTEME DE DIFFUSION INTRA-UTERIN', 'Système de diffusion intra-utérin'],
-    ['SUPPOSITOIRE VAGINALE', 'Suppositoire vaginal'],
+    ['SUPPOSITOIRE VAGINALE', 'Ovule'],
   ]
   for (const [brut, fr] of cas) {
     const f = normaliserForme(brut)

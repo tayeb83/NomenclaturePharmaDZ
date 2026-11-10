@@ -101,8 +101,16 @@ Tests : `npm run test:demandes`.
 - Route : `?q=amox` (première étape : DCI, substance ou marque), puis `?dci=amoxicilline&voie=orale-liquide&…`
   avec les identifiants renvoyés dans `options`. Une étape à valeur unique est remplie d'office (`auto`), un choix
   incompatible est retiré (`ignores`), aucune option ne mène à zéro résultat. Filtres `statut=f|i`, `labo`, `lang=ar`.
+- **Terminologies** : chaque forme porte son Standard Term **EDQM** (`lib/edqm.ts`) avec la nature du lien — `exact`,
+  `plus-large` (« comprimé pelliculé sécable » → « Comprimé pelliculé ») ou `proche` (à confirmer) ; jamais de code
+  sans terme sûr. Les 426 formes et 82 voies (anglais, français) viennent du paquet FHIR CH-Term :
+  `npx tsx scripts/build_edqm_terms.mts <dossier package>` régénère `lib/edqm-data.ts`. Les Standard Terms restent la
+  propriété de l'EDQM. L'arabe n'existe pas à la source : `lib/edqm-ar.ts` porte nos traductions par code, en brouillon
+  tant que le code n'est pas dans `EDQM_AR_RELUS`. Chaque dosage porte ses quantités en **UCUM** (`lib/ucum.ts`,
+  `mg`, `mL`, `[iU]`…) : de quoi produire un `Ratio` FHIR.
 - Audit à relire après chaque import : `DATABASE_URL=... npx tsx scripts/audit_guide_normalisation.mts` produit
-  `data/guide/audit_normalisation.xlsx` (formes et dosages non reconnus, regroupements, DCI fusionnées).
+  `data/guide/audit_normalisation.xlsx` (formes et dosages non reconnus, regroupements, DCI fusionnées, codes EDQM et
+  UCUM, feuille « Anomalies » des corrections à proposer sur la nomenclature, feuille de relecture de l'arabe).
   Les mots manquants s'ajoutent au vocabulaire `MOTS_FORME`. Tests : `npm run test:guide`.
 
 ### 🕸️ Graphe de connaissances (recherche)
