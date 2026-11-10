@@ -138,7 +138,7 @@ export default async function RecherchePage({
         </div>
       </div>
       <div className="page-body">
-        <div className="container" style={{ maxWidth: 860 }}>
+        <div className="container" style={{ maxWidth: 1080 }}>
           {searchError && (
             <div style={{ background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: 10, padding: '14px 20px', marginBottom: 20, color: '#b91c1c', fontSize: 14 }}>
               ⚠️ La base de données est temporairement indisponible. Veuillez réessayer dans quelques instants.

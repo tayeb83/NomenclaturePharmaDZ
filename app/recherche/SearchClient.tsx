@@ -477,7 +477,7 @@ export function SearchClient({
     ...(guideDispo ? [{ id: 'guidee' as Onglet, icone: '🧭', fr: 'Guidée', ar: 'موجَّه' }] : []),
   ]
   const aDesCriteres = Boolean(query || labo || substance || hasAdvancedFilters(advanced))
-  const afficherFiltres = !loading && (results.length > 0 || Object.keys(facSel).length > 0) && (groupesPrincipaux.length > 0 || groupesSecondaires.length > 0)
+  const afficherFiltres = (results.length > 0 || Object.keys(facSel).length > 0) && (groupesPrincipaux.length > 0 || groupesSecondaires.length > 0)
 
   return (
     <>
@@ -585,69 +585,70 @@ export function SearchClient({
         </section>
       )}
 
-      {!loading && !aDesCriteres && (
-        <p className="rech-indice">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden><path d="M4 6h16M7 12h10M10 18h4" /></svg>
-          {ar ? 'بعد البحث، تظهر مرشحات «الطريقة والشكل والجرعة والمصدر» هنا لتضييق النتائج.' : 'Après une recherche, la barre « Filtrer » apparaît ici : voie, forme, dosage, origine, pour affiner les résultats.'}
-        </p>
-      )}
-
-      {loading && (
-        <div className="loading-spinner">
-          <div className="spinner" /> {ar ? 'جاري البحث...' : 'Recherche en cours...'}
-        </div>
-      )}
-
-      {!loading && fuzzyInfo.fuzzy && results.length > 0 && (
-        <div className="rech-astuce">
-          {fuzzyInfo.matchedTerm ? (
-            ar
-              ? <>💡 لم يتم العثور على &laquo;{query}&raquo; في التسمية — نعرض نتائج المادة الفعالة <strong>{fuzzyInfo.matchedTerm}</strong>{fuzzyInfo.synonymTerm ? <> (الاسم الشائع: {fuzzyInfo.synonymTerm})</> : null}.</>
-              : <>💡 &laquo;{query}&raquo; n&apos;est pas dans la nomenclature — résultats pour la substance <strong>{fuzzyInfo.matchedTerm}</strong>{fuzzyInfo.synonymTerm ? <> (nom courant : {fuzzyInfo.synonymTerm})</> : null}.</>
-          ) : (
-            ar
-              ? <>💡 لا توجد نتيجة مطابقة تمامًا لـ &laquo;{query}&raquo; — نعرض أقرب النتائج (تصحيح إملائي/صوتي).</>
-              : <>💡 Aucun résultat exact pour &laquo;&nbsp;{query}&nbsp;&raquo; — voici les résultats les plus proches (correction orthographique/phonétique).</>
+      <div className={afficherFiltres ? 'rech-mise' : undefined}>
+        {afficherFiltres && (
+          <FiltresRecherche
+            ar={ar}
+            principaux={groupesPrincipaux}
+            secondaires={groupesSecondaires}
+            onClear={clearTout}
+            textes={ar
+              ? { filtres: 'تصفية', plus: '+ مزيد من المرشحات', moins: 'إخفاء', effacer: 'مسح الكل', chercher: 'بحث في القائمة…', autres: n => `عرض ${n} أخرى`, aucun: 'لا شيء', actifs: 'المرشحات النشطة', fermer: 'عرض النتائج' }
+              : { filtres: 'Filtrer', plus: '+ Plus de filtres', moins: 'Moins de filtres', effacer: 'Tout effacer', chercher: 'Chercher dans la liste…', autres: n => `Voir les ${n} autres`, aucun: 'Aucun choix', actifs: 'Filtres actifs', fermer: 'Voir les résultats' }}
+          />
+        )}
+        <div className="rech-colonne">
+          {!loading && !aDesCriteres && (
+            <p className="rech-indice">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden><path d="M4 6h16M7 12h10M10 18h4" /></svg>
+              {ar ? 'بعد البحث، تظهر مرشحات «الطريقة والشكل والجرعة والمصدر» هنا لتضييق النتائج.' : 'Après une recherche, la barre « Filtrer » apparaît ici : voie, forme, dosage, origine, pour affiner les résultats.'}
+            </p>
           )}
-        </div>
-      )}
 
-      {afficherFiltres && (
-        <FiltresRecherche
-          ar={ar}
-          principaux={groupesPrincipaux}
-          secondaires={groupesSecondaires}
-          onClear={clearTout}
-          textes={ar
-            ? { filtres: 'تصفية', plus: '+ مزيد من المرشحات', moins: 'إخفاء', effacer: 'مسح الكل', chercher: 'بحث في القائمة…', autres: n => `عرض ${n} أخرى`, aucun: 'لا شيء', actifs: 'المرشحات النشطة' }
-            : { filtres: 'Filtrer', plus: '+ Plus de filtres', moins: 'Moins de filtres', effacer: 'Tout effacer', chercher: 'Chercher dans la liste…', autres: n => `Voir les ${n} autres`, aucun: 'Aucun choix', actifs: 'Filtres actifs' }}
-        />
-      )}
+          {loading && (
+            <div className="loading-spinner">
+              <div className="spinner" /> {ar ? 'جاري البحث...' : 'Recherche en cours...'}
+            </div>
+          )}
 
-      {!loading && aDesCriteres && (
-        <div className="search-count">
-          {filteredResults.length === 0 ? (ar ? 'لا توجد نتائج' : 'Aucun résultat') : <><b>{filteredResults.length}</b> {ar ? 'نتيجة' : filteredResults.length > 1 ? 'résultats' : 'résultat'}</>}
-          {results.length !== filteredResults.length && ` (${results.length} ${ar ? 'إجمالي' : 'au total'})`}
-          {totalServeur > results.length && (
-            <span className="search-count-note">
-              {ar ? ` — عرض ${results.length} من ${totalServeur}، ضيّق النتائج بالمرشحات` : ` · ${results.length} affichés sur ${totalServeur} : affinez avec les filtres`}
-            </span>
+          {!loading && fuzzyInfo.fuzzy && results.length > 0 && (
+            <div className="rech-astuce">
+              {fuzzyInfo.matchedTerm ? (
+                ar
+                  ? <>💡 لم يتم العثور على &laquo;{query}&raquo; في التسمية — نعرض نتائج المادة الفعالة <strong>{fuzzyInfo.matchedTerm}</strong>{fuzzyInfo.synonymTerm ? <> (الاسم الشائع: {fuzzyInfo.synonymTerm})</> : null}.</>
+                  : <>💡 &laquo;{query}&raquo; n&apos;est pas dans la nomenclature — résultats pour la substance <strong>{fuzzyInfo.matchedTerm}</strong>{fuzzyInfo.synonymTerm ? <> (nom courant : {fuzzyInfo.synonymTerm})</> : null}.</>
+              ) : (
+                ar
+                  ? <>💡 لا توجد نتيجة مطابقة تمامًا لـ &laquo;{query}&raquo; — نعرض أقرب النتائج (تصحيح إملائي/صوتي).</>
+                  : <>💡 Aucun résultat exact pour &laquo;&nbsp;{query}&nbsp;&raquo; — voici les résultats les plus proches (correction orthographique/phonétique).</>
+              )}
+            </div>
           )}
-          {tronque && Object.keys(facSel).length === 0 && (
-            <span className="search-count-note">{ar ? ' · الأعداد على أول 300 نتيجة' : ' · compteurs sur les 300 premiers résultats'}</span>
+          {!loading && aDesCriteres && (
+            <div className="search-count">
+              {filteredResults.length === 0 ? (ar ? 'لا توجد نتائج' : 'Aucun résultat') : <><b>{filteredResults.length}</b> {ar ? 'نتيجة' : filteredResults.length > 1 ? 'résultats' : 'résultat'}</>}
+              {results.length !== filteredResults.length && ` (${results.length} ${ar ? 'إجمالي' : 'au total'})`}
+              {totalServeur > results.length && (
+                <span className="search-count-note">
+                  {ar ? ` — عرض ${results.length} من ${totalServeur}، ضيّق النتائج بالمرشحات` : ` · ${results.length} affichés sur ${totalServeur} : affinez avec les filtres`}
+                </span>
+              )}
+              {tronque && Object.keys(facSel).length === 0 && (
+                <span className="search-count-note">{ar ? ' · الأعداد على أول 300 نتيجة' : ' · compteurs sur les 300 premiers résultats'}</span>
+              )}
+            </div>
           )}
+          {!loading && filteredResults.slice(0, 3).map((d, i) => (
+            <DrugCard key={`${d.source}-${d.id}-${i}`} drug={d} type={d.source} onOpen={() => trackResultOpen(d)} />
+          ))}
+          {/* Pub après les 3 premiers résultats : la recherche n'en affichait aucune. */}
+          {!loading && filteredResults.length > 3 && <AdInContent style={{ margin: '16px auto' }} />}
+          {!loading && filteredResults.slice(3).map((d, i) => (
+            <DrugCard key={`${d.source}-${d.id}-${i + 3}`} drug={d} type={d.source} onOpen={() => trackResultOpen(d)} />
+          ))}
         </div>
-      )}
+      </div>
       </>)}
-
-      {onglet !== 'guidee' && !loading && filteredResults.slice(0, 3).map((d, i) => (
-        <DrugCard key={`${d.source}-${d.id}-${i}`} drug={d} type={d.source} onOpen={() => trackResultOpen(d)} />
-      ))}
-      {/* Pub après les 3 premiers résultats : la recherche n'en affichait aucune. */}
-      {onglet !== 'guidee' && !loading && filteredResults.length > 3 && <AdInContent style={{ margin: '16px auto' }} />}
-      {onglet !== 'guidee' && !loading && filteredResults.slice(3).map((d, i) => (
-        <DrugCard key={`${d.source}-${d.id}-${i + 3}`} drug={d} type={d.source} onOpen={() => trackResultOpen(d)} />
-      ))}
     </>
   )
 }

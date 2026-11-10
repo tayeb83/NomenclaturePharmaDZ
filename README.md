@@ -104,9 +104,10 @@ Tests : `npm run test:demandes`.
   substance existantes restent calculées dans le navigateur sur les lignes affichées.
 - **Onglets de `/recherche`** : Recherche (simple), Avancée (conditions ET / OU) et Guidée (URL
   `/recherche?onglet=guide`, la page `/lab/guide` reste disponible). Les filtres (voie, forme,
-  dosage, origine, puis pays, labo, statut, année, ATC, substance sous « Plus de filtres ») forment une barre de menus avec
-  un seul panneau ouvert à la fois (`components/search/FiltresRecherche.tsx`) ; les choix actifs s'affichent en pastilles
-  retirables. Dans la recherche guidée, les codes EDQM (forme, voie) et UCUM (dosage) sont toujours affichés.
+  dosage, origine, puis pays, labo, statut, année, ATC, substance sous « Plus de filtres ») forment une colonne latérale
+  toujours visible sur ordinateur, avec cases à cocher et blocs repliables (`components/search/FiltresRecherche.tsx`) ; sur
+  téléphone, un bouton « Filtrer » ouvre cette colonne en tiroir. Les choix actifs s'affichent en pastilles retirables.
+  Elle est la même dans les onglets Recherche et Avancée. Dans la recherche guidée, les codes EDQM (forme, voie) et UCUM (dosage) sont toujours affichés.
 - **Fiche médicament** : à côté de la forme, de la voie, de la méthode d'administration et du dosage, le code EDQM ou
   UCUM (lien vers `/terminologies` pour l'admin seulement, `nofollow`) ; le code ATC renvoie à la classe. Une correction manuelle de
   `forme_edqm_mapping` et une traduction `relu` de `edqm_termes` priment sur le calcul. Sans la migration 39, la fiche
