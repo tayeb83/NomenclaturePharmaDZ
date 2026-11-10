@@ -111,6 +111,9 @@ Tests : `npm run test:demandes`.
   sont toujours affichés.
 - **Accueil** (`components/search/SearchBox.tsx`) : hero centré, question « Que cherchez-vous ? » et commutateur en pilule à trois modes : Médicament, Recherche guidée, Pharmacie de garde
   (bouton « Près de moi » vers `/garde`, liste des wilayas vers `/pharmacie-de-garde/<wilaya>`, lien vers les communes).
+- **Article d'explication** : `lib/articles-guide.ts` (FR + AR, « La recherche guidée de DwaDZ : trouver un médicament en Algérie pas à pas »), lié
+  depuis l'accueil de la recherche guidée. À garder aligné sur `GuideClient.tsx` (libellés) et `lib/guide-core.ts` (règles). Les nombres de
+  présentations cités (saisie « amoxici ») datent de la rédaction : à rafraîchir si la nomenclature change.
 - **Fiche médicament** : à côté de la forme, de la voie, de la méthode d'administration et du dosage, le code EDQM ou
   UCUM (lien vers `/terminologies` pour l'admin seulement, `nofollow`) ; le code ATC renvoie à la classe. Une correction manuelle de
   `forme_edqm_mapping` et une traduction `relu` de `edqm_termes` priment sur le calcul. Sans la migration 39, la fiche
