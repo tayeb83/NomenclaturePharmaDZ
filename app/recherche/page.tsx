@@ -1,6 +1,7 @@
 import { rechercheAvecFacettes, type RechercheFacettes } from '@/lib/recherche-facettes'
 import { facettesDepuisParams, type FacetteSel } from '@/lib/facettes'
 import type { SearchResult } from '@/lib/db-types'
+import { labAccessible } from '@/lib/lab-access'
 import { SearchClient } from './SearchClient'
 import type { Metadata } from 'next'
 
@@ -90,9 +91,11 @@ function parseAdvanced(advancedRaw: string | undefined): AdvancedSearchCondition
 export default async function RecherchePage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; scope?: string; labo?: string; substance?: string; activeOnly?: string; advanced?: string; algerieOnly?: string; avancee?: string; mode?: string; voie?: string; forme?: string; dosage?: string; origine?: string }>
+  searchParams: Promise<{ q?: string; scope?: string; labo?: string; substance?: string; activeOnly?: string; advanced?: string; algerieOnly?: string; avancee?: string; onglet?: string; mode?: string; voie?: string; forme?: string; dosage?: string; origine?: string }>
 }) {
   const resolvedSearchParams = await searchParams
+  const guideDispo = labAccessible()
+  const ongletGuide = guideDispo && resolvedSearchParams.onglet === 'guide'
   const query = resolvedSearchParams.q || ''
   const scope = resolvedSearchParams.scope || 'all'
   const advanced = parseAdvanced(resolvedSearchParams.advanced)
@@ -116,7 +119,8 @@ export default async function RecherchePage({
   let fuzzyInfo: { fuzzy: boolean; matchedTerm: string | null; synonymTerm: string | null } = { fuzzy: false, matchedTerm: null, synonymTerm: null }
   let searchError = false
   try {
-    const response = await searchDrugs(query, scope, filters, choixFacettes)
+    // Onglet guidé : ses paramètres (voie, forme, dosage…) n'ont pas le sens des facettes ; pas de recherche côté serveur.
+    const response = ongletGuide ? await searchDrugs('', scope, {}, {}) : await searchDrugs(query, scope, filters, choixFacettes)
     results = response.results
     facettes = response.facettes
     selectionFacettes = response.selection
@@ -132,7 +136,7 @@ export default async function RecherchePage({
       <div className="page-header">
         <div className="container">
           <h1>🔍 Recherche de médicaments</h1>
-          <p>Recherche simple globale + recherche avancée booléenne sur toutes les propriétés.</p>
+          <p>Recherche simple, recherche avancée (conditions ET / OU) et filtres par voie, forme et dosage.</p>
         </div>
       </div>
       <div className="page-body">
@@ -158,6 +162,8 @@ export default async function RecherchePage({
             initialTotal={totalFacettes}
             initialTronque={tronque}
             initialAdvancedOpen={resolvedSearchParams.avancee === '1'}
+            initialOnglet={ongletGuide ? 'guidee' : 'simple'}
+            guideDispo={guideDispo}
           />
         </div>
       </div>

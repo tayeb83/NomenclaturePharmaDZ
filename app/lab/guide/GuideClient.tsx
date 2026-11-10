@@ -4,6 +4,8 @@
  * Recherche guidée (Lab) — interface « pastilles ».
  * L'état est l'URL (?dci=…&voie=…&forme=…&dosage=…&statut=…&labo=…) : un lien se partage tel quel.
  * Toute la logique (options, étapes remplies d'office, choix retirés) vient de /api/lab/guide.
+ * Deux emplacements : la page /lab/guide, et l'onglet « Guidée » de /recherche (mode `embedded`).
+ * Les codes EDQM (formes, voies) et UCUM (dosages) sont toujours affichés ; le code ATC reste sur la fiche.
  */
 
 import Link from 'next/link'
@@ -53,6 +55,20 @@ const RELATIONS: Record<string, { fr: string; ar: string }> = {
   proche: { fr: 'terme EDQM proche, à confirmer', ar: 'مصطلح EDQM قريب، قيد التأكيد' },
 }
 const LIMITE = 30
+const ICONES_VOIE: Record<string, string> = { 'orale-solide': '💊', 'orale-liquide': '🥄', injectable: '💉', rectale: '🔹', cutanee: '🧴', ophtalmique: '👁️', nasale: '👃', inhalee: '🌬️', auriculaire: '👂', buccale: '👄', vaginale: '🌸', transdermique: '🩹', autre: '•' }
+
+/** « AMOXICILLINE TRIHYDRATEE EXPRIME EN AMOXICILLINE » → nom + précision (sel, expression). */
+function morceauxDci(libelle: string, lang: string): { nom: string; detail: string } {
+  const noms: string[] = []
+  const details: string[] = []
+  for (const part of libelle.split(' + ')) {
+    const m = part.match(/^(.*?)\s+((?:EXPRIM[EÉ]E?\s+EN|\(?SOUS FORME)\b.*)$/i)
+    noms.push(displayName(m ? m[1] : part, lang as 'fr' | 'ar'))
+    if (m) details.push(m[2])
+  }
+  const casse = (t: string) => (t === t.toUpperCase() ? t.toLowerCase().replace(/^\p{L}/u, c => c.toUpperCase()) : t)
+  return { nom: noms.map(casse).join(' + '), detail: details.map(d => d.toLowerCase()).join(' · ') }
+}
 
 function ucumTexte(d: Presentation['dosage_ucum']): string {
   const q = d.quantites.map(x => `${x.valeur} ${x.ucum ?? `(${x.unite})`}`).join(' + ')
@@ -60,12 +76,13 @@ function ucumTexte(d: Presentation['dosage_ucum']): string {
   return d.denominateur ? `${q} / ${d.denominateur.valeur} ${d.denominateur.ucum ?? `(${d.denominateur.unite})`}` : q
 }
 
-export function GuideClient() {
+export function GuideClient({ embedded = false, basePath, extraParams }: { embedded?: boolean; basePath?: string; extraParams?: Record<string, string> } = {}) {
   const { lang } = useLanguage()
   const ar = lang === 'ar'
   const t = useCallback((fr: string, a: string) => (ar ? a : fr), [ar])
   const router = useRouter()
-  const pathname = usePathname() || '/lab/guide'
+  const pn = usePathname()
+  const pathname = basePath ?? pn ?? '/lab/guide'
   const sp = useSearchParams()
 
   const sel = useMemo(() => {
@@ -80,7 +97,7 @@ export function GuideClient() {
   const [rep, setRep] = useState<Reponse | null>(null)
   const [ouvert, setOuvert] = useState<Critere | null>(null)
   const [limite, setLimite] = useState(LIMITE)
-  const [codes, setCodes] = useState(false)
+  const codes = true
   const [charge, setCharge] = useState(false)
   const [erreur, setErreur] = useState<string | null>(null)
   const numero = useRef(0)
@@ -116,7 +133,7 @@ export function GuideClient() {
     appeler(params).then(r => {
       if (!r) return
       // substance inconnue (lien périmé après un import) : retour à la première étape
-      if (!r.selection.dci) { setRep(null); router.replace(pathname, { scroll: false }); return }
+      if (!r.selection.dci) { setRep(null); aller({}); return }
       setRep(r); setOuvert(null)
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -132,11 +149,11 @@ export function GuideClient() {
   }, [saisie, sel.dci, appeler])
 
   const aller = useCallback((suivant: Partial<Record<Critere, string>>) => {
-    const p = new URLSearchParams()
+    const p = new URLSearchParams(extraParams)
     for (const c of PARAMS) if (suivant[c]) p.set(c, suivant[c]!)
     setLimite(LIMITE)
     router.replace(p.size ? `${pathname}?${p}` : pathname, { scroll: false })
-  }, [router, pathname])
+  }, [router, pathname, extraParams])
 
   const choisir = (c: Critere, id: string) => aller({ ...sel, [c]: id })
   const retirer = (c: Critere) => {
@@ -151,30 +168,35 @@ export function GuideClient() {
   const fini = !!rep && rep.etape === null && !ouvert
   const optionsEtape = etape && etape !== 'dci' ? rep?.options[etape] ?? [] : []
 
+  const nbPres = (n: number) => `${n} ${t(n > 1 ? 'présentations' : 'présentation', n > 2 ? 'عروض' : 'عرض')}`
+
   return (
     <div dir={ar ? 'rtl' : 'ltr'}>
-      <div className="page-header">
-        <div className="container">
-          <h1>🧪 {t('Recherche guidée', 'البحث الموجَّه')}</h1>
-          <p style={{ maxWidth: 720 }}>
-            {t(
-              'Trouvez un médicament pas à pas : la substance, puis la voie, la forme et le dosage. Fonction en cours d’essai.',
-              'اعثر على دواء خطوة بخطوة: المادة الفعالة، ثم طريقة الاستعمال، فالشكل والجرعة. ميزة قيد التجربة.'
-            )}
-          </p>
+      {!embedded && (
+        <div className="page-header">
+          <div className="container">
+            <h1>🧪 {t('Recherche guidée', 'البحث الموجَّه')}</h1>
+            <p style={{ maxWidth: 720 }}>
+              {t(
+                'Trouvez un médicament pas à pas : la substance, puis la voie, la forme et le dosage. Fonction en cours d’essai.',
+                'اعثر على دواء خطوة بخطوة: المادة الفعالة، ثم طريقة الاستعمال، فالشكل والجرعة. ميزة قيد التجربة.'
+              )}
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="page-body">
-        <div className="container guide">
+      <div className={embedded ? undefined : 'page-body'}>
+        <div className={embedded ? 'guide' : 'container guide'}>
           {/* ── Étape 1 : substance ou marque ── */}
           {!sel.dci && (
-            <section>
+            <section className="guide-accueil">
               <label className="guide-question" htmlFor="guide-saisie">{t('Quelle substance ou quelle marque ?', 'أي مادة فعالة أو أي اسم تجاري؟')}</label>
-              <div className="search-bar">
+              <p className="guide-aide">{t('Un parcours en quatre temps : substance, voie, forme, dosage. Le nom de marque fonctionne aussi.', 'مسار من أربع خطوات: المادة، الطريقة، الشكل، الجرعة. الاسم التجاري يصلح أيضًا.')}</p>
+              <div className="search-bar guide-saisie">
                 <span className="search-bar-icon" aria-hidden>🔎</span>
                 <input
-                  id="guide-saisie" ref={champ} type="search" autoComplete="off" autoFocus value={saisie}
+                  id="guide-saisie" ref={champ} type="search" autoComplete="off" autoFocus={!embedded} value={saisie}
                   onChange={e => setSaisie(e.target.value)}
                   placeholder={t('Ex. amoxicilline, paracétamol, Augmentin…', 'مثال: amoxicilline، paracétamol، Augmentin…')}
                 />
@@ -186,29 +208,31 @@ export function GuideClient() {
                 </p>
               )}
               {suggestions && suggestions.length > 0 && (
-                <div className="guide-choix">
-                  {suggestions.map(o => (
-                    <button key={o.id} type="button" className="guide-carte" onClick={() => choisir('dci', o.id)}>
-                      <strong>{libDci(o)}</strong>
-                      <small>
-                        {o.n} {t(o.n > 1 ? 'présentations' : 'présentation', o.n > 2 ? 'عروض' : 'عرض')}
-                        {o.marques?.length ? ` · ${t('via', 'عبر')} ${o.marques.join(', ')}` : ''}
-                      </small>
-                    </button>
-                  ))}
-                </div>
-              )}
-              {!suggestions && (
-                <p className="guide-aide">
-                  {t('Tapez au moins deux lettres. Le nom de marque fonctionne aussi : « augm » propose amoxicilline + acide clavulanique.', 'اكتب حرفين على الأقل. الاسم التجاري يصلح أيضًا: «augm» يقترح أموكسيسيلين + حمض الكلافولانيك.')}
-                </p>
+                <ul className="guide-liste" aria-label={t('Substances proposées', 'المواد المقترحة')}>
+                  {suggestions.map(o => {
+                    const m = morceauxDci(o.libelle, lang)
+                    return (
+                      <li key={o.id}>
+                        <button type="button" className="guide-ligne" onClick={() => choisir('dci', o.id)}>
+                          <span className="guide-ligne-texte">
+                            <strong>{m.nom}</strong>
+                            {m.detail && <small>{m.detail}</small>}
+                            {o.marques?.length ? <small className="guide-via">{t('via', 'عبر')} {o.marques.join(', ')}</small> : null}
+                          </span>
+                          <span className="guide-ligne-n">{nbPres(o.n)}</span>
+                          <span className="guide-ligne-fleche" aria-hidden>{fleche}</span>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
               )}
             </section>
           )}
 
           {erreur && <p className="guide-erreur" role="alert">{erreur}</p>}
 
-          {/* ── Pastilles ── */}
+          {/* ── Parcours ── */}
           {sel.dci && rep && (
             <>
               <nav className="guide-pastilles" aria-label={t('Votre parcours', 'مسارك')}>
@@ -222,20 +246,21 @@ export function GuideClient() {
                       {i > 0 && <span className="guide-fleche" aria-hidden>{fleche}</span>}
                       {s ? (
                         <span className={`guide-pastille choisie${auto ? ' auto' : ''}${ouvert === c ? ' ouverte' : ''}`}>
+                          <span className="guide-pastille-num" aria-hidden>{i + 1}</span>
                           <button
                             type="button" className="guide-pastille-corps" disabled={c === 'dci'}
                             onClick={() => setOuvert(ouvert === c ? null : c)}
                             title={auto ? t('Rempli automatiquement : seule valeur possible', 'مُلئ تلقائيًا: القيمة الوحيدة الممكنة') : t('Modifier ce choix', 'تعديل هذا الاختيار')}
                           >
                             <span className="guide-pastille-nom">{t(NOMS[c].fr, NOMS[c].ar)}</span>
-                            {c === 'dci' ? libDci(s) : lib(s)}
+                            {c === 'dci' ? morceauxDci(s.libelle, lang).nom : lib(s)}
                           </button>
                           {!auto && (
                             <button type="button" className="guide-pastille-x" onClick={() => retirer(c)} aria-label={t(`Retirer ${NOMS[c].fr.toLowerCase()}`, `إزالة ${NOMS[c].ar}`)}>✕</button>
                           )}
                         </span>
                       ) : (
-                        <span className="guide-pastille suivante">+ {t(NOMS[c].fr, NOMS[c].ar)}</span>
+                        <span className="guide-pastille suivante"><span className="guide-pastille-num" aria-hidden>{i + 1}</span>{t(NOMS[c].fr, NOMS[c].ar)}</span>
                       )}
                     </span>
                   )
@@ -256,22 +281,25 @@ export function GuideClient() {
 
               {/* ── Choix de l'étape en cours ── */}
               {etape && etape !== 'dci' && (
-                <section>
+                <section className="guide-etape">
                   <h2 className="guide-question">{t(QUESTIONS[etape].fr, QUESTIONS[etape].ar)}</h2>
                   <div className="guide-choix">
                     {optionsEtape.map(o => {
                       const actif = rep.selection[etape]?.id === o.id
                       return (
                         <button key={o.id} type="button" className={`guide-carte${actif ? ' active' : ''}`} onClick={() => choisir(etape, o.id)} aria-pressed={actif}>
-                          <strong>{etape === 'voie' && o.courant ? o.courant : lib(o)}</strong>
+                          <span className="guide-carte-tete">
+                            {etape === 'voie' && <span className="guide-carte-icone" aria-hidden>{ICONES_VOIE[o.id] ?? '•'}</span>}
+                            <strong>{etape === 'voie' && o.courant ? o.courant : lib(o)}</strong>
+                          </span>
                           <small>
                             {etape === 'voie' && o.courant ? `${lib(o)} · ` : ''}
-                            {o.n} {t(o.n > 1 ? 'présentations' : 'présentation', o.n > 2 ? 'عروض' : 'عرض')}
+                            {nbPres(o.n)}
                           </small>
-                          {codes && o.edqm && (
-                            <small className="guide-code" dir="ltr" title={t(RELATIONS[o.edqm.relation].fr, RELATIONS[o.edqm.relation].ar)}>
-                              EDQM {o.edqm.code}{o.edqm.relation !== 'exact' ? ` · ${o.edqm.relation === 'proche' ? '≈' : '⊂'} ${o.edqm.terme}` : ''}
-                            </small>
+                          {o.edqm && (
+                            <span className="code code-edqm" dir="ltr" title={t(RELATIONS[o.edqm.relation].fr, RELATIONS[o.edqm.relation].ar)}>
+                              EDQM {o.edqm.code}{o.edqm.relation !== 'exact' ? ` ${o.edqm.relation === 'proche' ? '≈' : '⊂'}` : ''}
+                            </span>
                           )}
                         </button>
                       )
@@ -297,10 +325,6 @@ export function GuideClient() {
                     {(rep.options.labo ?? []).map(o => <option key={o.id} value={o.id}>{o.libelle} ({o.n})</option>)}
                   </select>
                 </label>
-                <label className="guide-case">
-                  <input id="guide-codes" type="checkbox" checked={codes} onChange={e => setCodes(e.target.checked)} />
-                  {t('Codes EDQM et UCUM', 'رموز EDQM و UCUM')}
-                </label>
               </div>
 
               {/* ── Présentations ── */}
@@ -322,13 +346,14 @@ export function GuideClient() {
                           {p.conditionnement ? <> · <span dir="ltr">{p.conditionnement}</span></> : null}
                         </span>
                         <span className="guide-resultat-labo">{p.labo}{p.pays ? ` ${getCountryFlag(p.pays)}` : ''}</span>
-                        {codes && (
-                          <span className="guide-code" dir="ltr">
-                            {p.forme_edqm ? `EDQM ${p.forme_edqm.code}${p.forme_edqm.relation === 'exact' ? '' : ` (${p.forme_edqm.relation})`}` : 'EDQM —'}
-                            {ucumTexte(p.dosage_ucum) ? ` · UCUM ${ucumTexte(p.dosage_ucum)}` : ''}
-                            {' · '}{t('nomenclature', 'المدونة')} : {p.forme ?? '—'} / {p.dosage ?? '—'}
+                        <span className="guide-codes" dir="ltr">
+                          <span className="code code-edqm" title={p.forme ? `${t('nomenclature', 'المدونة')} : ${p.forme}` : undefined}>
+                            {p.forme_edqm ? `EDQM ${p.forme_edqm.code}${p.forme_edqm.relation === 'exact' ? '' : p.forme_edqm.relation === 'proche' ? ' ≈' : ' ⊂'}` : 'EDQM —'}
                           </span>
-                        )}
+                          <span className="code code-ucum" title={p.dosage ? `${t('nomenclature', 'المدونة')} : ${p.dosage}` : undefined}>
+                            {ucumTexte(p.dosage_ucum) ? `UCUM ${ucumTexte(p.dosage_ucum)}` : 'UCUM —'}
+                          </span>
+                        </span>
                       </Link>
                     </li>
                   ))}
