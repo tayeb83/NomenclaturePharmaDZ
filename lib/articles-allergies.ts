@@ -177,7 +177,7 @@ export const ARTICLES_ALLERGIES: Article[] = [
       { type: 'h2', title: '4. Sur la fiche d’un médicament' },
       {
         type: 'paragraph',
-        text: 'Si la substance du médicament (ou sa classe) correspond à une allergie, la fiche affiche une section « Allergies documentées ». Elle apparaît à côté des interactions, avec des onglets « Interactions » et « Allergies » quand les deux existent, et un bouton « Voir les allergies (n) » dans la colonne de droite. Un médicament retiré n’en affiche pas.',
+        text: 'Si la substance du médicament (ou sa classe) correspond à des interactions ou à des allergies, la fiche affiche juste sous le titre un bandeau « Sécurité d’emploi » : les interactions avec un compteur par gravité, les allergies avec leurs codes HDO. Le bouton « Aperçu » le déplie sur place, sans quitter le haut de la fiche, et « Tout voir » ouvre l’onglet correspondant. Dessous, des onglets restent collés sous le menu pendant le défilement : Essentiel, Interactions, Allergies, puis deux raccourcis vers les génériques et le RCP. Sur téléphone, une barre fixe en bas de l’écran donne accès aux deux sujets d’un pouce. Un médicament retiré n’en affiche pas.',
       },
       {
         type: 'table',
@@ -460,7 +460,7 @@ export const ARTICLES_ALLERGIES: Article[] = [
       { type: 'h2', title: '4. في بطاقة الدواء' },
       {
         type: 'paragraph',
-        text: 'إذا طابقت المادة الفعالة للدواء (أو صنفها) حساسية ما، تعرض البطاقة قسم «الحساسيات الموثّقة». ويظهر بجانب التداخلات، مع تبويبي «التداخلات» و«الحساسيات» حين يوجدان معًا، وزر «عرض الحساسيات (n)» في العمود الجانبي. والدواء المسحوب لا يعرض شيئًا منها.',
+        text: 'إذا طابقت المادة الفعالة للدواء (أو صنفها) تداخلات أو حساسيات، تعرض البطاقة تحت العنوان مباشرة شريط «سلامة الاستعمال»: التداخلات مع عدّاد لكل درجة خطورة، والحساسيات مع رموز HDO. ويفتحه زر «نظرة سريعة» في مكانه دون مغادرة أعلى البطاقة، ويفتح «عرض الكل» التبويب المعني. وتحته تبقى تبويبات ملتصقة تحت القائمة أثناء التمرير: الأساسي، التداخلات، الحساسيات، ثم اختصاران إلى الأدوية الجنيسة وRCP. وعلى الهاتف يتيح شريط ثابت أسفل الشاشة الوصول إلى الموضوعين بإبهام واحد. والدواء المسحوب لا يعرض شيئًا منها.',
       },
       {
         type: 'table',

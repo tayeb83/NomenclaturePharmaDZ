@@ -67,9 +67,13 @@ par wilaya et commune. Interface bilingue **français / arabe** (RTL).
 - Chaque rattachement porte sa relation, comme l'EDQM : `exact` (la substance), `classe` (⊂, codes ATC de la classe), `proche` (≈, à confirmer).
   Seules 51 des 122 allergies HDO visent une substance de médicament ; aliments, métaux et chimie industrielle restent hors périmètre,
   les excipients (lait, œuf…) sont listés mais non évaluables : la nomenclature ne porte pas la composition. Les codes SNOMED CT et UMLS ne sont pas repris.
-- **Fiche** : section « Allergies documentées » (`#allergies`, `components/drug/AllergiesSection.tsx`) à côté des interactions, avec des onglets
-  d'ancrage Interactions / Allergies quand les deux existent. Trois niveaux : la substance, ses classes (par l'ATC : l'amoxicilline remonte aux
-  pénicillines puis aux bêta-lactamines), les excipients grisés. Le code HDO est devant chaque allergie et mène à sa fiche.
+- **Fiche — sécurité d'emploi** (`components/drug/FicheSecurite.tsx`, branché dans `MedicamentDetail.tsx`) : un **bandeau** sous le titre (compteurs
+  d'interactions par gravité, codes HDO des allergies, « Aperçu » qui s'ouvre sur place), des **onglets collants** sous le menu — Essentiel, Interactions,
+  Allergies, plus les raccourcis Génériques et RCP — et, sur téléphone, une **barre basse** fixe. Rien n'est retiré du HTML : les panneaux masqués portent
+  `hidden`, et l'impression les déplie tous. Les liens `#interactions`, `#allergies`, `#rcp`, `#meme-dci` (y compris depuis l'extérieur ou la colonne de droite)
+  ouvrent le bon onglet ; l'onglet choisi s'écrit dans l'URL (`#allergies`). Sans interactions ni allergies, la fiche reste celle d'avant.
+  La section « Allergies documentées » (`AllergiesSection.tsx`) a trois niveaux : la substance, ses classes (par l'ATC : l'amoxicilline remonte aux
+  pénicillines puis aux bêta-lactamines), les excipients grisés. Le code HDO est devant chaque allergie et mène à sa fiche. Maquettes : `docs/maquettes/fiche-securite.html`.
 - **Fiche d'une allergie** : `/allergies/<code>` (définition HDO, agent, rattachement, codes ATC, DCI et présentations concernées, références).
   Hors de l'index tant que les libellés français sont des brouillons.
 - **Recherche** : bouton « Allergie connue » (`?allergie=0060520&allergie_mode=signaler|masquer`, aussi sur `/api/search`). Signaler ajoute un
