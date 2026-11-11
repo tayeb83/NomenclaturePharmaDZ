@@ -586,6 +586,9 @@ export function SearchClient({
               ? 'اختر حساسية معروفة لتمييز الأدوية المعنية أو إخفائها. يُميَّز فقط ما يخص مادة هذه الحساسية أو صنفها المعلن، ولا يُستنتج أي تصالب مع مواد متقاربة. معلومة وليست رأيًا طبيًا.'
               : 'Choisissez une allergie connue pour signaler (ou masquer) les médicaments concernés. Seules la substance de cette allergie, ou sa classe déclarée, sont visées : aucune allergie croisée n\'est déduite. Information, pas un avis médical.'}
           </p>
+          <Link className="guide-mode-emploi" href={`/articles/allergie-connue-medicaments-algerie-mode-emploi${ar ? '-ar' : ''}`}>
+            📖 {ar ? 'دليل الاستعمال مع أمثلة' : 'Mode d’emploi avec exemples'}
+          </Link>
           <div className="rech-allergie-ligne">
             <label>
               <span>{ar ? 'الحساسية' : 'Allergie'}</span>

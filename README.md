@@ -80,6 +80,10 @@ par wilaya et commune. Interface bilingue **français / arabe** (RTL).
   synonymes) ; une association fixe (co-trimoxazole) exige ses deux composants ; une classe se juge sur le code ATC niveau 5 de la fiche.
   Limite connue : les associations bronchodilatateur + corticoïde (R03AK, R03AL) ne sont pas signalées pour « corticoïdes ».
 - Libellés français : brouillons (`Allergie — amoxicilline`), arabe : titres et notices traduits, noms d'allergies en français avec mention.
+- **Article d'explication** : `lib/articles-allergies.ts` (FR + AR, « L'option Allergie connue de DwaDZ… », slug `allergie-connue-medicaments-algerie-mode-emploi`
+  et `-ar`), avec QCM de révision. Lié depuis le panneau de recherche, la section de la fiche et la page d'une allergie. À garder aligné sur
+  `AllergiesSection.tsx`, `SearchClient.tsx` et `lib/allergies-core.ts` ; ses nombres (122 allergies, 51 / 7 / 1 / 60) viennent de l'onglet Bilan du xlsx et
+  sont vérifiés par `npm run test:allergies`.
 - Tests : `npm run test:allergies`.
 
 ### 🔎 Médicaments recherchés (ruptures, besoins)

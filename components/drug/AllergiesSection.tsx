@@ -127,6 +127,10 @@ export function AllergiesSection({ fiche, lang, id = 'allergies' }: { fiche: All
           {t(lang, 'Source : ', 'المصدر: ')}{HDO_SOURCE}.{' '}
           {t(lang, 'Le rattachement à la substance est automatique. Une erreur ? ', 'يتم ربط المادة آليًا. هل من خطأ؟ ')}
           <Link href="/contact" style={{ color: 'var(--blue)' }}>{t(lang, 'Écrivez-nous', 'راسلنا')}</Link>
+          {' · '}
+          <Link href={`/articles/allergie-connue-medicaments-algerie-mode-emploi${lang === 'ar' ? '-ar' : ''}`} style={{ color: 'var(--blue)' }}>
+            {t(lang, 'Comprendre cette section', 'فهم هذا القسم')}
+          </Link>
         </p>
       </div>
     </section>

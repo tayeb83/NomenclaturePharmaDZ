@@ -130,6 +130,11 @@ export default async function AllergiePage({ params }: { params: { code: string 
             </section>
           )}
 
+          <p style={{ fontSize: 13.5, margin: '0 0 12px' }}>
+            <Link href={`/articles/allergie-connue-medicaments-algerie-mode-emploi${lang === 'ar' ? '-ar' : ''}`} style={{ color: 'var(--blue)', fontWeight: 600 }}>
+              📖 {pickLang(lang, { fr: 'Comprendre les allergies dans DwaDZ : mode d’emploi et exemples', ar: 'فهم الحساسيات في DwaDZ: دليل الاستعمال وأمثلة' })}
+            </Link>
+          </p>
           <p style={{ fontSize: 13, color: '#5b6577', lineHeight: 1.7 }}>
             {pickLang(lang, { fr: 'Source : ', ar: 'المصدر: ' })}{HDO_SOURCE} —{' '}
             <a href={HDO_PURL(a.code)} target="_blank" rel="noopener noreferrer nofollow" dir="ltr">DOID:{a.code}</a>

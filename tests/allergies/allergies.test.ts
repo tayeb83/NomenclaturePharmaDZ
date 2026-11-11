@@ -124,3 +124,24 @@ test('page allergie : DCI concernées parmi les lignes de la nomenclature', () =
   assert.deepEqual(dcisConcernees(a, lignes).map(d => d.dci), ['AMOXICILLINE', 'AMPICILLINE'])
   assert.equal(nomAgent(a), 'pénicillines')
 })
+
+test('articles : la paire FR/AR existe, aligne ses chiffres sur l\'alignement et ses liens sur le site', async () => {
+  const { ARTICLES_ALLERGIES } = await import('../../lib/articles-allergies.ts')
+  const [fr, ar] = ARTICLES_ALLERGIES
+  assert.equal(fr.lang, 'fr'); assert.equal(ar.lang, 'ar')
+  assert.equal(ar.slug, `${fr.slug}-ar`)
+  assert.equal(fr.faq?.length, ar.faq?.length)
+  assert.equal(fr.content.filter(s => s.type === 'qcm')[0].questions?.length, ar.content.filter(s => s.type === 'qcm')[0].questions?.length)
+  // mêmes réponses justes dans les deux langues
+  const rep = (a: typeof fr) => a.content.find(s => s.type === 'qcm')!.questions!.map(q => q.answer).join('')
+  assert.equal(rep(fr), rep(ar))
+  // les exemples cités existent dans les données
+  for (const code of ['0040004', '0060520', '0060519', '0040070', '0040076']) {
+    assert.ok(allergieParCode(code), code)
+    assert.ok(JSON.stringify(fr.content).includes(`HDO ${code}`) && JSON.stringify(ar.content).includes(`HDO ${code}`), code)
+  }
+  // les nombres de l'article : 51 allergies en fiche, 7 excipients, 1 latex
+  const nb = (p: string) => new Set(ALLERGIES_HDO.filter(a => a.perimetre === p).map(a => a.code)).size
+  assert.deepEqual([nb('fiche'), nb('excipient'), nb('conditionnement')], [51, 7, 1])
+  for (const a of [fr, ar]) assert.ok(JSON.stringify(a.content).includes('51') && JSON.stringify(a.content).includes('122'))
+})
