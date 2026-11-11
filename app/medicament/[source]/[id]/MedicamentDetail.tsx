@@ -36,6 +36,8 @@ import { getPublishedMonographie, hasContent } from '@/lib/monographies'
 import { getPpa, formatPpa } from '@/lib/ppa'
 import { getInteractionsVers, getRcpForFiche, RCP_PORTAL_URL } from '@/lib/rcp'
 import { getInteractionsAnsm } from '@/lib/interactions'
+import { allergiesDeDci } from '@/lib/allergies-core'
+import { AllergiesSection, FicheOnglets, nombreAllergies } from '@/components/drug/AllergiesSection'
 import { AdInContent } from '@/components/ads/AdBanner'
 
 const TYPE_LABELS: Record<string, { fr: string; ar: string }> = {
@@ -291,6 +293,9 @@ export async function MedicamentDetail(
   const familleHref = famille.length >= MIN_FAMILY_SIZE ? `/marque/${familleSlug}` : null
   const autres = alternatifs.filter(a => !(med.source === 'enregistrement' && a.id === med.id))
   const atcLevel5 = atcHierarchy.find(a => a.niveau === 5)
+  // Allergies HDO de la substance et de sa classe ATC : calcul local, jamais bloquant pour la fiche
+  const allergies = med.source === 'retrait' ? null : (() => { try { return allergiesDeDci(med.dci, atcLevel5?.code ?? null) } catch { return null } })()
+  const nbAllergies = nombreAllergies(allergies)
 
   const headerBg = isRetrait
     ? 'linear-gradient(135deg, #7f1d1d, #991b1b)'
@@ -655,6 +660,11 @@ export async function MedicamentDetail(
                     {pickLang(lang, { fr: `Voir les interactions (${interactionsAnsm.items.length})`, ar: `عرض التداخلات (${interactionsAnsm.items.length})` })}
                   </a>
                 )}
+                {nbAllergies > 0 && (
+                  <a className="fiche-btn" href="#allergies">
+                    {pickLang(lang, { fr: `Voir les allergies (${nbAllergies})`, ar: `عرض الحساسيات (${nbAllergies})` })}
+                  </a>
+                )}
                 {!isRetrait && !isNonRenouv && (
                   rcps.length > 0 ? (
                     <a className="fiche-btn" href="#rcp">
@@ -674,7 +684,10 @@ export async function MedicamentDetail(
           </div>
 
           {/* ─── Interactions médicamenteuses (Thesaurus ANSM), en avant : avant la pub et les RCP ─── */}
+          <FicheOnglets interactions={interactionsAnsm?.items.length ?? 0} allergies={nbAllergies} lang={lang} />
           {interactionsAnsm && <InteractionsAnsmSection fiche={interactionsAnsm} lang={lang} />}
+          {/* ─── Allergies documentées (HDO), à côté des interactions : même substance, même logique ─── */}
+          {allergies && nbAllergies > 0 && <AllergiesSection fiche={allergies} lang={lang} />}
 
           {/* Pub juste après l'essentiel de la fiche : c'est là que le
               visiteur venu de Google a encore les yeux. Celle du bas de page

@@ -69,6 +69,8 @@ export type SearchResult = {
   code_atc?: string | null
   is_critical?: boolean
   critical_class_therapeutique?: string | null
+  /** Filtre « allergie connue » en mode signalement : l'allergie choisie concerne cette ligne (substance ou classe déclarée). */
+  allergie?: { code: string; relation: 'exact' | 'classe' | 'proche'; via: string } | null
 }
 
 export type Stats = {
