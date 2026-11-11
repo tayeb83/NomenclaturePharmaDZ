@@ -28,6 +28,7 @@ pnpm-debug.log*
 /data/*
 !/data/ansm/
 !/data/atc/
+!/data/hdo/
 
 __pycache__/
 *.pyc
