@@ -151,39 +151,6 @@ function Carte({ it, fiche, lang, montrerNiveau, entete }: { it: InteractionItem
   )
 }
 
-/**
- * Bandeau en haut de la fiche : le nombre d'interactions par gravité, avec un lien vers le détail.
- * Une contre-indication ne doit pas se découvrir en bas de page.
- */
-export function InteractionsBandeau({ fiche, lang }: { fiche: InteractionsFiche; lang: Lang }) {
-  const c = compter(fiche.items)
-  const graves = c.contre_indication + c.deconseillee
-  return (
-    <a
-      href="#interactions"
-      style={{
-        display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 12px', textDecoration: 'none', color: 'inherit',
-        background: C.cream, border: `1px solid ${C.creamEdge}`, borderTop: `3px solid ${C.brass}`, borderRadius: 12, padding: '10px 14px', marginBottom: 20,
-      }}
-    >
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: DISPLAY, fontWeight: 700, color: C.navy, fontSize: 19 }}>
-        <Khatam taille={18} couleur={C.brass} />
-        {t(lang, 'Interactions médicamenteuses', 'التداخلات الدوائية')}
-      </span>
-      {NIVEAUX.filter(n => c[n] > 0).map(n => (
-        <span key={n} style={{ background: NIVEAU[n].solid, color: 'white', borderRadius: 999, padding: '1px 11px', fontSize: 13.5, fontWeight: 700 }}>
-          {NIVEAU[n].icon} {c[n]} {NIVEAU[n].court[lang]}
-        </span>
-      ))}
-      <span style={{ marginInlineStart: 'auto', fontSize: 14, fontWeight: 700, color: C.brassDark }}>
-        {graves > 0
-          ? t(lang, 'À vérifier avant de dispenser ›', 'يُنصح بالتحقق قبل الصرف ‹')
-          : t(lang, 'Voir le détail ›', 'عرض التفاصيل ‹')}
-      </span>
-    </a>
-  )
-}
-
 type Tri = 'gravite' | 'alpha'
 
 /**

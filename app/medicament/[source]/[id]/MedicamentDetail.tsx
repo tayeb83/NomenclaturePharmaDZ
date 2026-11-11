@@ -31,13 +31,14 @@ import { BackButton } from '@/components/ui/BackButton'
 import { MedicamentInsights } from '@/components/drug/MedicamentInsights'
 import { MonographieSection } from '@/components/drug/MonographieSection'
 import { InteractionsEntrantes, RcpSection } from '@/components/drug/RcpSection'
-import { InteractionsAnsmSection, InteractionsBandeau } from '@/components/drug/InteractionsAnsmSection'
+import { InteractionsAnsmSection } from '@/components/drug/InteractionsAnsmSection'
 import { getPublishedMonographie, hasContent } from '@/lib/monographies'
 import { getPpa, formatPpa } from '@/lib/ppa'
 import { getInteractionsVers, getRcpForFiche, RCP_PORTAL_URL } from '@/lib/rcp'
 import { getInteractionsAnsm } from '@/lib/interactions'
 import { allergiesDeDci } from '@/lib/allergies-core'
-import { AllergiesSection, FicheOnglets, nombreAllergies } from '@/components/drug/AllergiesSection'
+import { AllergiesSection, libelleBandeau, nombreAllergies } from '@/components/drug/AllergiesSection'
+import { FicheSecurite, type SecuriteAllergies, type SecuriteInteractions } from '@/components/drug/FicheSecurite'
 import { AdInContent } from '@/components/ads/AdBanner'
 
 const TYPE_LABELS: Record<string, { fr: string; ar: string }> = {
@@ -296,6 +297,19 @@ export async function MedicamentDetail(
   // Allergies HDO de la substance et de sa classe ATC : calcul local, jamais bloquant pour la fiche
   const allergies = med.source === 'retrait' ? null : (() => { try { return allergiesDeDci(med.dci, atcLevel5?.code ?? null) } catch { return null } })()
   const nbAllergies = nombreAllergies(allergies)
+  const securiteInteractions: SecuriteInteractions | null = interactionsAnsm
+    ? { total: interactionsAnsm.items.length, items: interactionsAnsm.items.map(i => ({ niveau: i.niveau, nom: i.partenaire, classe: i.partenaire_est_classe })) }
+    : null
+  const securiteAllergies: SecuriteAllergies | null = allergies && nbAllergies > 0
+    ? {
+        total: nbAllergies,
+        items: [...allergies.substance, ...allergies.classes].map(m => ({
+          code: m.allergie.code, relation: m.relation, ...(({ label, fr }) => ({ label, fr }))(libelleBandeau(m.allergie, lang)),
+          detail: m.niveau === 'classe' ? `ATC ${m.via}` : (m.allergie.agents[0]?.id ?? ''),
+        })),
+      }
+    : null
+  const entrantes = med.dci ? <InteractionsEntrantes items={interactionsVers} dci={med.dci} lang={lang} /> : null
 
   const headerBg = isRetrait
     ? 'linear-gradient(135deg, #7f1d1d, #991b1b)'
@@ -404,6 +418,38 @@ export async function MedicamentDetail(
       {/* ─── Body ───────────────────────────────────────────── */}
       <div className="page-body">
         <div className="container" style={{ maxWidth: 960 }}>
+          {/* Alerte retrait */}
+          {isRetrait && med.motif_retrait && (
+            <div className="alert-banner error" style={{ borderColor: motifColor(med.motif_retrait), color: motifColor(med.motif_retrait), background: '#fef2f2', marginBottom: 24 }}>
+              <strong>{pickLang(lang, { fr: 'Motif de retrait :', ar: 'سبب السحب :' })}</strong> {displayField('motif', med.motif_retrait, lang)}
+              {med.date_retrait && <span style={{ marginLeft: 12, fontWeight: 400, color: '#7f1d1d' }}>({med.date_retrait})</span>}
+            </div>
+          )}
+          {isNonRenouv && med.date_final && (
+            <div className="alert-banner warning" style={{ marginBottom: 24 }}>
+              <strong>{pickLang(lang, { fr: 'AMM expirée :', ar: 'AMM منتهية الصلاحية :' })}</strong>{' '}
+              {pickLang(lang, { fr: 'Date de fin de validité', ar: 'تاريخ نهاية الصلاحية' })} — {med.date_final}
+            </div>
+          )}
+          {med.is_critical && (
+            <div className="alert-banner error" style={{ marginBottom: 24 }}>
+              <strong>{pickLang(lang, { fr: 'Statut critique:', ar: 'الحالة الحرجة:' })}</strong>{' '}
+              {pickLang(lang, { fr: 'Ce médicament figure sur la liste ministérielle des médicaments critiques.', ar: 'هذا الدواء مدرج في القائمة الوزارية للأدوية الحرجة.' })}
+              {med.critical_class_therapeutique && (
+                <> {pickLang(lang, { fr: 'Classe thérapeutique', ar: 'الفئة العلاجية' })} : <strong>{med.critical_class_therapeutique}</strong></>
+              )}
+            </div>
+          )}
+
+          <FicheSecurite
+            lang={lang}
+            interactions={securiteInteractions}
+            allergies={securiteAllergies}
+            generiques={autres.length}
+            rcp={rcps.length > 0}
+            panneaux={{
+              essentiel: (
+                <>
           {/* Lien vers l'autre version linguistique : utile au visiteur, et
               c'est par ce lien que les moteurs découvrent la page jumelle. Il
               suit la langue de la ROUTE et non la préférence d'affichage —
@@ -449,35 +495,6 @@ export async function MedicamentDetail(
           <p style={{ fontSize: 14, lineHeight: 1.75, color: '#334155', margin: '0 0 20px' }}>
             {resume}
           </p>
-        </div>
-        <div className="container" style={{ maxWidth: 960 }}>
-
-          {/* Alerte retrait */}
-          {isRetrait && med.motif_retrait && (
-            <div className="alert-banner error" style={{ borderColor: motifColor(med.motif_retrait), color: motifColor(med.motif_retrait), background: '#fef2f2', marginBottom: 24 }}>
-              <strong>{pickLang(lang, { fr: 'Motif de retrait :', ar: 'سبب السحب :' })}</strong> {displayField('motif', med.motif_retrait, lang)}
-              {med.date_retrait && <span style={{ marginLeft: 12, fontWeight: 400, color: '#7f1d1d' }}>({med.date_retrait})</span>}
-            </div>
-          )}
-          {isNonRenouv && med.date_final && (
-            <div className="alert-banner warning" style={{ marginBottom: 24 }}>
-              <strong>{pickLang(lang, { fr: 'AMM expirée :', ar: 'AMM منتهية الصلاحية :' })}</strong>{' '}
-              {pickLang(lang, { fr: 'Date de fin de validité', ar: 'تاريخ نهاية الصلاحية' })} — {med.date_final}
-            </div>
-          )}
-          {med.is_critical && (
-            <div className="alert-banner error" style={{ marginBottom: 24 }}>
-              <strong>{pickLang(lang, { fr: 'Statut critique:', ar: 'الحالة الحرجة:' })}</strong>{' '}
-              {pickLang(lang, { fr: 'Ce médicament figure sur la liste ministérielle des médicaments critiques.', ar: 'هذا الدواء مدرج في القائمة الوزارية للأدوية الحرجة.' })}
-              {med.critical_class_therapeutique && (
-                <> {pickLang(lang, { fr: 'Classe thérapeutique', ar: 'الفئة العلاجية' })} : <strong>{med.critical_class_therapeutique}</strong></>
-              )}
-            </div>
-          )}
-
-          {/* Interactions : le bandeau en tête de fiche renvoie au détail juste sous l'essentiel */}
-          {interactionsAnsm && <InteractionsBandeau fiche={interactionsAnsm} lang={lang} />}
-
           <div className="fiche-layout">
             <div className="fiche-main">
               {/* ─── Identification ──────────────────────────── */}
@@ -683,12 +700,6 @@ export async function MedicamentDetail(
             </aside>
           </div>
 
-          {/* ─── Interactions médicamenteuses (Thesaurus ANSM), en avant : avant la pub et les RCP ─── */}
-          <FicheOnglets interactions={interactionsAnsm?.items.length ?? 0} allergies={nbAllergies} lang={lang} />
-          {interactionsAnsm && <InteractionsAnsmSection fiche={interactionsAnsm} lang={lang} />}
-          {/* ─── Allergies documentées (HDO), à côté des interactions : même substance, même logique ─── */}
-          {allergies && nbAllergies > 0 && <AllergiesSection fiche={allergies} lang={lang} />}
-
           {/* Pub juste après l'essentiel de la fiche : c'est là que le
               visiteur venu de Google a encore les yeux. Celle du bas de page
               n'était presque jamais vue. */}
@@ -697,7 +708,7 @@ export async function MedicamentDetail(
           {/* ─── Monographie de la DCI (contenu saisi et relu) ──── */}
           {/* ─── RCP officiel (ANPP) : lien vers le PDF du portail ─── */}
           <RcpSection rcps={rcps} lang={lang} />
-          {med.dci && <InteractionsEntrantes items={interactionsVers} dci={med.dci} lang={lang} />}
+          {!interactionsAnsm && entrantes}
 
           {monographie && <MonographieSection m={monographie} dci={med.dci} lang={lang} />}
 
@@ -823,6 +834,18 @@ export async function MedicamentDetail(
               </div>
             </div>
           )}
+
+                </>
+              ),
+              interactions: interactionsAnsm ? (
+                <>
+                  <InteractionsAnsmSection fiche={interactionsAnsm} lang={lang} />
+                  {entrantes}
+                </>
+              ) : null,
+              allergies: allergies && nbAllergies > 0 ? <AllergiesSection fiche={allergies} lang={lang} /> : null,
+            }}
+          />
 
           {/* ─── FAQ (mêmes questions que le JSON-LD FAQPage) ──── */}
           <section style={{ marginTop: 40 }}>

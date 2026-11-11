@@ -137,16 +137,8 @@ export function AllergiesSection({ fiche, lang, id = 'allergies' }: { fiche: All
   )
 }
 
-/**
- * Onglets d'ancrage au-dessus des sections de substance : Interactions et Allergies côte à côte.
- * Les deux sections restent sur la page (lisibles par les moteurs et à l'impression) ; l'onglet y mène.
- */
-export function FicheOnglets({ interactions, allergies, lang }: { interactions: number; allergies: number; lang: Lang }) {
-  if (interactions === 0 || allergies === 0) return null
-  return (
-    <nav className="fiche-onglets" aria-label={t(lang, 'Informations sur la substance', 'معلومات عن المادة الفعالة')}>
-      <a href="#interactions" className="fiche-onglet">{t(lang, 'Interactions', 'التداخلات')} <i>{interactions}</i></a>
-      <a href="#allergies" className="fiche-onglet">{t(lang, 'Allergies', 'الحساسيات')} <i>{allergies}</i></a>
-    </nav>
-  )
+/** Libellé court d'une allergie pour le bandeau de la fiche : arabe pour les six classes, sinon le brouillon français (`fr` vrai). */
+export function libelleBandeau(a: AllergieHdo, lang: Lang): { label: string; fr: boolean } {
+  if (lang === 'ar' && CLASSE_AR[a.code]) return { label: `${t(lang, 'Allergie — ', 'حساسية ')}${CLASSE_AR[a.code]}`, fr: false }
+  return { label: a.fr ?? a.en, fr: true }
 }
