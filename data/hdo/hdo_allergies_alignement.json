@@ -20,7 +20,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/8400900",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040058"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040058",
+  "definition_en": "An allergic contact dermatitis that has_allergic_trigger 1,4-phenylenediamine.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_51403",
+  "agent_fr": "1,4-phenylenediamine",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040069",
@@ -43,7 +49,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/17008874",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040069"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040069",
+  "definition_en": "An allergic contact dermatitis that has_allergic_trigger 1-chloro-2,4-dinitrobenzene.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_34718",
+  "agent_fr": "1-chloro-2,4-dinitrobenzene",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040079",
@@ -66,7 +78,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/17008874",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040079"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040079",
+  "definition_en": "An allergic contact dermatitis that has_allergic_trigger 2,4-dinitrophenyl group.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_53018",
+  "agent_fr": "2,4-dinitrophenyl group",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040068",
@@ -89,7 +107,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/8462290",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040068"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040068",
+  "definition_en": "An allergic contact dermatitis that has_allergic_trigger 4-tert-butylphenol.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_34444",
+  "agent_fr": "4-tert-butylphenol",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040063",
@@ -112,7 +136,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/3356477",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040063"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040063",
+  "definition_en": "A respiratory allergy that has_allergic_trigger 4-vinylcyclohexene dioxide.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_59001",
+  "agent_fr": "4-vinylcyclohexene dioxide",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040007",
@@ -135,7 +165,15 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/25674793",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040007"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040007",
+  "definition_en": "A drug allergy that has_allergic_trigger abacavir.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_421707",
+  "agent_fr": "abacavir",
+  "cle": "abacavir",
+  "noms": [
+   "abacavir"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040081",
@@ -158,7 +196,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/6643876",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040081"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040081",
+  "definition_en": "A respiratory allergy that has_allergic_trigger acid anhydride.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_36606",
+  "agent_fr": "acid anhydride",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040077",
@@ -181,7 +225,16 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/2215478",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040077"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040077",
+  "definition_en": "A drug allergy that has_allergic_trigger alcuronium bromide.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_488385",
+  "agent_fr": "alcuronium",
+  "cle": "alcuronium",
+  "noms": [
+   "alcuronium",
+   "alcuronium bromide"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040022",
@@ -204,7 +257,15 @@
   "umls_cui": "C0571303",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/1959977",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040022"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040022",
+  "definition_en": "A drug allergy that has_allergic_trigger amodiaquine.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_2674",
+  "agent_fr": "amodiaquine",
+  "cle": "amodiaquine",
+  "noms": [
+   "amodiaquine"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040004",
@@ -227,7 +288,16 @@
   "umls_cui": "C0571417",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/11746950",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040004"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040004",
+  "definition_en": "A beta-lactam allergy that has_allergic_trigger amoxicillin.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_2676",
+  "agent_fr": "amoxicilline",
+  "cle": "amoxicillin",
+  "noms": [
+   "amoxicilline",
+   "amoxicillin"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060504",
@@ -250,7 +320,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "http://research.bmh.manchester.ac.uk/informall/allergenic-food/index.aspx?FoodId=2 | https://www.ncbi.nlm.nih.gov/pubmed/26549334 | https://www.ncbi.nlm.nih.gov/pubmed/29130794",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060504"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060504",
+  "definition_en": "A fruit allergy triggered by Malus domestica plant fruit food product.",
+  "agent_uri": "http://purl.obolibrary.org/obo/FOODON_00001611",
+  "agent_fr": "apple food product",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060505",
@@ -273,7 +349,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "http://research.bmh.manchester.ac.uk/informall/allergenic-food/index.aspx?FoodId=410 | https://www.ncbi.nlm.nih.gov/pubmed/30611476",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060505"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060505",
+  "definition_en": "A fruit allergy triggered by Prunus armeniaca plant fruit food product.",
+  "agent_uri": "http://purl.obolibrary.org/obo/FOODON_00001615",
+  "agent_fr": "apricot food product",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:13564",
@@ -296,7 +378,13 @@
   "umls_cui": "C0004030",
   "autres_xrefs": "GARD:5856 | ICD10CM:B44 | ICD9CM:117.3 | MESH:D001228 | NCI:C2886",
   "sources": "http://www.mayoclinic.com/print/aspergillosis/DS00950/METHOD=print&DSECTION=all",
-  "uri": "http://purl.obolibrary.org/obo/DOID_13564"
+  "uri": "http://purl.obolibrary.org/obo/DOID_13564",
+  "definition_en": "An opportunistic mycosis that involves a spectrum of diseases of humans and animals caused by members of the genus Aspergillus infecting lungs, brain, kidney, heart, bone, eyes, sinuses, skin and gastrointestinal tract. It is a serious illnesses in people with a weakened immune system.",
+  "agent_uri": "http://purl.obolibrary.org/obo/NCBITaxon_5052",
+  "agent_fr": "Aspergillus",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040002",
@@ -319,7 +407,16 @@
   "umls_cui": "C0004058",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/2468301",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040002"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040002",
+  "definition_en": "A drug allergy that has_allergic_trigger acetylsalicylic acid.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_15365",
+  "agent_fr": "acide acétylsalicylique",
+  "cle": "acetylsalicylic acid",
+  "noms": [
+   "acide acétylsalicylique",
+   "acetylsalicylic acid"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060514",
@@ -342,7 +439,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "http://research.bmh.manchester.ac.uk/informall/allergenic-food/index.aspx?FoodId=5005 | https://www.ncbi.nlm.nih.gov/pubmed/24795722 | https://www.ncbi.nlm.nih.gov/pubmed/30323632",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060514"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060514",
+  "definition_en": "A fish allergy triggered by Gadus morhua.",
+  "agent_uri": "http://purl.obolibrary.org/obo/NCBITaxon_8049",
+  "agent_fr": "Gadus morhua",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060515",
@@ -365,7 +468,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "http://research.bmh.manchester.ac.uk/informall/allergenic-food/index.aspx?FoodId=5022 | https://www.ncbi.nlm.nih.gov/pubmed/24795722 | https://www.ncbi.nlm.nih.gov/pubmed/30323632",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060515"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060515",
+  "definition_en": "A fish allergy triggered by Salmo salar.",
+  "agent_uri": "http://purl.obolibrary.org/obo/FOODON_00001623",
+  "agent_fr": "atlantic salmon and trout food product",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060515",
@@ -388,7 +497,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "http://research.bmh.manchester.ac.uk/informall/allergenic-food/index.aspx?FoodId=5022 | https://www.ncbi.nlm.nih.gov/pubmed/24795722 | https://www.ncbi.nlm.nih.gov/pubmed/30323632",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060515"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060515",
+  "definition_en": "A fish allergy triggered by Salmo salar.",
+  "agent_uri": "http://purl.obolibrary.org/obo/NCBITaxon_8030",
+  "agent_fr": "Salmo salar",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040037",
@@ -411,7 +526,16 @@
   "umls_cui": "C0571476",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/1991925",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040037"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040037",
+  "definition_en": "A beta-lactam allergy that has_allergic_trigger aztreonam.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_161680",
+  "agent_fr": "aztréonam",
+  "cle": "aztreonam",
+  "noms": [
+   "aztréonam",
+   "aztreonam"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040075",
@@ -434,7 +558,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/6446435",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040075"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040075",
+  "definition_en": "An allergic contact dermatitis that has_allergic_trigger benzo[d]isothiazol-3-one.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_167099",
+  "agent_fr": "benzo[d]isothiazol-3-one",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040057",
@@ -457,7 +587,13 @@
   "umls_cui": "C0571102",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/25097477",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040057"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040057",
+  "definition_en": "An allergic contact dermatitis that has_allergic_trigger benzoic acid.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_30746",
+  "agent_fr": "benzoic acid",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040003",
@@ -480,7 +616,16 @@
   "umls_cui": "C0571411",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/14483916",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040003"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040003",
+  "definition_en": "A beta-lactam allergy that has_allergic_trigger benzylpenicillin.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_18208",
+  "agent_fr": "benzylpénicilline",
+  "cle": "benzylpenicillin",
+  "noms": [
+   "benzylpénicilline",
+   "benzylpenicillin"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060519",
@@ -503,7 +648,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://en.wikipedia.org/wiki/%CE%92-lactam_antibiotic#Allergy/hypersensitivity | https://www.hopkinsguides.com/hopkins/view/Johns_Hopkins_ABX_Guide/540622/all/Beta_lactam_allergy | https://www.ncbi.nlm.nih.gov/pubmed/31009700",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060519"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060519",
+  "definition_en": "A drug allergy triggered by a beta-lactam.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_35627",
+  "agent_fr": "bêta-lactamines",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060525",
@@ -526,7 +677,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "http://research.bmh.manchester.ac.uk/informall/allergenic-food/index.aspx?FoodId=5027 | https://www.ncbi.nlm.nih.gov/pubmed/28027402 | https://www.ncbi.nlm.nih.gov/pubmed/29858102",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060525"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060525",
+  "definition_en": "A crustacean allergy triggered by Farfantepenaeus aztecus.",
+  "agent_uri": "http://purl.obolibrary.org/obo/NCBITaxon_6690",
+  "agent_fr": "Penaeus aztecus",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040006",
@@ -549,7 +706,16 @@
   "umls_cui": "C0570787",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/7602118",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040006"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040006",
+  "definition_en": "A drug allergy that has_allergic_trigger carbamazepine.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_3387",
+  "agent_fr": "carbamazépine",
+  "cle": "carbamazepine",
+  "noms": [
+   "carbamazépine",
+   "carbamazepine"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040032",
@@ -572,7 +738,13 @@
   "umls_cui": "C0571443",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/2457043",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040032"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040032",
+  "definition_en": "A drug allergy that has_allergic_trigger carbapenems.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_46633",
+  "agent_fr": "carbapénèmes",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060516",
@@ -595,7 +767,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "http://research.bmh.manchester.ac.uk/informall/allergenic-food/index.aspx?FoodId=5018 | https://www.ncbi.nlm.nih.gov/pubmed/24795722 | https://www.ncbi.nlm.nih.gov/pubmed/30323632",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060516"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060516",
+  "definition_en": "A fish allergy triggered by Cyprinus carpio.",
+  "agent_uri": "http://purl.obolibrary.org/obo/FOODON_00001684",
+  "agent_fr": "carp food product",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040064",
@@ -618,7 +796,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/11380545",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040064"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040064",
+  "definition_en": "An allergic contact dermatitis that has_allergic_trigger (-)-carvone.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_15400",
+  "agent_fr": "(-)-carvone",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040023",
@@ -641,7 +825,16 @@
   "umls_cui": "C0571453",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/12569987",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040023"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040023",
+  "definition_en": "A cephalosporin allergy that has_allergic_trigger cefaclor.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_3478",
+  "agent_fr": "céfaclor",
+  "cle": "cefaclor",
+  "noms": [
+   "céfaclor",
+   "cefaclor"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040030",
@@ -664,7 +857,16 @@
   "umls_cui": "C0571460",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/16867046",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040030"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040030",
+  "definition_en": "A cephalosporin allergy that has_allergic_trigger cefixime.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_472657",
+  "agent_fr": "céfixime",
+  "cle": "cefixime",
+  "noms": [
+   "céfixime",
+   "cefixime"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040020",
@@ -687,7 +889,16 @@
   "umls_cui": "C0571457",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/12833570",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040020"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040020",
+  "definition_en": "A cephalosporin allergy that has_allergic_trigger cefotaxime.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_204928",
+  "agent_fr": "céfotaxime",
+  "cle": "cefotaxime",
+  "noms": [
+   "céfotaxime",
+   "cefotaxime"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040103",
@@ -710,7 +921,16 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/28543395",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040103"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040103",
+  "definition_en": "A cephalosporin allergy that has_allergic_trigger cefotiam.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_355510",
+  "agent_fr": "céfotiam",
+  "cle": "cefotiam",
+  "noms": [
+   "céfotiam",
+   "cefotiam"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040024",
@@ -733,7 +953,15 @@
   "umls_cui": "C0571458",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/12833570",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040024"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040024",
+  "definition_en": "A cephalosporin allergy that has_allergic_trigger ceftazidime.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_3508",
+  "agent_fr": "ceftazidime",
+  "cle": "ceftazidime",
+  "noms": [
+   "ceftazidime"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040005",
@@ -756,7 +984,15 @@
   "umls_cui": "C0571463",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/12833570",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040005"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040005",
+  "definition_en": "A cephalosporin allergy that has_allergic_trigger ceftriaxone.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_29007",
+  "agent_fr": "ceftriaxone",
+  "cle": "ceftriaxone",
+  "noms": [
+   "ceftriaxone"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040025",
@@ -779,7 +1015,16 @@
   "umls_cui": "C0571454",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/12833570",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040025"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040025",
+  "definition_en": "A cephalosporin allergy that has_allergic_trigger cefuroxime.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_3515",
+  "agent_fr": "céfuroxime",
+  "cle": "cefuroxime",
+  "noms": [
+   "céfuroxime",
+   "cefuroxime"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0070335",
@@ -802,7 +1047,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?lvl=0&id=4045",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0070335"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0070335",
+  "definition_en": "A vegetable allergy triggered by celery (Apium graveolens).",
+  "agent_uri": "http://purl.obolibrary.org/obo/FOODON_00001705",
+  "agent_fr": "leaf celery food product",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040021",
@@ -825,7 +1076,13 @@
   "umls_cui": "C0571444",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/2083978",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040021"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040021",
+  "definition_en": "A drug allergy that has_allergic_trigger cephalosporin.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_23066",
+  "agent_fr": "céphalosporines",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060506",
@@ -848,7 +1105,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "http://research.bmh.manchester.ac.uk/informall/allergenic-food/index.aspx?FoodId=19 | https://www.ncbi.nlm.nih.gov/pubmed/26549334 | https://www.ncbi.nlm.nih.gov/pubmed/30093847",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060506"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060506",
+  "definition_en": "A fruit allergy triggered by Prunus avium plant fruit food product.",
+  "agent_uri": "http://purl.obolibrary.org/obo/FOODON_00001717",
+  "agent_fr": "cherry food product",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060492",
@@ -871,7 +1134,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "http://research.bmh.manchester.ac.uk/informall/allergenic-food/index.aspx?FoodId=5001 | https://en.wikipedia.org/wiki/Egg_allergy",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060492"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060492",
+  "definition_en": "An egg allergy triggered by Gallus gallus eggs.",
+  "agent_uri": "http://purl.obolibrary.org/obo/FOODON_00001275",
+  "agent_fr": "chicken egg food product",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040062",
@@ -894,7 +1163,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/2758361",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040062"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040062",
+  "definition_en": "A respiratory allergy that has_allergic_trigger chloramine T.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_53767",
+  "agent_fr": "chloramine T",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040026",
@@ -917,7 +1192,15 @@
   "umls_cui": "C0571344",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/10848923",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040026"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040026",
+  "definition_en": "A drug allergy that has_allergic_trigger chlorhexidine.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_3614",
+  "agent_fr": "chlorhexidine",
+  "cle": "chlorhexidine",
+  "noms": [
+   "chlorhexidine"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040056",
@@ -940,7 +1223,13 @@
   "umls_cui": "",
   "autres_xrefs": "ICD10CM:L23.0",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/1108802",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040056"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040056",
+  "definition_en": "An allergic contact dermatitis that has_allergic_trigger chromium atom.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_28073",
+  "agent_fr": "chromium atom",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040070",
@@ -963,7 +1252,20 @@
   "umls_cui": "C0571504",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/445303",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040070"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040070",
+  "definition_en": "A drug allergy that has_allergic_trigger co-trimoxazole.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_3770",
+  "agent_fr": "sulfaméthoxazole et triméthoprime",
+  "cle": "sulfamethoxazole and trimethoprim",
+  "noms": [
+   "sulfaméthoxazole et triméthoprime",
+   "sulfamethoxazole and trimethoprim",
+   "co-trimoxazole"
+  ],
+  "composants": [
+   "sulfamethoxazole",
+   "trimethoprim"
+  ]
  },
  {
   "allergy_id": "DOID:0040054",
@@ -986,7 +1288,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/7444839",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040054"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040054",
+  "definition_en": "An allergic asthma that has_allergic_trigger cobalt atom.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_27638",
+  "agent_fr": "cobalt atom",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040053",
@@ -1009,7 +1317,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/8566016",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040053"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040053",
+  "definition_en": "An allergic contact dermatitis that has_allergic_trigger cobalt atom.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_27638",
+  "agent_fr": "cobalt atom",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040014",
@@ -1026,13 +1340,19 @@
   "relation": "classe",
   "atc_libelle_en": "Corticosteroids for local oral treatment ; Corticosteroids acting locally ; Corticosteroids …",
   "atc_libelle_fr": "corticoïdes pour traitement oral local ; corticoïdes à action locale ; corticoïdes …",
-  "atc_codes": "A01AC | A07EA | C05AA | D07 | D07AA | D07AB | D07AC | D07AD | D07BA | D07BB | D07BC | D07BD | D07CA | D07CB | D07CC | D07CD | D07XA | D07XB | D07XC | D07XD | D10AA | D11AH | G01BA | G01BC | G01BD | G01BE | G01BF | H02 | H02BX | H02CA | M01BA | R01AD | R03AL | S01BA | S01BB | S01CA | S01CB | S02BA | S02CA | S03BA | S03CA",
-  "note": "corticoïdes : H02 (systémiques), D07 (dermatologiques) et les sous-classes « corticosteroids » des autres voies",
+  "atc_codes": "A01AC | A07EA | C05AA | D07AA | D07AB | D07AC | D07AD | D07BA | D07BB | D07BC | D07BD | D07CA | D07CB | D07CC | D07CD | D07XA | D07XB | D07XC | D07XD | D10AA | G01BA | G01BC | G01BD | G01BE | G01BF | H02AB | H02BX | M01BA | R01AD | R03BA | S01BA | S01BB | S01CA | S01CB | S02BA | S02CA | S03BA | S03CA",
+  "note": "corticoïdes seuls ou associés (liste ATC explicite) ; les associations bronchodilatateur + corticoïde (R03AK, R03AL) ne sont pas couvertes : leurs codes mélangent des produits avec et sans corticoïde",
   "snomed_ct": "",
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/2265088",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040014"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040014",
+  "definition_en": "A drug allergy that has_allergic_trigger corticosteroid.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_50858",
+  "agent_fr": "corticoïdes",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060526",
@@ -1055,7 +1375,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/25728640 | https://www.ncbi.nlm.nih.gov/pubmed/29858102",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060526"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060526",
+  "definition_en": "A crustacean allergy triggered by Scylla paramamosain.",
+  "agent_uri": "http://purl.obolibrary.org/obo/NCBITaxon_85552",
+  "agent_fr": "Scylla paramamosain",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060524",
@@ -1078,7 +1404,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/28027402 | https://www.ncbi.nlm.nih.gov/pubmed/29858102 | https://www.ncbi.nlm.nih.gov/pubmed/30893087",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060524"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060524",
+  "definition_en": "A shellfish allergy triggered by Crustacea.",
+  "agent_uri": "http://purl.obolibrary.org/obo/FOODON_00001792",
+  "agent_fr": "crustacean food product",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040027",
@@ -1101,7 +1433,15 @@
   "umls_cui": "C0570670",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/8024619",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040027"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040027",
+  "definition_en": "A drug allergy that has_allergic_trigger cyclophosphamide.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_4027",
+  "agent_fr": "cyclophosphamide",
+  "cle": "cyclophosphamide",
+  "noms": [
+   "cyclophosphamide"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040019",
@@ -1124,7 +1464,16 @@
   "umls_cui": "C0571922",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/15479277",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040019"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040019",
+  "definition_en": "A drug allergy that has_allergic_trigger D-mannitol.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_16899",
+  "agent_fr": "mannitol",
+  "cle": "mannitol",
+  "noms": [
+   "mannitol",
+   "D-mannitol"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040031",
@@ -1147,7 +1496,16 @@
   "umls_cui": "C0570540",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/21060839",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040031"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040031",
+  "definition_en": "A drug allergy that has_allergic_trigger diclofenac.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_47381",
+  "agent_fr": "diclofénac",
+  "cle": "diclofenac",
+  "noms": [
+   "diclofénac",
+   "diclofenac"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040042",
@@ -1170,7 +1528,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/8711735",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040042"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040042",
+  "definition_en": "An isocyanates allergic asthma that has_allergic_trigger diphenylmethane-4,4-diisocyanate.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_53218",
+  "agent_fr": "diphenylmethane-4,4'-diisocyanate",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040052",
@@ -1193,7 +1557,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/6296214",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040052"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040052",
+  "definition_en": "An allergic contact dermatitis that has_allergic_trigger diphenylmethane-4,4-diisocyanate.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_53218",
+  "agent_fr": "diphenylmethane-4,4'-diisocyanate",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040073",
@@ -1216,7 +1586,17 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/3128591",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040073"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040073",
+  "definition_en": "A drug allergy that has_allergic_trigger disodium cromoglycate.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_128458",
+  "agent_fr": "acide cromoglicique",
+  "cle": "cromoglicic acid",
+  "noms": [
+   "acide cromoglicique",
+   "cromoglicic acid",
+   "disodium cromoglycate"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060500",
@@ -1239,7 +1619,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.mayoclinic.org/diseases-conditions/drug-allergy/symptoms-causes/syc-20371835",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060500"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060500",
+  "definition_en": "An allergic disease that is triggered by a drug.",
+  "agent_uri": null,
+  "agent_fr": null,
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:4377",
@@ -1262,7 +1648,13 @@
   "umls_cui": "C0559469",
   "autres_xrefs": "MESH:D021181 | NCI:C172313",
   "sources": "http://en.wikipedia.org/wiki/Allergy#Foods",
-  "uri": "http://purl.obolibrary.org/obo/DOID_4377"
+  "uri": "http://purl.obolibrary.org/obo/DOID_4377",
+  "definition_en": "A food allergy that is an allergy or hypersensitivity to dietary substances from the yolk or whites of eggs, causing an overreaction of the immune system which may lead to severe physical symptoms.",
+  "agent_uri": "http://purl.obolibrary.org/obo/FOODON_00001274",
+  "agent_fr": "egg food product",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060513",
@@ -1285,7 +1677,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://acaai.org/allergies/types/food-allergies/types-food-allergy/fish-allergy | https://www.ncbi.nlm.nih.gov/pubmed/24795722 | https://www.ncbi.nlm.nih.gov/pubmed/30323632",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060513"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060513",
+  "definition_en": "A food allergy triggered by fish.",
+  "agent_uri": "http://purl.obolibrary.org/obo/FOODON_00001248",
+  "agent_fr": "fish food product",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060513",
@@ -1308,7 +1706,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://acaai.org/allergies/types/food-allergies/types-food-allergy/fish-allergy | https://www.ncbi.nlm.nih.gov/pubmed/24795722 | https://www.ncbi.nlm.nih.gov/pubmed/30323632",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060513"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060513",
+  "definition_en": "A food allergy triggered by fish.",
+  "agent_uri": "http://purl.obolibrary.org/obo/NCBITaxon_7898",
+  "agent_fr": "Actinopterygii",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040074",
@@ -1331,7 +1735,13 @@
   "umls_cui": "C0571339",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/7902023",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040074"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040074",
+  "definition_en": "An allergic contact dermatitis that has_allergic_trigger formaldehyde.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_16842",
+  "agent_fr": "formaldehyde",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060503",
@@ -1354,7 +1764,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://en.wikipedia.org/wiki/Fruit_allergy | https://www.ncbi.nlm.nih.gov/pubmed/26022876 | https://www.ncbi.nlm.nih.gov/pubmed/26549334",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060503"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060503",
+  "definition_en": "A food allergy triggered by a plant fruit product.",
+  "agent_uri": "http://purl.obolibrary.org/obo/FOODON_00001057",
+  "agent_fr": "plant fruit food product",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040078",
@@ -1377,7 +1793,15 @@
   "umls_cui": "C0571145",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/2215478",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040078"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040078",
+  "definition_en": "A drug allergy that has_allergic_trigger gallamine.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_503442",
+  "agent_fr": "gallamine",
+  "cle": "gallamine",
+  "noms": [
+   "gallamine"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040051",
@@ -1400,7 +1824,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/4008795",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040051"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040051",
+  "definition_en": "An allergic asthma that has_allergic_trigger hexahydrophthalic anhydride.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_103210",
+  "agent_fr": "hexahydrophthalic anhydride",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040040",
@@ -1423,7 +1853,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/8711735",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040040"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040040",
+  "definition_en": "An isocyanates allergic asthma that has_allergic_trigger hexamethylene diisocyanate.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_53578",
+  "agent_fr": "hexamethylene diisocyanate",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060531",
@@ -1446,7 +1882,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://farrp.unl.edu/informallmollshellfish",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060531"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060531",
+  "definition_en": "A snail allergy triggered by the horned turban snail.",
+  "agent_uri": "http://purl.obolibrary.org/obo/NCBITaxon_63673",
+  "agent_fr": "Turbo cornutus",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060527",
@@ -1469,7 +1911,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "http://research.bmh.manchester.ac.uk/informall/allergenic-food/index.aspx?FoodId=5029 | https://www.ncbi.nlm.nih.gov/pubmed/29858102",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060527"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060527",
+  "definition_en": "A crustacean allergy triggered by Fenneropenaeus indicus.",
+  "agent_uri": "http://purl.obolibrary.org/obo/NCBITaxon_29960",
+  "agent_fr": "Penaeus indicus",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040041",
@@ -1492,7 +1940,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/3349596",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040041"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040041",
+  "definition_en": "An allergic asthma that has_allergic_trigger isocyanates.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_53212",
+  "agent_fr": "isocyanates",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040008",
@@ -1515,7 +1969,16 @@
   "umls_cui": "",
   "autres_xrefs": "ICD10CM:Z88.1",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/445303",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040008"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040008",
+  "definition_en": "A drug allergy that has_allergic_trigger isoniazide.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_6030",
+  "agent_fr": "isoniazide",
+  "cle": "isoniazid",
+  "noms": [
+   "isoniazide",
+   "isoniazid"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040060",
@@ -1538,7 +2001,16 @@
   "umls_cui": "C0570547",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/11169173",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040060"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040060",
+  "definition_en": "A photoallergic dermatitis that has_allergic_trigger ketoprofen.",
+  "agent_uri": null,
+  "agent_fr": "kétoprofène",
+  "cle": "ketoprofen",
+  "noms": [
+   "kétoprofène",
+   "ketoprofen"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060532",
@@ -1561,7 +2033,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://en.wikipedia.org/wiki/Latex_allergy | https://www.ncbi.nlm.nih.gov/pubmed/27010091",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060532"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060532",
+  "definition_en": "An allergic disease that is triggered by latex.",
+  "agent_uri": "http://purl.obolibrary.org/obo/NCBITaxon_3981",
+  "agent_fr": "Hevea brasiliensis",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060904",
@@ -1584,7 +2062,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://en.wikipedia.org/wiki/Legume",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060904"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060904",
+  "definition_en": "A fruit allergy triggered by Fabaceae (legume) plant fruit or seed food product.",
+  "agent_uri": "http://purl.obolibrary.org/obo/FOODON_00001264",
+  "agent_fr": "legume food product",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040009",
@@ -1607,7 +2091,16 @@
   "umls_cui": "C0570646",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/9013953",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040009"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040009",
+  "definition_en": "A drug allergy that has_allergic_trigger lidocaine.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_6456",
+  "agent_fr": "lidocaïne",
+  "cle": "lidocaine",
+  "noms": [
+   "lidocaïne",
+   "lidocaine"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040049",
@@ -1630,7 +2123,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/3711550",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040049"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040049",
+  "definition_en": "An allergic asthma that has_allergic_trigger maleic anhydride.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_474859",
+  "agent_fr": "maleic anhydride",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060509",
@@ -1653,7 +2152,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "http://research.bmh.manchester.ac.uk/informall/allergenic-food/index.aspx?FoodId=67 | https://www.ncbi.nlm.nih.gov/pubmed/26549334",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060509"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060509",
+  "definition_en": "A fruit allergy triggered by Cucumis melo plant fruit food product.",
+  "agent_uri": "http://purl.obolibrary.org/obo/FOODON_00002029",
+  "agent_fr": "melon food product",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040066",
@@ -1676,7 +2181,15 @@
   "umls_cui": "C0570673",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/445303",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040066"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040066",
+  "definition_en": "A drug allergy that has_allergic_trigger melphalan.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_28876",
+  "agent_fr": "melphalan",
+  "cle": "melphalan",
+  "noms": [
+   "melphalan"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040010",
@@ -1699,7 +2212,16 @@
   "umls_cui": "",
   "autres_xrefs": "ICD10CM:Z88.4",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/9989796",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040010"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040010",
+  "definition_en": "A drug allergy that has_allergic_trigger mepivacaine.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_6759",
+  "agent_fr": "mépivacaïne",
+  "cle": "mepivacaine",
+  "noms": [
+   "mépivacaïne",
+   "mepivacaine"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040038",
@@ -1722,7 +2244,16 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/23668298",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040038"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040038",
+  "definition_en": "An allergic asthma that has_allergic_trigger meropenem, a beta-lactam antibiotic.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_43968",
+  "agent_fr": "méropénem",
+  "cle": "meropenem",
+  "noms": [
+   "méropénem",
+   "meropenem"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060501",
@@ -1745,7 +2276,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/27228132",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060501"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060501",
+  "definition_en": "An allergic disease that is triggered by a metal.",
+  "agent_uri": null,
+  "agent_fr": null,
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040044",
@@ -1768,7 +2305,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/3622432",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040044"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040044",
+  "definition_en": "An isocyanates allergic asthma that has_allergic_trigger methyl isocyanate.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_59059",
+  "agent_fr": "methyl isocyanate",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:4376",
@@ -1791,7 +2334,13 @@
   "umls_cui": "C0079840",
   "autres_xrefs": "MESH:D016269",
   "sources": "http://en.wikipedia.org/wiki/Milk_hypersensitivity",
-  "uri": "http://purl.obolibrary.org/obo/DOID_4376"
+  "uri": "http://purl.obolibrary.org/obo/DOID_4376",
+  "definition_en": "A food allergy that results in adverse immune reaction to one or more of the proteins in cow's milk and/or the milk of other animals, which are normally harmless to the non-allergic individual.",
+  "agent_uri": "http://purl.obolibrary.org/obo/FOODON_00001257",
+  "agent_fr": "milk or milk based food product",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060523",
@@ -1814,7 +2363,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/28027402 | https://www.ncbi.nlm.nih.gov/pubmed/29858102 | https://www.ncbi.nlm.nih.gov/pubmed/30893087",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060523"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060523",
+  "definition_en": "A shellfish allergy triggered by Mollusca.",
+  "agent_uri": "http://purl.obolibrary.org/obo/FOODON_00002044",
+  "agent_fr": "mollusc food product",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040102",
@@ -1837,7 +2392,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/28295200",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040102"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040102",
+  "definition_en": "An allergic contact dermatitis that has_allergic_trigger N,N-diethylthiourea.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_82448",
+  "agent_fr": "N,N'-diethylthiourea",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040101",
@@ -1860,7 +2421,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/28295200",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040101"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040101",
+  "definition_en": "An allergic contact dermatitis that has_allergic_trigger N,N-diphenylthiourea.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_138412",
+  "agent_fr": "N,N'-diphenylthiourea",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040067",
@@ -1883,7 +2450,16 @@
   "umls_cui": "C1443961",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/21616561",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040067"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040067",
+  "definition_en": "An allergic contact dermatitis that has_allergic_trigger neomycin sulfate.",
+  "agent_uri": null,
+  "agent_fr": "néomycine",
+  "cle": "neomycin",
+  "noms": [
+   "néomycine",
+   "neomycin"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040045",
@@ -1906,7 +2482,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/6691936",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040045"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040045",
+  "definition_en": "An allergic asthma that has_allergic_trigger nickel atom.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_28112",
+  "agent_fr": "nickel atom",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040046",
@@ -1929,7 +2511,13 @@
   "umls_cui": "",
   "autres_xrefs": "ICD10CM:L23.0",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/7671317",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040046"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040046",
+  "definition_en": "An allergic contact dermatitis that has_allergic_trigger nickel atom.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_28112",
+  "agent_fr": "nickel atom",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060508",
@@ -1952,7 +2540,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/26549334 | https://www.ncbi.nlm.nih.gov/pubmed/30099793",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060508"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060508",
+  "definition_en": "A fruit allergy triggered by Citrus sinensis plant fruit food product.",
+  "agent_uri": "http://purl.obolibrary.org/obo/FOODON_00002071",
+  "agent_fr": "orange food product",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040082",
@@ -1975,7 +2569,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/3932500",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040082"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040082",
+  "definition_en": "A drug allergy that has_allergic_trigger oxirane.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_27561",
+  "agent_fr": "oxirane",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040055",
@@ -1998,7 +2598,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/25097477",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040055"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040055",
+  "definition_en": "An allergic contact dermatitis that has_allergic_trigger palladium.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_33363",
+  "agent_fr": "palladium atom",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040072",
@@ -2021,7 +2627,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/17986299",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040072"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040072",
+  "definition_en": "An allergic contact dermatitis that has_allergic_trigger parthenolide.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_7939",
+  "agent_fr": "parthenolide",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040080",
@@ -2044,7 +2656,17 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/19804438",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040080"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040080",
+  "definition_en": "A drug allergy that has_allergic_trigger patent blue V.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_59601",
+  "agent_fr": "bleu patenté",
+  "cle": "patent blue",
+  "noms": [
+   "bleu patenté",
+   "patent blue",
+   "patent blue V"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060510",
@@ -2067,7 +2689,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/30672059",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060510"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060510",
+  "definition_en": "A fruit allergy triggered by Prunus persica plant fruit food product.",
+  "agent_uri": "http://purl.obolibrary.org/obo/FOODON_00002095",
+  "agent_fr": "peach food product",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060520",
@@ -2085,12 +2713,18 @@
   "atc_libelle_en": "BETA-LACTAM ANTIBACTERIALS, PENICILLINS",
   "atc_libelle_fr": "bêtalactamines, pénicillines",
   "atc_codes": "J01C",
-  "note": "pénicillines (ATC J01C) ; HDO ne les range pas sous les bêta-lactamines : la hiérarchie ATC comble",
+  "note": "pénicillines (ATC J01C)",
   "snomed_ct": "",
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://en.wikipedia.org/wiki/Side_effects_of_penicillin#Allergies_and_cross_sensitivities | https://www.mayoclinic.org/diseases-conditions/penicillin-allergy/symptoms-causes/syc-20376222",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060520"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060520",
+  "definition_en": "A beta-lactam allergy triggered by penicillin.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_17334",
+  "agent_fr": "pénicillines",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040011",
@@ -2113,7 +2747,16 @@
   "umls_cui": "C0570785",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/11994495",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040011"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040011",
+  "definition_en": "A drug allergy that has_allergic_trigger phenobarbital.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_8069",
+  "agent_fr": "phénobarbital",
+  "cle": "phenobarbital",
+  "noms": [
+   "phénobarbital",
+   "phenobarbital"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040012",
@@ -2136,7 +2779,16 @@
   "umls_cui": "C0570789",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/7602118",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040012"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040012",
+  "definition_en": "A drug allergy that has_allergic_trigger phenytoin.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_8107",
+  "agent_fr": "phénytoïne",
+  "cle": "phenytoin",
+  "noms": [
+   "phénytoïne",
+   "phenytoin"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040048",
@@ -2159,7 +2811,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/3711550",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040048"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040048",
+  "definition_en": "An allergic asthma that has_allergic_trigger phthalic anhydride.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_36605",
+  "agent_fr": "phthalic anhydride",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040076",
@@ -2182,7 +2840,16 @@
   "umls_cui": "C0571482",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/7400667",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040076"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040076",
+  "definition_en": "A drug allergy that has_allergic_trigger phthalyl group.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_26096",
+  "agent_fr": "phthalyl group",
+  "cle": "phthalylsulfathiazole",
+  "noms": [
+   "phthalylsulfathiazole",
+   "phthalyl group"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040033",
@@ -2205,7 +2872,16 @@
   "umls_cui": "C0571427",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/21532862",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040033"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040033",
+  "definition_en": "A beta-lactam allergy that has_allergic_trigger piperacillin.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_8232",
+  "agent_fr": "pipéracilline",
+  "cle": "piperacillin",
+  "noms": [
+   "pipéracilline",
+   "piperacillin"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060511",
@@ -2228,7 +2904,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "http://research.bmh.manchester.ac.uk/informall/allergenic-food/index.aspx?FoodId=27",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060511"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060511",
+  "definition_en": "A fruit allergy triggered by Prunus domestica plant fruit food product.",
+  "agent_uri": "http://purl.obolibrary.org/obo/FOODON_00002161",
+  "agent_fr": "plum fruit food product",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040059",
@@ -2251,7 +2933,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/15462465",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040059"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040059",
+  "definition_en": "An allergic contact dermatitis that has_allergic_trigger potassium dichromate.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_53444",
+  "agent_fr": "potassium dichromate",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040065",
@@ -2274,7 +2962,15 @@
   "umls_cui": "C0571881",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/445303",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040065"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040065",
+  "definition_en": "A drug allergy that has_allergic_trigger quinidine.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_28593",
+  "agent_fr": "quinidine",
+  "cle": "quinidine",
+  "noms": [
+   "quinidine"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060518",
@@ -2297,7 +2993,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/24795722 | https://www.ncbi.nlm.nih.gov/pubmed/26111497 | https://www.ncbi.nlm.nih.gov/pubmed/30323632",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060518"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060518",
+  "definition_en": "A fish allergy triggered by Oncorhynchus mykiss.",
+  "agent_uri": "http://purl.obolibrary.org/obo/FOODON_00002185",
+  "agent_fr": "rainbow trout food product",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060518",
@@ -2320,7 +3022,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/24795722 | https://www.ncbi.nlm.nih.gov/pubmed/26111497 | https://www.ncbi.nlm.nih.gov/pubmed/30323632",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060518"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060518",
+  "definition_en": "A fish allergy triggered by Oncorhynchus mykiss.",
+  "agent_uri": "http://purl.obolibrary.org/obo/NCBITaxon_8022",
+  "agent_fr": "Oncorhynchus mykiss",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040013",
@@ -2343,7 +3051,15 @@
   "umls_cui": "C0570577",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/7782125",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040013"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040013",
+  "definition_en": "A drug allergy that has_allergic_trigger ranitidine.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_8776",
+  "agent_fr": "ranitidine",
+  "cle": "ranitidine",
+  "noms": [
+   "ranitidine"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040061",
@@ -2366,7 +3082,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/2312995",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040061"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040061",
+  "definition_en": "A respiratory allergy that has_allergic_trigger remazole black-GR.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_53731",
+  "agent_fr": "remazole black-GR",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040034",
@@ -2389,7 +3111,17 @@
   "umls_cui": "C0571149",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/17667569",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040034"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040034",
+  "definition_en": "A drug allergy that has_allergic_trigger rocuronium.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_8884",
+  "agent_fr": "bromure de rocuronium",
+  "cle": "rocuronium bromide",
+  "noms": [
+   "bromure de rocuronium",
+   "rocuronium bromide",
+   "rocuronium"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060495",
@@ -2412,7 +3144,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/28027402 | https://www.ncbi.nlm.nih.gov/pubmed/29858102 | https://www.ncbi.nlm.nih.gov/pubmed/30893087",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060495"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060495",
+  "definition_en": "A food allergy triggered by Crustacea or Mollusca.",
+  "agent_uri": "http://purl.obolibrary.org/obo/FOODON_00001293",
+  "agent_fr": "shellfish food product",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060495",
@@ -2435,7 +3173,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/28027402 | https://www.ncbi.nlm.nih.gov/pubmed/29858102 | https://www.ncbi.nlm.nih.gov/pubmed/30893087",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060495"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060495",
+  "definition_en": "A food allergy triggered by Crustacea or Mollusca.",
+  "agent_uri": "http://purl.obolibrary.org/obo/NCBITaxon_197562",
+  "agent_fr": "Pancrustacea",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060495",
@@ -2458,7 +3202,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/28027402 | https://www.ncbi.nlm.nih.gov/pubmed/29858102 | https://www.ncbi.nlm.nih.gov/pubmed/30893087",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060495"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060495",
+  "definition_en": "A food allergy triggered by Crustacea or Mollusca.",
+  "agent_uri": "http://purl.obolibrary.org/obo/NCBITaxon_6447",
+  "agent_fr": "Mollusca",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040001",
@@ -2481,7 +3231,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/20471069",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040001"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040001",
+  "definition_en": "A crustacean allergy that has_allergic_trigger shrimp.",
+  "agent_uri": "http://purl.obolibrary.org/obo/FOODON_00002239",
+  "agent_fr": "shrimp food product",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060530",
@@ -2504,7 +3260,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "http://research.bmh.manchester.ac.uk/informall/allergenic-food/index.aspx?FoodId=5010 | https://www.ncbi.nlm.nih.gov/pubmed/15591808",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060530"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060530",
+  "definition_en": "A mollusc allergy triggered by snails.",
+  "agent_uri": "http://purl.obolibrary.org/obo/FOODON_00002244",
+  "agent_fr": "snail food product",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040071",
@@ -2527,7 +3289,16 @@
   "umls_cui": "C0571155",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/445303",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040071"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040071",
+  "definition_en": "A drug allergy that has_allergic_trigger sodium aurothiomalate.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_5516",
+  "agent_fr": "aurothiomalate de sodium",
+  "cle": "sodium aurothiomalate",
+  "noms": [
+   "aurothiomalate de sodium",
+   "sodium aurothiomalate"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040028",
@@ -2550,7 +3321,17 @@
   "umls_cui": "C0571140",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/2410473",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040028"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040028",
+  "definition_en": "A drug allergy that has_allergic_trigger succinylcholine.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_45652",
+  "agent_fr": "suxaméthonium",
+  "cle": "suxamethonium",
+  "noms": [
+   "suxaméthonium",
+   "suxamethonium",
+   "succinylcholine"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040016",
@@ -2573,7 +3354,16 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/7602118",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040016"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040016",
+  "definition_en": "A drug allergy that has_allergic_trigger sulfamethoxazole.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_9332",
+  "agent_fr": "sulfaméthoxazole",
+  "cle": "sulfamethoxazole",
+  "noms": [
+   "sulfaméthoxazole",
+   "sulfamethoxazole"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040035",
@@ -2596,7 +3386,15 @@
   "umls_cui": "C0570587",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/2434548",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040035"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040035",
+  "definition_en": "A drug allergy that has_allergic_trigger sulfasalazine.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_9334",
+  "agent_fr": "sulfasalazine",
+  "cle": "sulfasalazine",
+  "noms": [
+   "sulfasalazine"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040015",
@@ -2619,7 +3417,13 @@
   "umls_cui": "C0038757",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/2434548",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040015"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040015",
+  "definition_en": "A drug allergy that has_allergic_trigger sulfonamide.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_35358",
+  "agent_fr": "sulfamides antibactériens",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040017",
@@ -2642,7 +3446,16 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/509935",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040017"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040017",
+  "definition_en": "A drug allergy that has_allergic_trigger suprofen.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_9362",
+  "agent_fr": "suprofène",
+  "cle": "suprofen",
+  "noms": [
+   "suprofène",
+   "suprofen"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040050",
@@ -2665,7 +3478,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/3711550",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040050"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040050",
+  "definition_en": "An allergic asthma that has_allergic_trigger tetrachlorophthalic anhydride.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_59097",
+  "agent_fr": "tetrachlorophthalic anhydride",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040018",
@@ -2688,7 +3507,15 @@
   "umls_cui": "C0570633",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/2215478",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040018"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040018",
+  "definition_en": "A drug allergy that has_allergic_trigger thiopental.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_102166",
+  "agent_fr": "thiopental",
+  "cle": "thiopental",
+  "noms": [
+   "thiopental"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060528",
@@ -2711,7 +3538,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "http://research.bmh.manchester.ac.uk/informall/allergenic-food/index.aspx?FoodId=5028 | https://www.ncbi.nlm.nih.gov/pubmed/22135598 | https://www.ncbi.nlm.nih.gov/pubmed/29178679",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060528"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060528",
+  "definition_en": "A crustacean allergy triggered by Penaeus monodon.",
+  "agent_uri": "http://purl.obolibrary.org/obo/NCBITaxon_6687",
+  "agent_fr": "Penaeus monodon",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040104",
@@ -2734,7 +3567,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3194110/",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040104"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040104",
+  "definition_en": "A toluene meta-diisocyanate allergic asthma that has_allergic_trigger toluene 2,4-diisocyanate.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_53556",
+  "agent_fr": "toluene 2,4-diisocyanate",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040043",
@@ -2757,7 +3596,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/11289402",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040043"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040043",
+  "definition_en": "An isocyanates allergic asthma that has_allergic_trigger toluene meta-diisocyanate.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_53555",
+  "agent_fr": "toluene meta-diisocyanate",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060512",
@@ -2780,7 +3625,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "http://research.bmh.manchester.ac.uk/informall/allergenic-food/index.aspx?FoodId=52 | https://www.ncbi.nlm.nih.gov/pubmed/12001794 | https://www.ncbi.nlm.nih.gov/pubmed/23653972",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060512"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060512",
+  "definition_en": "A fruit allergy triggered by Solanum lycopersicum plant fruit food product.",
+  "agent_uri": "http://purl.obolibrary.org/obo/FOODON_00001164",
+  "agent_fr": "tomato food product",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040047",
@@ -2803,7 +3654,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/6643876",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040047"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040047",
+  "definition_en": "An allergic asthma that has_allergic_trigger trimellitic anhydride.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_53050",
+  "agent_fr": "trimellitic anhydride",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040029",
@@ -2826,7 +3683,16 @@
   "umls_cui": "C0571390",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/3377143",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040029"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040029",
+  "definition_en": "A drug allergy that has_allergic_trigger trimethoprim.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_45924",
+  "agent_fr": "triméthoprime",
+  "cle": "trimethoprim",
+  "noms": [
+   "triméthoprime",
+   "trimethoprim"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0040036",
@@ -2849,7 +3715,15 @@
   "umls_cui": "C0571147",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/2215478",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0040036"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0040036",
+  "definition_en": "A drug allergy that has_allergic_trigger tubocurarine.",
+  "agent_uri": "http://purl.obolibrary.org/obo/CHEBI_9774",
+  "agent_fr": "tubocurarine",
+  "cle": "tubocurarine",
+  "noms": [
+   "tubocurarine"
+  ],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0070334",
@@ -2872,7 +3746,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://farrp.unl.edu/informallvegetables",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0070334"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0070334",
+  "definition_en": "A food allergy triggered by a vegetable food product.",
+  "agent_uri": "http://purl.obolibrary.org/obo/FOODON_00001261",
+  "agent_fr": "vegetable food product",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060529",
@@ -2895,7 +3775,13 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://www.ncbi.nlm.nih.gov/pubmed/20471069 | https://www.ncbi.nlm.nih.gov/pubmed/28027402 | https://www.ncbi.nlm.nih.gov/pubmed/29858102",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060529"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060529",
+  "definition_en": "A crustacean allergy triggered by Litopenaeus vannamei.",
+  "agent_uri": "http://purl.obolibrary.org/obo/NCBITaxon_6689",
+  "agent_fr": "Penaeus vannamei",
+  "cle": null,
+  "noms": [],
+  "composants": null
  },
  {
   "allergy_id": "DOID:0060517",
@@ -2918,6 +3804,12 @@
   "umls_cui": "",
   "autres_xrefs": "",
   "sources": "https://acaai.org/allergies/types/food-allergies/types-food-allergy/fish-allergy",
-  "uri": "http://purl.obolibrary.org/obo/DOID_0060517"
+  "uri": "http://purl.obolibrary.org/obo/DOID_0060517",
+  "definition_en": "A fish allergy triggered by Danio rerio.",
+  "agent_uri": "http://purl.obolibrary.org/obo/NCBITaxon_7955",
+  "agent_fr": "Danio rerio",
+  "cle": null,
+  "noms": [],
+  "composants": null
  }
 ]

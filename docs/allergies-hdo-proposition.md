@@ -1,6 +1,7 @@
 # Allergies HDO : proposition d'alignement et d'intégration
 
-Statut : **proposition** (aucune migration appliquée, aucun code de l'application modifié).
+Statut : **B (onglet Allergies de la fiche) et C (filtre « Allergie connue ») sont réalisés** ; A et D restent des maquettes. Voir le README, section « Allergies documentées ».
+Écart avec §3 : aucune table SQL n'a été créée. Les données sont générées dans `lib/allergies-data.ts` et `lib/allergies-choix.ts` (même principe que `lib/edqm-data.ts`), et la fiche s'appuie sur le code ATC déjà en base. Le schéma du §3 reste valable si l'on veut un jour des corrections manuelles ou des traductions relues en base.
 Maquettes : `docs/maquettes/allergies-hdo.html` · Alignement : `data/hdo/hdo_allergies_alignement.{csv,xlsx,json}`
 Génération : `python3 -I scripts/build_hdo_alignement.py`
 

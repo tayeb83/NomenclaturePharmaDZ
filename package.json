@@ -16,7 +16,8 @@
     "test:graphe": "node --test --test-concurrency=1 \"tests/graphe/*.test.ts\"",
     "test:regression": "node --test --test-concurrency=1 \"tests/regression/*.test.ts\"",
     "test:videos": "node --test --test-concurrency=1 \"tests/videos/*.test.ts\"",
-    "test:guide": "node --test --test-concurrency=1 \"tests/guide/*.test.ts\""
+    "test:guide": "node --test --test-concurrency=1 \"tests/guide/*.test.ts\"",
+    "test:allergies": "node --test --test-concurrency=1 \"tests/allergies/*.test.ts\""
   },
   "dependencies": {
     "@vercel/blob": "^2.8.2",

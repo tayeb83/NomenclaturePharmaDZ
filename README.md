@@ -59,6 +59,33 @@ par wilaya et commune. Interface bilingue **français / arabe** (RTL).
 - Contrôle du rapprochement avec votre nomenclature : `DATABASE_URL=... npx tsx scripts/check_ansm_couverture.mts`.
 - Tests : `npm run test:interactions`.
 
+### 🩺 Allergies documentées (Human Disease Ontology)
+- Source : l'extraction HDO « allergie × agent déclencheur » (`data/hdo/hdo_allergies_substances.csv`, en anglais), alignée sur la
+  substance ou la classe ATC par `python3 -I scripts/build_hdo_alignement.py` ; elle écrit `data/hdo/hdo_allergies_alignement.{csv,xlsx,json}`
+  (relecture : onglets Bilan et Anomalies) et les deux fichiers lus par le site, **`lib/allergies-data.ts`** et **`lib/allergies-choix.ts`**
+  (générés, ne pas modifier à la main). Pas de migration SQL : la fiche s'appuie sur la DCI, le code ATC déjà en base et ces fichiers.
+- Chaque rattachement porte sa relation, comme l'EDQM : `exact` (la substance), `classe` (⊂, codes ATC de la classe), `proche` (≈, à confirmer).
+  Seules 51 des 122 allergies HDO visent une substance de médicament ; aliments, métaux et chimie industrielle restent hors périmètre,
+  les excipients (lait, œuf…) sont listés mais non évaluables : la nomenclature ne porte pas la composition. Les codes SNOMED CT et UMLS ne sont pas repris.
+- **Fiche** : section « Allergies documentées » (`#allergies`, `components/drug/AllergiesSection.tsx`) à côté des interactions, avec des onglets
+  d'ancrage Interactions / Allergies quand les deux existent. Trois niveaux : la substance, ses classes (par l'ATC : l'amoxicilline remonte aux
+  pénicillines puis aux bêta-lactamines), les excipients grisés. Le code HDO est devant chaque allergie et mène à sa fiche.
+- **Fiche d'une allergie** : `/allergies/<code>` (définition HDO, agent, rattachement, codes ATC, DCI et présentations concernées, références).
+  Hors de l'index tant que les libellés français sont des brouillons.
+- **Recherche** : bouton « Allergie connue » (`?allergie=0060520&allergie_mode=signaler|masquer`, aussi sur `/api/search`). Signaler ajoute un
+  badge cliquable sur les présentations concernées ; masquer les retire avant le calcul des facettes. Le choix survit à une nouvelle saisie.
+- **Pas d'allergie croisée** : seule la substance de l'allergie choisie, ou sa classe déclarée, est visée (`lib/allergies-core.ts`). Information
+  tirée de la littérature, ni contre-indication ni avis médical ; l'absence de signalement ne veut pas dire absence de risque.
+- Rapprochement : le nom de chaque substance de la DCI est comparé au nom de l'agent par le moteur des RCP (`lib/rcp-match.ts` : accents, sels,
+  synonymes) ; une association fixe (co-trimoxazole) exige ses deux composants ; une classe se juge sur le code ATC niveau 5 de la fiche.
+  Limite connue : les associations bronchodilatateur + corticoïde (R03AK, R03AL) ne sont pas signalées pour « corticoïdes ».
+- Libellés français : brouillons (`Allergie — amoxicilline`), arabe : titres et notices traduits, noms d'allergies en français avec mention.
+- **Article d'explication** : `lib/articles-allergies.ts` (FR + AR, « L'option Allergie connue de DwaDZ… », slug `allergie-connue-medicaments-algerie-mode-emploi`
+  et `-ar`), avec QCM de révision. Lié depuis le panneau de recherche, la section de la fiche et la page d'une allergie. À garder aligné sur
+  `AllergiesSection.tsx`, `SearchClient.tsx` et `lib/allergies-core.ts` ; ses nombres (122 allergies, 51 / 7 / 1 / 60) viennent de l'onglet Bilan du xlsx et
+  sont vérifiés par `npm run test:allergies`.
+- Tests : `npm run test:allergies`.
+
 ### 🔎 Médicaments recherchés (ruptures, besoins)
 Les demandes reçues par email sont saisies à la main, puis relayées chaque jour sur Facebook
 et sur une page publique **`/demandes`** (FR/AR), tant qu'elles sont actives.

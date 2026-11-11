@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { rechercheAvecFacettes } from '@/lib/recherche-facettes'
 import { facettesDepuisParams } from '@/lib/facettes'
+import { allergieDepuisParams } from '@/lib/allergies-params'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -14,6 +15,8 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(parseInt(searchParams.get('limit') || '30'), 80) // la liste d'une DCI est élargie côté requête
   // Facettes : ?voie=…&forme=…&dosage=…&origine=f|i (identifiants renvoyés dans `facettes`)
   const choixFacettes = facettesDepuisParams(n => searchParams.get(n))
+  // Allergie connue : ?allergie=0060520&allergie_mode=signaler|masquer (code HDO d'une allergie rattachée à une substance)
+  const allergie = allergieDepuisParams(n => searchParams.get(n))
 
   let advanced: Array<{ field: string; operator: string; value: string; bool?: 'AND' | 'OR' }> = []
   try {
@@ -29,8 +32,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { results, fuzzy, matchedTerm, synonymTerm, total, tronque, facettes, selection, ignores } =
-      await rechercheAvecFacettes(q, scope, limit, { labo, substance, activeOnly, advanced, dciMode }, choixFacettes)
+    const { results, fuzzy, matchedTerm, synonymTerm, total, tronque, facettes, selection, ignores, allergie: bilanAllergie } =
+      await rechercheAvecFacettes(q, scope, limit, { labo, substance, activeOnly, advanced, dciMode }, choixFacettes, allergie)
     return NextResponse.json({
       results,
       count: results.length,
@@ -46,6 +49,8 @@ export async function GET(request: NextRequest) {
       facettes,
       selection,
       ignores,
+      /** filtre « allergie connue » : code, mode, présentations signalées ou masquées dans le lot analysé */
+      allergie: bilanAllergie,
       filters: { labo, substance, activeOnly, advanced },
     }, {
       headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' }

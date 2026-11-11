@@ -12,6 +12,9 @@ import { useSuggestions } from '@/components/search/useSuggestions'
 import { FiltresRecherche, type GroupeFiltre, type OptionFiltre } from '@/components/search/FiltresRecherche'
 // Types seulement : le code de normalisation reste côté serveur (il est lourd pour un bundle navigateur).
 import type { Facette, Facettes, FacetteSel } from '@/lib/facettes'
+import { CHOIX_ALLERGIES } from '@/lib/allergies-choix'
+import type { AllergieChoisie, ModeAllergie } from '@/lib/allergies-params'
+import Link from 'next/link'
 
 // Recherche guidée (Lab) : chargée seulement quand on ouvre l'onglet.
 const GuideClient = dynamic(() => import('@/app/lab/guide/GuideClient').then(m => m.GuideClient), { ssr: false })
@@ -83,6 +86,7 @@ function buildSearchParams(
   algerieOnly: boolean,
   dciMode = false,
   fac: FacetteSel = {},
+  allergie: AllergieChoisie | null = null,
 ) {
   const params = new URLSearchParams()
   if (q.trim()) params.set('q', q)
@@ -93,6 +97,7 @@ function buildSearchParams(
   if (algerieOnly) params.set('algerieOnly', '1')
   if (dciMode) params.set('mode', 'dci')
   for (const f of ['voie', 'forme', 'dosage', 'origine'] as const) if (fac[f]) params.set(f, fac[f]!)
+  if (allergie) { params.set('allergie', allergie.code); params.set('allergie_mode', allergie.mode) }
   if (hasAdvancedFilters(advanced)) params.set('advanced', JSON.stringify(advanced))
   return params
 }
@@ -101,6 +106,9 @@ function effectiveAdvanced(base: AdvancedSearchCondition[], algerieOnly: boolean
   if (!algerieOnly) return base
   return [...base, { field: 'statut', operator: 'equals', value: 'F', bool: 'AND' as const }]
 }
+
+/** Ce que le serveur a trouvé pour l'allergie choisie, dans le lot de résultats analysé. */
+type BilanAllergie = { code: string; mode: ModeAllergie; signales: number; signales_total: number; masques: number } | null
 
 type FuzzyInfo = {
   fuzzy: boolean
@@ -128,6 +136,8 @@ export function SearchClient({
   initialFacSel = {},
   initialTotal = 0,
   initialTronque = false,
+  initialAllergie = null,
+  initialAllergieBilan = null,
   basePath = '/recherche',
 }: {
   initialQuery: string
@@ -152,6 +162,9 @@ export function SearchClient({
   /** Lignes qui respectent les facettes, avant troncature de la liste affichée. */
   initialTotal?: number
   initialTronque?: boolean
+  /** Allergie connue (?allergie=…&allergie_mode=…) : signaler ou masquer les présentations concernées. */
+  initialAllergie?: AllergieChoisie | null
+  initialAllergieBilan?: BilanAllergie
   basePath?: string
 }) {
   const { lang } = useLanguage()
@@ -191,6 +204,11 @@ export function SearchClient({
   const [tronque, setTronque] = useState(initialTronque)
   // Lue par syncUrl et search sans les re-créer à chaque clic sur une facette.
   const facRef = useRef<FacetteSel>(initialFacSel)
+  // L'allergie connue reste choisie d'une saisie à l'autre (contrairement aux facettes) : c'est une donnée du patient, pas de la liste.
+  const allergieRef = useRef<AllergieChoisie | null>(initialAllergie)
+  const [allergie, setAllergie] = useState<AllergieChoisie | null>(initialAllergie)
+  const [bilanAllergie, setBilanAllergie] = useState<BilanAllergie>(initialAllergieBilan)
+  const [allergieOuverte, setAllergieOuverte] = useState(false)
   const [loading, setLoading] = useState(false)
   const [selectedPays, setSelectedPays] = useState('')
   const [selectedLaboFacet, setSelectedLaboFacet] = useState('')
@@ -220,7 +238,7 @@ export function SearchClient({
   }, [])
 
   const syncUrl = useCallback((nextQ: string, nextScope: string, nextLabo: string, nextSubstance: string, nextActiveOnly: boolean, nextAdvanced: AdvancedSearchCondition[], nextAlgerieOnly: boolean) => {
-    const params = buildSearchParams(nextQ, nextScope, nextLabo, nextSubstance, nextActiveOnly, nextAdvanced, nextAlgerieOnly, dciModeRef.current, facRef.current)
+    const params = buildSearchParams(nextQ, nextScope, nextLabo, nextSubstance, nextActiveOnly, nextAdvanced, nextAlgerieOnly, dciModeRef.current, facRef.current, allergieRef.current)
     startTransition(() => {
       router.replace(`${basePath}${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false })
     })
@@ -230,13 +248,14 @@ export function SearchClient({
     if (!q.trim() && !l.trim() && !sub.trim() && !hasAdvancedFilters(adv)) { setResults([]); setFuzzyInfo(NO_FUZZY); setFacettes(FACETTES_VIDES); setTotalServeur(0); return }
     setLoading(true)
     try {
-      const params = buildSearchParams(q, s, l, sub, active, adv, false, dciModeRef.current, facRef.current)
+      const params = buildSearchParams(q, s, l, sub, active, adv, false, dciModeRef.current, facRef.current, allergieRef.current)
       const res = await fetch(`/api/search?${params.toString()}`)
       const data = await res.json()
       setResults(data.results || [])
       setFacettes(data.facettes ?? FACETTES_VIDES)
       setTotalServeur(data.total ?? (data.results || []).length)
       setTronque(Boolean(data.tronque))
+      setBilanAllergie(data.allergie ?? null)
       // le serveur retire les choix devenus impossibles : on s'aligne sur ce qu'il a réellement appliqué
       if (data.selection) { facRef.current = data.selection; setFacSel(data.selection) }
       setFuzzyInfo(data.fuzzy ? { fuzzy: true, matchedTerm: data.matchedTerm ?? null, synonymTerm: data.synonymTerm ?? null } : NO_FUZZY)
@@ -284,6 +303,16 @@ export function SearchClient({
     setFacSel({})
     syncUrl(query, scope, labo, substance, activeOnly, advanced, algerieOnly)
     search(query, scope, labo, substance, activeOnly, effectiveAdvanced(advanced, algerieOnly))
+  }
+
+  /** Choisir, changer de mode ou retirer l'allergie connue : la liste est recalculée côté serveur. */
+  function majAllergie(next: AllergieChoisie | null) {
+    allergieRef.current = next
+    setAllergie(next)
+    if (!next) setBilanAllergie(null)
+    syncUrl(query, scope, labo, substance, activeOnly, advanced, algerieOnly)
+    const effAdv = effectiveAdvanced(advanced, algerieOnly)
+    if (query.trim() || labo.trim() || substance.trim() || hasAdvancedFilters(effAdv)) search(query, scope, labo, substance, activeOnly, effAdv)
   }
 
   function handleScope(s: string) {
@@ -540,12 +569,55 @@ export function SearchClient({
             <input type="checkbox" checked={activeOnly} onChange={(e) => handleActiveOnly(e.target.checked)} />
             <span>{ar ? 'الأدوية النشطة فقط' : 'Médicaments actifs uniquement'}</span>
           </label>
+          <button type="button" className={`rech-csv${allergieOuverte || allergie ? ' actif' : ''}`} aria-expanded={allergieOuverte || Boolean(allergie)} onClick={() => setAllergieOuverte(!(allergieOuverte || allergie))}>
+            🩺 {ar ? 'حساسية معروفة' : 'Allergie connue'}{allergie && <span className="fl-badge" style={{ marginInlineStart: 6 }}>1</span>}
+          </button>
           <button type="button" className={`rech-csv${advancedOpen ? ' actif' : ''}`} aria-expanded={advancedOpen} onClick={() => setAdvancedOpen(!advancedOpen)}>
             ⚙ {ar ? 'شروط متقدمة' : 'Conditions avancées'}{nbConditions > 0 && <span className="fl-badge" style={{ marginInlineStart: 6 }}>{nbConditions}</span>}
           </button>
           <button type="button" className="rech-csv" onClick={exportCsv} disabled={!results.length}>⬇ {ar ? 'تصدير CSV' : 'Exporter en CSV'}</button>
         </div>
       </div>
+
+      {(allergieOuverte || allergie) && (
+        <section className="rech-avancee rech-allergie" aria-label={ar ? 'حساسية معروفة' : 'Allergie connue'}>
+          <p className="rech-avancee-aide">
+            {ar
+              ? 'اختر حساسية معروفة لتمييز الأدوية المعنية أو إخفائها. يُميَّز فقط ما يخص مادة هذه الحساسية أو صنفها المعلن، ولا يُستنتج أي تصالب مع مواد متقاربة. معلومة وليست رأيًا طبيًا.'
+              : 'Choisissez une allergie connue pour signaler (ou masquer) les médicaments concernés. Seules la substance de cette allergie, ou sa classe déclarée, sont visées : aucune allergie croisée n\'est déduite. Information, pas un avis médical.'}
+          </p>
+          <Link className="guide-mode-emploi" href={`/articles/allergie-connue-medicaments-algerie-mode-emploi${ar ? '-ar' : ''}`}>
+            📖 {ar ? 'دليل الاستعمال مع أمثلة' : 'Mode d’emploi avec exemples'}
+          </Link>
+          <div className="rech-allergie-ligne">
+            <label>
+              <span>{ar ? 'الحساسية' : 'Allergie'}</span>
+              <select
+                className="rech-champ"
+                value={allergie?.code ?? ''}
+                onChange={e => majAllergie(e.target.value ? { code: e.target.value, mode: allergie?.mode ?? 'signaler' } : null)}
+              >
+                <option value="">{ar ? '— لا شيء —' : '— aucune —'}</option>
+                <optgroup label={ar ? 'أصناف' : 'Classes'}>
+                  {CHOIX_ALLERGIES.filter(c => c.classe).map(c => <option key={c.code} value={c.code}>{c.code} · {c.fr}</option>)}
+                </optgroup>
+                <optgroup label={ar ? 'مواد' : 'Substances'}>
+                  {CHOIX_ALLERGIES.filter(c => !c.classe).map(c => <option key={c.code} value={c.code}>{c.code} · {c.fr}{c.proche ? ' ≈' : ''}</option>)}
+                </optgroup>
+              </select>
+            </label>
+            <div className="rech-allergie-mode" role="group" aria-label={ar ? 'الوضع' : 'Mode'}>
+              {(['signaler', 'masquer'] as const).map(m => (
+                <button key={m} type="button" aria-pressed={allergie?.mode === m} disabled={!allergie}
+                  className={`filter-tab${allergie?.mode === m ? ' active' : ''}`}
+                  onClick={() => allergie && majAllergie({ ...allergie, mode: m })}>
+                  {m === 'signaler' ? (ar ? 'تمييز' : 'Signaler') : (ar ? 'إخفاء' : 'Masquer')}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {advancedOpen && (
         <section className="rech-avancee" aria-label={ar ? 'بحث متقدم' : 'Recherche avancée'}>
@@ -627,6 +699,30 @@ export function SearchClient({
               )}
             </div>
           )}
+          {allergie && (() => {
+            const choix = CHOIX_ALLERGIES.find(c => c.code === allergie.code)
+            return (
+              <div className="rech-allergie-actif" role="status">
+                <Link href={`/allergies/${allergie.code}`} className="fiche-code hdo" dir="ltr" title={ar ? 'بطاقة الحساسية' : 'Fiche de l\'allergie'}>
+                  HDO {allergie.code}{choix?.classe ? ' ⊂' : choix?.proche ? ' ≈' : ''}
+                </Link>
+                <span>
+                  {ar ? 'حساسية معروفة: ' : 'Allergie connue : '}<strong>{choix?.fr ?? allergie.code}</strong>
+                  {bilanAllergie && !loading && aDesCriteres && (
+                    allergie.mode === 'masquer'
+                      ? (ar ? ` — ${bilanAllergie.masques} تقديمًا مخفيًا` : ` — ${bilanAllergie.masques} présentation${bilanAllergie.masques > 1 ? 's' : ''} masquée${bilanAllergie.masques > 1 ? 's' : ''}`)
+                      : (ar ? ` — ${bilanAllergie.signales} تقديمًا مميّزًا` : ` — ${bilanAllergie.signales} présentation${bilanAllergie.signales > 1 ? 's' : ''} signalée${bilanAllergie.signales > 1 ? 's' : ''}`)
+                        + (bilanAllergie.signales_total > bilanAllergie.signales
+                          ? (ar ? ` (و${bilanAllergie.signales_total - bilanAllergie.signales} أخرى بعد النتائج المعروضة: ضيّق البحث)` : ` (+ ${bilanAllergie.signales_total - bilanAllergie.signales} au-delà de la liste affichée : affinez la recherche)`)
+                          : '')
+                  )}
+                </span>
+                <Link href={`/allergies/${allergie.code}`} className="rech-allergie-lien">{ar ? 'بطاقة الحساسية ›' : 'Fiche de l\'allergie ›'}</Link>
+                <button type="button" className="rech-allergie-x" onClick={() => majAllergie(null)} aria-label={ar ? 'إزالة الحساسية' : 'Retirer l\'allergie'}>✕</button>
+                <small>{ar ? 'تمييز فقط، دون استنتاج أي حساسية متصالبة.' : 'Signalement seulement : aucune allergie croisée n\'est déduite. Absence de signalement ≠ absence de risque.'}</small>
+              </div>
+            )
+          })()}
           {!loading && aDesCriteres && (
             <div className="search-count">
               {filteredResults.length === 0 ? (ar ? 'لا توجد نتائج' : 'Aucun résultat') : <><b>{filteredResults.length}</b> {ar ? 'نتيجة' : filteredResults.length > 1 ? 'résultats' : 'résultat'}</>}

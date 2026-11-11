@@ -134,6 +134,27 @@ export function DrugCard({
         )}
       </div>
 
+      {drug.allergie && (
+        <div className="drug-allergie">
+          <span aria-hidden>⚠</span>
+          <Link
+            href={`/allergies/${drug.allergie.code}`}
+            className="fiche-code hdo"
+            dir="ltr"
+            onClick={e => e.stopPropagation()}
+            onKeyDown={e => e.stopPropagation()}
+            title={lang === 'ar' ? 'بطاقة الحساسية' : "Fiche de l'allergie"}
+          >
+            HDO {drug.allergie.code}{drug.allergie.relation === 'classe' ? ' ⊂' : drug.allergie.relation === 'proche' ? ' ≈' : ''}
+          </Link>
+          <span>
+            {lang === 'ar' ? 'حساسية معروفة — ' : 'Allergie connue — '}
+            {drug.allergie.relation === 'classe'
+              ? (lang === 'ar' ? `صنف ATC ${drug.allergie.via}` : `classe ATC ${drug.allergie.via}`)
+              : (lang === 'ar' ? `المادة: ${drug.allergie.via}` : `substance : ${drug.allergie.via}`)}
+          </span>
+        </div>
+      )}
       {isRetrait && drug.motif_retrait && (
         <div className="drug-alert retrait">
           ⚠️ {displayField('motif', drug.motif_retrait, lang)}

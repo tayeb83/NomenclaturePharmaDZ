@@ -1243,3 +1243,33 @@ a.home-mode-aide:hover { text-decoration: underline; }
 
 .guide-mode-emploi { justify-self: start; font-size: 14px; font-weight: 700; color: var(--blue); text-decoration: none; }
 .guide-mode-emploi:hover { text-decoration: underline; }
+
+/* ── Allergies HDO : code en puce, lignes de la fiche, onglets d'ancrage ── */
+.fiche-code.hdo { background: #fbe7ea; color: #9b1c3a; }
+.hdo-liste { list-style: none; margin: 0; padding: 0; }
+.hdo-groupe { margin: 0 0 2px; font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: #5b6577; font-weight: 700; }
+.hdo-ligne { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 8px 0; border-top: 1px solid #efe4c8; }
+.hdo-ligne:first-child { border-top: 0; }
+.hdo-nom { font-weight: 700; color: #12233f; text-decoration: none; }
+.hdo-nom:hover { text-decoration: underline; }
+.hdo-rel { font-size: 12px; color: #475569; background: #f1f5f9; border-radius: 6px; padding: 1px 8px; }
+.hdo-ligne.gris { opacity: .62; }
+.hdo-ligne.gris .hdo-nom { font-weight: 500; }
+.hdo-excipients { border: 1px dashed #cbd5e1; border-radius: 10px; padding: 8px 12px; background: #fafafa; }
+.hdo-excipients > summary { cursor: pointer; font-weight: 600; color: #475569; font-size: 14px; }
+.fiche-onglets { display: flex; gap: 4px; margin: 28px 0 -16px; border-bottom: 2px solid #efe4c8; }
+.fiche-onglet { padding: 8px 16px; font-weight: 700; font-size: 15px; color: #1d4e9e; text-decoration: none; border-bottom: 3px solid transparent; margin-bottom: -2px; }
+.fiche-onglet:hover { border-bottom-color: #b98425; }
+.fiche-onglet i { font: normal 11.5px var(--font-mono, monospace); background: #f1f5f9; border-radius: 999px; padding: 0 7px; margin-inline-start: 4px; color: #475569; }
+@media print { .fiche-onglets { display: none; } }
+
+/* ── Recherche : filtre « Allergie connue » ── */
+.rech-allergie-ligne { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.rech-allergie-ligne label { display: grid; gap: 4px; font-size: 13px; color: #475569; font-weight: 600; min-width: 260px; flex: 1 1 260px; }
+.rech-allergie-mode { display: inline-flex; gap: 6px; }
+.rech-allergie-actif { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; background: #fff7f8; border: 1px solid #f3c5cd; border-inline-start: 4px solid #9b1c3a; border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; font-size: 14px; }
+.rech-allergie-actif small { flex-basis: 100%; color: #5b6577; font-size: 12.5px; }
+.rech-allergie-lien { color: #1d4e9e; font-weight: 600; font-size: 13.5px; }
+.rech-allergie-x { margin-inline-start: auto; border: 0; background: none; cursor: pointer; font-size: 15px; color: #9b1c3a; }
+.drug-allergie { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; background: #fbe7ea; color: #9b1c3a; border-radius: 8px; padding: 5px 10px; margin-top: 8px; font-size: 13px; font-weight: 600; }
+.drug-allergie .fiche-code.hdo { background: #fff; }

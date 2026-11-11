@@ -4,7 +4,8 @@ DwaDZ — Allergies HDO (Human Disease Ontology) : proposition d'alignement alle
 
 Entrée  : data/hdo/hdo_allergies_substances.csv (extraction HDO : allergie + agent déclencheur, en anglais)
           data/atc/ATC_2026_fr_en_ar.xlsx       (ATC déjà utilisée par le site)
-Sorties : data/hdo/hdo_allergies_alignement.csv   (une ligne par couple allergie × agent, pour l'import)
+Sorties : lib/allergies-data.ts, lib/allergies-choix.ts (consommés par le site)
+          data/hdo/hdo_allergies_alignement.csv   (une ligne par couple allergie × agent, pour l'import)
           data/hdo/hdo_allergies_alignement.xlsx  (même chose + onglets Bilan et Anomalies, pour la relecture)
           data/hdo/hdo_allergies_alignement.json  (utilisé par la maquette docs/maquettes/allergies-hdo.html)
 
@@ -53,8 +54,15 @@ def classe(prefixes):
     return sorted(prefixes)
 
 
-def niveau4_corticoides():
-    return sorted(c for c, (n, en, _) in atc.items() if n == 4 and 'corticosteroids' in en.lower() and 'excl.' not in en.lower())
+# Corticoïdes : liste explicite de codes ATC de niveau 4 (revue à la main, pas de recherche par libellé :
+# H02CA = anti-corticoïdes, R03AL = associations souvent sans corticoïde, A07EB/R01AC/R03BC = « excl. corticosteroids »).
+CORTICOIDES = [
+    # seuls
+    'A01AC', 'A07EA', 'C05AA', 'D07AA', 'D07AB', 'D07AC', 'D07AD', 'H02AB', 'R01AD', 'R03BA', 'S01BA', 'S02BA', 'S03BA',
+    # associés à un autre principe actif (le corticoïde y est présent)
+    'D07BA', 'D07BB', 'D07BC', 'D07BD', 'D07CA', 'D07CB', 'D07CC', 'D07CD', 'D07XA', 'D07XB', 'D07XC', 'D07XD',
+    'D10AA', 'G01BA', 'G01BC', 'G01BD', 'G01BE', 'G01BF', 'H02BX', 'M01BA', 'S01BB', 'S01CA', 'S01CB', 'S02CA', 'S03CA',
+]
 
 
 # ── Rattachements décidés à la main quand le libellé ChEBI ≠ libellé ATC ────
@@ -69,13 +77,13 @@ MANUEL = {
     'CHEBI:45652':  ('exact', 'substance', 'suxamethonium', 'succinylcholine = suxaméthonium (synonymes)'),
     'CHEBI:59601':  ('exact', 'substance', 'patent blue', 'colorant diagnostique (ATC V04CX09)'),
     'CHEBI:26096':  ('proche', 'substance', 'phthalylsulfathiazole', 'ChEBI : un groupe chimique, pas une substance ; seul médicament ATC à porter le groupe phtalyle : à confirmer'),
-    'CHEBI:17334':  ('classe', 'classe', ['J01C'], 'pénicillines (ATC J01C) ; HDO ne les range pas sous les bêta-lactamines : la hiérarchie ATC comble'),
+    'CHEBI:17334':  ('classe', 'classe', ['J01C'], 'pénicillines (ATC J01C)'),
     'CHEBI:35627':  ('classe', 'classe', ['J01C', 'J01D'], 'pénicillines + céphalosporines, monobactams, carbapénèmes (ATC J01C et J01D)'),
     'CHEBI:23066':  ('classe', 'classe', ['J01DB', 'J01DC', 'J01DD', 'J01DE', 'J01DI'], 'céphalosporines 1re à 4e génération et autres (ATC J01DB–DE, J01DI)'),
     'CHEBI:46633':  ('classe', 'classe', ['J01DH'], 'carbapénèmes (ATC J01DH)'),
     'CHEBI:35358':  ('classe', 'classe', ['J01EB', 'J01EC', 'J01ED', 'J01EE', 'A07AB', 'D06BA', 'G01AE'],
                      'sulfamides antibactériens seulement (la source HDO parle des antibiotiques) ; ni diurétiques ni sulfamides hypoglycémiants ; le triméthoprime seul (J01EA) n’en est pas un'),
-    'CHEBI:50858':  ('classe', 'classe', None, 'corticoïdes : H02 (systémiques), D07 (dermatologiques) et les sous-classes « corticosteroids » des autres voies'),
+    'CHEBI:50858':  ('classe', 'classe', None, 'corticoïdes seuls ou associés (liste ATC explicite) ; les associations bronchodilatateur + corticoïde (R03AK, R03AL) ne sont pas couvertes : leurs codes mélangent des produits avec et sans corticoïde'),
 }
 COMPLEXES = {  # allergies sans agent simple : l'agent est dans l'expression OWL
     'DOID:0040067': ('exact', 'substance', 'neomycin', 'agent complexe (neomycin sulfate AND has_allergic_trigger) : la substance est la néomycine'),
@@ -90,6 +98,9 @@ COMPLEXES = {  # allergies sans agent simple : l'agent est dans l'expression OWL
 # racine           : niveau de regroupement de la hiérarchie HDO (pas de substance)
 # non_allergie     : n'est pas une allergie
 EXCIPIENT_CANDIDATS = {'DOID:4376', 'DOID:4377', 'DOID:0060492', 'DOID:0060904', 'DOID:0060513', 'DOID:0040057', 'DOID:0040075', 'DOID:0040019'}
+
+# Associations fixes : l'allergie vise les deux substances ensemble (clé = nom anglais ATC de chaque composant)
+COMPOSANTS = {'CHEBI:3770': ['sulfamethoxazole', 'trimethoprim']}
 
 FR_CLASSES = {'CHEBI:17334': 'pénicillines', 'CHEBI:35627': 'bêta-lactamines', 'CHEBI:23066': 'céphalosporines',
               'CHEBI:46633': 'carbapénèmes', 'CHEBI:35358': 'sulfamides antibactériens', 'CHEBI:50858': 'corticoïdes'}
@@ -120,24 +131,63 @@ def nature(r, parents):
     return 'autre'
 
 
+def ecrire_ts(out):
+    """lib/allergies-data.ts (fiche, page allergie, rapprochement) et lib/allergies-choix.ts (liste légère du filtre de recherche).
+    Seules les allergies utilisables dans DwaDZ y figurent ; l'alignement complet reste dans data/hdo/. Les codes SNOMED CT
+    et UMLS ne sont pas repris (licence à vérifier avant tout affichage)."""
+    par_code = {}
+    for o in out:
+        if o['perimetre'] not in ('fiche', 'excipient', 'conditionnement'):
+            continue
+        a = par_code.get(o['code'])
+        if not a:
+            a = par_code[o['code']] = {
+                'code': o['code'], 'en': o['label_en'], 'fr': o['label_fr_brouillon'], 'fr_statut': o['label_fr_statut'],
+                'definition_en': o['definition_en'], 'nature': o['nature'], 'perimetre': o['perimetre'],
+                'relation': o['relation'], 'cle': o['cle'], 'noms': o['noms'], 'composants': o['composants'],
+                'atc': [c for c in o['atc_codes'].split(' | ') if c], 'atc_libelle_fr': o['atc_libelle_fr'],
+                'agents': [], 'note': o['note'] or None, 'parents': [p for p in o['parents_hdo'].split(' | ') if p],
+                'sources': [u for u in o['sources'].split(' | ') if u], 'uri': o['uri'],
+            }
+        a['agents'].append({'id': o['agent_id'], 'en': o['agent_label_en'], 'fr': o['agent_fr'], 'uri': o['agent_uri']})
+    allergies = sorted(par_code.values(), key=lambda a: a['code'])
+    corps = json.dumps(allergies, ensure_ascii=False, indent=1)
+    (RACINE / 'lib/allergies-data.ts').write_text(
+        '/**\n * DwaDZ — Allergies HDO (Human Disease Ontology) utilisables dans le site : GÉNÉRÉ par scripts/build_hdo_alignement.py,\n'
+        ' * ne pas modifier à la main (corriger data/hdo/ ou le script, puis relancer).\n'
+        ' * Les libellés français sont des brouillons (fr_statut). Pas de codes SNOMED CT ni UMLS ici.\n */\n\n'
+        "import type { AllergieHdo } from './allergies-core.ts'\n\n"
+        f"export const ALLERGIES_HDO: AllergieHdo[] = {corps}\n", encoding='utf-8')
+    choix = [{'code': a['code'], 'fr': (a['agents'][0]['fr'] or a['agents'][0]['en']), 'en': a['agents'][0]['en'] or a['en'],
+              'classe': a['relation'] == 'classe', 'proche': a['relation'] == 'proche'}
+             for a in allergies if a['perimetre'] == 'fiche']
+    choix.sort(key=lambda c: (not c['classe'], plier(c['fr'])))
+    (RACINE / 'lib/allergies-choix.ts').write_text(
+        '/**\n * DwaDZ — Allergies proposées par le filtre « Allergie connue » de la recherche (liste légère, côté navigateur).\n'
+        ' * GÉNÉRÉ par scripts/build_hdo_alignement.py, ne pas modifier à la main.\n */\n\n'
+        'export type ChoixAllergie = { code: string; fr: string; en: string; classe: boolean; proche: boolean }\n\n'
+        f"export const CHOIX_ALLERGIES: ChoixAllergie[] = {json.dumps(choix, ensure_ascii=False, indent=1)}\n", encoding='utf-8')
+
+
 def main():
     rows = list(csv.DictReader(open(SRC, encoding='utf-8-sig')))
     out, anomalies = [], []
-    corticoides = ['H02', 'D07', *niveau4_corticoides()]
     for r in rows:
         parents = set(filter(None, r['allergy_parent_ids'].split(' | ')))
         nat = nature(r, parents)
         ag = r['agent_id'] or ''
         relation, codes, atc_en, atc_fr, note, perim = 'aucun', [], None, None, '', 'hors_perimetre'
+        genre_sub = False  # vrai quand l'agent est une substance (à rapprocher par son nom), faux pour une classe
 
         decision = MANUEL.get(ag) or COMPLEXES.get(r['allergy_id'])
         if ag == 'CHEBI:50858':
-            decision = ('classe', 'classe', sorted(set(corticoides)), MANUEL[ag][3])
+            decision = ('classe', 'classe', CORTICOIDES, MANUEL[ag][3])
         if decision:
             relation, genre, valeur, note = decision
             if genre == 'substance':
                 codes, atc_fr = substance(valeur)
                 atc_en = valeur
+                genre_sub = True
             else:
                 codes = classe(valeur)
                 atc_en = ' ; '.join(atc[c][1] for c in codes[:3]) + (' …' if len(codes) > 3 else '')
@@ -145,7 +195,7 @@ def main():
         elif r['agent_ontology'] == 'CHEBI' and nat in ('medicament', 'contact', 'respiratoire'):
             codes, atc_fr = substance(r['agent_label_en'])
             if codes:
-                relation, atc_en = 'exact', r['agent_label_en']
+                relation, atc_en, genre_sub = 'exact', r['agent_label_en'], True
 
         if relation != 'aucun' and nat in ('medicament', 'contact'):
             perim = 'fiche'
@@ -176,6 +226,10 @@ def main():
             'relation': relation, 'atc_libelle_en': atc_en, 'atc_libelle_fr': atc_fr, 'atc_codes': ' | '.join(codes),
             'note': note, 'snomed_ct': r['snomed_ct_xrefs'], 'umls_cui': r['umls_xrefs'], 'autres_xrefs': r['other_xrefs'],
             'sources': r['source_evidence_links'], 'uri': r['allergy_uri'],
+            'definition_en': r['allergy_definition_en'], 'agent_uri': r['agent_uri'] or None, 'agent_fr': agent_fr,
+            'cle': (atc_en.lower() if (relation in ('exact', 'proche') and genre_sub) else None),
+            'noms': [n for n in dict.fromkeys([atc_fr, atc_en, r['agent_label_en'] or None]) if n] if (relation in ('exact', 'proche') and genre_sub) else [],
+            'composants': COMPOSANTS.get(ag),
         })
 
     # ── Anomalies de la source, à signaler à HDO ou à neutraliser ───────────
@@ -193,16 +247,19 @@ def main():
 
     # ── Écritures ───────────────────────────────────────────────────────────
     cols = list(out[0])
+    plat = lambda o: {c: (' | '.join(map(str, v)) if isinstance(v, list) else v) for c, v in o.items()}  # listes → texte pour CSV/xlsx
     with open(f'{OUT}.csv', 'w', newline='', encoding='utf-8') as f:
-        w = csv.DictWriter(f, cols); w.writeheader(); w.writerows(out)
+        w = csv.DictWriter(f, cols); w.writeheader(); w.writerows(plat(o) for o in out)
     json.dump(out, open(f'{OUT}.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+
+    ecrire_ts(out)
 
     bilan = defaultdict(int)
     for o in out:
         bilan[(o['perimetre'], o['relation'])] += 1
     wb = openpyxl.Workbook()
     ws = wb.active; ws.title = 'Alignement'; ws.append(cols)
-    for o in out: ws.append([o[c] for c in cols])
+    for o in map(plat, out): ws.append([o[c] for c in cols])
     ws.freeze_panes = 'C2'; ws.auto_filter.ref = ws.dimensions
     wsb = wb.create_sheet('Bilan'); wsb.append(['perimetre', 'relation', 'lignes'])
     for (p, rel), n in sorted(bilan.items()): wsb.append([p, rel, n])
