@@ -83,17 +83,7 @@ export default async function ArticlesPage() {
             padding: '22px 24px',
             marginBottom: 28,
           }}>
-            <div className="articles-hero-grid" style={{ display: 'grid', gridTemplateColumns: '1.1fr .9fr', gap: 20, alignItems: 'start' }}>
-              <div>
-                <h2 style={{ margin: '0 0 10px', fontSize: 20, color: '#0f172a', fontWeight: 800 }}>
-                  {pickLang(lang, { fr: 'Pourquoi cette section aide votre SEO ?', ar: 'كيف تساعد هذه الصفحة في تحسين السيو؟' })}
-                </h2>
-                <ul style={{ margin: 0, paddingInlineStart: 18, color: '#334155', lineHeight: 1.8, fontSize: 14.5 }}>
-                  <li>{pickLang(lang, { fr: 'Couvre des requêtes longue traîne recherchées par les pharmaciens et les étudiants.', ar: 'تغطي كلمات مفتاحية طويلة يبحث عنها الصيادلة والطلبة.' })}</li>
-                  <li>{pickLang(lang, { fr: 'Renforce le maillage interne vers la recherche, les alertes, la veille et les médicaments.', ar: 'تعزز الربط الداخلي نحو البحث والتنبيهات والمراقبة وصفحات الأدوية.' })}</li>
-                  <li>{pickLang(lang, { fr: 'Ajoute des contenus bilingues FR/AR avec balisage structuré pour une meilleure indexation.', ar: 'تضيف محتوى ثنائي اللغة مع بيانات منظمة لتحسين الفهرسة.' })}</li>
-                </ul>
-              </div>
+            <div className="articles-hero-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 20, alignItems: 'start' }}>
               <div style={{ background: 'white', borderRadius: 14, border: '1px solid #e2e8f0', padding: '18px 18px' }}>
                 <div style={{ fontSize: 12, fontWeight: 800, color: '#0369a1', marginBottom: 10 }}>
                   {pickLang(lang, { fr: 'ARTICLES MIS EN AVANT', ar: 'مقالات بارزة' })}
