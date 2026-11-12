@@ -129,7 +129,7 @@ test('clé d\'alias : articles et « autres » ignorés', () => {
 test('alias : « Bêta-bloquants » est rapproché des titres BÊTA-BLOQUANTS, donc couvert par classe', () => {
   const ligne = data.interactions.find(i => i.partenaire.startsWith('BÊTA-BLOQUANTS (SAUF ESMOLOL)'))!
   const sans = comparerFait(ctx, fait(ligne.substance, 'Bêta-bloquants', 'precaution', { cible_type: null, cible: null }))
-  assert.equal(sans[0].ecart, 'non_resolue') // sans la table, le nom n'est pas reconnu
+  assert.equal(sans[0].ecart, 'non_resolue') // sans la table : il ressemble à un titre, donc ni candidat ni couvert
   const avec = comparerFait(ctxAlias, fait(ligne.substance, 'Bêta-bloquants', 'precaution', { cible_type: null, cible: null }))
   assert.ok(avec.some(c => c.ecart === 'couverte_classe' || c.ecart === 'couverte_directe' || c.ecart === 'divergence_niveau'), JSON.stringify(avec.map(c => c.ecart)))
   assert.ok(avec[0].b_est_classe)
@@ -177,4 +177,56 @@ test('diagnostic : artefact, titre proche, inconnu', () => {
   assert.equal(proche.cause, 'proche_titre')
   assert.ok(proche.suggestions.some(t => /POMPE/.test(t)), proche.suggestions.join(' | '))
   assert.equal(diagnostiquer(ctxAlias, 'Zorglubine').cause, 'inconnu')
+})
+
+// ─── Partenaires réellement non résolus sur la base de production (lot de 34 RCP) ───
+const reels = readFileSync(new URL('./fixtures/partenaires_non_resolus.txt', import.meta.url), 'utf8').split('\n').filter(Boolean)
+
+/** Noms qui restent à trancher par un pharmacien : pas de classe équivalente dans le thésaurus, ou phrase d'extraction. */
+const A_TRANCHER = new Set([
+  'Médicaments allongeant l’intervalle QT',
+  'Médicaments provoquant un allongement de l’intervalle QT',
+  'Les transporteurs de cations organiques (TCO)',
+  'Médicaments avec une activité hyperglycémique intrinsèque (par ex, les glucocorticoïdes (en',
+  'Antidiabétiques oraux',
+  'Autres dépresseurs du système nerveux central, tels qu\'autres dérivés morphiniques',
+  'Les dépresseurs du système nerveux central',
+  'Médicaments cardiovasculaires',
+  'Médicaments métabolisés par les isoenzymes du Cytochrome P450 :',
+  'Enzymes cytochrome P450',
+  'Autres médicaments agissant sur la pression artérielle',
+  'Du fait de la majoration de l\'effet hypoglycémiant, dans certains cas, des',
+])
+
+test('libellés réellement rencontrés : seuls les cas à trancher restent non résolus', () => {
+  const restes = reels.filter(n => comparerFait(ctxAlias, fait('ACETAZOLAMIDE', n, 'precaution', { cible_type: null, cible: null })).some(c => c.ecart === 'non_resolue'))
+  assert.deepEqual(new Set(restes), A_TRANCHER, `à jour data/ansm/alias_partenaires.json ou la liste : ${restes.join(' | ')}`)
+  assert.ok(reels.length >= 90, String(reels.length))
+})
+
+test('libellés réels : plus de la moitié ne comptent plus comme non résolus grâce aux titres et aux alias', () => {
+  const sans = buildGapContext(buildThesaurusIndex(titres, liens), data.interactions)
+  const non = (c: typeof sans) => reels.filter(n => comparerFait(c, fait('ACETAZOLAMIDE', n, 'precaution', { cible_type: null, cible: null })).some(x => x.ecart === 'non_resolue')).length
+  assert.ok(non(ctxAlias) < non(sans) / 3, `${non(ctxAlias)} avec la table, ${non(sans)} sans`)
+})
+
+test('listes et phrases : « A, B : » se coupe, une phrase ne se coupe pas', () => {
+  const liste = comparerFait(ctxAlias, fait('ACETAZOLAMIDE', 'Insuline, metformine, sulfamides hypoglycémiants', 'precaution', { cible_type: null, cible: null }))
+  assert.ok(liste.length >= 3 && liste.every(c => c.ecart !== 'non_resolue'), JSON.stringify(liste.map(c => [c.b, c.ecart])))
+  const phrase = comparerFait(ctxAlias, fait('ACETAZOLAMIDE', 'Du fait de la majoration de l\'effet hypoglycémiant, dans certains cas, des', 'precaution', { cible_type: null, cible: null }))
+  assert.equal(phrase.length, 1)
+  assert.equal(phrase[0].ecart, 'non_resolue')
+})
+
+test('nom libre : une substance inconnue du thésaurus devient un candidat « hors thésaurus », jamais une classe', () => {
+  const [c] = comparerFait(ctxAlias, fait('ACETAZOLAMIDE', 'Phénylbutazone (voie générale)', 'deconseillee', { cible_type: null, cible: null }))
+  assert.equal(c.ecart, 'absente')
+  assert.equal(c.b_hors_thesaurus, true)
+  assert.equal(c.b_est_classe, false)
+  assert.equal(c.b, 'Phénylbutazone')
+})
+
+test('un nom proche d\'un titre n\'est pas un candidat : il attend un alias', () => {
+  const [c] = comparerFait(ctxAlias, fait('ACETAZOLAMIDE', 'Inhibiteurs de la pompe protonique', 'precaution', { cible_type: null, cible: null }))
+  assert.equal(c.ecart, 'non_resolue')
 })
