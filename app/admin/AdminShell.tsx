@@ -17,7 +17,8 @@ const GROUPS: { title: string; items: Item[] }[] = [
       { label: 'Monographies DCI', href: '/admin/monographies' },
       { label: 'RCP (ANPP)', href: '/admin/rcp' },
       { label: 'NAQESS (accès)', href: '/admin/acces' },
-      { label: 'Interactions', href: '/admin/interactions' },
+      { label: 'Interactions', href: '/admin/interactions', match: 'exact' },
+      { label: 'Interactions à relire', href: '/admin/interactions/veille' },
     ],
   },
   {
