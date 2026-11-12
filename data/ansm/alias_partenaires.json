@@ -1,0 +1,363 @@
+{
+ "_note": "Noms cités par les RCP de l'ANPP → titres du Thesaurus ANSM. À relire par un pharmacien. 'vers' = un ou plusieurs titres exacts du thésaurus (un titre : substance ; plusieurs : famille). 'ignorer' = artefact d'extraction ou hors sujet, avec le motif. Contrôlé par tests/interactions/gap.test.ts.",
+ "alias": {
+  "digitaliques": {
+   "vers": [
+    "DIGOXINE"
+   ]
+  },
+  "bêta-bloquants": {
+   "vers": [
+    "BÊTA-BLOQUANTS (SAUF ESMOLOL ET SOTALOL) (Y COMPRIS COLLYRES)",
+    "BÊTA-BLOQUANTS (SAUF ESMOLOL) (Y COMPRIS COLLYRES)",
+    "BÊTA-BLOQUANTS DANS L'INSUFFISANCE CARDIAQUE",
+    "BÊTA-BLOQUANTS NON CARDIO-SÉLECTIFS (Y COMPRIS COLLYRES)"
+   ]
+  },
+  "bêtabloquants": {
+   "vers": [
+    "BÊTA-BLOQUANTS (SAUF ESMOLOL ET SOTALOL) (Y COMPRIS COLLYRES)",
+    "BÊTA-BLOQUANTS (SAUF ESMOLOL) (Y COMPRIS COLLYRES)",
+    "BÊTA-BLOQUANTS DANS L'INSUFFISANCE CARDIAQUE",
+    "BÊTA-BLOQUANTS NON CARDIO-SÉLECTIFS (Y COMPRIS COLLYRES)"
+   ]
+  },
+  "diurétiques": {
+   "vers": [
+    "DIURÉTIQUES",
+    "DIURÉTIQUES DE L'ANSE",
+    "DIURÉTIQUES ÉPARGNEURS DE POTASSIUM (SEULS OU ASSOCIÉS)",
+    "DIURÉTIQUES HYPOKALIÉMIANTS",
+    "DIURÉTIQUES THIAZIDIQUES ET APPARENTÉS"
+   ]
+  },
+  "diurétiques épargneurs de potassium": {
+   "vers": [
+    "DIURÉTIQUES ÉPARGNEURS DE POTASSIUM (SEULS OU ASSOCIÉS)"
+   ]
+  },
+  "diurétiques thiazidiques": {
+   "vers": [
+    "DIURÉTIQUES THIAZIDIQUES ET APPARENTÉS"
+   ]
+  },
+  "thiazidiques": {
+   "vers": [
+    "DIURÉTIQUES THIAZIDIQUES ET APPARENTÉS"
+   ]
+  },
+  "alcool": {
+   "vers": [
+    "ALCOOL (BOISSON OU EXCIPIENT)"
+   ]
+  },
+  "boissons alcoolisées": {
+   "vers": [
+    "ALCOOL (BOISSON OU EXCIPIENT)"
+   ]
+  },
+  "jus de pamplemousse": {
+   "vers": [
+    "PAMPLEMOUSSE (JUS ET FRUIT)"
+   ]
+  },
+  "pamplemousse": {
+   "vers": [
+    "PAMPLEMOUSSE (JUS ET FRUIT)"
+   ]
+  },
+  "médicaments susceptibles de donner des torsades de pointes": {
+   "vers": [
+    "SUBSTANCES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES",
+    "NEUROLEPTIQUES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES",
+    "ANTIPARASITAIRES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES"
+   ]
+  },
+  "torsades de pointes": {
+   "vers": [
+    "SUBSTANCES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES",
+    "NEUROLEPTIQUES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES",
+    "ANTIPARASITAIRES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES"
+   ]
+  },
+  "aines": {
+   "vers": [
+    "ANTI-INFLAMMATOIRES NON STÉROÏDIENS"
+   ]
+  },
+  "anti-inflammatoires non stéroïdiens": {
+   "vers": [
+    "ANTI-INFLAMMATOIRES NON STÉROÏDIENS"
+   ]
+  },
+  "glucocorticoïdes": {
+   "vers": [
+    "GLUCOCORTICOÏDES (SAUF HYDROCORTISONE)",
+    "GLUCOCORTICOÏDES PAR VOIE INTRA-ARTICULAIRE ET MÉTABOLISÉS"
+   ]
+  },
+  "imao": {
+   "vers": [
+    "IMAO IRRÉVERSIBLES",
+    "IMAO-A RÉVERSIBLES, Y COMPRIS OXAZOLIDINONES ET BLEU DE MÉTHYLÈNE",
+    "IMAO-B"
+   ]
+  },
+  "inhibiteurs de la monoamine oxydase": {
+   "vers": [
+    "IMAO IRRÉVERSIBLES",
+    "IMAO-A RÉVERSIBLES, Y COMPRIS OXAZOLIDINONES ET BLEU DE MÉTHYLÈNE",
+    "IMAO-B"
+   ]
+  },
+  "sympathomimétiques": {
+   "vers": [
+    "SYMPATHOMIMÉTIQUES ALPHA (VOIES ORALE ET/OU NASALE)",
+    "SYMPATHOMIMÉTIQUES ALPHA ET BÊTA (VOIE IM ET IV)",
+    "SYMPATHOMIMÉTIQUES INDIRECTS"
+   ]
+  },
+  "antiacides": {
+   "vers": [
+    "TOPIQUES GASTRO-INTESTINAUX, ANTIACIDES ET ADSORBANTS"
+   ]
+  },
+  "topiques gastro-intestinaux": {
+   "vers": [
+    "TOPIQUES GASTRO-INTESTINAUX, ANTIACIDES ET ADSORBANTS"
+   ]
+  },
+  "pansements gastro-intestinaux": {
+   "vers": [
+    "TOPIQUES GASTRO-INTESTINAUX, ANTIACIDES ET ADSORBANTS"
+   ]
+  },
+  "contraceptifs oraux": {
+   "vers": [
+    "ESTROPROGESTATIFS CONTRACEPTIFS",
+    "PROGESTATIFS CONTRACEPTIFS"
+   ]
+  },
+  "œstroprogestatifs": {
+   "vers": [
+    "ESTROPROGESTATIFS CONTRACEPTIFS"
+   ]
+  },
+  "estroprogestatifs": {
+   "vers": [
+    "ESTROPROGESTATIFS CONTRACEPTIFS"
+   ]
+  },
+  "macrolides": {
+   "vers": [
+    "MACROLIDES (SAUF SPIRAMYCINE)"
+   ]
+  },
+  "tétracyclines": {
+   "vers": [
+    "CYCLINES"
+   ]
+  },
+  "cyclines": {
+   "vers": [
+    "CYCLINES"
+   ]
+  },
+  "benzodiazépines": {
+   "vers": [
+    "BENZODIAZÉPINES ET APPARENTÉS"
+   ]
+  },
+  "médicaments sédatifs": {
+   "vers": [
+    "MÉDICAMENTS SÉDATIFS"
+   ]
+  },
+  "sédatifs": {
+   "vers": [
+    "MÉDICAMENTS SÉDATIFS"
+   ]
+  },
+  "hypnotiques": {
+   "vers": [
+    "HYPNOTIQUES"
+   ]
+  },
+  "antihypertenseurs": {
+   "vers": [
+    "ANTIHYPERTENSEURS ALPHA-BLOQUANTS",
+    "ANTIHYPERTENSEURS CENTRAUX",
+    "ANTIHYPERTENSEURS SAUF ALPHA-BLOQUANTS"
+   ]
+  },
+  "inhibiteurs de la pompe à protons": {
+   "vers": [
+    "ANTISÉCRÉTOIRES INHIBITEURS DE LA POMPE À PROTONS"
+   ]
+  },
+  "ipp": {
+   "vers": [
+    "ANTISÉCRÉTOIRES INHIBITEURS DE LA POMPE À PROTONS"
+   ]
+  },
+  "statines": {
+   "vers": [
+    "INHIBITEURS DE L'HMG-COA RÉDUCTASE (STATINES)"
+   ]
+  },
+  "cholestyramine": {
+   "vers": [
+    "RÉSINES CHÉLATRICES"
+   ]
+  },
+  "colestyramine": {
+   "vers": [
+    "RÉSINES CHÉLATRICES"
+   ]
+  },
+  "dérivés nitrés": {
+   "vers": [
+    "DÉRIVÉS NITRÉS ET APPARENTÉS"
+   ]
+  },
+  "antagonistes calciques": {
+   "vers": [
+    "ANTAGONISTES DES CANAUX CALCIQUES"
+   ]
+  },
+  "inhibiteurs calciques": {
+   "vers": [
+    "ANTAGONISTES DES CANAUX CALCIQUES"
+   ]
+  },
+  "antagonistes des canaux calciques": {
+   "vers": [
+    "ANTAGONISTES DES CANAUX CALCIQUES"
+   ]
+  },
+  "sels de fer": {
+   "vers": [
+    "FER"
+   ]
+  },
+  "fer": {
+   "vers": [
+    "FER"
+   ]
+  },
+  "alcaloïdes de l'ergot de seigle": {
+   "vers": [
+    "ALCALOÏDES DE L'ERGOT DE SEIGLE DOPAMINERGIQUES",
+    "ALCALOÏDES DE L'ERGOT DE SEIGLE VASOCONSTRICTEURS"
+   ]
+  },
+  "anticholinergiques": {
+   "vers": [
+    "MÉDICAMENTS ATROPINIQUES"
+   ]
+  },
+  "atropiniques": {
+   "vers": [
+    "MÉDICAMENTS ATROPINIQUES"
+   ]
+  },
+  "médicaments à effet atropinique": {
+   "vers": [
+    "MÉDICAMENTS ATROPINIQUES"
+   ]
+  },
+  "sartans": {
+   "vers": [
+    "ANTAGONISTES DES RÉCEPTEURS DE L'ANGIOTENSINE II"
+   ]
+  },
+  "isrs": {
+   "vers": [
+    "INHIBITEURS SÉLECTIFS DE LA RECAPTURE DE LA SÉROTONINE"
+   ]
+  },
+  "inhibiteurs sélectifs de la recapture de la sérotonine": {
+   "vers": [
+    "INHIBITEURS SÉLECTIFS DE LA RECAPTURE DE LA SÉROTONINE"
+   ]
+  },
+  "antivitamines k": {
+   "vers": [
+    "ANTIVITAMINES K"
+   ]
+  },
+  "avk": {
+   "vers": [
+    "ANTIVITAMINES K"
+   ]
+  },
+  "iec": {
+   "vers": [
+    "INHIBITEURS DE L'ENZYME DE CONVERSION"
+   ]
+  },
+  "fluoroquinolones": {
+   "vers": [
+    "FLUOROQUINOLONES"
+   ]
+  },
+  "quinolones": {
+   "vers": [
+    "FLUOROQUINOLONES"
+   ]
+  },
+  "sulfamides hypoglycémiants": {
+   "vers": [
+    "SULFAMIDES HYPOGLYCÉMIANTS"
+   ]
+  }
+ },
+ "atc": {
+  "J01AA": [
+   "CYCLINES"
+  ],
+  "J01FA": [
+   "MACROLIDES (SAUF SPIRAMYCINE)"
+  ],
+  "J01MA": [
+   "FLUOROQUINOLONES"
+  ],
+  "J01M": [
+   "FLUOROQUINOLONES"
+  ],
+  "M01A": [
+   "ANTI-INFLAMMATOIRES NON STÉROÏDIENS"
+  ],
+  "C09A": [
+   "INHIBITEURS DE L'ENZYME DE CONVERSION"
+  ],
+  "C09C": [
+   "ANTAGONISTES DES RÉCEPTEURS DE L'ANGIOTENSINE II"
+  ],
+  "C10AA": [
+   "INHIBITEURS DE L'HMG-COA RÉDUCTASE (STATINES)"
+  ],
+  "C07": [
+   "BÊTA-BLOQUANTS (SAUF ESMOLOL ET SOTALOL) (Y COMPRIS COLLYRES)",
+   "BÊTA-BLOQUANTS (SAUF ESMOLOL) (Y COMPRIS COLLYRES)",
+   "BÊTA-BLOQUANTS DANS L'INSUFFISANCE CARDIAQUE",
+   "BÊTA-BLOQUANTS NON CARDIO-SÉLECTIFS (Y COMPRIS COLLYRES)"
+  ],
+  "C03": [
+   "DIURÉTIQUES",
+   "DIURÉTIQUES DE L'ANSE",
+   "DIURÉTIQUES ÉPARGNEURS DE POTASSIUM (SEULS OU ASSOCIÉS)",
+   "DIURÉTIQUES HYPOKALIÉMIANTS",
+   "DIURÉTIQUES THIAZIDIQUES ET APPARENTÉS"
+  ],
+  "A10BB": [
+   "SULFAMIDES HYPOGLYCÉMIANTS"
+  ],
+  "C01AA": [
+   "DIGOXINE"
+  ],
+  "B01AA": [
+   "ANTIVITAMINES K"
+  ]
+ }
+}
