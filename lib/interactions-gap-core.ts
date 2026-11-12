@@ -111,7 +111,7 @@ const rangMin = (ls: LigneAnsm[]): Niveau | null =>
 
 /** Compare un fait RCP au thésaurus : un constat par couple (substance de la fiche, substance du partenaire). */
 export function comparerFait(ctx: GapContext, fait: FaitRcp): Constat[] {
-  const base = { fait, niveau_ansm: null, via: [], sens: null, a_hors_thesaurus: false, b_hors_thesaurus: false } as const
+  const base: Omit<Constat, 'a' | 'b' | 'ecart'> = { fait, niveau_ansm: null, via: [], sens: null, a_hors_thesaurus: false, b_hors_thesaurus: false }
   const source = composantsDeDci(ctx.index, fait.dci)
 
   // Une classe ATC n'a pas (encore) d'équivalent dans les classes du thésaurus : on ne tranche pas.
