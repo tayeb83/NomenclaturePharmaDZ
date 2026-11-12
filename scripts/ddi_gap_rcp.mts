@@ -168,6 +168,12 @@ try {
   console.log(`  divergence de niveau  : ${n('divergence_niveau')}`)
   console.log(`  absentes de l'ANSM    : ${n('absente')}`)
   console.log(`  partenaire non résolu : ${n('non_resolue')}  (à rapprocher, pas des absences)`)
+  const div = b.candidats.filter(c => c.ecart === 'divergence_niveau')
+  const abs = b.candidats.filter(c => c.ecart === 'absente')
+  console.log(`  dont divergences : ${div.filter(c => c.sens === 'source_plus_grave').length} paires où le RCP est plus sévère, ${div.filter(c => c.sens === 'source_moins_grave').length} où il l'est moins`)
+  console.log(`  dont absentes    : ${abs.filter(c => c.a_hors_thesaurus || c.b_hors_thesaurus).length} avec une substance hors thésaurus, ${abs.filter(c => !c.a_hors_thesaurus && !c.b_hors_thesaurus).length} entre deux substances que l'ANSM traite`)
+  const types = constats.filter(c => c.ecart === 'non_resolue')
+  console.log(`  non résolus      : ${types.filter(c => c.fait.cible_type === 'classe').length} faits visent une classe ATC, ${types.filter(c => c.fait.cible_type !== 'classe').length} un nom inconnu`)
   console.log(`${b.candidats.length} candidats → ${dossier}/candidats.csv`)
   if (apply) {
     await appliquer(pool!, b.candidats)
