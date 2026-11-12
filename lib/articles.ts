@@ -20,6 +20,10 @@ export interface Article {
   tags: string[]
   /** vignette du visuel de partage : fichier PNG sous assets/articles/ (sans elle, le visuel n'a que le titre) */
   image?: string
+  /** articles publiés depuis l'admin : image de couverture (https), version dans l'autre langue, source d'origine */
+  imageUrl?: string
+  translationSlug?: string
+  source?: { nom: string | null; url: string | null }
   content: ArticleSection[]
   faq?: ArticleFaq[]
 }

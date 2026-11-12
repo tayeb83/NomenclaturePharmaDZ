@@ -20,7 +20,20 @@ const VIGNETTE_W = 430
 const coupe = (s: string, max: number) => (s.length > max ? `${s.slice(0, max - 1).trimEnd()}…` : s)
 
 /** Vignette de l'article, lue dans assets/articles (nom de fichier sûr : jamais un chemin fourni par l'URL). */
-async function charger(image: string | undefined): Promise<string | null> {
+async function charger(image: string | undefined, imageUrl?: string): Promise<string | null> {
+  // article de la base : image de couverture en https, récupérée ici (taille et type contrôlés)
+  if (imageUrl && /^https:\/\//.test(imageUrl)) {
+    try {
+      const res = await fetch(imageUrl, { signal: AbortSignal.timeout(6000) })
+      const type = res.headers.get('content-type') || ''
+      // satori n'affiche que PNG et JPEG
+      if (res.ok && /^image\/(png|jpe?g)/.test(type)) {
+        const buf = Buffer.from(await res.arrayBuffer())
+        if (buf.length <= 3 * 1024 * 1024) return `data:${type.split(';')[0]};base64,${buf.toString('base64')}`
+      }
+    } catch { /* pas de vignette : le visuel n'a que le titre */ }
+    return null
+  }
   if (!image || !/^[a-z0-9-]+\.png$/.test(image)) return null
   try {
     const png = await readFile(path.join(process.cwd(), 'assets', 'articles', image))
@@ -30,12 +43,12 @@ async function charger(image: string | undefined): Promise<string | null> {
   }
 }
 
-export async function buildArticleShareImage(a: Pick<Article, 'title' | 'subtitle' | 'lang' | 'tags' | 'image'>) {
+export async function buildArticleShareImage(a: Pick<Article, 'title' | 'subtitle' | 'lang' | 'tags' | 'image' | 'imageUrl'>) {
   const chrome = await imageChrome(a.lang)
   const { ar, fonts, logo, rowDir, displayFamily, appHost } = chrome
   // satori écarte trop les mots arabes : l'espace insécable garde le texte en un seul segment
   const nb = (s: string) => (ar ? s.replace(/ /g, ' ') : s)
-  const vignette = await charger(a.image)
+  const vignette = await charger(a.image, a.imageUrl)
 
   const titre = coupe(a.title, 118)
   const taille = vignette

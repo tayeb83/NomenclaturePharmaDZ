@@ -12,6 +12,7 @@
 
 import { buildMatchIndex, foldNom, resolveCible, type MatchIndex } from './rcp-match.ts'
 import type { Lang } from './i18n.ts'
+import { sourceDe, type SourceItem } from './interactions-admin-core.ts'
 
 /** Le PDF du thésaurus, tel que publié par l'ANSM. */
 export const ANSM_THESAURUS_URL = 'https://ansm.sante.fr/uploads/2024/06/07/20230915-thesaurus-interactions-medicamenteuses-septembre-2023.pdf'
@@ -35,8 +36,17 @@ export type InteractionRow = {
   conduite_ar: string | null
   partenaire_ar: string | null
   ar_statut: 'absent' | 'brouillon' | 'relu'
-  page: number
+  /** page du PDF du thésaurus ; absente pour une interaction saisie dans l'admin */
+  page: number | null
   source_version: string
+  // colonnes de sql/40_interactions_admin.sql (absentes tant que la migration n'est pas appliquée)
+  origine?: 'ansm' | 'manuelle' | null
+  mecanisme_fr?: string | null
+  mecanisme_ar?: string | null
+  source_type?: string | null
+  source_titre?: string | null
+  source_url?: string | null
+  source_ref?: string | null
 }
 
 export type ClasseLien = { classe: string; membre: string }
@@ -143,7 +153,13 @@ export type InteractionItem = {
   langue: Lang
   /** traduction arabe relue ; false tant qu'elle est en brouillon ; null si le texte est en français */
   relue: boolean | null
-  page: number
+  /** mécanisme de l'interaction, quand il est renseigné (le thésaurus ANSM n'en donne pas) */
+  mecanisme: string | null
+  mecanisme_langue: Lang
+  /** source détaillée (RCP, article, site…) ; null pour une ligne du thésaurus sans précision : « Source : ANSM » */
+  source: SourceItem | null
+  /** page du PDF du thésaurus, null pour une interaction saisie dans l'admin */
+  page: number | null
   /** titre du thésaurus sous lequel la ligne est écrite */
   substance: string
   /** renseigné quand la ligne vient d'une classe de la substance, pas de la substance elle-même */
@@ -186,6 +202,9 @@ export function toItem(row: InteractionRow, lang: Lang, directs: ReadonlySet<str
     conduite: ar ? row.conduite_ar ?? '' : row.conduite_fr,
     langue: ar ? 'ar' : 'fr',
     relue: ar ? row.ar_statut === 'relu' : null,
+    mecanisme: (lang === 'ar' && row.mecanisme_ar) || row.mecanisme_fr || null,
+    mecanisme_langue: lang === 'ar' && row.mecanisme_ar ? 'ar' : 'fr',
+    source: sourceDe(row),
     page: row.page,
     substance: row.substance,
     via_classe: directs.has(row.substance) ? null : row.substance,

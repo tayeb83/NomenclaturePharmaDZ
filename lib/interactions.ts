@@ -20,6 +20,12 @@ export * from './interactions-core'
 
 export const INTERACTIONS_TAG = 'interactions-ansm'
 
+/** Après une saisie dans l'admin : les index (titres, noms arabes) sont reconstruits à la prochaine requête. */
+export function viderCachesInteractions(): void {
+  thesaurusMemo = undefined
+  nomsArMemo = undefined
+}
+
 /** Au-delà, la liste des membres d'une classe est tronquée à l'affichage. */
 const MEMBRES_MAX = 60
 
@@ -96,16 +102,20 @@ async function fetchInteractionsFiche(dci: string, lang: Lang): Promise<Interact
   const { titres, classes } = resoudreDci(t, dci)
   if (titres.length + classes.length === 0) return null
 
-  const rows = await query<InteractionRow>(
-    `SELECT id, substance, partenaire, partenaire_est_classe, niveau, niveaux, risque_fr, conduite_fr,
-            risque_ar, conduite_ar, partenaire_ar, ar_statut, page, source_version
-     FROM interactions_ansm WHERE substance = ANY($1::text[])`,
-    [[...titres, ...classes]]
-  )
+  const colonnes = `id, substance, partenaire, partenaire_est_classe, niveau, niveaux, risque_fr, conduite_fr,
+            risque_ar, conduite_ar, partenaire_ar, ar_statut, page, source_version`
+  const colonnesAdmin = `, origine, mecanisme_fr, mecanisme_ar, source_type, source_titre, source_url, source_ref`
+  const requete = (cols: string) =>
+    query<InteractionRow>(`SELECT ${cols} FROM interactions_ansm WHERE substance = ANY($1::text[])`, [[...titres, ...classes]])
+  // sql/40 non appliqué (colonne inconnue) : la fiche garde ses interactions, sans mécanisme ni source détaillée
+  const rows = await requete(colonnes + colonnesAdmin).catch(err => {
+    if (err?.code === '42703') return requete(colonnes)
+    throw err
+  })
   if (rows.length === 0) return null
 
   const directs = new Set(titres)
-  const items = trierItems(rows.map(r => toItem({ ...r, page: Number(r.page) }, lang, directs)))
+  const items = trierItems(rows.map(r => toItem({ ...r, page: r.page == null ? null : Number(r.page) }, lang, directs)))
 
   // un lien vers la page /dci n'est proposé que si la nomenclature DwaDZ contient la substance
   const nomenclature = await getNomenclatureIndex().catch(() => null)

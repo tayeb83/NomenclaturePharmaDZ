@@ -124,11 +124,14 @@ def main() -> int:
                                    THEN interactions_ansm.ar_statut ELSE 'absent' END,
                   risque_fr = EXCLUDED.risque_fr, conduite_fr = EXCLUDED.conduite_fr,
                   updated_at = NOW()
+                -- une interaction saisie dans l'admin (origine 'manuelle') n'est jamais écrasée
+                WHERE COALESCE(interactions_ansm.origine, 'ansm') = 'ansm'
             """, rows, page_size=500)
 
             cur.execute("""
                 DELETE FROM interactions_ansm
-                WHERE (substance_key, partenaire_key) NOT IN (SELECT * FROM unnest(%s::text[], %s::text[]))
+                WHERE COALESCE(origine, 'ansm') = 'ansm'
+                  AND (substance_key, partenaire_key) NOT IN (SELECT * FROM unnest(%s::text[], %s::text[]))
             """, ([r[1] for r in rows], [r[3] for r in rows]))
             supprimees = cur.rowcount
 

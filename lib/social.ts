@@ -389,6 +389,21 @@ export async function postToFacebook(message: string): Promise<{ success: boolea
 }
 
 /**
+ * Publie un lien sur la Page Facebook : Facebook construit l'aperçu (titre, résumé, visuel) depuis les balises
+ * Open Graph de la page. Utilisé pour partager un article depuis l'admin.
+ */
+export async function postFacebookLink(message: string, link: string): Promise<{ success: boolean; postId?: string; error?: string }> {
+  const { token, pageId, error } = await resolvePageAccessToken()
+  if (!token || !pageId) return { success: false, error: error || 'Facebook credentials manquants' }
+  try {
+    const res = await axios.post(`${FACEBOOK_GRAPH_BASE}/${pageId}/feed`, { message, link, access_token: token })
+    return { success: true, postId: res.data.id }
+  } catch (err: any) {
+    return { success: false, error: describeGraphError(err) }
+  }
+}
+
+/**
  * Publie une photo sur la Page Facebook (upload multipart direct — pas
  * d'URL publique à faire récupérer par le crawler Meta, que notre
  * middleware anti-bot bloque). La légende accompagne la photo.

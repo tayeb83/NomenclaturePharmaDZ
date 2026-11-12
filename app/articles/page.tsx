@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
-import { ARTICLES, getFeaturedArticles } from '@/lib/articles'
+import { getAllArticles } from '@/lib/articles-db'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
 
@@ -32,9 +32,10 @@ export default async function ArticlesPage() {
   const langCookie = cookies().get('lang')?.value
   const lang: Lang = isLang(langCookie) ? langCookie : 'fr'
 
-  const visibleArticles = ARTICLES.filter(a => a.lang === lang)
-  const otherLangArticles = ARTICLES.filter(a => a.lang !== lang)
-  const featuredArticles = getFeaturedArticles(lang, 3)
+  const tous = await getAllArticles()
+  const visibleArticles = tous.filter(a => a.lang === lang)
+  const otherLangArticles = tous.filter(a => a.lang !== lang)
+  const featuredArticles = visibleArticles.slice(0, 3)
 
   const itemListJsonLd = {
     '@context': 'https://schema.org',

@@ -57,6 +57,11 @@ par wilaya et commune. Interface bilingue **français / arabe** (RTL).
 - Après un import, les fiches se rafraîchissent seules sous 24 h ; pour aller plus vite, session admin
   puis `POST /api/admin/interactions`.
 - Contrôle du rapprochement avec votre nomenclature : `DATABASE_URL=... npx tsx scripts/check_ansm_couverture.mts`.
+- **Saisie et sourçage depuis l'admin** (`/admin/interactions`) : liste de toutes les interactions (ANSM + saisies), création,
+  correction, mécanisme, arabe, et source obligatoire pour une saisie (RCP, article scientifique, étude, site, ANSM, autre :
+  titre ou lien, référence précise). « Créer aussi le sens inverse » ajoute la ligne B + A pour qu'elle figure sur les deux fiches.
+  Une saisie (origine `manuelle`) n'est jamais écrasée par les imports du thésaurus. Mise en route :
+  `psql "$DATABASE_URL" -f sql/40_interactions_admin.sql` (à appliquer **avant** le prochain import du thésaurus).
 - Tests : `npm run test:interactions`.
 
 ### 🩺 Allergies documentées (Human Disease Ontology)
@@ -196,6 +201,19 @@ Tests : `npm run test:demandes`.
 - `DATABASE_URL=... python scripts/kg_export.py --db --out data/kg` (vraie base) ou
   `python scripts/kg_export.py --json scripts/fixtures/nomenclature_synthetique.json --out data/kg` (test, chiffres fictifs).
 - Tests : `python3 -m unittest scripts.tests.test_kg_export`.
+
+### ✍️ Articles publiés depuis l'admin (`/admin/articles`, FR / AR)
+- Les articles historiques restent dans `lib/articles*.ts` ; ceux de la base (`sql/41_articles_admin.sql`) s'y ajoutent :
+  liste `/articles`, page de l'article, sitemap, visuel de partage 1200×630 (avec l'image de couverture), lien « version arabe / française ».
+- Un article = une langue (`fr` ou `ar`) ; on relie les deux versions avec « Version dans l'autre langue ». Brouillon ou publié ;
+  un brouillon s'ouvre en aperçu pour l'administrateur connecté, jamais pour le public.
+- Texte en Markdown simple (`##`, listes, `> [!warning]`, tableaux, images https). Aide intégrée au formulaire.
+- **Import depuis une autre source** : adresse d'une page web (titre, résumé, image, langue et texte récupérés ; adresses internes refusées)
+  ou fichier `.md` / `.txt` / `.html`. La source d'origine (nom + lien) s'affiche sous l'article ; respectez les droits du texte repris.
+- Facebook : bloc de partage (Facebook, X, WhatsApp, copie du texte et des hashtags) sous chaque article publié, et bouton
+  « Publier sur Facebook » dans l'admin (`FACEBOOK_PAGE_ID` + `FACEBOOK_PAGE_ACCESS_TOKEN`).
+- Image de couverture : envoi (`BLOB_READ_WRITE_TOKEN`) ou adresse https. Tests : `npm run test:articles`.
+- Mise en route : `psql "$DATABASE_URL" -f sql/41_articles_admin.sql`.
 
 ### 📰 Partage d'un article
 - Barre de partage en bas de chaque article (`components/drug/ShareBar.tsx`, `lib/article-share.ts`) : Facebook, X, WhatsApp, copier le lien, **copier le texte**,

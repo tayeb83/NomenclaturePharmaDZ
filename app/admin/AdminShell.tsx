@@ -17,6 +17,7 @@ const GROUPS: { title: string; items: Item[] }[] = [
       { label: 'Monographies DCI', href: '/admin/monographies' },
       { label: 'RCP (ANPP)', href: '/admin/rcp' },
       { label: 'NAQESS (accès)', href: '/admin/acces' },
+      { label: 'Interactions', href: '/admin/interactions' },
     ],
   },
   {
@@ -37,7 +38,7 @@ const GROUPS: { title: string; items: Item[] }[] = [
     ],
   },
   { title: 'Abonnements', items: [{ label: 'Graphes & PDF', href: '/admin/graphe', adminOnly: true }] },
-  { title: 'Communication', items: [{ label: 'Demandes de médicaments', href: '/admin/demandes' }, { label: 'Publications Facebook', href: '/admin/social' }, { label: 'Vidéos', href: '/admin/videos' }] },
+  { title: 'Communication', items: [{ label: 'Demandes de médicaments', href: '/admin/demandes' }, { label: 'Articles', href: '/admin/articles' }, { label: 'Publications Facebook', href: '/admin/social' }, { label: 'Vidéos', href: '/admin/videos' }] },
   { title: 'Administration', items: [{ label: 'Comptes admin', href: '/admin/comptes', adminOnly: true }] },
 ]
 

@@ -3,7 +3,9 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
-import { ARTICLES, getArticleBySlug, getRelatedArticles, type ArticleSection } from '@/lib/articles'
+import { ARTICLES, type Article, type ArticleSection } from '@/lib/articles'
+import { findArticle, findArticleDraft, findTranslation, relatedArticles } from '@/lib/articles-db'
+import { isAdminSessionValid } from '@/lib/admin-auth'
 import { AdInContent } from '@/components/ads/AdBanner'
 import ShareBar from '@/components/drug/ShareBar'
 import { articleShareMessage, hashtagsArticle, ligneSuivre, texteACopier } from '@/lib/article-share'
@@ -16,18 +18,29 @@ export async function generateStaticParams() {
   return ARTICLES.map(a => ({ slug: a.slug }))
 }
 
+/** Article public ; un administrateur connecté peut aussi ouvrir un brouillon pour le relire. */
+async function chargerArticle(slug: string): Promise<{ article: Article; brouillon: boolean } | null> {
+  const publie = await findArticle(slug)
+  if (publie) return { article: publie, brouillon: false }
+  if (!isAdminSessionValid(cookies().get('admin_session')?.value)) return null
+  const draft = await findArticleDraft(slug)
+  return draft ? { article: draft, brouillon: true } : null
+}
+
 export async function generateMetadata(
   { params }: { params: { slug: string } }
 ): Promise<Metadata> {
   const { slug } = params
-  const article = getArticleBySlug(slug)
-  if (!article) return { title: 'Article introuvable' }
+  const trouve = await chargerArticle(slug)
+  if (!trouve) return { title: 'Article introuvable' }
+  const { article, brouillon } = trouve
 
   const canonical = `${APP_URL}/articles/${article.slug}`
   // visuel de partage 1200×630 propre à l'article (voir lib/article-share-image.tsx)
   const shareImage = `${APP_URL}/partage/article/${article.slug}`
   return {
     title: `${article.seoTitle || article.title}`,
+    ...(brouillon ? { robots: { index: false, follow: false } } : {}),
     description: article.description,
     keywords: article.seoKeywords,
     alternates: { canonical },
@@ -46,11 +59,15 @@ export async function generateMetadata(
   }
 }
 
+/** **gras** et [texte](https://lien) dans un texte d'article. Les liens sortants portent rel="nofollow noopener". */
 function renderBold(text: string) {
-  const parts = text.split(/\*\*(.*?)\*\*/g)
-  return parts.map((part, i) =>
-    i % 2 === 1 ? <strong key={i}>{part}</strong> : part
-  )
+  return text.split(/(\*\*[^*]+\*\*|\[[^\]]+\]\(https?:\/\/[^)\s]+\))/g).map((part, i) => {
+    const gras = /^\*\*([^*]+)\*\*$/.exec(part)
+    if (gras) return <strong key={i}>{gras[1]}</strong>
+    const lien = /^\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)$/.exec(part)
+    if (lien) return <a key={i} href={lien[2]} target="_blank" rel="nofollow noopener noreferrer" style={{ color: '#0284c7' }}>{lien[1]}</a>
+    return part
+  })
 }
 
 function RenderSection({ section, isRtl }: { section: ArticleSection; isRtl: boolean }) {
@@ -59,7 +76,7 @@ function RenderSection({ section, isRtl }: { section: ArticleSection; isRtl: boo
   if (section.type === 'intro') {
     return (
       <p style={{ fontSize: 15.5, color: '#334155', lineHeight: 1.8, direction: dir, marginBottom: 28 }}>
-        {section.text}
+        {section.text ? renderBold(section.text) : null}
       </p>
     )
   }
@@ -116,7 +133,7 @@ function RenderSection({ section, isRtl }: { section: ArticleSection; isRtl: boo
   if (section.type === 'paragraph') {
     return (
       <p style={{ fontSize: 15, color: '#334155', lineHeight: 1.8, direction: dir, marginBottom: 16 }}>
-        {section.text}
+        {section.text ? renderBold(section.text) : null}
       </p>
     )
   }
@@ -181,7 +198,7 @@ function RenderSection({ section, isRtl }: { section: ArticleSection; isRtl: boo
         padding: '14px 18px', margin: '20px 0', direction: dir,
       }}>
         <p style={{ margin: 0, fontSize: 14.5, color: s.color, lineHeight: 1.7 }}>
-          {section.text}
+          {section.text ? renderBold(section.text) : null}
         </p>
       </div>
     )
@@ -228,16 +245,13 @@ export default async function ArticleDetailPage({ params }: { params: { slug: st
   const lang: Lang = isLang(langCookie) ? langCookie : 'fr'
   const { slug } = params
 
-  const article = getArticleBySlug(slug)
-  if (!article) notFound()
+  const trouve = await chargerArticle(slug)
+  if (!trouve) notFound()
+  const { article, brouillon } = trouve
 
-  const related = getRelatedArticles(slug, article.lang)
+  const related = await relatedArticles(article)
   const isRtl = article.lang === 'ar'
-
-  const altSlug = article.slug.endsWith('-ar')
-    ? article.slug.replace(/-ar$/, '')
-    : `${article.slug}-ar`
-  const altArticle = getArticleBySlug(altSlug)
+  const altArticle = await findTranslation(article)
 
   const AUDIENCE_LABEL: Record<string, { fr: string; ar: string; color: string }> = {
     professionnel: { fr: 'Professionnel', ar: 'مهني', color: '#0284c7' },
@@ -253,6 +267,8 @@ export default async function ArticleDetailPage({ params }: { params: { slug: st
     datePublished: article.date,
     inLanguage: article.lang,
     keywords: [...article.tags, ...(article.seoKeywords || [])].join(', '),
+    ...(article.imageUrl ? { image: article.imageUrl } : {}),
+    ...(article.source?.url ? { isBasedOn: article.source.url } : {}),
     publisher: {
       '@type': 'Organization',
       name: 'DwaDZ',
@@ -335,6 +351,11 @@ export default async function ArticleDetailPage({ params }: { params: { slug: st
 
       <div className="page-body">
         <div className="container" style={{ maxWidth: 840 }}>
+          {brouillon && (
+            <div style={{ background: '#fef3c7', border: '1.5px solid #f59e0b', borderRadius: 8, padding: '10px 16px', marginBottom: 18, fontSize: 13, color: '#92400e', fontWeight: 700 }}>
+              Aperçu administrateur : cet article est un brouillon, il n’est pas visible du public.
+            </div>
+          )}
           {altArticle && (
             <div style={{
               background: '#eff6ff', border: '1.5px solid #bfdbfe', borderRadius: 8,
@@ -360,6 +381,15 @@ export default async function ArticleDetailPage({ params }: { params: { slug: st
               <RenderSection key={i} section={section} isRtl={isRtl} />
             ))}
           </article>
+
+          {article.source && (article.source.url || article.source.nom) && (
+            <p style={{ marginTop: 28, fontSize: 13, color: '#64748b', direction: isRtl ? 'rtl' : 'ltr' }}>
+              {article.lang === 'ar' ? 'المصدر الأصلي: ' : 'Source d’origine : '}
+              {article.source.url
+                ? <a href={article.source.url} target="_blank" rel="nofollow noopener noreferrer" style={{ color: '#0284c7', fontWeight: 600 }}>{article.source.nom || article.source.url} ↗</a>
+                : <strong>{article.source.nom}</strong>}
+            </p>
+          )}
 
           {article.faq?.length ? (
             <section style={{ marginTop: 36 }}>
