@@ -1,0 +1,35 @@
+/* dwadz-icons.css : mise en page de l'icône composée (forme + pastilles de voie + modificateurs).
+   Variables personnalisables : --dz-size, --dz-ink, --dz-accent, --dz-mod-bg, --dz-mod-ring, --dz-mod-ink */
+.dz-ico {
+  --dz-size: 40px;
+  position: relative;
+  display: inline-block;
+  flex: none;
+  inline-size: var(--dz-size);
+  block-size: var(--dz-size);
+  color: var(--dz-ink, #2c2c2a);
+  vertical-align: middle;
+}
+.dz-ico svg { display: block; }
+.dz-base { inline-size: 100%; block-size: 100%; }
+.dz-routes, .dz-mods {
+  position: absolute;
+  display: flex;
+  gap: calc(var(--dz-size) * 0.03);
+}
+/* Pastilles de voie : coin bas, côté fin de ligne (gauche en RTL pour l'arabe) */
+.dz-routes { inset-inline-end: calc(var(--dz-size) * -0.14); inset-block-end: calc(var(--dz-size) * -0.12); }
+.dz-route { inline-size: calc(var(--dz-size) * 0.44); block-size: calc(var(--dz-size) * 0.44); }
+/* Modificateurs : coin haut */
+.dz-mods { inset-inline-end: calc(var(--dz-size) * -0.12); inset-block-start: calc(var(--dz-size) * -0.1); }
+.dz-mod { inline-size: calc(var(--dz-size) * 0.38); block-size: calc(var(--dz-size) * 0.38); }
+
+@media (prefers-color-scheme: dark) {
+  .dz-ico {
+    --dz-ink: #e8e6dc;
+    --dz-accent: #5dcaa5;
+    --dz-mod-bg: #2c2c2a;
+    --dz-mod-ring: #888780;
+    --dz-mod-ink: #e8e6dc;
+  }
+}
