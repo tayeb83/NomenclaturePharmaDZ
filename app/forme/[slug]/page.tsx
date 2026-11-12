@@ -3,6 +3,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { getMedicamentsByForme, getAllFormeList } from '@/lib/queries'
+import { FormeIcon } from '@/components/ui/FormeIcon'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
 import { medicamentPath } from '@/lib/medicament-url'
 import { AdInContent } from '@/components/ads/AdBanner'
@@ -111,8 +112,9 @@ export default async function FormePage({ params }: { params: { slug: string } }
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '.08em', marginBottom: 6 }}>
               {pickLang(lang, { fr: 'FORME PHARMACEUTIQUE', ar: 'الشكل الصيدلاني' })}
             </div>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 800, color: 'white', margin: 0 }}>
-              {lang === 'ar' ? formeAr : forme.charAt(0).toUpperCase() + forme.slice(1)}
+            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 800, color: 'white', margin: 0, display: 'flex', alignItems: 'center', gap: 14 }}>
+              <span style={{ background: '#fff', borderRadius: 14, padding: 8, display: 'inline-flex', flex: 'none' }}><FormeIcon forme={forme} lang={lang} size={48} /></span>
+              <span>{lang === 'ar' ? formeAr : forme.charAt(0).toUpperCase() + forme.slice(1)}</span>
             </h1>
             {lang === 'ar' && (
               <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14, marginTop: 4 }}>{forme}</div>

@@ -5,5 +5,5 @@ export function classify(forme: string | null | undefined, codesEdqm?: string[])
 export function render(info: InfoIcone, opts?: OptsIcone): string
 export function html(forme: string | null | undefined, opts?: OptsIcone): string
 export function altText(info: InfoIcone, lang?: 'fr' | 'ar'): string
-declare const DwaIcons: { normalize: typeof normalize; classify: typeof classify; render: typeof render; html: typeof html; altText: typeof altText }
+declare const DwaIcons: { rules: unknown; normalize: typeof normalize; classify: typeof classify; render: typeof render; html: typeof html; altText: typeof altText }
 export default DwaIcons

@@ -18,6 +18,7 @@ import { displayField } from '@/lib/translate-fields'
 import { atcLabel } from '@/lib/atc-label'
 import { getCachedTerminologieFiche } from '@/lib/terminologie-cache'
 import { labAccessible } from '@/lib/lab-access'
+import { FormeIcon, VoieIcon, pastilleDeCodeEdqm } from '@/components/ui/FormeIcon'
 import { lienTerminologie, type TermeFiche } from '@/lib/terminologie-fiche'
 import { medicamentPath, medicamentSlug } from '@/lib/medicament-url'
 import { lettreForNom, lettreLabel, lettrePath } from '@/lib/repertoire'
@@ -534,6 +535,7 @@ export async function MedicamentDetail(
                 <table className="fiche-table"><tbody>
                   {med.forme && (
                     <Row label={pickLang(lang, { fr: 'Forme pharmaceutique', ar: 'الشكل الصيدلاني' })}>
+                      <FormeIcon forme={med.forme} codes={termino?.voies.map(v => v.code)} lang={lang} size={32} />
                       {displayField('forme', med.forme, lang)}
                       {termino?.forme && (
                         <> <CodeChip kind="EDQM" onglet="formes" code={termino.forme.code} titre={nomTerme(termino.forme, lang)} relation={termino.forme.relation} lang={lang} lien={lienLab} /></>
@@ -545,7 +547,7 @@ export async function MedicamentDetail(
                       {termino.voies.map((v, i) => (
                         <span key={v.code} className="fiche-terme">
                           {i > 0 && pickLang(lang, { fr: ' · ', ar: ' · ' })}
-                          {nomTerme(v, lang)} <CodeChip kind="EDQM" onglet="voies" code={v.code} titre={v.en} lang={lang} lien={lienLab} />
+                          <VoieIcon voie={pastilleDeCodeEdqm(v.code)} size={18} />{nomTerme(v, lang)} <CodeChip kind="EDQM" onglet="voies" code={v.code} titre={v.en} lang={lang} lien={lienLab} />
                         </span>
                       ))}
                     </Row>
@@ -653,7 +655,7 @@ export async function MedicamentDetail(
                 {(med.forme || med.dosage) && (
                   <>
                     <div className="fiche-aside-label">{pickLang(lang, { fr: 'Forme / dosage', ar: 'الشكل / الجرعة' })}</div>
-                    <div className="fiche-aside-value">{[med.forme, med.dosage].filter(Boolean).join(' – ')}</div>
+                    <div className="fiche-aside-value" style={{ display: 'flex', alignItems: 'center' }}><FormeIcon forme={med.forme} codes={termino?.voies.map(v => v.code)} lang={lang} size={28} />{[med.forme, med.dosage].filter(Boolean).join(' – ')}</div>
                   </>
                 )}
 

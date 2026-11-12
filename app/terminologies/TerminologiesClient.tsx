@@ -11,6 +11,7 @@ import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
+import { FormeIcon, VoieIcon, pastilleDeCodeEdqm } from '@/components/ui/FormeIcon'
 import type { LigneTermino, ListesTerminologies } from '@/lib/terminologies-page'
 import type { AtcReferentielLigne } from '@/lib/queries'
 
@@ -195,7 +196,7 @@ export function TerminologiesClient({ listes }: { listes: ListesTerminologies })
                       return (
                         <tr key={l.code} ref={cible(l) ? ligneCode : undefined} className={cible(l) ? 'cible' : undefined} id={`t-${l.code}`}>
                           <td><code dir="ltr" className={`termino-code ${onglet === 'ucum' ? 'ucum' : 'edqm'}`}>{l.code}</code></td>
-                          <td>{l.fr ?? <span className="termino-vide">—</span>}{l.symbole && l.symbole !== l.code ? <span className="termino-sym"> ({l.symbole})</span> : null}</td>
+                          <td>{onglet === 'formes' ? <FormeIcon forme={l.fr ?? l.en} lang={lang} size={26} /> : onglet === 'voies' ? <VoieIcon voie={pastilleDeCodeEdqm(l.code)} size={20} /> : null}{l.fr ?? <span className="termino-vide">—</span>}{l.symbole && l.symbole !== l.code ? <span className="termino-sym"> ({l.symbole})</span> : null}</td>
                           <td dir="ltr" style={{ textAlign: 'start' }}>{l.en}</td>
                           <td dir="rtl" className="termino-ar">{l.ar ?? <span className="termino-vide">—</span>}</td>
                           <td><span className={`termino-pill ${st.cls}`}>{t(st.fr, st.ar)}</span></td>
