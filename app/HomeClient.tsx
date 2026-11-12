@@ -17,9 +17,10 @@ export type HomeSpecialite = {
   nb_produits: number
 }
 
-// Remplacez ces IDs par vos vrais slots AdSense (disponibles dans Google AdSense > Annonces > Par bloc)
-const AD_SLOT_HOME_TOP = process.env.NEXT_PUBLIC_AD_SLOT_HOME_TOP || '1234567890'
-const AD_SLOT_HOME_MIDDLE = process.env.NEXT_PUBLIC_AD_SLOT_HOME_MIDDLE || '0987654321'
+// Emplacements dédiés facultatifs. S'ils ne sont pas définis, on ne passe rien :
+// AdBanner retombe alors sur l'emplacement « contenu » réel (jamais un faux ID).
+const AD_SLOT_HOME_TOP = process.env.NEXT_PUBLIC_AD_SLOT_HOME_TOP || undefined
+const AD_SLOT_HOME_MIDDLE = process.env.NEXT_PUBLIC_AD_SLOT_HOME_MIDDLE || undefined
 
 function formatDate(d: string | null): string | null {
   if (!d) return null
