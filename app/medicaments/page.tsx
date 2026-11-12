@@ -44,7 +44,7 @@ export default async function MedicamentsPage() {
       </div>
 
       {/* Publicité entre l'en-tête et la liste */}
-      <AdHorizontal slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MEDICAMENTS || '0000000000'} />
+      <AdHorizontal slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MEDICAMENTS || undefined} />
 
       {lettres.length > 0 && (
         <nav aria-label="Répertoire alphabétique" style={{ marginBottom: 24 }}>
