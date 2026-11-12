@@ -277,3 +277,65 @@ test('comparateur : composantsDeDci garde le titre et les classes de chaque subs
   assert.deepEqual(r.titres, ['AMIODARONE'])
   assert.ok(!r.classes.includes('AMIODARONE'))
 })
+
+// ── Saisie depuis l'admin (sql/40_interactions_admin.sql) ─────────────────────
+import { inverseDe, normaliserNom, sourceDe, validateInteraction } from '../../lib/interactions-admin-core.ts'
+
+const SAISIE = {
+  substance: ' amiodarone ', partenaire: 'Simvastatine', niveau: 'deconseillee', risque_fr: 'Majoration des effets indésirables musculaires.',
+  mecanisme_fr: 'Inhibition du CYP3A4', conduite_fr: 'Limiter la simvastatine à 20 mg/j.', source_type: 'rcp',
+  source_titre: 'RCP Zocor — rubrique 4.5', source_url: 'https://exemple.dz/rcp.pdf', inverse: true,
+}
+
+test('saisie admin : valide, noms normalisés en majuscules', () => {
+  const v = validateInteraction(SAISIE)
+  assert.ok(v.ok)
+  if (!v.ok) return
+  assert.equal(v.value.substance, 'AMIODARONE')
+  assert.equal(v.value.partenaire, 'SIMVASTATINE')
+  assert.equal(v.value.mecanisme_fr, 'Inhibition du CYP3A4')
+  assert.equal(v.value.inverse, true)
+  assert.equal(normaliserNom('  acide   valproïque '), 'ACIDE VALPROÏQUE')
+})
+
+test('saisie admin : une interaction doit être sourcée', () => {
+  assert.equal(validateInteraction({ ...SAISIE, source_titre: '', source_url: '' }).ok, false)
+  assert.equal(validateInteraction({ ...SAISIE, source_type: 'blog' }).ok, false)
+  assert.equal(validateInteraction({ ...SAISIE, source_titre: '' }).ok, true) // le lien suffit
+  assert.equal(validateInteraction({ ...SAISIE, source_url: '' }).ok, true) // le titre suffit
+  assert.equal(validateInteraction({ ...SAISIE, source_url: 'javascript:alert(1)' }).ok, false)
+})
+
+test('saisie admin : refus des cas incohérents', () => {
+  assert.equal(validateInteraction({ ...SAISIE, partenaire: 'amiodarone' }).ok, false) // même substance
+  assert.equal(validateInteraction({ ...SAISIE, partenaire: '' }).ok, false)
+  assert.equal(validateInteraction({ ...SAISIE, niveau: 'grave' }).ok, false)
+  assert.equal(validateInteraction({ ...SAISIE, risque_fr: '  ' }).ok, false)
+})
+
+test('saisie admin : statut arabe cohérent avec le texte arabe', () => {
+  const sans = validateInteraction({ ...SAISIE, ar_statut: 'relu' })
+  assert.ok(sans.ok && sans.value.ar_statut === 'absent')
+  const avec = validateInteraction({ ...SAISIE, risque_ar: 'خطر', ar_statut: 'absent' })
+  assert.ok(avec.ok && avec.value.ar_statut === 'brouillon')
+})
+
+test('sens inverse : substances échangées, même source, arabe du partenaire non repris', () => {
+  const v = validateInteraction({ ...SAISIE, id: 7, partenaire_ar: 'سيمفاستاتين' })
+  assert.ok(v.ok)
+  if (!v.ok) return
+  const i = inverseDe(v.value)
+  assert.equal(i.substance, 'SIMVASTATINE')
+  assert.equal(i.partenaire, 'AMIODARONE')
+  assert.equal(i.partenaire_ar, null)
+  assert.equal(i.id, undefined)
+  assert.equal(i.source_url, v.value.source_url)
+  assert.equal(i.inverse, false)
+})
+
+test('source présentée au public', () => {
+  assert.equal(sourceDe({ origine: 'ansm' }), null)
+  assert.deepEqual(sourceDe({ source_type: 'article', source_titre: 'T', source_url: 'https://x.org', source_ref: 'PMID 1' }),
+    { type: 'article', titre: 'T', url: 'https://x.org', ref: 'PMID 1' })
+  assert.equal(sourceDe({ source_type: 'inconnu' }), null)
+})

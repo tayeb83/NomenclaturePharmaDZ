@@ -13,7 +13,7 @@ import {
 import { getGardeCoverage, slugify } from '@/lib/garde'
 import { getDirectoryPlaces, getAllPharmacyRefs, groupByWilaya, pharmacyPath } from '@/lib/annuaire'
 import { medicamentPath } from '@/lib/medicament-url'
-import { ARTICLES } from '@/lib/articles'
+import { getAllArticles } from '@/lib/articles-db'
 import { getPublishedSlugs as getVideoSlugs } from '@/lib/videos'
 import { MIN_FAMILY_SIZE } from '@/lib/marque'
 import { DEMOS } from '@/lib/graphe/demos'
@@ -424,7 +424,7 @@ export default async function sitemap({ id }: { id: number | string }): Promise<
       changeFrequency: 'weekly',
       priority: 0.8,
     },
-    ...ARTICLES.map(article => ({
+    ...(await getAllArticles()).map(article => ({
       url: `${APP_URL}/articles/${article.slug}`,
       lastModified: new Date(article.date),
       changeFrequency: 'monthly' as const,

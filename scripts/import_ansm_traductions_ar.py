@@ -50,7 +50,8 @@ def main() -> int:
     conn = psycopg2.connect(dsn)
     try:
         with conn, conn.cursor() as cur:
-            cur.execute("SELECT id, partenaire, risque_fr, conduite_fr, ar_statut FROM interactions_ansm")
+            # les lignes saisies dans l'admin (origine 'manuelle') portent leur propre arabe : on n'y touche pas
+            cur.execute("SELECT id, partenaire, risque_fr, conduite_fr, ar_statut FROM interactions_ansm WHERE COALESCE(origine, 'ansm') = 'ansm'")
             updates, vus_relus = [], 0
             for id_, partenaire, risque_fr, conduite_fr, statut in cur.fetchall():
                 if statut == "relu" and not args.ecraser_relu:

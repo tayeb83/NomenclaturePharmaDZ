@@ -9,6 +9,7 @@ import {
   type InteractionItem, type Niveau,
 } from '@/lib/interactions-core'
 import type { InteractionsFiche } from '@/lib/interactions'
+import { SOURCE_COURT } from '@/lib/interactions-admin-core'
 
 /**
  * Style « Casbah » du site : marine, laiton, zellige, crème, Amiri. Les quatre gravités se distinguent
@@ -67,6 +68,25 @@ function Tag({ children }: { children: React.ReactNode }) {
   )
 }
 
+/** Source de l'interaction : thésaurus ANSM par défaut, sinon RCP / article / étude / site avec son lien. */
+function Source({ it, lang }: { it: InteractionItem; lang: Lang }) {
+  const s = it.source
+  if (!s || s.type === 'ansm') {
+    const detail = s?.titre && s.titre !== 'ANSM' ? s.titre : null
+    return <span>{t(lang, 'Source : ANSM', 'المصدر: ANSM')}{detail ? ` (${detail}${s?.ref ? `, ${s.ref}` : ''})` : ''}</span>
+  }
+  const nom = s.titre || s.url || ''
+  return (
+    <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>
+      {t(lang, 'Source', 'المصدر')} ({SOURCE_COURT[s.type][lang]}) :{' '}
+      {s.url
+        ? <a href={s.url} target="_blank" rel="noopener noreferrer nofollow" style={{ color: C.blue, fontWeight: 700 }}>{nom} ↗</a>
+        : <b>{nom}</b>}
+      {s.ref ? ` · ${s.ref}` : ''}
+    </span>
+  )
+}
+
 function Carte({ it, fiche, lang, montrerNiveau, entete }: { it: InteractionItem; fiche: InteractionsFiche; lang: Lang; montrerNiveau: boolean; entete?: (it: InteractionItem) => React.ReactNode }) {
   const n = NIVEAU[it.niveau]
   const p = fiche.partenaires[it.id]
@@ -118,6 +138,13 @@ function Carte({ it, fiche, lang, montrerNiveau, entete }: { it: InteractionItem
         </div>
       </div>
 
+      {it.mecanisme && (
+        <div style={{ padding: '9px 14px 11px', display: 'grid', gap: 4, borderTop: `1px solid ${C.creamEdge}` }}>
+          <p style={labelStyle}>{t(lang, 'Mécanisme', 'الآلية')}</p>
+          <p dir={it.mecanisme_langue === 'ar' ? 'rtl' : 'ltr'} lang={it.mecanisme_langue} style={{ ...txt, fontSize: it.mecanisme_langue === 'ar' ? 16 : 14.5 }}>{it.mecanisme}</p>
+        </div>
+      )}
+
       {p && p.membres.length > 0 && (
         <details style={{ padding: '0 14px 10px', fontSize: 14, color: C.muted }}>
           <summary style={{ cursor: 'pointer', color: C.blue, paddingTop: 8 }}>
@@ -139,7 +166,7 @@ function Carte({ it, fiche, lang, montrerNiveau, entete }: { it: InteractionItem
       )}
 
       <footer style={{ ...small, padding: '6px 14px', borderTop: `1px solid ${C.creamEdge}`, background: C.cream, display: 'flex', flexWrap: 'wrap', gap: '3px 14px' }}>
-        <span>{t(lang, 'Source : ANSM', 'المصدر: ANSM')}</span>
+        <Source it={it} lang={lang} />
         {it.relue === false && <span>{t(lang, '', 'ترجمة قيد المراجعة')}</span>}
         <span>
           {it.via_classe
