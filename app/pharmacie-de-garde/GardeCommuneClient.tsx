@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { Fragment, useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import type { GardeShift, GardeCoverageEntry } from '@/lib/db-types'
@@ -10,6 +10,7 @@ import type { Lang } from '@/lib/i18n'
 import { GardeFeedback } from '@/components/garde/GardeFeedback'
 import { StateMedal } from '@/components/annuaire/StateMedal'
 import { AdInContent } from '@/components/ads/AdBanner'
+import { decouperPourPubs } from '@/components/ads/decoupe'
 import {
   isPremium,
   premiumCardStyle,
@@ -513,17 +514,17 @@ export function GardeCommuneClient({
 
           {/* Pub après les deux premières pharmacies : le visiteur a déjà sa
               réponse, et l'emplacement est vu (celui du bas de page ne l'était
-              presque jamais). Deux grilles distinctes plutôt qu'un index dans
-              le map : l'emplacement ne se remonte pas quand le tri change. */}
-          <div style={{ display: 'grid', gap: 10 }}>
-            {sortedSchedule.slice(0, 2).map(renderShift)}
-          </div>
-          {sortedSchedule.length > 2 && <AdInContent style={{ margin: '14px auto' }} />}
-          {sortedSchedule.length > 2 && (
-            <div style={{ display: 'grid', gap: 10 }}>
-              {sortedSchedule.slice(2).map(renderShift)}
-            </div>
-          )}
+              presque jamais). Une seconde suit six pharmacies plus loin dans
+              les longues listes. Une grille par segment plutôt qu'un index
+              dans le map : l'emplacement ne se remonte pas quand le tri change. */}
+          {decouperPourPubs(sortedSchedule, 2, 6, 2).map((segment, k) => (
+            <Fragment key={`segment-${k}`}>
+              {k > 0 && <AdInContent placement="list" style={{ margin: '14px auto' }} />}
+              <div style={{ display: 'grid', gap: 10 }}>
+                {segment.items.map(renderShift)}
+              </div>
+            </Fragment>
+          ))}
         </>
       )}
 

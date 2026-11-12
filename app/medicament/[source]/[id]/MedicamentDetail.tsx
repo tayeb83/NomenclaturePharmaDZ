@@ -40,7 +40,7 @@ import { getInteractionsAnsm } from '@/lib/interactions'
 import { allergiesDeDci } from '@/lib/allergies-core'
 import { AllergiesSection, libelleBandeau, nombreAllergies } from '@/components/drug/AllergiesSection'
 import { FicheSecurite, type SecuriteAllergies, type SecuriteInteractions } from '@/components/drug/FicheSecurite'
-import { AdInContent } from '@/components/ads/AdBanner'
+import { AdInContent, AdSidebar } from '@/components/ads/AdBanner'
 
 const TYPE_LABELS: Record<string, { fr: string; ar: string }> = {
   GE: { fr: 'Générique', ar: 'جنيس' }, 'Gé': { fr: 'Générique', ar: 'جنيس' }, RE: { fr: 'Référence étrangère', ar: 'مرجعي أجنبي' },
@@ -635,6 +635,7 @@ export async function MedicamentDetail(
             </div>
 
             {/* ─── Repères : prix, DCI, prescription, accès rapides ─── */}
+            <div className="fiche-cote">
             <aside className="fiche-box fiche-aside">
               <h2 className="fiche-box-title">{pickLang(lang, { fr: 'Repères', ar: 'معالم' })}</h2>
               <div className="fiche-aside-body">
@@ -707,12 +708,16 @@ export async function MedicamentDetail(
                 </a>
               </div>
             </aside>
+            {/* Pub de colonne, sur ordinateur : elle reste à l'écran avec les
+                repères pendant toute la lecture de la fiche. */}
+            <AdSidebar />
+            </div>
           </div>
 
           {/* Pub juste après l'essentiel de la fiche : c'est là que le
               visiteur venu de Google a encore les yeux. Celle du bas de page
               n'était presque jamais vue. */}
-          <AdInContent />
+          <AdInContent placement="top" />
 
           {/* ─── Monographie de la DCI (contenu saisi et relu) ──── */}
           {/* ─── RCP officiel (ANPP) : lien vers le PDF du portail ─── */}

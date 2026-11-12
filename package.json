@@ -19,6 +19,7 @@
     "test:videos": "node --test --test-concurrency=1 \"tests/videos/*.test.ts\"",
     "test:guide": "node --test --test-concurrency=1 \"tests/guide/*.test.ts\"",
     "test:allergies": "node --test --test-concurrency=1 \"tests/allergies/*.test.ts\"",
+    "test:ads": "node --test --test-concurrency=1 \"tests/ads/*.test.ts\"",
     "test:icones": "node lib/dwadz-icons/test_parity.js"
   },
   "dependencies": {
