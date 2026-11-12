@@ -689,7 +689,7 @@ a.fiche-atc:hover { text-decoration: underline; }
 .fiche-terme { display: inline; }
 .fiche-flag { font-size: 18px; margin-inline-end: 6px; vertical-align: middle; }
 .fiche-obs { padding: 10px 12px; font-size: 13.5px; line-height: 1.7; color: #333; }
-.fiche-aside { position: sticky; top: 12px; }
+.fiche-cote { position: sticky; top: 12px; display: grid; gap: 14px; min-width: 0; }
 .fiche-aside-body { padding: 10px 12px 14px; }
 .fiche-aside-label { margin-top: 10px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #666; }
 .fiche-aside-label:first-child { margin-top: 0; }
@@ -702,13 +702,14 @@ a.fiche-atc:hover { text-decoration: underline; }
 .fiche-btn-outline { background: #fff; color: #0b5394; }
 @media (max-width: 860px) {
   .fiche-layout { grid-template-columns: 1fr; }
-  .fiche-aside { position: static; order: -1; }
+  .fiche-cote { position: static; order: -1; }
   .fiche-table th { width: 40%; }
 }
 @media print {
   .fiche-layout { grid-template-columns: 1fr 200pt; gap: 8pt; }
   .fiche-box { break-inside: avoid; page-break-inside: avoid; border: 1pt solid #bbb; }
-  .fiche-aside { position: static; }
+  .fiche-cote { position: static; }
+  .pub-cote { display: none; }
   .fiche-btn { display: none; }
 }
 

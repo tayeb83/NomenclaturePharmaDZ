@@ -171,6 +171,12 @@ export function GardeWilayaView({ data, lang }: { data: WilayaPageData; lang: La
         </section>
       )}
 
+      {/* Pub entre les pharmacies du jour et la liste des communes : celle du
+          bas de page passe sous une longue liste de liens. */}
+      {mainCommune && shifts.length > 0 && wilaya.communes.length > 0 && (
+        <AdInContent placement="list" style={{ margin: '0 auto 32px' }} />
+      )}
+
       {wilaya.communes.length > 0 && (
         <section>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--navy)', marginBottom: 12 }}>{t.communes(wilayaName)}</h2>

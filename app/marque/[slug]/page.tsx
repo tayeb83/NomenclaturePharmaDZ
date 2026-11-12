@@ -138,7 +138,7 @@ export default async function MarquePage({ params }: { params: { slug: string } 
             </p>
           )}
 
-          <AdInContent style={{ margin: '0 auto 28px' }} />
+          <AdInContent placement="top" style={{ margin: '0 auto 28px' }} />
 
           <div className="section-title">
             {pickLang(lang, { fr: `💊 Présentations de ${nom}`, ar: `💊 تقديمات ${nom}` })}

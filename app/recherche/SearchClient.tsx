@@ -1,11 +1,12 @@
 'use client'
 
-import { Suspense, useState, useTransition, useCallback, useRef, useEffect, useMemo } from 'react'
+import { Fragment, Suspense, useState, useTransition, useCallback, useRef, useEffect, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import type { SearchResult } from '@/lib/db-types'
 import { DrugCard } from '@/components/drug/DrugCard'
 import { AdInContent } from '@/components/ads/AdBanner'
+import { decouperPourPubs } from '@/components/ads/decoupe'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 import { SuggestionList } from '@/components/search/SuggestionList'
 import { useSuggestions } from '@/components/search/useSuggestions'
@@ -738,13 +739,16 @@ export function SearchClient({
               )}
             </div>
           )}
-          {!loading && filteredResults.slice(0, 3).map((d, i) => (
-            <DrugCard key={`${d.source}-${d.id}-${i}`} drug={d} type={d.source} onOpen={() => trackResultOpen(d)} />
-          ))}
-          {/* Pub après les 3 premiers résultats : la recherche n'en affichait aucune. */}
-          {!loading && filteredResults.length > 3 && <AdInContent style={{ margin: '16px auto' }} />}
-          {!loading && filteredResults.slice(3).map((d, i) => (
-            <DrugCard key={`${d.source}-${d.id}-${i + 3}`} drug={d} type={d.source} onOpen={() => trackResultOpen(d)} />
+          {/* Une pub après les 3 premiers résultats, puis toutes les 8 fiches
+              (3 au plus) : les longues listes n'en montraient qu'une seule.
+              Clé stable par segment : la pub ne se remonte pas au filtrage. */}
+          {!loading && decouperPourPubs(filteredResults, 3, 8, 3).map((segment, k) => (
+            <Fragment key={`segment-${k}`}>
+              {k > 0 && <AdInContent placement="list" style={{ margin: '16px auto' }} />}
+              {segment.items.map((d, i) => (
+                <DrugCard key={`${d.source}-${d.id}-${segment.debut + i}`} drug={d} type={d.source} onOpen={() => trackResultOpen(d)} />
+              ))}
+            </Fragment>
           ))}
         </div>
       </div>

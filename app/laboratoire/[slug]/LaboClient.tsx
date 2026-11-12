@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { AdInContent } from '@/components/ads/AdBanner'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { medicamentPath } from '@/lib/medicament-url'
@@ -196,6 +197,11 @@ export function LaboClient({
           </div>
         </section>
       )}
+
+      {/* Pub entre le portefeuille et la longue liste de produits : la page
+          n'en avait qu'une, tout en bas, sous un tableau rarement parcouru
+          jusqu'au bout. */}
+      <AdInContent placement="top" style={{ margin: '0 auto 32px' }} />
 
       {/* ── Liste des produits ── */}
       <section style={{ marginBottom: 40 }}>

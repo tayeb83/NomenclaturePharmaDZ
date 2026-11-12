@@ -152,7 +152,7 @@ export default async function DciPage({ params }: { params: { slug: string } }) 
             ))}
           </div>
 
-          <AdInContent style={{ margin: '0 auto 28px' }} />
+          <AdInContent placement="top" style={{ margin: '0 auto 28px' }} />
 
           {/* Lien substitution */}
           {generiques.length > 0 && (
