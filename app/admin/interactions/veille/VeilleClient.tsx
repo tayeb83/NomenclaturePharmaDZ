@@ -137,6 +137,7 @@ export function VeilleClient() {
             {c.niveau_ansm && <span className="adm-pill">ANSM : {NIVEAU_LABEL[c.niveau_ansm as Niveau] ?? c.niveau_ansm}</span>}
             {c.sens === 'source_plus_grave' && <span className="adm-pill bad">le RCP est plus sévère</span>}
             {c.sens === 'source_moins_grave' && <span className="adm-pill wa">le RCP est moins sévère</span>}
+            {c.b_est_classe && <span className="adm-pill in">« {c.substance_b} » est une classe</span>}
             {(c.a_hors_thesaurus || c.b_hors_thesaurus) && <span className="adm-pill wa">substance hors thésaurus ANSM</span>}
             <span style={{ fontSize: 12, color: 'var(--adm-muted)' }}>{c.n_sources} RCP · score {c.score}</span>
           </div>
@@ -182,7 +183,7 @@ export function VeilleClient() {
               {absente ? (
                 <>
                   <p style={{ margin: 0, fontSize: 12.5, color: 'var(--adm-muted)' }}>
-                    Accepter crée l’interaction dans les deux sens, en saisie manuelle, avec le RCP choisi comme source. Le niveau est le vôtre :
+                    {c.b_est_classe ? 'Accepter crée une interaction substance + classe, en saisie manuelle,' : 'Accepter crée l’interaction dans les deux sens, en saisie manuelle,'} avec le RCP choisi comme source. Le niveau est le vôtre :
                     il ne reprend pas automatiquement celui du RCP. Rédigez le risque avec vos mots : le texte du RCP n’est pas recopié.
                   </p>
                   <div className="adm-fields">

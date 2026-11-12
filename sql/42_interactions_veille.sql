@@ -87,3 +87,7 @@ CREATE TABLE IF NOT EXISTS interactions_evidence (
 );
 
 CREATE INDEX IF NOT EXISTS idx_interactions_evidence_candidate ON interactions_evidence (candidate_id);
+
+-- Candidat dont le partenaire est une classe du thésaurus (« + ANTAGONISTES CALCIQUES ») : accepter crée une seule
+-- ligne (substance + classe), pas le sens inverse. Ajouté après la première version : rejouable.
+ALTER TABLE interactions_candidates ADD COLUMN IF NOT EXISTS b_est_classe BOOLEAN NOT NULL DEFAULT FALSE;

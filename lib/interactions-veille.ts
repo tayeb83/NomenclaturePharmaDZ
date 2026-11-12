@@ -30,6 +30,7 @@ export type CandidatRow = {
   via: string[] | null
   a_hors_thesaurus: boolean
   b_hors_thesaurus: boolean
+  b_est_classe: boolean
   n_sources: number
   score: number
   statut: Statut
@@ -50,7 +51,7 @@ export type PreuveRow = PreuveRcp & {
 
 export type LigneAnsmRow = { id: number; substance: string; partenaire: string; niveau: string; risque_fr: string; conduite_fr: string; origine: string; page: number | null }
 
-const COLS = `id, paire_key, substance_a, substance_b, ecart, gravite_source, niveau_ansm, sens, via, a_hors_thesaurus, b_hors_thesaurus,
+const COLS = `id, paire_key, substance_a, substance_b, ecart, gravite_source, niveau_ansm, sens, via, a_hors_thesaurus, b_hors_thesaurus, b_est_classe,
   n_sources, score, statut, motif, reviewed_by, reviewed_at, promoted_id, last_seen`
 
 export type ListFiltres = { statut?: string; ecart?: string; q?: string; limit?: number; offset?: number }

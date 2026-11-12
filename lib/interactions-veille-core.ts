@@ -96,22 +96,23 @@ export function sourceDepuisPreuve(p: PreuveRcp): Pick<InteractionInput, 'source
   }
 }
 
-/** Interaction à créer à partir d'un candidat accepté ; les deux sens sont créés pour que les deux fiches l'affichent. */
+/** Interaction à créer à partir d'un candidat accepté ; deux substances : les deux sens sont créés pour que les deux fiches l'affichent. */
 export function interactionDepuisCandidat(
-  c: { substance_a: string; substance_b: string },
+  c: { substance_a: string; substance_b: string; b_est_classe?: boolean },
   d: Decision,
   source: PreuveRcp,
 ): InteractionInput {
   return {
     substance: normaliserNom(c.substance_a),
     partenaire: normaliserNom(c.substance_b),
-    partenaire_est_classe: false,
+    partenaire_est_classe: !!c.b_est_classe,
     niveau: d.niveau!,
     risque_fr: d.risque_fr,
     mecanisme_fr: d.mecanisme_fr,
     conduite_fr: d.conduite_fr,
     risque_ar: null, mecanisme_ar: null, conduite_ar: null, partenaire_ar: null, ar_statut: 'absent',
     ...sourceDepuisPreuve(source),
-    inverse: true,
+    // « A + CLASSE » : pas de sens inverse (la classe n'a pas de fiche médicament)
+    inverse: !c.b_est_classe,
   }
 }
