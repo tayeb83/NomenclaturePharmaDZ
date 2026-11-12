@@ -94,6 +94,15 @@ function ecrireRapport(dossier: string, b: ReturnType<typeof bilan>, constats: C
       c.via.join(' ; '), c.preuves[0].rcp_id, c.preuves[0].section, c.preuves[0].page,
     ]),
   ]))
+  // divergences de niveau : de quoi vérifier si l'écart vient de l'ANSM, du RCP ou de l'extraction de la gravité
+  writeFileSync(`${dossier}/divergences.csv`, csv([
+    ['sens', 'substance_a', 'substance_b', 'gravite_rcp', 'niveau_ansm', 'rubriques', 'n_rcp', 'lignes_ansm', 'extrait_rcp'],
+    ...b.candidats.filter(c => c.ecart === 'divergence_niveau').sort((x, y) => (x.sens ?? '').localeCompare(y.sens ?? '') || y.score - x.score).map(c => [
+      c.sens, c.substance_a, c.substance_b, c.gravite_source, c.niveau_ansm,
+      [...new Set(c.preuves.map(p => p.section ?? '?'))].join('+'), c.n_rcp, c.via.slice(0, 2).join(' ; '),
+      (c.preuves.find(p => p.gravite === c.gravite_source)?.contexte ?? '').slice(0, 200),
+    ]),
+  ]))
   // partenaires non identifiés, regroupés : de quoi remplir data/ansm/alias_partenaires.json
   const RANG: Record<Gravite, number> = { contre_indiquee: 4, deconseillee: 3, precaution: 2, a_prendre_en_compte: 1, non_precisee: 0 }
   const nr = new Map<string, { libelle: string; n: number; rcps: Set<string>; gravite: Gravite }>()
@@ -184,6 +193,13 @@ try {
   const div = b.candidats.filter(c => c.ecart === 'divergence_niveau')
   const abs = b.candidats.filter(c => c.ecart === 'absente')
   console.log(`  dont divergences : ${div.filter(c => c.sens === 'source_plus_grave').length} paires où le RCP est plus sévère, ${div.filter(c => c.sens === 'source_moins_grave').length} où il l'est moins`)
+  // gravité du RCP × niveau ANSM, en paires : si une colonne domine, l'écart est systématique (extraction ou échelle), pas ponctuel
+  const croix = new Map<string, number>()
+  for (const c of div) { const k = `${c.gravite_source} (RCP) → ${c.niveau_ansm} (ANSM)`; croix.set(k, (croix.get(k) ?? 0) + 1) }
+  for (const [k, v] of [...croix].sort((x, y) => y[1] - x[1])) console.log(`      ${String(v).padStart(3)}  ${k}`)
+  const rubriques = new Map<string, number>()
+  for (const c of div) for (const r of new Set(c.preuves.map(p => p.section ?? '?'))) rubriques.set(r, (rubriques.get(r) ?? 0) + 1)
+  console.log(`      rubriques des divergences : ${[...rubriques].map(([r, n]) => `${r} ×${n}`).join(', ')}`)
   console.log(`  dont absentes    : ${abs.filter(c => c.a_hors_thesaurus || c.b_hors_thesaurus).length} avec une substance hors thésaurus, ${abs.filter(c => !c.a_hors_thesaurus && !c.b_hors_thesaurus).length} entre deux substances que l'ANSM traite`)
   const types = constats.filter(c => c.ecart === 'non_resolue')
   const causes = new Map<string, number>()
