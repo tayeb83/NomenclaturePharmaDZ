@@ -5,9 +5,9 @@
  * critère), tiroir ouvert par un bouton « Filtrer » sur téléphone. Un seul choix par critère ; recocher le retire.
  */
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 
-export type OptionFiltre = { id: string; label: string; n: number; drapeau?: string }
+export type OptionFiltre = { id: string; label: string; n: number; drapeau?: string; icone?: ReactNode }
 export type GroupeFiltre = {
   id: string
   titre: string
@@ -51,7 +51,7 @@ function Bloc({ g, ouvert, onToggle, textes }: { g: GroupeFiltre; ouvert: boolea
             <label key={o.id} className={`fl-option${g.actif === o.id ? ' choisi' : ''}`}>
               <span className="fl-option-nom">
                 <input type="checkbox" checked={g.actif === o.id} onChange={() => g.onPick(o.id)} />
-                <span>{o.drapeau ?? ''}{o.label}</span>
+                <span>{o.icone}{o.drapeau ?? ''}{o.label}</span>
               </span>
               <span className="fl-option-n">{o.n}</span>
             </label>

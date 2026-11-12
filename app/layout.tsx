@@ -4,6 +4,7 @@ import { Nav } from '@/components/layout/Nav'
 import { Footer } from '@/components/layout/Footer'
 import { BackBar } from '@/components/layout/BackBar'
 import { LanguageProvider } from '@/components/i18n/LanguageProvider'
+import { SpriteIcones } from '@/components/ui/SpriteIcones'
 import { PWAManager } from '@/components/pwa/PWAManager'
 import { PageVisitTracker } from '@/components/analytics/PageVisitTracker'
 import { getCachedStats } from '@/lib/medicament-cache'
@@ -143,6 +144,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         )}
       </head>
       <body suppressHydrationWarning>
+        <SpriteIcones />
         <LanguageProvider initialLang={initialLang}>
           <Nav currentVersion={currentVersion} isAdmin={isAdmin} />
           <BackBar />

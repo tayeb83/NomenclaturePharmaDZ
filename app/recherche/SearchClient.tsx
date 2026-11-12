@@ -9,6 +9,7 @@ import { AdInContent } from '@/components/ads/AdBanner'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 import { SuggestionList } from '@/components/search/SuggestionList'
 import { useSuggestions } from '@/components/search/useSuggestions'
+import { FormeIcon, VoieIcon, PASTILLE_DE_VOIE } from '@/components/ui/FormeIcon'
 import { FiltresRecherche, type GroupeFiltre, type OptionFiltre } from '@/components/search/FiltresRecherche'
 // Types seulement : le code de normalisation reste côté serveur (il est lourd pour un bundle navigateur).
 import type { Facette, Facettes, FacetteSel } from '@/lib/facettes'
@@ -482,7 +483,7 @@ export function SearchClient({
       id: g.id,
       titre: ar ? g.ar : g.fr,
       actif: facSel[g.id],
-      options: facettes[g.id].map(o => ({ id: o.id, label: ar && o.libelle_ar ? o.libelle_ar : o.libelle, n: o.n, drapeau: g.id === 'origine' && o.id === 'f' ? '🇩🇿 ' : undefined })),
+      options: facettes[g.id].map(o => ({ id: o.id, label: ar && o.libelle_ar ? o.libelle_ar : o.libelle, n: o.n, drapeau: g.id === 'origine' && o.id === 'f' ? '🇩🇿 ' : undefined, icone: g.id === 'forme' ? <FormeIcon forme={o.libelle} size={22} /> : g.id === 'voie' ? <VoieIcon voie={PASTILLE_DE_VOIE[o.id] ?? 'other'} size={20} /> : undefined })),
       onPick: (id: string) => handleFacette(g.id, id),
     }))
 

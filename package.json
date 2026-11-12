@@ -18,7 +18,8 @@
     "test:regression": "node --test --test-concurrency=1 \"tests/regression/*.test.ts\"",
     "test:videos": "node --test --test-concurrency=1 \"tests/videos/*.test.ts\"",
     "test:guide": "node --test --test-concurrency=1 \"tests/guide/*.test.ts\"",
-    "test:allergies": "node --test --test-concurrency=1 \"tests/allergies/*.test.ts\""
+    "test:allergies": "node --test --test-concurrency=1 \"tests/allergies/*.test.ts\"",
+    "test:icones": "node lib/dwadz-icons/test_parity.js"
   },
   "dependencies": {
     "@vercel/blob": "^2.8.2",

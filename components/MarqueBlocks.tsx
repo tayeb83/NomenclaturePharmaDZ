@@ -4,6 +4,7 @@ import { getCountryFlag } from '@/lib/countryFlag'
 import { medicamentPath } from '@/lib/medicament-url'
 import type { MarqueGroup } from '@/lib/dci-groups'
 import type { Enregistrement } from '@/lib/db-types'
+import { FormeIcon } from '@/components/ui/FormeIcon'
 
 /**
  * Blocs « un nom commercial = un tableau de présentations », partagés par les
@@ -53,7 +54,7 @@ export function MarqueBlocks({ marques, lang }: { marques: MarqueGroup<Enregistr
                 <tbody>
                   {g.presentations.map(med => (
                     <tr key={med.id}>
-                      <td>{med.forme || '—'}</td>
+                      <td>{med.forme ? <span style={{ display: 'inline-flex', alignItems: 'center' }}><FormeIcon forme={med.forme} lang={lang} size={24} />{med.forme}</span> : '—'}</td>
                       <td>{med.dosage || '—'}</td>
                       <td>{med.labo || '—'}</td>
                       <td>
