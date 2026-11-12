@@ -66,13 +66,6 @@
     "PAMPLEMOUSSE (JUS ET FRUIT)"
    ]
   },
-  "médicaments susceptibles de donner des torsades de pointes": {
-   "vers": [
-    "SUBSTANCES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES",
-    "NEUROLEPTIQUES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES",
-    "ANTIPARASITAIRES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES"
-   ]
-  },
   "torsades de pointes": {
    "vers": [
     "SUBSTANCES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES",
@@ -309,6 +302,240 @@
   "sulfamides hypoglycémiants": {
    "vers": [
     "SULFAMIDES HYPOGLYCÉMIANTS"
+   ]
+  },
+  "aas": {
+   "vers": [
+    "ACIDE ACETYLSALICYLIQUE"
+   ]
+  },
+  "agonistes-antagonistes morphiniques": {
+   "vers": [
+    "MORPHINIQUES AGONISTES-ANTAGONISTES"
+   ]
+  },
+  "alpha-1-bloquants": {
+   "vers": [
+    "ALPHABLOQUANTS À VISÉE UROLOGIQUE",
+    "ANTIHYPERTENSEURS ALPHA-BLOQUANTS"
+   ]
+  },
+  "alphabloquants": {
+   "vers": [
+    "ALPHABLOQUANTS À VISÉE UROLOGIQUE",
+    "ANTIHYPERTENSEURS ALPHA-BLOQUANTS"
+   ]
+  },
+  "anti-acides": {
+   "vers": [
+    "TOPIQUES GASTRO-INTESTINAUX, ANTIACIDES ET ADSORBANTS"
+   ]
+  },
+  "antiarythmiques donnant des torsades de pointes": {
+   "vers": [
+    "SUBSTANCES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES",
+    "TORSADOGÈNES (SAUF ARSÉNIEUX, ANTIPARASITAIRES, NEUROLEPTIQUES, MÉTHADONE...)",
+    "NEUROLEPTIQUES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES",
+    "ANTIPARASITAIRES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES"
+   ]
+  },
+  "médicaments donnant des torsades de pointes": {
+   "vers": [
+    "SUBSTANCES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES",
+    "TORSADOGÈNES (SAUF ARSÉNIEUX, ANTIPARASITAIRES, NEUROLEPTIQUES, MÉTHADONE...)",
+    "NEUROLEPTIQUES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES",
+    "ANTIPARASITAIRES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES"
+   ]
+  },
+  "substances susceptibles de provoquer des torsades de pointes": {
+   "vers": [
+    "SUBSTANCES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES",
+    "TORSADOGÈNES (SAUF ARSÉNIEUX, ANTIPARASITAIRES, NEUROLEPTIQUES, MÉTHADONE...)",
+    "NEUROLEPTIQUES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES",
+    "ANTIPARASITAIRES SUSCEPTIBLES DE DONNER DES TORSADES DE POINTES"
+   ]
+  },
+  "antidépresseurs tricycliques": {
+   "vers": [
+    "ANTIDÉPRESSEURS IMIPRAMINIQUES"
+   ]
+  },
+  "antagonistes des récepteurs histaminiques h2": {
+   "vers": [
+    "ANTISÉCRÉTOIRES ANTIHISTAMINIQUES H2"
+   ]
+  },
+  "antidépresseurs inhibiteurs sélectifs de la recapture de la sérotonine": {
+   "vers": [
+    "INHIBITEURS SÉLECTIFS DE LA RECAPTURE DE LA SÉROTONINE"
+   ]
+  },
+  "anticonvulsivants inducteurs enzymatiques": {
+   "vers": [
+    "INDUCTEURS ENZYMATIQUES",
+    "INDUCTEURS ENZYMATIQUES PUISSANTS"
+   ]
+  },
+  "ara ii": {
+   "vers": [
+    "ANTAGONISTES DES RÉCEPTEURS DE L'ANGIOTENSINE II"
+   ]
+  },
+  "ara2": {
+   "vers": [
+    "ANTAGONISTES DES RÉCEPTEURS DE L'ANGIOTENSINE II"
+   ]
+  },
+  "dérivés morphiniques": {
+   "vers": [
+    "MORPHINIQUES"
+   ]
+  },
+  "médicaments à risque d'angioœdème bradykinique": {
+   "vers": [
+    "MÉDICAMENTS, BRADYKININE ET ANGIO-ŒDÈME"
+   ]
+  },
+  "chélateurs des acides biliaires": {
+   "vers": [
+    "RÉSINES CHÉLATRICES"
+   ]
+  },
+  "consommation d'alcool": {
+   "vers": [
+    "ALCOOL (BOISSON OU EXCIPIENT)"
+   ]
+  },
+  "médicaments provoquant une réaction antabuse avec l'alcool": {
+   "vers": [
+    "ANTABUSE (RÉACTION)"
+   ]
+  },
+  "delamanide": {
+   "vers": [
+    "DÉLAMANID"
+   ]
+  },
+  "estroprogestatifs et progestatifs": {
+   "vers": [
+    "ESTROPROGESTATIFS CONTRACEPTIFS",
+    "PROGESTATIFS CONTRACEPTIFS"
+   ]
+  },
+  "héparines de bas poids moléculaire et apparentés": {
+   "vers": [
+    "HÉPARINES",
+    "HÉPARINES (DOSES CURATIVES ET/OU SUJET ÂGÉ)",
+    "HÉPARINES (DOSES PRÉVENTIVES)"
+   ]
+  },
+  "héparines non fractionnées": {
+   "vers": [
+    "HÉPARINES",
+    "HÉPARINES (DOSES CURATIVES ET/OU SUJET ÂGÉ)",
+    "HÉPARINES (DOSES PRÉVENTIVES)"
+   ]
+  },
+  "hydroxycloroquine": {
+   "vers": [
+    "HYDROXYCHLOROQUINE"
+   ]
+  },
+  "imao non sélectifs": {
+   "vers": [
+    "IMAO IRRÉVERSIBLES"
+   ]
+  },
+  "imao non sélectifs irréversibles": {
+   "vers": [
+    "IMAO IRRÉVERSIBLES"
+   ]
+  },
+  "imao sélectifs a": {
+   "vers": [
+    "IMAO-A RÉVERSIBLES, Y COMPRIS OXAZOLIDINONES ET BLEU DE MÉTHYLÈNE"
+   ]
+  },
+  "imao sélectifs b": {
+   "vers": [
+    "IMAO-B"
+   ]
+  },
+  "inhibiteurs des tyrosines kinases métabolisés": {
+   "vers": [
+    "INHIBITEURS DE TYROSINE KINASES MÉTABOLISÉS"
+   ]
+  },
+  "interféron alpha": {
+   "vers": [
+    "INTERFERON ALFA"
+   ]
+  },
+  "jus de pamplemousse ou de pamplemousse": {
+   "vers": [
+    "PAMPLEMOUSSE (JUS ET FRUIT)"
+   ]
+  },
+  "sodium (oxybate de)": {
+   "vers": [
+    "OXYBATE DE SODIUM"
+   ]
+  },
+  "suppléments potassiques": {
+   "vers": [
+    "POTASSIUM"
+   ]
+  },
+  "œstrogènes": {
+   "vers": [
+    "ESTROGÈNES NON CONTRACEPTIFS"
+   ]
+  },
+  "une chimiothérapie à base de platine": {
+   "vers": [
+    "ORGANOPLATINES"
+   ]
+  },
+  "inhibiteurs du cyp3a": {
+   "vers": [
+    "INHIBITEURS PUISSANTS DU CYP3A4"
+   ]
+  },
+  "inhibiteurs du cyp3a4": {
+   "vers": [
+    "INHIBITEURS PUISSANTS DU CYP3A4"
+   ]
+  },
+  "inducteurs du cyp3a4": {
+   "vers": [
+    "INDUCTEURS ENZYMATIQUES",
+    "INDUCTEURS ENZYMATIQUES PUISSANTS"
+   ]
+  },
+  "inducteurs du cytochrome cyp3a4": {
+   "vers": [
+    "INDUCTEURS ENZYMATIQUES",
+    "INDUCTEURS ENZYMATIQUES PUISSANTS"
+   ]
+  },
+  "substrats du cyp3a4": {
+   "vers": [
+    "SUBSTRATS À RISQUE DU CYP3A4"
+   ]
+  },
+  "substrats du cytochrome cyp3a4": {
+   "vers": [
+    "SUBSTRATS À RISQUE DU CYP3A4"
+   ]
+  },
+  "ains": {
+   "vers": [
+    "ANTI-INFLAMMATOIRES NON STÉROÏDIENS"
+   ]
+  },
+  "sympathomimétiques alpha": {
+   "vers": [
+    "SYMPATHOMIMÉTIQUES ALPHA (VOIES ORALE ET/OU NASALE)"
    ]
   }
  },

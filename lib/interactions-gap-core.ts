@@ -93,10 +93,45 @@ export type GapContext = {
   atc: Map<string, string[]>
   /** tous les titres du thésaurus (substances et classes) */
   titres: string[]
+  /** cleAlias(titre) → titre : un nom de RCP identique à un titre du thésaurus, malgré parenthèses, articles ou pluriel */
+  titreParCle: Map<string, string>
 }
 
-/** « Les bêta-bloquants », « Autres AINS » → « beta bloquants », « aines » : la clé de la table d'alias. */
-export const cleAlias = (s: string): string => foldNom(s).replace(/^(?:(?:les|des|autres|aux|la|le|l|du|de la|de l|d)\s+)+/, '')
+/**
+ * Clé de comparaison d'un nom de classe ou de substance : sans accents, articles et « autres », pluriel ramené au singulier,
+ * « susceptibles de provoquer / d'induire / donnant des torsades » ramenés à la formule du thésaurus.
+ * « Les bêta-bloquants », « Un bêta-bloquant » et « Bêta-bloquants » donnent la même clé.
+ */
+export const cleAlias = (s: string): string => {
+  let f = foldNom(s)
+  for (let i = 0; i < 4; i++) f = f.replace(/^(?:les|des|autres?|aux|la|le|l|du|de la|de l|d|un|une|certains|certaines)\s+/, '')
+  f = f.replace(/\b(?:susceptibles?|capables?) (?:de|d) (?:provoquer|induire|donner|causer)\b/g, 'susceptibles de donner')
+    .replace(/\bdonnant\b/g, 'susceptibles de donner')
+  return f.split(' ').map(t => (t.length > 3 && /[sx]$/.test(t) ? t.slice(0, -1) : t)).join(' ')
+}
+
+/**
+ * Les RCP copient les lignes du thésaurus, souvent coupées en fin de ligne ou suivies d'exemples :
+ * « Corticoïdes (gluco-, minéralo-) (voie générale) (sauf hydrocortisone en traitement », « Indinavir : ».
+ * Formes à essayer, de la plus complète à la plus nue : ponctuation finale et parenthèse ouverte retirées, puis sans parenthèses
+ * ni exemples (« tels que… », « [ … »).
+ */
+export function variantesLibelle(libelle: string): string[] {
+  let v = libelle.replace(/\s+/g, ' ').trim().replace(/^[\s[(]+/, '')
+  v = v.replace(/[\s:;,.]+$/, '')
+  // parenthèse restée ouverte (ligne coupée) : on garde ce qui la précède ; parenthèse fermante orpheline : retirée
+  let depth = 0
+  let coupe = -1
+  for (let i = 0; i < v.length; i++) {
+    if (v[i] === '(') { if (depth === 0) coupe = i; depth++ } else if (v[i] === ')') { if (depth > 0) depth--; else v = v.slice(0, i) + v.slice(i + 1), i-- }
+  }
+  if (depth > 0) v = v.slice(0, coupe)
+  v = v.replace(/[\s:;,.]+$/, '').trim()
+  let sans = v
+  while (/\([^()]*\)/.test(sans)) sans = sans.replace(/\([^()]*\)/g, ' ')
+  const nu = sans.split(/\s+(?:tels?\s+qu|y\s+compris|notamment|utilis[ée]e?s?\s)|\s*\[/i)[0].replace(/\s+/g, ' ').replace(/[\s:;,.]+$/, '').trim()
+  return [...new Set([v, nu].filter(Boolean))]
+}
 
 export function buildGapContext(index: ThesaurusIndex, lignes: LigneAnsm[], table?: TableAlias): GapContext {
   const parSubstance = new Map<string, LigneAnsm[]>()
@@ -107,7 +142,8 @@ export function buildGapContext(index: ThesaurusIndex, lignes: LigneAnsm[], tabl
   const aliases = new Map(Object.entries(table?.alias ?? {}).map(([k, v]) => [cleAlias(k), v]))
   const atc = new Map(Object.entries(table?.atc ?? {}))
   const titres = [...new Set([...index.titres.exact.values()].flat().map(x => x.dci))]
-  return { index, parSubstance, aliases, atc, titres }
+  const titreParCle = new Map(titres.map(t => [cleAlias(t), t]))
+  return { index, parSubstance, aliases, atc, titres, titreParCle }
 }
 
 const titreEstClasse = (ctx: GapContext, titre: string | null): boolean => !!titre && ctx.index.membresDe.has(cle(titre))
@@ -139,68 +175,121 @@ function lignesVisant(ctx: GapContext, x: Composant, y: Composant): { direct: Li
 const rangMin = (ls: LigneAnsm[]): Niveau | null =>
   ls.length ? ls.reduce((m, l) => (NIVEAU_RANG[l.niveau] < NIVEAU_RANG[m] ? l.niveau : m), ls[0].niveau) : null
 
-type Partenaire = { composants: Composant[]; estClasse: boolean } | { ignorer: string } | null
+type Partenaire =
+  | { composants: Composant[]; estClasse: boolean; libre?: boolean }
+  | { ignorer: string }
+  | null
 
 /** Composant correspondant à des titres du thésaurus : un titre seul se comporte comme une substance, plusieurs comme une classe. */
 function composantDepuisTitres(nom: string, titres: string[]): Composant {
   return titres.length === 1 ? { nom, titre: titres[0], classes: [] } : { nom, titre: null, classes: titres }
 }
 
-/** Qui est le partenaire cité par le RCP : table d'alias relue, code ATC de classe, puis nomenclature et thésaurus. */
-function resoudrePartenaire(ctx: GapContext, fait: FaitRcp): Partenaire {
-  const alias = ctx.aliases.get(cleAlias(fait.libelle)) ?? (fait.cible ? ctx.aliases.get(cleAlias(fait.cible)) : undefined)
-  if (alias && 'ignorer' in alias) return { ignorer: alias.ignorer }
-  if (alias) return { composants: [composantDepuisTitres(fait.libelle, alias.vers)], estClasse: alias.vers.length > 1 || titreEstClasse(ctx, alias.vers[0]) }
+const GENERIQUE = /(^| )(medicament|substance|produit|traitement|agent|derive|inhibiteur|antagoniste|agoniste|inducteur|antidiabetique|anti|enzyme|transporteur|autre)/
 
+/** Un nom court qui ressemble à une substance (« Glitazones », « Phénylbutazone ») : candidat hors thésaurus, jamais lié à rien. */
+const nomLibre = (ctx: GapContext, v: string): boolean => {
+  const f = foldNom(v)
+  // s'il ressemble à un titre du thésaurus, c'est un alias à écrire, pas une substance absente
+  return f.length >= 4 && f.split(' ').length <= 3 && !/\d/.test(f) && !GENERIQUE.test(f) && diagnostiquer(ctx, v).cause === 'inconnu'
+}
+
+/** Un nom isolé : table d'alias relue, titre du thésaurus, puis nomenclature. */
+function resoudreNom(ctx: GapContext, nom: string): Partenaire {
+  const k = cleAlias(nom)
+  const alias = ctx.aliases.get(k)
+  if (alias && 'ignorer' in alias) return { ignorer: alias.ignorer }
+  if (alias) return { composants: [composantDepuisTitres(nom, alias.vers)], estClasse: alias.vers.length > 1 || titreEstClasse(ctx, alias.vers[0]) }
+  const titre = ctx.titreParCle.get(k)
+  if (titre) return { composants: [composantDepuisTitres(nom, [titre])], estClasse: titreEstClasse(ctx, titre) }
+  const composants = composantsDeDci(ctx.index, nom)
+  if (composants.some(p => !!p.titre || p.classes.length > 0)) {
+    return { composants, estClasse: composants.length === 1 && titreEstClasse(ctx, composants[0].titre) }
+  }
+  return null
+}
+
+/** Le nom, ses formes nettoyées, puis — pour « A, B, C : » ou « A et B » — chacun de ses éléments. */
+function resoudreListe(ctx: GapContext, libelle: string): { libelle: string; partenaire: Partenaire }[] {
+  const formes = variantesLibelle(libelle)
+  for (const f of formes) {
+    const r = resoudreNom(ctx, f)
+    if (r) return [{ libelle: f, partenaire: r }]
+  }
+  const nu = formes[formes.length - 1] ?? libelle
+  if (ARTEFACT.test(foldNom(nu))) return [{ libelle: nu, partenaire: null }] // phrase, pas une liste de substances
+  for (const separateur of [/\s*,\s*|\s*;\s*/, /\s+et\s+/]) {
+    const parts = nu.split(separateur).map(x => x.trim()).filter(Boolean)
+    if (parts.length < 2) continue
+    const elements = parts.flatMap(x => {
+      for (const f of variantesLibelle(x)) { const r = resoudreNom(ctx, f); if (r) return [{ libelle: f, partenaire: r }] }
+      return [{ libelle: x, partenaire: nomLibre(ctx, x) ? ({ composants: [{ nom: x, titre: null, classes: [] }], estClasse: false, libre: true } as Partenaire) : null }]
+    })
+    // « A et B » : on ne coupe que si chaque moitié est reconnue (« Héparines de bas poids moléculaire et apparentés » reste entier)
+    if (separateur.source.includes('et') && elements.some(e => !e.partenaire || ('libre' in e.partenaire && e.partenaire.libre))) continue
+    return elements
+  }
+  return [{ libelle: nu, partenaire: nomLibre(ctx, nu) ? { composants: [{ nom: nu, titre: null, classes: [] }], estClasse: false, libre: true } : null }]
+}
+
+/** Qui est le partenaire cité par le RCP : alias relu, code ATC de classe, nomenclature, puis le nom lui-même (nettoyé, éventuellement en liste). */
+function resoudrePartenaires(ctx: GapContext, fait: FaitRcp): { libelle: string; partenaire: Partenaire }[] {
+  const alias = ctx.aliases.get(cleAlias(fait.libelle)) ?? (fait.cible ? ctx.aliases.get(cleAlias(fait.cible)) : undefined)
+  if (alias && 'ignorer' in alias) return [{ libelle: fait.libelle, partenaire: { ignorer: alias.ignorer } }]
+  if (alias) return [{ libelle: fait.libelle, partenaire: { composants: [composantDepuisTitres(fait.libelle, alias.vers)], estClasse: alias.vers.length > 1 || titreEstClasse(ctx, alias.vers[0]) } }]
   if (fait.cible_type === 'classe') {
     const titres = (fait.cible && ctx.atc.get(fait.cible)) || null
-    return titres?.length ? { composants: [composantDepuisTitres(fait.libelle, titres)], estClasse: true } : null
+    return [{ libelle: fait.libelle, partenaire: titres?.length ? { composants: [composantDepuisTitres(fait.libelle, titres)], estClasse: true } : null }]
   }
-  const nom = fait.cible_type === 'dci' && fait.cible ? fait.cible : fait.libelle
-  const composants = composantsDeDci(ctx.index, nom)
-  // Le partenaire est identifié s'il est dans la nomenclature (cible_type 'dci') ou s'il est connu du thésaurus.
-  if (fait.cible_type !== 'dci' && !composants.some(p => !!p.titre || p.classes.length > 0)) return null
-  return { composants, estClasse: composants.length === 1 && titreEstClasse(ctx, composants[0].titre) }
+  if (fait.cible_type === 'dci' && fait.cible) {
+    // la nomenclature a reconnu la substance à l'import : on s'y fie
+    return [{ libelle: fait.libelle, partenaire: { composants: composantsDeDci(ctx.index, fait.cible), estClasse: false } }]
+  }
+  return resoudreListe(ctx, fait.libelle)
 }
 
 /** Compare un fait RCP au thésaurus : un constat par couple (substance de la fiche, substance du partenaire). */
 export function comparerFait(ctx: GapContext, fait: FaitRcp): Constat[] {
   const base = { fait, niveau_ansm: null, via: [], sens: null, a_hors_thesaurus: false, b_hors_thesaurus: false, b_est_classe: false, note: null }
   const source = composantsDeDci(ctx.index, fait.dci)
-  const partenaire = resoudrePartenaire(ctx, fait)
-  if (!partenaire) return source.map(a => ({ ...base, via: [] as string[], a: a.nom, b: fait.libelle, ecart: 'non_resolue' as const }))
-  if ('ignorer' in partenaire) {
-    return source.map(a => ({ ...base, via: [] as string[], a: a.nom, b: fait.libelle, ecart: 'ignoree' as const, note: partenaire.ignorer }))
-  }
-
   const out: Constat[] = []
-  for (const a of source) {
-    for (const b of partenaire.composants) {
-      // nom canonique : le titre du thésaurus quand il existe (sans sel), pour que « Phénytoïne sodique » et « PHENYTOINE » ne fassent qu'une paire
-      const na = a.titre ?? a.nom
-      const nb = b.titre ?? b.nom
-      if (cle(na) === cle(nb)) continue // une substance ne figure pas en interaction avec elle-même
-      const ab = lignesVisant(ctx, a, b)
-      const ba = lignesVisant(ctx, b, a)
-      const direct = [...ab.direct, ...ba.direct]
-      const classe = [...ab.classe, ...ba.classe]
-      const toutes = [...direct, ...classe]
-      const niveau = rangMin(toutes)
-      const c: Constat = {
-        fait, a: na, b: nb, ecart: 'absente', niveau_ansm: niveau,
-        via: [...new Set(toutes.map(l => `${l.substance} + ${l.partenaire}`))],
-        sens: null, a_hors_thesaurus: horsThesaurus(a), b_hors_thesaurus: horsThesaurus(b) && !partenaire.estClasse,
-        b_est_classe: partenaire.estClasse, note: null,
-      }
-      if (toutes.length > 0) {
-        c.ecart = direct.length > 0 ? 'couverte_directe' : 'couverte_classe'
-        if (fait.gravite !== 'non_precisee' && niveau) {
-          const rs = NIVEAU_RANG[GRAVITE_VERS_NIVEAU[fait.gravite]]
-          const ra = NIVEAU_RANG[niveau]
-          if (rs !== ra) { c.ecart = 'divergence_niveau'; c.sens = rs < ra ? 'source_plus_grave' : 'source_moins_grave' }
+  for (const { libelle, partenaire } of resoudrePartenaires(ctx, fait)) {
+    if (!partenaire) {
+      for (const a of source) out.push({ ...base, via: [] as string[], a: a.nom, b: libelle, ecart: 'non_resolue' })
+      continue
+    }
+    if ('ignorer' in partenaire) {
+      for (const a of source) out.push({ ...base, via: [] as string[], a: a.nom, b: libelle, ecart: 'ignoree', note: partenaire.ignorer })
+      continue
+    }
+    for (const a of source) {
+      for (const b of partenaire.composants) {
+        // nom canonique : le titre du thésaurus quand il existe (sans sel), pour que « Phénytoïne sodique » et « PHENYTOINE » ne fassent qu'une paire
+        const na = a.titre ?? a.nom
+        const nb = b.titre ?? b.nom
+        if (cle(na) === cle(nb)) continue // une substance ne figure pas en interaction avec elle-même
+        const ab = lignesVisant(ctx, a, b)
+        const ba = lignesVisant(ctx, b, a)
+        const direct = [...ab.direct, ...ba.direct]
+        const classe = [...ab.classe, ...ba.classe]
+        const toutes = [...direct, ...classe]
+        const niveau = rangMin(toutes)
+        const c: Constat = {
+          fait, a: na, b: nb, ecart: 'absente', niveau_ansm: niveau,
+          via: [...new Set(toutes.map(l => `${l.substance} + ${l.partenaire}`))],
+          sens: null, a_hors_thesaurus: horsThesaurus(a), b_hors_thesaurus: horsThesaurus(b) && !partenaire.estClasse,
+          b_est_classe: partenaire.estClasse, note: null,
         }
+        if (toutes.length > 0) {
+          c.ecart = direct.length > 0 ? 'couverte_directe' : 'couverte_classe'
+          if (fait.gravite !== 'non_precisee' && niveau) {
+            const rs = NIVEAU_RANG[GRAVITE_VERS_NIVEAU[fait.gravite]]
+            const ra = NIVEAU_RANG[niveau]
+            if (rs !== ra) { c.ecart = 'divergence_niveau'; c.sens = rs < ra ? 'source_plus_grave' : 'source_moins_grave' }
+          }
+        }
+        out.push(c)
       }
-      out.push(c)
     }
   }
   return out
@@ -215,20 +304,21 @@ export type Diagnostic = {
 }
 
 const MOTS_VIDES = new Set(['medicaments', 'medicament', 'substances', 'substance', 'autres', 'avec', 'dans', 'pour', 'susceptibles', 'donner', 'effet', 'type', 'voie', 'sauf'])
-const ARTEFACT = /^(voir|cf\b|association|il\b|en cas|ce\b|cette\b|l utilisation|toute|pour|sauf|et\b|ou\b|de\b)|\b4 \d\b|\bcontre indiqu/
+const ARTEFACT = /^(voir|cf\b|du fait|dans|association|il\b|en cas|ce\b|cette\b|l utilisation|toute|pour|sauf|et\b|ou\b|de\b)|\b4 \d\b|\bcontre indiqu/
 
 /**
  * Pourquoi un partenaire reste non résolu, et ce qui y ressemble dans le thésaurus. Ne résout rien :
  * un rapprochement douteux ne produit aucun candidat. Sert à remplir data/ansm/alias_partenaires.json.
  */
 export function diagnostiquer(ctx: GapContext, libelle: string): Diagnostic {
-  const f = foldNom(libelle)
+  const nu = variantesLibelle(libelle).slice(-1)[0] ?? libelle
+  const f = foldNom(nu)
   if (f.length > 80 || f.split(' ').length > 9 || ARTEFACT.test(f)) return { cause: 'artefact_extraction', suggestions: [] }
   const mots = f.split(' ').filter(m => m.length >= 4 && !MOTS_VIDES.has(m))
   if (mots.length === 0) return { cause: 'inconnu', suggestions: [] }
   const scores = ctx.titres.map(t => {
     const tm = foldNom(t).split(' ').filter(m => m.length >= 4)
-    const communs = mots.filter(m => tm.some(x => x.slice(0, 5) === m.slice(0, 5)))
+    const communs = mots.filter(m => tm.some(x => x === m || (m.length >= 7 && x.length >= 7 && x.slice(0, 7) === m.slice(0, 7))))
     return { t, score: communs.length / mots.length - tm.length * 0.01 }
   }).filter(x => x.score >= 0.5).sort((a, b) => b.score - a.score || a.t.localeCompare(b.t))
   return scores.length
