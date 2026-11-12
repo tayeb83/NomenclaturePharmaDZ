@@ -386,11 +386,18 @@ export async function MedicamentDetail(
                   </Link>
                 ) : displayName(med.dci, lang)}
               </div>
-              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: 'white', margin: 0 }}>
-                {lang === 'ar'
-                  ? [displayName(med.nom_marque, lang), displayField('dosage', med.dosage, lang)].filter(Boolean).join(' ')
-                  : medicamentDesignation(med)}
-              </h1>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+                {med.forme && (
+                  <span style={{ background: '#fff', borderRadius: 14, padding: '10px 16px 14px 10px', display: 'inline-flex', flex: 'none' }}>
+                    <FormeIcon forme={med.forme} codes={termino?.voies.map(v => v.code)} lang={lang} size={56} />
+                  </span>
+                )}
+                <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: 'white', margin: 0 }}>
+                  {lang === 'ar'
+                    ? [displayName(med.nom_marque, lang), displayField('dosage', med.dosage, lang)].filter(Boolean).join(' ')
+                    : medicamentDesignation(med)}
+                </h1>
+              </div>
               {med.is_critical && (
                 <div style={{
                   marginTop: 10,
