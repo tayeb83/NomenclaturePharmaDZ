@@ -23,6 +23,12 @@ export function VoieIcon({ voie, size = 18 }: { voie: string; size?: number }) {
   )
 }
 
+/** Code EDQM de voie (200xxxxx) → pastille du sprite (« other » si la voie n'a pas de glyphe propre). */
+export function pastilleDeCodeEdqm(code: string): string {
+  const r = (DwaIcons.rules as { edqm_route: Record<string, string> }).edqm_route
+  return r[code] ?? 'other'
+}
+
 /** Identifiant de voie de la recherche (lib/guide-core.ts) → pastille du sprite. */
 export const PASTILLE_DE_VOIE: Record<string, string> = {
   'orale-solide': 'oral', 'orale-liquide': 'oral', injectable: 'injectable', inhalee: 'inhaled', buccale: 'buccal',
