@@ -14,7 +14,7 @@
 | 0:21–0:27 | لكل مصطلح رمز رقمي. وبذلك يوحد ما يكتب بطرق مختلفة | Chaque terme a un code numérique : on unifie ce qui s'écrit de plusieurs façons |
 | 0:27–0:35 | فائدته: تبادل المعطيات بين الأنظمة وقواعد البيانات بلغة واحدة يفهمها الجميع | Son intérêt : échanger des données entre systèmes et bases de données dans une langue commune |
 | 0:35–0:41 | وكيف يظهر في DwaDZ؟ في البحث العادي والموجه، مع رموز EDQM | Et sur DwaDZ ? En recherche normale comme guidée, avec les codes EDQM |
-| 0:41–0:47 | مثلا في البحث الموجه: الطريقة الفموية Oral use رمزها 20053000 | Par exemple en recherche guidée : la voie orale (« Oral use ») a le code 20053000 |
+| 0:41–0:47 | مثلا: الطريقة الفموية Oral use رمزها 20053000 | Par exemple : la voie orale (« Oral use ») a le code 20053000 |
 | 0:47–0:54 | وفي كل نتيجة: رمز EDQM للشكل، ورمز UCUM لوحدة الجرعة | Et dans chaque résultat : le code EDQM de la forme, et le code UCUM de l'unité du dosage |
 | 0:54–1:01 | وتظهر هذه الرموز أيضا في بطاقة الدواء بجانب الشكل والطريقة والجرعة | Ces codes figurent aussi sur la fiche du médicament, à côté de la forme, de la voie et du dosage |
 | 1:01–1:09 | وتشير العلامات إلى درجة التطابق: بلا علامة تطابق تام، ثم للأوسع، ثم للقريب | Les signes indiquent la correspondance : aucun signe = exact, ⊂ = plus large, ≈ = proche à confirmer |
