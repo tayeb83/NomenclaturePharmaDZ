@@ -4,11 +4,11 @@ const A = (n, w, h) => (to, hl, from) => shot(`assets/guidee/${n}.jpg`, w, h, to
 const accueil = A("accueil", 2000, 791), amo = A("amo", 2000, 1144), voie = A("voie", 2000, 1144), forme = A("forme", 2000, 1144)
 window.SPEC = {
   meta: { slug: "recherche-guidee-dwadz", n: 19, titreFr: "Recherche guidée : trouver un médicament pas à pas avec DwaDZ", titreAr: "البحث الموجَّه: اعثر على دوائك خطوة بخطوة مع DwaDZ",
-    descFr: "Tu ne connais pas le nom exact du médicament ? La recherche guidée de DwaDZ te pose les bonnes questions dans l'ordre : substance (ou marque), voie d'administration, forme, dosage. À chaque étape, seuls les choix qui existent vraiment dans la nomenclature algérienne sont proposés, et la liste de présentations se réduit. Les codes EDQM (forme, voie) et UCUM (unité du dosage) s'affichent à chaque résultat. Essaie-la : https://www.dzair-pharma.net/lab/guide . Elle aide à retrouver une présentation ; elle ne remplace ni l'ordonnance ni l'avis du médecin ou du pharmacien. Vidéo en arabe, sous-titrée en français.",
+    descFr: "Tu ne connais pas le nom exact du médicament ? La recherche guidée de DwaDZ te pose les bonnes questions dans l'ordre : substance (ou marque), voie d'administration, forme, dosage. À chaque étape, seuls les choix qui existent vraiment dans la nomenclature algérienne sont proposés, et la liste de présentations se réduit. Les codes EDQM (forme, voie) et UCUM (unité du dosage) s'affichent à chaque résultat. Essaie-la : https://www.dzair-pharma.net/recherche?onglet=guide . Elle aide à retrouver une présentation ; elle ne remplace ni l'ordonnance ni l'avis du médecin ou du pharmacien. Vidéo en arabe, sous-titrée en français.",
     descAr: "لا تعرف الاسم الدقيق للدواء؟ البحث الموجَّه في DwaDZ يطرح عليك الأسئلة بالترتيب: المادة الفعالة (أو الاسم التجاري)، ثم طريقة الاستعمال، ثم الشكل، ثم الجرعة. في كل خطوة تظهر فقط الخيارات الموجودة فعلًا في المدوّنة الوطنية الجزائرية، وتتقلص قائمة العروض. وتظهر مع كل نتيجة رموز EDQM وUCUM. هذه الأداة تساعد على إيجاد العرض المطلوب، ولا تغني عن الوصفة أو رأي الطبيب أو الصيدلي. فيديو بالعربية مع ترجمة فرنسية.",
     tags: ["DwaDZ", "البحث_الموجه", "EDQM", "UCUM", "الدواء"],
-    cta: { url: "https://www.dzair-pharma.net/lab/guide", fr: "Essayer la recherche guidée", ar: "جرّب البحث الموجَّه" },
-    sources: ["Recherche guidée DwaDZ (/lab/guide), données de la nomenclature nationale des produits pharmaceutiques (MIPH)", "EDQM Standard Terms (forme pharmaceutique, voie d'administration)", "UCUM (Unified Code for Units of Measure)"],
+    cta: { url: "https://www.dzair-pharma.net/recherche?onglet=guide", fr: "Essayer la recherche guidée", ar: "جرّب البحث الموجَّه" },
+    sources: ["Recherche guidée DwaDZ (page Recherche, onglet Guidée), données de la nomenclature nationale des produits pharmaceutiques (MIPH)", "EDQM Standard Terms (forme pharmaceutique, voie d'administration)", "UCUM (Unified Code for Units of Measure)"],
     verifier: "Captures du site réel : l'exemple « amo » (amoxicilline + acide clavulanique, sirop) et les nombres de présentations (15, 12, 8, 13…) changent à chaque mise à jour de la nomenclature : aucun nombre n'est cité dans la voix. La vidéo ne donne aucune posologie. Relecture par un pharmacien." },
   cover: { ar: "البحث الموجَّه", fr: ["Recherche guidée :", "pas à pas"], subAr: "المادة، الطريقة، الشكل، الجرعة", subFr: "Substance, voie, forme, dosage", icons: ["🧭", "💊"], c: "#4dabf7" },
   segments: [
@@ -34,7 +34,7 @@ window.SPEC = {
       "وإذا وجد خيار واحد فقط، تملأ الخطوة تلقائيا بإطار ذهبي"),
     seg("هذه الأداة تساعدك على إيجاد العرض المطلوب،|ولا تعطي جرعة ولا تغني عن الطبيب أو الصيدلي", "L'outil aide à retrouver une présentation ;|il ne donne aucune posologie", card("👩‍⚕️", "لا تغني عن الطبيب أو الصيدلي", "Aucune posologie, aucun conseil médical", COL.ok), "think",
       "هذه الأداة تساعدك على إيجاد العرض المطلوب، ولا تعطي جرعة، ولا تغني عن الطبيب أو الصيدلي"),
-    seg("جرّب البحث الموجَّه الآن على DwaDZ.|الرابط في وصف الفيديو", "Essaie la recherche guidée sur DwaDZ.|Lien dans la description", link("dzair-pharma.net/lab/guide", "الرابط في وصف الفيديو", "Lien dans la description"), "happy",
+    seg("جرّب البحث الموجَّه الآن على DwaDZ.|الرابط في وصف الفيديو", "Essaie la recherche guidée sur DwaDZ.|Lien dans la description", link("dzair-pharma.net/recherche", "الرابط في وصف الفيديو", "Lien dans la description"), "happy",
       "جرب البحث الموجه الآن على DwaDZ. الرابط في وصف الفيديو"),
     seg("معلومة عامة، ولا تغني عن|رأي الطبيب أو الصيدلي", "Information générale : elle ne remplace pas|l'avis du médecin ou du pharmacien", logo()),
   ],
