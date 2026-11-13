@@ -53,6 +53,7 @@ export interface QcmQuestion {
 
 import { ARTICLES_GRAPHES } from './articles-graphes'
 import { ARTICLES_GUIDE } from './articles-guide'
+import { ARTICLES_ICONES } from './articles-icones'
 import { ARTICLES_ALLERGIES } from './articles-allergies'
 
 export const ARTICLES: Article[] = [
@@ -1165,6 +1166,7 @@ export const ARTICLES: Article[] = [
   },
   ...ARTICLES_GRAPHES,
   ...ARTICLES_GUIDE,
+  ...ARTICLES_ICONES,
   ...ARTICLES_ALLERGIES,
 ]
 
