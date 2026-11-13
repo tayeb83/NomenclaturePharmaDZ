@@ -1,7 +1,7 @@
 # Ép. 19 — البحث الموجَّه: اعثر على دوائك خطوة بخطوة مع DwaDZ (Recherche guidée : trouver un médicament pas à pas avec DwaDZ)
 
 - **Durée** : 81 s · **Langue** : arabe standard (voix clonée, eleven_v3 + lexique complet), traduction française en sous-titre
-- **Lien cliquable** : https://www.dzair-pharma.net/lab/guide (bouton site + légende Facebook ; l'adresse est affichée en fin de vidéo)
+- **Lien cliquable** : https://www.dzair-pharma.net/recherche?onglet=guide (bouton site + légende Facebook ; l'adresse est affichée en fin de vidéo)
 - **Relu par** : ________ · **Date** : ________
 
 ## Script de voix (texte exactement lu)

@@ -357,17 +357,17 @@ image d'aperçu = `couverture-<épisode>-verticale.jpg` (le fichier `…-partage
 - **العنوان بالعربية** : البحث الموجَّه: اعثر على دوائك خطوة بخطوة مع DwaDZ
 - **Description française** :
   ```text
-  Tu ne connais pas le nom exact du médicament ? La recherche guidée de DwaDZ te pose les bonnes questions dans l'ordre : substance (ou marque), voie d'administration, forme, dosage. À chaque étape, seuls les choix qui existent vraiment dans la nomenclature algérienne sont proposés, et la liste de présentations se réduit. Les codes EDQM (forme, voie) et UCUM (unité du dosage) s'affichent à chaque résultat. Essaie-la : https://www.dzair-pharma.net/lab/guide . Elle aide à retrouver une présentation ; elle ne remplace ni l'ordonnance ni l'avis du médecin ou du pharmacien. Vidéo en arabe, sous-titrée en français.
+  Tu ne connais pas le nom exact du médicament ? La recherche guidée de DwaDZ te pose les bonnes questions dans l'ordre : substance (ou marque), voie d'administration, forme, dosage. À chaque étape, seuls les choix qui existent vraiment dans la nomenclature algérienne sont proposés, et la liste de présentations se réduit. Les codes EDQM (forme, voie) et UCUM (unité du dosage) s'affichent à chaque résultat. Essaie-la : https://www.dzair-pharma.net/recherche?onglet=guide . Elle aide à retrouver une présentation ; elle ne remplace ni l'ordonnance ni l'avis du médecin ou du pharmacien. Vidéo en arabe, sous-titrée en français.
   ```
 - **الوصف بالعربية** :
   ```text
   لا تعرف الاسم الدقيق للدواء؟ البحث الموجَّه في DwaDZ يطرح عليك الأسئلة بالترتيب: المادة الفعالة (أو الاسم التجاري)، ثم طريقة الاستعمال، ثم الشكل، ثم الجرعة. في كل خطوة تظهر فقط الخيارات الموجودة فعلًا في المدوّنة الوطنية الجزائرية، وتتقلص قائمة العروض. وتظهر مع كل نتيجة رموز EDQM وUCUM. هذه الأداة تساعد على إيجاد العرض المطلوب، ولا تغني عن الوصفة أو رأي الطبيب أو الصيدلي. فيديو بالعربية مع ترجمة فرنسية.
   ```
 - **Étiquettes** : DwaDZ, البحث_الموجه, EDQM, UCUM, الدواء
-- **Lien cliquable (admin → « Lien cliquable »)** : https://www.dzair-pharma.net/lab/guide · bouton FR : « Essayer la recherche guidée » · bouton AR : « جرّب البحث الموجَّه »
+- **Lien cliquable (admin → « Lien cliquable »)** : https://www.dzair-pharma.net/recherche?onglet=guide · bouton FR : « Essayer la recherche guidée » · bouton AR : « جرّب البحث الموجَّه »
 - **Sources** :
   ```text
-  Recherche guidée DwaDZ (/lab/guide), données de la nomenclature nationale des produits pharmaceutiques (MIPH)
+  Recherche guidée DwaDZ (page Recherche, onglet Guidée), données de la nomenclature nationale des produits pharmaceutiques (MIPH)
   EDQM Standard Terms (forme pharmaceutique, voie d'administration)
   UCUM (Unified Code for Units of Measure)
   ```
@@ -375,26 +375,26 @@ image d'aperçu = `couverture-<épisode>-verticale.jpg` (le fichier `…-partage
 
 ---------------------------------------------------------------------------------------------------
 
-## 20 — C'est quoi l'EDQM ? Définition, utilité et affichage sur DwaDZ  (fichier : edqm.clone.mp4 · couverture : couverture-edqm-verticale.jpg · 89 s)
+## 20 — C'est quoi l'EDQM ? Définition, utilité et affichage sur DwaDZ  (fichier : edqm.clone.mp4 · couverture : couverture-edqm-verticale.jpg · 88 s)
 
 - **Identifiant** : `cest-quoi-edqm-dwadz` · **N° d'épisode** : 20
 - **Titre français** : C'est quoi l'EDQM ? Définition, utilité et affichage sur DwaDZ
 - **العنوان بالعربية** : ما هو EDQM؟ التعريف والفائدة وكيف يظهر في DwaDZ
 - **Description française** :
   ```text
-  L'EDQM (Direction européenne de la qualité du médicament et des soins de santé, Conseil de l'Europe, Strasbourg) publie les « Standard Terms » : des termes normalisés, avec un code numérique, pour les formes pharmaceutiques, les voies d'administration et les conditionnements. Le même médicament s'écrit de plusieurs façons selon les bases de données ; le terme et le code EDQM les rapprochent. Sur DwaDZ, les codes EDQM de la forme et de la voie s'affichent dans la recherche guidée et sur les fiches, avec le code UCUM de l'unité du dosage. Ce sont des repères de terminologie pour les professionnels : la fiche officielle reste la nomenclature. Essaie : https://www.dzair-pharma.net/lab/guide . Vidéo en arabe, sous-titrée en français.
+  L'EDQM (Direction européenne de la qualité du médicament et des soins de santé, Conseil de l'Europe, Strasbourg) publie les « Standard Terms » : des termes normalisés, avec un code numérique, pour les formes pharmaceutiques, les voies d'administration et les conditionnements. Le même médicament s'écrit de plusieurs façons selon les bases de données ; le terme et le code EDQM les rapprochent. Sur DwaDZ, les codes EDQM de la forme et de la voie s'affichent dans la recherche normale comme dans la recherche guidée, et sur les fiches, avec le code UCUM de l'unité du dosage. Ce sont des repères de terminologie pour les professionnels : la fiche officielle reste la nomenclature. Essaie : https://www.dzair-pharma.net/recherche?onglet=guide . Vidéo en arabe, sous-titrée en français.
   ```
 - **الوصف بالعربية** :
   ```text
-  EDQM هي المديرية الأوروبية لجودة الأدوية والرعاية الصحية، التابعة لمجلس أوروبا في ستراسبورغ. تنشر «المصطلحات القياسية» (Standard Terms): مصطلحات موحدة ورمز رقمي للأشكال الصيدلانية وطرق الإعطاء والتعبئة. فالدواء الواحد يُكتب بطرق مختلفة بين قواعد البيانات، ويقرّب بينها مصطلح EDQM ورمزه. في DwaDZ تظهر رموز EDQM للشكل والطريقة في البحث الموجَّه وفي بطاقات الأدوية، مع رمز UCUM لوحدة الجرعة. هي مراجع مصطلحية للمهنيين، والمرجع الرسمي يبقى المدوّنة الوطنية. فيديو بالعربية مع ترجمة فرنسية.
+  EDQM هي المديرية الأوروبية لجودة الأدوية والرعاية الصحية، التابعة لمجلس أوروبا في ستراسبورغ. تنشر «المصطلحات القياسية» (Standard Terms): مصطلحات موحدة ورمز رقمي للأشكال الصيدلانية وطرق الإعطاء والتعبئة. فالدواء الواحد يُكتب بطرق مختلفة بين قواعد البيانات، ويقرّب بينها مصطلح EDQM ورمزه. في DwaDZ تظهر رموز EDQM للشكل والطريقة في البحث العادي والموجَّه وفي بطاقات الأدوية، مع رمز UCUM لوحدة الجرعة. هي مراجع مصطلحية للمهنيين، والمرجع الرسمي يبقى المدوّنة الوطنية. فيديو بالعربية مع ترجمة فرنسية.
   ```
 - **Étiquettes** : DwaDZ, EDQM, UCUM, المصطلحات, الدواء
-- **Lien cliquable (admin → « Lien cliquable »)** : https://www.dzair-pharma.net/lab/guide · bouton FR : « Voir les codes EDQM dans la recherche guidée » · bouton AR : « شاهد رموز EDQM في البحث الموجَّه »
+- **Lien cliquable (admin → « Lien cliquable »)** : https://www.dzair-pharma.net/recherche?onglet=guide · bouton FR : « Voir les codes EDQM dans la recherche » · bouton AR : « شاهد رموز EDQM في البحث »
 - **Sources** :
   ```text
   EDQM (Conseil de l'Europe) : Standard Terms, formes pharmaceutiques, voies d'administration, conditionnements
-  Recherche guidée DwaDZ (/lab/guide) et article « La recherche guidée de DwaDZ » (codes EDQM et UCUM)
+  Recherche guidée DwaDZ (page Recherche, onglet Guidée) et article « La recherche guidée de DwaDZ » (codes EDQM et UCUM)
   UCUM (Unified Code for Units of Measure)
   ```
-- **À vérifier avant publication** : Captures réelles de la recherche guidée (voie « Oral use » 20053000 ; forme 10111000 ; UCUM). Aucune capture de la fiche médicament n'est utilisée : le texte dit seulement, d'après l'article du site, que les codes y figurent aussi : vérifier sur une fiche avant publication. Vérifier la définition de l'EDQM sur edqm.eu. La vidéo ne dit pas que l'EDQM est l'autorité algérienne : DwaDZ s'en sert comme repère. Relecture par un pharmacien.
+- **À vérifier avant publication** : Captures réelles de la recherche guidée (les codes existent aussi en recherche normale, sans capture ici) (voie « Oral use » 20053000 ; forme 10111000 ; UCUM). Aucune capture de la fiche médicament n'est utilisée : le texte dit seulement, d'après l'article du site, que les codes y figurent aussi : vérifier sur une fiche avant publication. Vérifier la définition de l'EDQM sur edqm.eu. La vidéo ne dit pas que l'EDQM est l'autorité algérienne : DwaDZ s'en sert comme repère. Relecture par un pharmacien.
 
