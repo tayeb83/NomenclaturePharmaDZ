@@ -56,6 +56,7 @@ import { ARTICLES_GUIDE } from './articles-guide'
 import { ARTICLES_ICONES } from './articles-icones'
 import { ARTICLES_TERMINOLOGIES } from './articles-terminologies'
 import { ARTICLES_ALLERGIES } from './articles-allergies'
+import { ARTICLES_FICHE } from './articles-fiche'
 
 export const ARTICLES: Article[] = [
   {
@@ -1170,6 +1171,7 @@ export const ARTICLES: Article[] = [
   ...ARTICLES_ICONES,
   ...ARTICLES_TERMINOLOGIES,
   ...ARTICLES_ALLERGIES,
+  ...ARTICLES_FICHE,
 ]
 
 export function getArticleBySlug(slug: string): Article | undefined {
