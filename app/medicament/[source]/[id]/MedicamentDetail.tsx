@@ -25,7 +25,7 @@ import { lettreForNom, lettreLabel, lettrePath } from '@/lib/repertoire'
 import { medicalPageJsonLd, breadcrumbJsonLd, faqJsonLd } from '@/lib/schema'
 import { marqueSlug, MIN_FAMILY_SIZE } from '@/lib/marque'
 import { buildMedicamentFaq } from '@/lib/medicament-faq'
-import { buildMedicamentTitle, buildMedicamentDescription, medicamentDesignation } from '@/lib/medicament-seo'
+import { buildMedicamentTitle, buildMedicamentDescription, medicamentDesignation, pickClasseAtc, type SeoExtras } from '@/lib/medicament-seo'
 import { PrintButton } from '@/components/ui/PrintButton'
 import { GlossarySection } from '@/components/ui/GlossarySection'
 import { BackButton } from '@/components/ui/BackButton'
@@ -203,8 +203,19 @@ export async function buildMedicamentMetadata(
   // Le nom de marque et la DCI restent en caractères latins (dénominations
   // officielles, et ce que tapent les internautes), y compris en tête des
   // titres arabes ; seul l'habillage éditorial est traduit.
-  const title = buildMedicamentTitle(med, lang)
-  const description = buildMedicamentDescription(med, lang)
+  // Prix, classe ATC et RCP : les mêmes lectures (en cache) que la fiche, pour
+  // n'annoncer dans le title que ce qu'elle affiche. Jamais bloquant.
+  let extras: SeoExtras = {}
+  if (med.source === 'enregistrement') {
+    const [ppa, atcHierarchy, rcps] = await Promise.all([
+      getPpa(med.n_enreg, med.code).catch(() => null),
+      getCachedAtcHierarchyByDci(med.dci).catch(() => []),
+      getRcpForFiche(med.n_enreg, med.code).catch(() => []),
+    ])
+    extras = { ppa, classe: pickClasseAtc(atcHierarchy, med.code_atc, lang), hasRcp: rcps.length > 0 }
+  }
+  const title = buildMedicamentTitle(med, lang, extras)
+  const description = buildMedicamentDescription(med, lang, extras)
 
   // URLs canoniques enrichies du nom commercial : c'est cette forme qui est
   // déclarée aux moteurs et affichée dans les résultats de recherche.
