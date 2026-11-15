@@ -29,13 +29,15 @@ export interface Article {
 }
 
 export interface ArticleSection {
-  type: 'intro' | 'h2' | 'h3' | 'paragraph' | 'list' | 'table' | 'qcm' | 'callout' | 'image'
+  type: 'intro' | 'h2' | 'h3' | 'paragraph' | 'list' | 'table' | 'qcm' | 'callout' | 'image' | 'devinette'
   title?: string
   text?: string
   items?: string[]
   rows?: { cells: string[] }[]
   headers?: string[]
   questions?: QcmQuestion[]
+  /** type « devinette » : icônes à deviner, réponse révélée au clic */
+  devinettes?: ArticleDevinette[]
   variant?: 'info' | 'warning' | 'tip'
   /** type « image » : fichier sous /public, texte alternatif (obligatoire), légende et dimensions réelles */
   src?: string
@@ -43,6 +45,23 @@ export interface ArticleSection {
   caption?: string
   width?: number
   height?: number
+}
+
+/**
+ * Une icône de forme à deviner. L'icône est dessinée par lib/dwadz-icons à partir du libellé
+ * (et des codes EDQM de voie s'ils sont donnés), exactement comme sur une fiche.
+ */
+export interface ArticleDevinette {
+  /** libellé de forme tel qu'il figure dans la nomenclature (« COMPRIME EFFERVESCENT ») */
+  forme: string
+  /** numéro affiché ; par défaut le rang dans le bloc (à fixer quand le jeu s'étale sur plusieurs blocs) */
+  numero?: number
+  /** codes EDQM de voie d'administration (« 20051000 ») */
+  codes?: string[]
+  indice: string
+  reponse: string
+  /** lignes d'explication affichées sous la réponse (**gras** accepté) */
+  details?: string[]
 }
 
 export interface QcmQuestion {
@@ -57,6 +76,7 @@ import { ARTICLES_ICONES } from './articles-icones'
 import { ARTICLES_TERMINOLOGIES } from './articles-terminologies'
 import { ARTICLES_ALLERGIES } from './articles-allergies'
 import { ARTICLES_FICHE } from './articles-fiche'
+import { ARTICLES_JEU_ICONES } from './articles-jeu-icones'
 
 export const ARTICLES: Article[] = [
   {
@@ -1172,6 +1192,7 @@ export const ARTICLES: Article[] = [
   ...ARTICLES_TERMINOLOGIES,
   ...ARTICLES_ALLERGIES,
   ...ARTICLES_FICHE,
+  ...ARTICLES_JEU_ICONES,
 ]
 
 export function getArticleBySlug(slug: string): Article | undefined {
