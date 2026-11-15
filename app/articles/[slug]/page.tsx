@@ -8,6 +8,7 @@ import { findArticle, findArticleDraft, findTranslation, relatedArticles } from 
 import { isAdminSessionValid } from '@/lib/admin-auth'
 import { AdInContent } from '@/components/ads/AdBanner'
 import ShareBar from '@/components/drug/ShareBar'
+import DwaIcons from '@/lib/dwadz-icons/dwadz-icons.js'
 import { articleShareMessage, hashtagsArticle, ligneSuivre, texteACopier } from '@/lib/article-share'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.dzair-pharma.net'
@@ -200,6 +201,44 @@ function RenderSection({ section, isRtl }: { section: ArticleSection; isRtl: boo
         <p style={{ margin: 0, fontSize: 14.5, color: s.color, lineHeight: 1.7 }}>
           {section.text ? renderBold(section.text) : null}
         </p>
+      </div>
+    )
+  }
+
+  if (section.type === 'devinette' && section.devinettes) {
+    return (
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 14, alignItems: 'start', margin: '16px 0 24px', direction: dir }}>
+        {section.devinettes.map((d, i) => {
+          // L'icône est celle des fiches, sans son texte alternatif ni son infobulle : ils donneraient la réponse.
+          const icone = DwaIcons.html(d.forme, { codes: d.codes, lang: isRtl ? 'ar' : 'fr', size: 76 })
+            .replace(/ role="img" aria-label="[^"]*" title="[^"]*"/, ' aria-hidden="true"')
+          return (
+            <div key={i} style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: 12, padding: '16px 16px 12px' }}>
+              <p style={{ margin: 0, fontSize: 12.5, fontWeight: 700, color: '#64748b' }}>
+                {isRtl ? `الأيقونة الغامضة رقم ${d.numero ?? i + 1}` : `Icône mystère n° ${d.numero ?? i + 1}`}
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '22px 0 26px', pointerEvents: 'none' }} dangerouslySetInnerHTML={{ __html: icone }} />
+              <p style={{ margin: '0 0 10px', fontSize: 14, color: '#334155', lineHeight: 1.6 }}>
+                <strong>{isRtl ? 'تلميح: ' : 'Indice : '}</strong>{renderBold(d.indice)}
+              </p>
+              <details>
+                <summary style={{ cursor: 'pointer', fontSize: 14, fontWeight: 700, color: '#0284c7', padding: '6px 0' }}>
+                  {isRtl ? 'اضغط لرؤية الجواب' : 'Cliquez pour voir la réponse'}
+                </summary>
+                <div style={{ background: '#d1fae5', border: '1px solid #16a34a', borderRadius: 8, padding: '10px 12px', marginTop: 6 }}>
+                  <p style={{ margin: 0, fontSize: 14.5, fontWeight: 700, color: '#065f46', lineHeight: 1.5 }}>{renderBold(d.reponse)}</p>
+                  {d.details?.map((ligne, k) => (
+                    <p key={k} style={{ margin: '6px 0 0', fontSize: 13.5, color: '#14532d', lineHeight: 1.6 }}>{renderBold(ligne)}</p>
+                  ))}
+                  <p style={{ margin: '8px 0 0', fontSize: 12, color: '#166534' }}>
+                    {isRtl ? 'التسمية في المدونة: ' : 'Libellé dans la nomenclature : '}
+                    <span dir="ltr" lang="fr" style={{ fontFamily: 'ui-monospace, monospace' }}>{d.forme}</span>
+                  </p>
+                </div>
+              </details>
+            </div>
+          )
+        })}
       </div>
     )
   }
