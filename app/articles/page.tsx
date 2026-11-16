@@ -57,15 +57,15 @@ export default async function ArticlesPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
       />
 
-      <div className="page-header" style={{ background: 'linear-gradient(135deg, #0f172a, #0c2340)' }}>
+      <div className="page-header">
         <div className="container">
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600, letterSpacing: '.06em', marginBottom: 4 }}>
+          <div style={{ fontSize: 11, color: 'var(--slate-600)', fontWeight: 600, letterSpacing: '.06em', marginBottom: 4 }}>
             {pickLang(lang, { fr: 'VEILLE RÉGLEMENTAIRE & CONTENU SEO', ar: 'مراقبة تنظيمية ومحتوى محسّن للسيو' })}
           </div>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: 'white', margin: 0 }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: 'var(--navy)', margin: 0 }}>
             {pickLang(lang, { fr: '📰 Articles & Dossiers', ar: '📰 مقالات ودراسات' })}
           </h1>
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, marginTop: 8, marginBottom: 0, maxWidth: 760 }}>
+          <p style={{ color: 'var(--slate-600)', fontSize: 14, marginTop: 8, marginBottom: 0, maxWidth: 760 }}>
             {pickLang(lang, {
               fr: 'Une bibliothèque éditoriale pensée pour le SEO pharmaceutique en Algérie : réglementation officinale, traçabilité, pharmacovigilance, fiches de révision et maillage interne vers les pages stratégiques du site.',
               ar: 'مكتبة تحريرية موجّهة لتحسين الظهور في محركات البحث داخل المجال الصيدلاني بالجزائر: التنظيم، التتبع، اليقظة الدوائية، وبطاقات مراجعة مع ربط داخلي نحو الصفحات الأساسية في الموقع.',

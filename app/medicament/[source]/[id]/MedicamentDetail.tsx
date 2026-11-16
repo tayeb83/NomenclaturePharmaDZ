@@ -323,11 +323,8 @@ export async function MedicamentDetail(
     : null
   const entrantes = med.dci ? <InteractionsEntrantes items={interactionsVers} dci={med.dci} lang={lang} /> : null
 
-  const headerBg = isRetrait
-    ? 'linear-gradient(135deg, #7f1d1d, #991b1b)'
-    : isNonRenouv
-    ? 'linear-gradient(135deg, #78350f, #b45309)'
-    : 'linear-gradient(135deg, #0f172a, #0c2340)'
+  // Bandeau commun à tout le site ; le statut reste signalé par un liseré de couleur.
+  const headerTon = isRetrait ? ' ton-retrait' : isNonRenouv ? ' ton-alerte' : ''
 
   const statusBadge = isRetrait
     ? { label: pickLang(lang, { fr: '🚫 Médicament retiré', ar: '🚫 دواء مسحوب' }), bg: '#fee2e2', color: '#991b1b' }
@@ -381,14 +378,14 @@ export async function MedicamentDetail(
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd(faq)) }} />
       {/* ─── Header ─────────────────────────────────────────── */}
-      <div className="page-header" style={{ background: headerBg }}>
+      <div className={`page-header${headerTon}`}>
         <div className="container">
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '.06em', marginBottom: 4 }}>
+              <div style={{ fontSize: 11, color: 'var(--slate-600)', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '.06em', marginBottom: 4 }}>
                 {pickLang(lang, { fr: 'DCI — DÉNOMINATION COMMUNE INTERNATIONALE', ar: 'DCI — التسمية الدولية المشتركة' })}
               </div>
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>
+              <div style={{ fontSize: 13, color: 'var(--slate-600)', marginBottom: 8 }}>
                 {/* Lien vers le hub DCI uniquement s'il existe des
                     enregistrements actifs sous cette DCI (sinon 404). */}
                 {alternatifs.length > 0 && med.dci ? (
@@ -403,7 +400,7 @@ export async function MedicamentDetail(
                     <FormeIcon forme={med.forme} codes={termino?.voies.map(v => v.code)} lang={lang} size={56} />
                   </span>
                 )}
-                <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: 'white', margin: 0 }}>
+                <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: 'var(--navy)', margin: 0 }}>
                   {lang === 'ar'
                     ? [displayName(med.nom_marque, lang), displayField('dosage', med.dosage, lang)].filter(Boolean).join(' ')
                     : medicamentDesignation(med)}
@@ -417,9 +414,9 @@ export async function MedicamentDetail(
                   gap: 8,
                   padding: '5px 10px',
                   borderRadius: 999,
-                  background: 'rgba(239, 68, 68, 0.2)',
-                  border: '1px solid rgba(252, 165, 165, 0.6)',
-                  color: '#fee2e2',
+                  background: '#fee2e2',
+                  border: '1px solid #fca5a5',
+                  color: '#991b1b',
                   fontSize: 12,
                   fontWeight: 700,
                 }}>

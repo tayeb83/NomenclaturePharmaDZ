@@ -8,9 +8,9 @@ export function EnteteGraphe({ titre, retour = true }: { titre?: { fr: string; a
   const { lang } = useLanguage()
   const t = TEXTES[lang]
   return (
-    <div className="page-header" style={{ background: 'linear-gradient(135deg, #12233f, #173f82)' }}>
+    <div className="page-header">
       <div className="container">
-        {retour && <Link href="/graphe" style={{ color: 'rgba(255,255,255,.8)', fontSize: 13 }}>{t.retour}</Link>}
+        {retour && <Link href="/graphe" style={{ color: 'var(--slate-600)', fontSize: 13 }}>{t.retour}</Link>}
         <h1>🕸️ {titre ? titre[lang] : t.titre}</h1>
       </div>
     </div>

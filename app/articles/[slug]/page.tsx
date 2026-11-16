@@ -348,7 +348,7 @@ export default async function ArticleDetailPage({ params }: { params: { slug: st
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {faqJsonLd ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} /> : null}
 
-      <div className="page-header" style={{ background: 'linear-gradient(135deg, #0f172a, #0c2340)' }}>
+      <div className="page-header">
         <div className="container">
           <Link href="/articles" className="detail-back-link">
             {pickLang(lang, { fr: '← Retour aux articles', ar: '→ العودة إلى المقالات' })}
@@ -365,21 +365,21 @@ export default async function ArticleDetailPage({ params }: { params: { slug: st
               {article.tags.slice(0, 4).map(tag => (
                 <span key={tag} style={{
                   padding: '4px 12px', borderRadius: 20, fontSize: 11,
-                  background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)',
+                  background: 'rgba(255,255,255,.75)', color: 'var(--slate-600)',
                 }}>{tag}</span>
               ))}
             </div>
 
             <h1 style={{
-              fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: 'white',
+              fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: 'var(--navy)',
               margin: '0 0 8px', direction: isRtl ? 'rtl' : 'ltr', lineHeight: 1.3,
             }}>
               {article.title}
             </h1>
-            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, margin: '0 0 8px', direction: isRtl ? 'rtl' : 'ltr', maxWidth: 780 }}>
+            <p style={{ color: 'var(--slate-600)', fontSize: 14, margin: '0 0 8px', direction: isRtl ? 'rtl' : 'ltr', maxWidth: 780 }}>
               {article.subtitle}
             </p>
-            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 12, color: 'var(--slate-600)' }}>
               <span>🗓 {new Date(article.date).toLocaleDateString(article.lang === 'ar' ? 'ar-DZ' : 'fr-DZ', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
               <span>⏱ {article.readingTime} {article.lang === 'ar' ? 'دقائق' : 'min de lecture'}</span>
               {article.seoKeywords?.length ? <span>🔎 {article.seoKeywords.slice(0, 3).join(' • ')}</span> : null}

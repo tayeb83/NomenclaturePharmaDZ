@@ -49,12 +49,12 @@ export default async function VideoPage({ params }: { params: { slug: string } }
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(videoJsonLd(v, APP_URL, lang)) }} />
-      <div className="page-header" style={{ background: 'linear-gradient(135deg, #0f172a, #0c2340)' }}>
+      <div className="page-header">
         <div className="container">
-          <Link href="/videos" style={{ color: 'rgba(255,255,255,.7)', fontSize: 13, textDecoration: 'none' }}>
+          <Link href="/videos" style={{ color: 'var(--slate-600)', fontSize: 13, textDecoration: 'none' }}>
             {pickLang(lang, { fr: '← Toutes les vidéos', ar: 'جميع الفيديوهات ←' })}
           </Link>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 800, color: 'white', margin: '8px 0 0', direction: lang === 'ar' ? 'rtl' : 'ltr' }}>{titre}</h1>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 800, color: 'var(--navy)', margin: '8px 0 0', direction: lang === 'ar' ? 'rtl' : 'ltr' }}>{titre}</h1>
         </div>
       </div>
       <div className="page-body">

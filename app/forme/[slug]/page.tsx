@@ -103,23 +103,23 @@ export default async function FormePage({ params }: { params: { slug: string } }
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* Header */}
-      <div className="page-header" style={{ background: 'linear-gradient(135deg, #164e63, #0e7490)' }}>
+      <div className="page-header">
         <div className="container">
           <Link href="/medicaments" className="detail-back-link">
             {pickLang(lang, { fr: '← Médicaments', ar: '→ الأدوية' })}
           </Link>
           <div style={{ marginTop: 12 }}>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '.08em', marginBottom: 6 }}>
+            <div style={{ fontSize: 11, color: 'var(--slate-600)', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '.08em', marginBottom: 6 }}>
               {pickLang(lang, { fr: 'FORME PHARMACEUTIQUE', ar: 'الشكل الصيدلاني' })}
             </div>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 800, color: 'white', margin: 0, display: 'flex', alignItems: 'center', gap: 14 }}>
+            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 800, color: 'var(--navy)', margin: 0, display: 'flex', alignItems: 'center', gap: 14 }}>
               <span style={{ background: '#fff', borderRadius: 14, padding: 8, display: 'inline-flex', flex: 'none' }}><FormeIcon forme={forme} lang={lang} size={48} /></span>
               <span>{lang === 'ar' ? formeAr : forme.charAt(0).toUpperCase() + forme.slice(1)}</span>
             </h1>
             {lang === 'ar' && (
-              <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14, marginTop: 4 }}>{forme}</div>
+              <div style={{ color: 'var(--slate-600)', fontSize: 14, marginTop: 4 }}>{forme}</div>
             )}
-            <p style={{ color: 'rgba(255,255,255,0.65)', marginTop: 8, fontSize: 15 }}>
+            <p style={{ color: 'var(--slate-600)', marginTop: 8, fontSize: 15 }}>
               {pickLang(lang, {
                 fr: `${meds.length} médicament${meds.length > 1 ? 's' : ''} — ${dciGroups.length} DCI — ${locaux.length} fabriqué${locaux.length > 1 ? 's' : ''} en Algérie`,
                 ar: `${meds.length} دواء — ${dciGroups.length} مادة فعالة — ${locaux.length} مصنع في الجزائر`,

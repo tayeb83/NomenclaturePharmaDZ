@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, Suspense, useState, useTransition, useCallback, useRef, useEffect, useMemo } from 'react'
+import { Fragment, Suspense, type ReactNode, useState, useTransition, useCallback, useRef, useEffect, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import type { SearchResult } from '@/lib/db-types'
@@ -17,11 +17,13 @@ import type { Facette, Facettes, FacetteSel } from '@/lib/facettes'
 import { CHOIX_ALLERGIES } from '@/lib/allergies-choix'
 import type { AllergieChoisie, ModeAllergie } from '@/lib/allergies-params'
 import Link from 'next/link'
+import { Bandeau } from '@/components/layout/Bandeau'
+import { ModesRecherche, PanneauGarde } from '@/components/search/ModesRecherche'
 
 // Recherche guidée (Lab) : chargée seulement quand on ouvre l'onglet.
 const GuideClient = dynamic(() => import('@/app/lab/guide/GuideClient').then(m => m.GuideClient), { ssr: false })
 
-type Onglet = 'simple' | 'guidee'
+type Onglet = 'simple' | 'guidee' | 'garde'
 
 type AdvancedSearchCondition = {
   field: string
@@ -141,6 +143,7 @@ export function SearchClient({
   initialAllergie = null,
   initialAllergieBilan = null,
   basePath = '/recherche',
+  avis,
 }: {
   initialQuery: string
   initialScope: string
@@ -168,6 +171,8 @@ export function SearchClient({
   initialAllergie?: AllergieChoisie | null
   initialAllergieBilan?: BilanAllergie
   basePath?: string
+  /** Message affiché en tête du corps de page (base indisponible…). */
+  avis?: ReactNode
 }) {
   const { lang } = useLanguage()
   const SCOPES = useMemo(() => ([
@@ -271,6 +276,7 @@ export function SearchClient({
   function changerOnglet(next: Onglet) {
     if (next === onglet) return
     setOnglet(next)
+    if (next === 'garde') return
     if (next === 'guidee') {
       startTransition(() => { router.replace(`${basePath}?onglet=guide`, { scroll: false }) })
       return
@@ -502,33 +508,38 @@ export function SearchClient({
     if (Object.keys(facRef.current).length) clearFacettes()
   }
 
-  const onglets: Array<{ id: Onglet; icone: string; fr: string; ar: string }> = [
-    { id: 'simple', icone: '🔍', fr: 'Recherche', ar: 'بحث' },
-    ...(guideDispo ? [{ id: 'guidee' as Onglet, icone: '🧭', fr: 'Guidée', ar: 'موجَّه' }] : []),
-  ]
   const nbConditions = advanced.filter(c => c.value?.trim()).length
   const aDesCriteres = Boolean(query || labo || substance || hasAdvancedFilters(advanced))
   const afficherFiltres = (results.length > 0 || Object.keys(facSel).length > 0) && (groupesPrincipaux.length > 0 || groupesSecondaires.length > 0)
 
+  const dir = ar ? 'rtl' : 'ltr'
+  const selecteur = (
+    <ModesRecherche
+      ar={ar}
+      mode={onglet === 'simple' ? 'medicament' : onglet}
+      onChange={m => changerOnglet(m === 'medicament' ? 'simple' : m)}
+      modes={guideDispo ? undefined : ['medicament', 'garde']}
+    />
+  )
+
+  // Recherche guidée : elle dessine le même bandeau, avec son parcours à la place du champ.
+  if (onglet === 'guidee') {
+    return (
+      <Suspense fallback={<Bandeau dir={dir}>{selecteur}</Bandeau>}>
+        <GuideClient embedded basePath={basePath} extraParams={{ onglet: 'guide' }} entete={selecteur} />
+      </Suspense>
+    )
+  }
+
   return (
     <>
-      <div className="rech-onglets" role="tablist" aria-label={ar ? 'أنماط البحث' : 'Modes de recherche'} dir={ar ? 'rtl' : 'ltr'}>
-        {onglets.map(o => (
-          <button key={o.id} type="button" role="tab" aria-selected={onglet === o.id} className={`rech-onglet${onglet === o.id ? ' actif' : ''}`} onClick={() => changerOnglet(o.id)}>
-            <span aria-hidden>{o.icone}</span> {ar ? o.ar : o.fr}
-            {o.id === 'guidee' && <em className="rech-onglet-lab">{ar ? 'جديد' : 'Nouveau'}</em>}
-          </button>
-        ))}
-      </div>
-
-      {onglet === 'guidee' ? (
-        <Suspense fallback={null}><GuideClient embedded basePath={basePath} extraParams={{ onglet: 'guide' }} /></Suspense>
-      ) : (<>
-      <div className="search-bar rech-barre">
-        <span className="search-bar-icon">🔍</span>
+      <Bandeau dir={dir}>
+        {selecteur}
+        {onglet === 'garde' ? <PanneauGarde ar={ar} /> : (<>
+      <div className="home-search rech-barre" role="search">
         <input
           ref={inputRef}
-          type="text"
+          type="search"
           value={query}
           onChange={e => { handleInput(e.target.value); sg.setOpen(true) }}
           onKeyDown={e => { sg.onKeyDown(e) }}
@@ -539,11 +550,13 @@ export function SearchClient({
           aria-controls="search-sg"
           aria-autocomplete="list"
           aria-activedescendant={sg.active >= 0 ? `search-sg-${sg.active}` : undefined}
+          aria-label={ar ? 'البحث عن دواء' : 'Rechercher un médicament'}
           autoComplete="off"
-          placeholder={ar ? 'بحث شامل: DCI، الاسم التجاري، الشكل، الجرعة، المخبر...' : 'DCI, marque, forme, dosage, labo…'}
+          enterKeyHint="search"
+          placeholder={ar ? 'الاسم أو المادة الفعالة أو المخبر…' : 'Nom, substance active ou laboratoire…'}
           autoFocus
         />
-        <kbd className="rech-raccourci" aria-hidden>/</kbd>
+        <button type="button" onClick={() => { sg.setOpen(false); handleInput(query) }}>{ar ? 'بحث' : 'Rechercher'}</button>
         {sg.open && sg.items.length > 0 && (
           <SuggestionList id="search-sg" items={sg.items} active={sg.active} lang={lang} onPick={sg.pick} onHover={sg.setActive} />
         )}
@@ -581,6 +594,20 @@ export function SearchClient({
         </div>
       </div>
 
+        </>)}
+      </Bandeau>
+
+      <div className="page-body">
+        <div className="container" dir={dir}>
+      {avis}
+      <h1 className="rech-titre">
+        {onglet === 'garde'
+          ? (ar ? 'صيدليات المناوبة' : 'Pharmacies de garde')
+          : query.trim()
+            ? (ar ? <>نتائج البحث عن «{query.trim()}»</> : <>Résultats pour « {query.trim()} »</>)
+            : (ar ? 'البحث عن الأدوية' : 'Recherche de médicaments')}
+      </h1>
+      {onglet !== 'garde' && (<>
       {(allergieOuverte || allergie) && (
         <section className="rech-avancee rech-allergie" aria-label={ar ? 'حساسية معروفة' : 'Allergie connue'}>
           <p className="rech-avancee-aide">
@@ -753,6 +780,8 @@ export function SearchClient({
         </div>
       </div>
       </>)}
+        </div>
+      </div>
     </>
   )
 }

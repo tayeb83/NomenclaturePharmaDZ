@@ -56,34 +56,34 @@ export default async function AtcCodePage({ params }: { params: { code: string }
 
   return (
     <>
-      <div className="page-header" style={{ background: 'linear-gradient(135deg, #0f172a, #1e3a5f)' }}>
+      <div className="page-header">
         <div className="container">
           {/* Fil d'Ariane ATC */}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', fontSize: 13 }}>
-            <Link href="/classes-therapeutiques" style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'none' }}>
+            <Link href="/classes-therapeutiques" style={{ color: 'var(--slate-600)', textDecoration: 'none' }}>
               {pickLang(lang, { fr: 'Classes ATC', ar: 'فئات ATC' })}
             </Link>
             {ancestors.map(a => (
-              <span key={a.code} style={{ color: 'rgba(255,255,255,0.65)' }}>
+              <span key={a.code} style={{ color: 'var(--slate-600)' }}>
                 {' / '}
-                <Link href={`/classes-therapeutiques/${a.code}`} style={{ color: 'rgba(255,255,255,0.85)', textDecoration: 'none' }}>
+                <Link href={`/classes-therapeutiques/${a.code}`} style={{ color: 'var(--slate-600)', textDecoration: 'none' }}>
                   {a.code}
                 </Link>
               </span>
             ))}
-            <span style={{ color: 'rgba(255,255,255,0.5)' }}>{' / '}{node.code}</span>
+            <span style={{ color: 'var(--slate-600)' }}>{' / '}{node.code}</span>
           </div>
 
           <div style={{ marginTop: 14 }}>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '.08em', marginBottom: 6 }}>
+            <div style={{ fontSize: 11, color: 'var(--slate-600)', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '.08em', marginBottom: 6 }}>
               {pickLang(lang, { fr: `CLASSIFICATION ATC — NIVEAU ${node.niveau}`, ar: `تصنيف ATC — المستوى ${node.niveau}` })}
             </div>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 800, color: 'white', margin: 0 }}>
+            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 800, color: 'var(--navy)', margin: 0 }}>
               <span style={{ fontFamily: 'var(--font-mono)', color: '#7dd3fc' }}>{node.code}</span>
               {' — '}{label}
             </h1>
             {node.label_en && node.label_fr && node.label_en !== node.label_fr && (
-              <p style={{ color: 'rgba(255,255,255,0.65)', marginTop: 8, fontSize: 14, fontStyle: 'italic' }}>
+              <p style={{ color: 'var(--slate-600)', marginTop: 8, fontSize: 14, fontStyle: 'italic' }}>
                 {node.label_en}
               </p>
             )}

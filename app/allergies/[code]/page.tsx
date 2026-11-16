@@ -47,17 +47,17 @@ export default async function AllergiePage({ params }: { params: { code: string 
 
   return (
     <>
-      <div className="page-header" style={{ background: 'linear-gradient(135deg, #0f172a, #1e3a5f)' }}>
+      <div className="page-header">
         <div className="container">
           <Link href="/recherche" className="detail-back-link">{pickLang(lang, { fr: '← Recherche', ar: '→ البحث' })}</Link>
           <div style={{ marginTop: 12 }}>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '.08em', marginBottom: 6 }}>
+            <div style={{ fontSize: 11, color: 'var(--slate-600)', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '.08em', marginBottom: 6 }}>
               {pickLang(lang, { fr: 'ALLERGIE DOCUMENTÉE · HUMAN DISEASE ONTOLOGY', ar: 'حساسية موثّقة · HUMAN DISEASE ONTOLOGY' })}
             </div>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 800, color: 'white', margin: 0 }} lang="fr" dir="ltr">
+            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 800, color: 'var(--navy)', margin: 0 }} lang="fr" dir="ltr">
               {a.fr ?? a.en}
             </h1>
-            <p style={{ color: 'rgba(255,255,255,0.65)', marginTop: 8, fontSize: 15 }}>
+            <p style={{ color: 'var(--slate-600)', marginTop: 8, fontSize: 15 }}>
               <CodeHdo code={a.code} relation={a.relation} titre={`HDO DOID:${a.code}`} /> <span dir="ltr">{a.en}</span>
             </p>
           </div>

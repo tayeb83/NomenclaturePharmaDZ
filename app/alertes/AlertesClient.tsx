@@ -78,7 +78,7 @@ export function AlertesClient({
 
   return (
     <>
-      <div className="page-header" style={{ background: 'linear-gradient(135deg, #7f1d1d, #991b1b)' }}>
+      <div className="page-header ton-retrait">
         <div className="container">
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
             <div>

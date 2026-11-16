@@ -79,7 +79,7 @@ export function OutilsClient({
 
   return (
     <div dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      <div className="page-header" style={{ background: 'linear-gradient(135deg, #1e3a5f, #0f766e)' }}>
+      <div className="page-header">
         <div className="container">
           <h1>🧰 {t('Outils & analyses', 'الأدوات والتحليلات')}</h1>
           <p style={{ maxWidth: 720 }}>

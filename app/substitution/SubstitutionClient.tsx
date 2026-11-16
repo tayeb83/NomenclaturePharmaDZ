@@ -16,7 +16,7 @@ export function SubstitutionClient({ generiques }: { generiques: any[] }) {
 
   return (
     <>
-      <div className="page-header" style={{ background: 'linear-gradient(135deg, #064e3b, #065f46)' }}>
+      <div className="page-header">
         <div className="container">
           <h1>♻️ {t('Substitution générique', 'الاستبدال الجنيسي')}</h1>
           <p>{t(
