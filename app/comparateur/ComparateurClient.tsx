@@ -238,7 +238,7 @@ export function ComparateurClient({ data }: { data: MarketComparatorData }) {
 
   return (
     <>
-      <div className="page-header" style={{ background: 'linear-gradient(135deg, #1e1b4b, #4f46e5)' }}>
+      <div className="page-header">
         <div className="container">
           <h1>📊 {t('Comparateur marché', 'مقارنة السوق')}</h1>
           <p>{t(

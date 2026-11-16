@@ -96,19 +96,19 @@ export default async function MarquePage({ params }: { params: { slug: string } 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
 
-      <div className="page-header" style={{ background: 'linear-gradient(135deg, #0f172a, #1e3a5f)' }}>
+      <div className="page-header">
         <div className="container">
           <Link href="/medicaments" className="detail-back-link">
             {pickLang(lang, { fr: '← Médicaments', ar: '→ الأدوية' })}
           </Link>
           <div style={{ marginTop: 12 }}>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '.08em', marginBottom: 6 }}>
+            <div style={{ fontSize: 11, color: 'var(--slate-600)', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '.08em', marginBottom: 6 }}>
               {pickLang(lang, { fr: 'NOM COMMERCIAL', ar: 'الاسم التجاري' })}
             </div>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 800, color: 'white', margin: 0 }}>
+            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 800, color: 'var(--navy)', margin: 0 }}>
               {nom}
             </h1>
-            <p style={{ color: 'rgba(255,255,255,0.65)', marginTop: 8, fontSize: 15 }}>
+            <p style={{ color: 'var(--slate-600)', marginTop: 8, fontSize: 15 }}>
               {pickLang(lang, {
                 fr: `${meds.length} présentation${meds.length > 1 ? 's' : ''} enregistrée${meds.length > 1 ? 's' : ''} en Algérie`,
                 ar: `${meds.length} تقديم مسجل في الجزائر`,

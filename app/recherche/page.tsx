@@ -134,21 +134,12 @@ export default async function RecherchePage({
   }
 
   return (
-    <>
-      <div className="page-header">
-        <div className="container">
-          <h1>🔍 Recherche de médicaments</h1>
-          <p>Une recherche, des filtres par voie, forme et dosage, et des conditions avancées (ET / OU) au besoin.</p>
-        </div>
-      </div>
-      <div className="page-body">
-        <div className="container" style={{ maxWidth: 1080 }}>
-          {searchError && (
-            <div style={{ background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: 10, padding: '14px 20px', marginBottom: 20, color: '#b91c1c', fontSize: 14 }}>
-              ⚠️ La base de données est temporairement indisponible. Veuillez réessayer dans quelques instants.
-            </div>
-          )}
           <SearchClient
+            avis={searchError ? (
+              <div style={{ background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: 10, padding: '14px 20px', marginBottom: 20, color: '#b91c1c', fontSize: 14 }}>
+                ⚠️ La base de données est temporairement indisponible. Veuillez réessayer dans quelques instants.
+              </div>
+            ) : undefined}
             initialQuery={query}
             initialScope={scope}
             initialResults={results}
@@ -168,8 +159,5 @@ export default async function RecherchePage({
             initialAdvancedOpen={resolvedSearchParams.avancee === '1'}
             initialOnglet={ongletGuide ? 'guidee' : 'simple'}
           />
-        </div>
-      </div>
-    </>
   )
 }

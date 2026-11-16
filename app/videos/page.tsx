@@ -30,12 +30,12 @@ export default async function VideosPage() {
       {videos.map((v) => (
         <script key={v.slug} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(videoJsonLd(v, APP_URL, lang)) }} />
       ))}
-      <div className="page-header" style={{ background: 'linear-gradient(135deg, #0f172a, #0c2340)' }}>
+      <div className="page-header">
         <div className="container">
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: 'white', margin: 0 }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: 'var(--navy)', margin: 0 }}>
             {pickLang(lang, { fr: '🎬 Vidéos pédagogiques', ar: '🎬 فيديوهات تعليمية' })}
           </h1>
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, marginTop: 8, marginBottom: 0, maxWidth: 720 }}>
+          <p style={{ color: 'var(--slate-600)', fontSize: 14, marginTop: 8, marginBottom: 0, maxWidth: 720 }}>
             {pickLang(lang, {
               fr: 'Courtes vidéos animées, commentées en arabe et sous-titrées en français, pour comprendre les médicaments.',
               ar: 'فيديوهات قصيرة متحركة بالعربية مع ترجمة فرنسية لفهم الأدوية.',

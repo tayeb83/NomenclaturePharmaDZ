@@ -91,20 +91,20 @@ export default async function RetraitsAnneePage({ params }: { params: { annee: s
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* Header */}
-      <div className="page-header" style={{ background: 'linear-gradient(135deg, #7f1d1d, #991b1b)' }}>
+      <div className="page-header ton-retrait">
         <div className="container">
           <Link href="/alertes" className="detail-back-link">
             {pickLang(lang, { fr: '← Alertes & Retraits', ar: '→ التنبيهات والانسحابات' })}
           </Link>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginTop: 12 }}>
             <div>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '.08em', marginBottom: 6 }}>
+              <div style={{ fontSize: 11, color: 'var(--slate-600)', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '.08em', marginBottom: 6 }}>
                 {pickLang(lang, { fr: 'RETRAITS DU MARCHÉ ALGÉRIEN', ar: 'انسحابات من السوق الجزائري' })}
               </div>
-              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 800, color: 'white', margin: 0 }}>
+              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 800, color: 'var(--navy)', margin: 0 }}>
                 {pickLang(lang, { fr: `🚫 Retraits ${annee}`, ar: `🚫 انسحابات ${annee}` })}
               </h1>
-              <p style={{ color: 'rgba(255,255,255,0.75)', marginTop: 8, fontSize: 15 }}>
+              <p style={{ color: 'var(--slate-600)', marginTop: 8, fontSize: 15 }}>
                 {pickLang(lang, {
                   fr: `${retraits.length} médicament${retraits.length > 1 ? 's' : ''} retiré${retraits.length > 1 ? 's' : ''} — ${motifGroups.length} motif${motifGroups.length > 1 ? 's' : ''} différent${motifGroups.length > 1 ? 's' : ''}`,
                   ar: `${retraits.length} دواء مسحوب — ${motifGroups.length} سبب مختلف`,

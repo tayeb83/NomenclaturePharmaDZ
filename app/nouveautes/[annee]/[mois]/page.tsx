@@ -95,21 +95,21 @@ export default async function NouveautesAnneeMoisPage({ params }: { params: { an
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* Header */}
-      <div className="page-header" style={{ background: 'linear-gradient(135deg, #14532d, #166534)' }}>
+      <div className="page-header">
         <div className="container">
           <Link href="/veille" className="detail-back-link">
             {pickLang(lang, { fr: '← Veille pharmaceutique', ar: '→ اليقظة الصيدلانية' })}
           </Link>
           <div style={{ marginTop: 12 }}>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '.08em', marginBottom: 6 }}>
+            <div style={{ fontSize: 11, color: 'var(--slate-600)', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '.08em', marginBottom: 6 }}>
               {pickLang(lang, { fr: 'NOUVELLES INSCRIPTIONS — NOMENCLATURE MIPH', ar: 'تسجيلات جديدة — نومنكلاتور MIPH' })}
             </div>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 800, color: 'white', margin: 0 }}>
+            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 800, color: 'var(--navy)', margin: 0 }}>
               {lang === 'ar'
                 ? `✨ ${moisLabelAr} ${annee}`
                 : `✨ ${moisLabelFr} ${annee}`}
             </h1>
-            <p style={{ color: 'rgba(255,255,255,0.65)', marginTop: 8, fontSize: 15 }}>
+            <p style={{ color: 'var(--slate-600)', marginTop: 8, fontSize: 15 }}>
               {pickLang(lang, {
                 fr: `${meds.length} nouveaux médicaments — ${generiques.length} génériques — ${locaux.length} fabriqués en Algérie`,
                 ar: `${meds.length} دواء جديد — ${generiques.length} جنيس — ${locaux.length} مصنع في الجزائر`,

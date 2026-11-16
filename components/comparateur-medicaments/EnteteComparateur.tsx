@@ -8,9 +8,9 @@ export function EnteteComparateur() {
   const { lang } = useLanguage()
   const ar = lang === 'ar'
   return (
-    <div className="page-header" style={{ background: 'linear-gradient(135deg, #12233f, #173f82)' }}>
+    <div className="page-header">
       <div className="container">
-        <Link href="/outils" style={{ color: 'rgba(255,255,255,.8)', fontSize: 13 }}>{ar ? 'الأدوات →' : '← Outils'}</Link>
+        <Link href="/outils" style={{ color: 'var(--slate-600)', fontSize: 13 }}>{ar ? 'الأدوات →' : '← Outils'}</Link>
         <h1>⚖️ {ar ? 'مقارنة بين دواءين' : 'Comparateur de deux médicaments'}</h1>
       </div>
     </div>

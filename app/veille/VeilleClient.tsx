@@ -29,7 +29,7 @@ export function VeilleClient({
 
   return (
     <>
-      <div className="page-header" style={{ background: 'linear-gradient(135deg, #1e3a5f, #0284c7)' }}>
+      <div className="page-header">
         <div className="container">
           <h1>📋 {t('Veille réglementaire', 'المراقبة التنظيمية')}</h1>
           <p>{t(

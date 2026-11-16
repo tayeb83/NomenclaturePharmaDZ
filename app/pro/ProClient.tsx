@@ -327,10 +327,10 @@ export function ProClient() {
 
   return (
     <div dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      <div className="page-header" style={{ background: 'linear-gradient(135deg, #0f172a, #1e3a5f)' }}>
+      <div className="page-header">
         <div className="container">
-          <h1 style={{ color: 'white' }}>{t.headerTitle}</h1>
-          <p style={{ color: 'rgba(255,255,255,0.7)', maxWidth: 720 }}>{t.headerSub}</p>
+          <h1 style={{ color: 'var(--navy)' }}>{t.headerTitle}</h1>
+          <p style={{ color: 'var(--slate-600)', maxWidth: 720 }}>{t.headerSub}</p>
         </div>
       </div>
 

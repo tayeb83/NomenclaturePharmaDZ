@@ -10,7 +10,8 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Bandeau } from '@/components/layout/Bandeau'
 import { useLanguage } from '@/components/i18n/LanguageProvider'
 import { displayName } from '@/lib/arabize'
 import { getCountryFlag } from '@/lib/countryFlag'
@@ -76,7 +77,7 @@ function ucumTexte(d: Presentation['dosage_ucum']): string {
   return d.denominateur ? `${q} / ${d.denominateur.valeur} ${d.denominateur.ucum ?? `(${d.denominateur.unite})`}` : q
 }
 
-export function GuideClient({ embedded = false, basePath, extraParams }: { embedded?: boolean; basePath?: string; extraParams?: Record<string, string> } = {}) {
+export function GuideClient({ embedded = false, basePath, extraParams, entete }: { embedded?: boolean; basePath?: string; extraParams?: Record<string, string>; /** Sélecteur de mode affiché en tête du bandeau (onglet de /recherche). */ entete?: ReactNode } = {}) {
   const { lang } = useLanguage()
   const ar = lang === 'ar'
   const t = useCallback((fr: string, a: string) => (ar ? a : fr), [ar])
@@ -172,72 +173,23 @@ export function GuideClient({ embedded = false, basePath, extraParams }: { embed
 
   return (
     <div dir={ar ? 'rtl' : 'ltr'}>
-      {!embedded && (
-        <div className="page-header">
-          <div className="container">
-            <h1>🧪 {t('Recherche guidée', 'البحث الموجَّه')}</h1>
-            <p style={{ maxWidth: 720 }}>
-              {t(
-                'Trouvez un médicament pas à pas : la substance, puis la voie, la forme et le dosage. Fonction en cours d’essai.',
-                'اعثر على دواء خطوة بخطوة: المادة الفعالة، ثم طريقة الاستعمال، فالشكل والجرعة. ميزة قيد التجربة.'
-              )}
-            </p>
-          </div>
-        </div>
-      )}
-
-      <div className={embedded ? undefined : 'page-body'}>
-        <div className={embedded ? 'guide' : 'container guide'}>
-          {/* ── Étape 1 : substance ou marque ── */}
-          {!sel.dci && (
-            <section className="guide-accueil">
+      {/* Même bandeau que l'accueil et la recherche : le parcours y remplace le champ. */}
+      <Bandeau>
+        {entete ?? <h1 className="bandeau-titre">{t('Recherche guidée', 'البحث الموجَّه')}</h1>}
+        {!sel.dci && (
+          <div className="guide-accueil">
               <label className="guide-question" htmlFor="guide-saisie">{t('Quelle substance ou quelle marque ?', 'أي مادة فعالة أو أي اسم تجاري؟')}</label>
-              <p className="guide-aide">{t('Un parcours en quatre temps : substance, voie, forme, dosage. Le nom de marque fonctionne aussi.', 'مسار من أربع خطوات: المادة، الطريقة، الشكل، الجرعة. الاسم التجاري يصلح أيضًا.')}</p>
-              <Link className="guide-mode-emploi" href={`/articles/recherche-guidee-medicament-algerie-mode-emploi${ar ? '-ar' : ''}`}>
-                📖 {t('Mode d’emploi avec exemples', 'دليل الاستعمال مع أمثلة')}
-              </Link>
-              <div className="search-bar guide-saisie">
-                <span className="search-bar-icon" aria-hidden>🔎</span>
+              <div className="home-search guide-saisie">
                 <input
                   id="guide-saisie" ref={champ} type="search" autoComplete="off" autoFocus={!embedded} value={saisie}
                   onChange={e => setSaisie(e.target.value)}
                   placeholder={t('Ex. amoxicilline, paracétamol, Augmentin…', 'مثال: amoxicilline، paracétamol، Augmentin…')}
                 />
               </div>
-              {suggestions && suggestions.length === 0 && !charge && (
-                <p className="guide-vide">
-                  {t('Aucune substance ne correspond à cette saisie. Vérifiez l’orthographe ou essayez le nom de marque.', 'لا توجد مادة مطابقة. تحقق من الكتابة أو جرّب الاسم التجاري.')}{' '}
-                  <Link href={`/recherche?q=${encodeURIComponent(saisie.trim())}`}>{t('Chercher dans tout le site', 'ابحث في كامل الموقع')}</Link>
-                </p>
-              )}
-              {suggestions && suggestions.length > 0 && (
-                <ul className="guide-liste" aria-label={t('Substances proposées', 'المواد المقترحة')}>
-                  {suggestions.map(o => {
-                    const m = morceauxDci(o.libelle, lang)
-                    return (
-                      <li key={o.id}>
-                        <button type="button" className="guide-ligne" onClick={() => choisir('dci', o.id)}>
-                          <span className="guide-ligne-texte">
-                            <strong>{m.nom}</strong>
-                            {m.detail && <small>{m.detail}</small>}
-                            {o.marques?.length ? <small className="guide-via">{t('via', 'عبر')} {o.marques.join(', ')}</small> : null}
-                          </span>
-                          <span className="guide-ligne-n">{nbPres(o.n)}</span>
-                          <span className="guide-ligne-fleche" aria-hidden>{fleche}</span>
-                        </button>
-                      </li>
-                    )
-                  })}
-                </ul>
-              )}
-            </section>
-          )}
-
-          {erreur && <p className="guide-erreur" role="alert">{erreur}</p>}
-
-          {/* ── Parcours ── */}
-          {sel.dci && rep && (
-            <>
+          </div>
+        )}
+        {sel.dci && rep && (
+          <>
               <nav className="guide-pastilles" aria-label={t('Votre parcours', 'مسارك')}>
                 {ETAPES.map((c, i) => {
                   const s = rep.selection[c]
@@ -282,6 +234,71 @@ export function GuideClient({ embedded = false, basePath, extraParams }: { embed
                 </p>
               )}
 
+              {/* ── Filtres ── */}
+              <div className="guide-filtres">
+                <div className="guide-segments" role="group" aria-label={t(NOMS.statut.fr, NOMS.statut.ar)}>
+                  <button type="button" className={!rep.selection.statut ? 'actif' : ''} onClick={() => retirer('statut')}>{t('Toutes origines', 'كل المصادر')}</button>
+                  {(rep.options.statut ?? []).filter(o => o.id !== 'non-precise').map(o => (
+                    <button key={o.id} type="button" className={rep.selection.statut?.id === o.id ? 'actif' : ''} onClick={() => choisir('statut', o.id)}>
+                      {o.id === 'f' ? '🇩🇿 ' : ''}{lib(o)} <span className="guide-n">{o.n}</span>
+                    </button>
+                  ))}
+                </div>
+                <label className="guide-select">
+                  <span>{t(NOMS.labo.fr, NOMS.labo.ar)}</span>
+                  <select id="guide-labo" value={rep.selection.labo?.id ?? ''} onChange={e => (e.target.value ? choisir('labo', e.target.value) : retirer('labo'))}>
+                    <option value="">{t('Tous', 'الكل')}</option>
+                    {(rep.options.labo ?? []).map(o => <option key={o.id} value={o.id}>{o.libelle} ({o.n})</option>)}
+                  </select>
+                </label>
+              </div>
+          </>
+        )}
+      </Bandeau>
+
+      <div className="page-body">
+        <div className="container">
+          <div className="guide">
+            {entete && <h1 className="rech-titre">{t('Recherche guidée', 'البحث الموجَّه')}</h1>}
+            {!sel.dci && (
+              <>
+              <p className="guide-aide">{t('Un parcours en quatre temps : substance, voie, forme, dosage. Le nom de marque fonctionne aussi.', 'مسار من أربع خطوات: المادة، الطريقة، الشكل، الجرعة. الاسم التجاري يصلح أيضًا.')}</p>
+              <Link className="guide-mode-emploi" href={`/articles/recherche-guidee-medicament-algerie-mode-emploi${ar ? '-ar' : ''}`}>
+                📖 {t('Mode d’emploi avec exemples', 'دليل الاستعمال مع أمثلة')}
+              </Link>
+              {suggestions && suggestions.length === 0 && !charge && (
+                <p className="guide-vide">
+                  {t('Aucune substance ne correspond à cette saisie. Vérifiez l’orthographe ou essayez le nom de marque.', 'لا توجد مادة مطابقة. تحقق من الكتابة أو جرّب الاسم التجاري.')}{' '}
+                  <Link href={`/recherche?q=${encodeURIComponent(saisie.trim())}`}>{t('Chercher dans tout le site', 'ابحث في كامل الموقع')}</Link>
+                </p>
+              )}
+              {suggestions && suggestions.length > 0 && (
+                <ul className="guide-liste" aria-label={t('Substances proposées', 'المواد المقترحة')}>
+                  {suggestions.map(o => {
+                    const m = morceauxDci(o.libelle, lang)
+                    return (
+                      <li key={o.id}>
+                        <button type="button" className="guide-ligne" onClick={() => choisir('dci', o.id)}>
+                          <span className="guide-ligne-texte">
+                            <strong>{m.nom}</strong>
+                            {m.detail && <small>{m.detail}</small>}
+                            {o.marques?.length ? <small className="guide-via">{t('via', 'عبر')} {o.marques.join(', ')}</small> : null}
+                          </span>
+                          <span className="guide-ligne-n">{nbPres(o.n)}</span>
+                          <span className="guide-ligne-fleche" aria-hidden>{fleche}</span>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+              </>
+            )}
+
+            {erreur && <p className="guide-erreur" role="alert">{erreur}</p>}
+
+            {sel.dci && rep && (
+              <>
               {/* ── Choix de l'étape en cours ── */}
               {etape && etape !== 'dci' && (
                 <section className="guide-etape">
@@ -310,25 +327,6 @@ export function GuideClient({ embedded = false, basePath, extraParams }: { embed
                   </div>
                 </section>
               )}
-
-              {/* ── Filtres ── */}
-              <div className="guide-filtres">
-                <div className="guide-segments" role="group" aria-label={t(NOMS.statut.fr, NOMS.statut.ar)}>
-                  <button type="button" className={!rep.selection.statut ? 'actif' : ''} onClick={() => retirer('statut')}>{t('Toutes origines', 'كل المصادر')}</button>
-                  {(rep.options.statut ?? []).filter(o => o.id !== 'non-precise').map(o => (
-                    <button key={o.id} type="button" className={rep.selection.statut?.id === o.id ? 'actif' : ''} onClick={() => choisir('statut', o.id)}>
-                      {o.id === 'f' ? '🇩🇿 ' : ''}{lib(o)} <span className="guide-n">{o.n}</span>
-                    </button>
-                  ))}
-                </div>
-                <label className="guide-select">
-                  <span>{t(NOMS.labo.fr, NOMS.labo.ar)}</span>
-                  <select id="guide-labo" value={rep.selection.labo?.id ?? ''} onChange={e => (e.target.value ? choisir('labo', e.target.value) : retirer('labo'))}>
-                    <option value="">{t('Tous', 'الكل')}</option>
-                    {(rep.options.labo ?? []).map(o => <option key={o.id} value={o.id}>{o.libelle} ({o.n})</option>)}
-                  </select>
-                </label>
-              </div>
 
               {/* ── Présentations ── */}
               <section aria-live="polite">
@@ -370,10 +368,11 @@ export function GuideClient({ embedded = false, basePath, extraParams }: { embed
                   <p className="guide-aide">{t('Liste limitée à 100. Précisez la forme ou le dosage pour voir le reste.', 'القائمة محدودة بـ 100. حدّد الشكل أو الجرعة لرؤية الباقي.')}</p>
                 )}
               </section>
-            </>
-          )}
+              </>
+            )}
 
-          {sel.dci && !rep && !erreur && <p className="guide-aide">{t('Chargement…', 'جارٍ التحميل…')}</p>}
+            {sel.dci && !rep && !erreur && <p className="guide-aide">{t('Chargement…', 'جارٍ التحميل…')}</p>}
+          </div>
         </div>
       </div>
     </div>

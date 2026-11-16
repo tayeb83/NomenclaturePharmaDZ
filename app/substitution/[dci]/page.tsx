@@ -118,19 +118,19 @@ export default async function SubstitutionDciPage({ params }: { params: { dci: s
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* Header */}
-      <div className="page-header" style={{ background: 'linear-gradient(135deg, #064e3b, #065f46)' }}>
+      <div className="page-header">
         <div className="container">
           <Link href="/substitution" className="detail-back-link">
             {pickLang(lang, { fr: '← Substitution générique', ar: '→ الاستبدال الجنيسي' })}
           </Link>
           <div style={{ marginTop: 12 }}>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '.08em', marginBottom: 6 }}>
+            <div style={{ fontSize: 11, color: 'var(--slate-600)', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '.08em', marginBottom: 6 }}>
               {pickLang(lang, { fr: 'SUBSTITUTION — DÉNOMINATION COMMUNE INTERNATIONALE', ar: 'الاستبدال — الاسم العام الدولي' })}
             </div>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 800, color: 'white', margin: 0, textTransform: 'uppercase' }}>
+            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 800, color: 'var(--navy)', margin: 0, textTransform: 'uppercase' }}>
               ♻️ {dci}
             </h1>
-            <p style={{ color: 'rgba(255,255,255,0.65)', marginTop: 8, fontSize: 15 }}>
+            <p style={{ color: 'var(--slate-600)', marginTop: 8, fontSize: 15 }}>
               {pickLang(lang, {
                 fr: `${generiques.length} générique${generiques.length > 1 ? 's' : ''} · ${reference.length} référence${reference.length > 1 ? 's' : ''} — enregistrés en Algérie`,
                 ar: `${generiques.length} جنيس · ${reference.length} مرجعي — مسجل في الجزائر`,
