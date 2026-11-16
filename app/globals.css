@@ -1363,3 +1363,28 @@ a.home-mode-aide:hover { text-decoration: underline; }
   .bandeau .home-search button { padding: 0 16px; }
   .rech-titre { font-size: 22px; }
 }
+
+/* ─── Recherche centrée dans la fenêtre (accueil, recherche, recherche guidée) ─── */
+.home-hero, .hero.bandeau { --niche: 190px; }
+.hero.bandeau { --niche: 88px; }
+@media (min-width: 761px) {
+  /* Une colonne vide de la largeur de la niche, à gauche, garde le contenu au vrai centre. */
+  .home-hero .hero-grid, .bandeau .hero-grid { grid-template-columns: var(--niche) minmax(0, 1fr) var(--niche); }
+  .home-hero .hero-content, .bandeau .hero-content { grid-column: 2; }
+  .home-hero .hero-niche, .bandeau .hero-niche { grid-column: 3; }
+}
+.home-hero .hero-content, .bandeau .hero-content { text-align: center; }
+.home-hero h1 { margin-inline: auto; max-width: 760px; }
+.home-hero .hero-lead, .home-hero .hero-content > p { margin-inline: auto; }
+.home-search-wrap { margin-inline: auto; }
+.home-search-wrap .home-search { max-width: none; text-align: start; }
+.home-seg, .bandeau .home-seg { margin-inline: auto; }
+.home-search-chips { justify-content: center; margin-inline: auto; }
+.home-hero-cta, .home-etapes, .home-garde { justify-content: center; }
+.home-panneau p, .home-mode-aide { margin-inline: auto; }
+.bandeau .hero-content { justify-items: center; }
+.bandeau .home-search, .bandeau .home-panneau, .bandeau .guide-pastilles, .bandeau .guide-accueil { width: 100%; }
+.bandeau .home-search input { text-align: start; }
+.bandeau .rech-options, .bandeau .rech-outils, .bandeau .filter-tabs, .bandeau .guide-pastilles, .bandeau .guide-filtres { justify-content: center; }
+.bandeau .guide-accueil { justify-items: center; }
+.home-search-wrap, .home-question, .home-mode-aide, .home-panneau { text-align: center; }
