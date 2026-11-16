@@ -1388,3 +1388,4 @@ a.home-mode-aide:hover { text-decoration: underline; }
 .bandeau .rech-options, .bandeau .rech-outils, .bandeau .filter-tabs, .bandeau .guide-pastilles, .bandeau .guide-filtres { justify-content: center; }
 .bandeau .guide-accueil { justify-items: center; }
 .home-search-wrap, .home-question, .home-mode-aide, .home-panneau { text-align: center; }
+.hero .home-mode-aide, .hero .home-panneau p { max-width: none; margin-inline: auto; }
