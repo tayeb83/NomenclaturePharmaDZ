@@ -29,7 +29,7 @@ export interface Article {
 }
 
 export interface ArticleSection {
-  type: 'intro' | 'h2' | 'h3' | 'paragraph' | 'list' | 'table' | 'qcm' | 'callout' | 'image' | 'devinette'
+  type: 'intro' | 'h2' | 'h3' | 'paragraph' | 'list' | 'table' | 'qcm' | 'callout' | 'image' | 'devinette' | 'equivalents'
   title?: string
   text?: string
   items?: string[]
@@ -39,6 +39,10 @@ export interface ArticleSection {
   /** type « devinette » : icônes à deviner, réponse révélée au clic */
   devinettes?: ArticleDevinette[]
   variant?: 'info' | 'warning' | 'tip'
+  /** type « equivalents » : codes ATC de substance dont on liste, à l'affichage, les présentations enregistrées
+   *  (components/articles/EquivalentsBlock.tsx), et DCI pour le lien vers la recherche */
+  atc?: string[]
+  dci?: string
   /** type « image » : fichier sous /public, texte alternatif (obligatoire), légende et dimensions réelles */
   src?: string
   alt?: string
@@ -78,6 +82,7 @@ import { ARTICLES_ALLERGIES } from './articles-allergies'
 import { ARTICLES_FICHE } from './articles-fiche'
 import { ARTICLES_JEU_ICONES } from './articles-jeu-icones'
 import { ARTICLES_RECHERCHE_FAUTES } from './articles-recherche-fautes'
+import { ARTICLES_EQUIVALENTS } from './articles-equivalents'
 
 export const ARTICLES: Article[] = [
   {
@@ -1195,6 +1200,7 @@ export const ARTICLES: Article[] = [
   ...ARTICLES_FICHE,
   ...ARTICLES_JEU_ICONES,
   ...ARTICLES_RECHERCHE_FAUTES,
+  ...ARTICLES_EQUIVALENTS,
 ]
 
 export function getArticleBySlug(slug: string): Article | undefined {

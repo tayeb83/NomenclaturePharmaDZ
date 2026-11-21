@@ -8,6 +8,7 @@ import { findArticle, findArticleDraft, findTranslation, relatedArticles } from 
 import { isAdminSessionValid } from '@/lib/admin-auth'
 import { AdInContent } from '@/components/ads/AdBanner'
 import ShareBar from '@/components/drug/ShareBar'
+import EquivalentsBlock from '@/components/articles/EquivalentsBlock'
 import DwaIcons from '@/lib/dwadz-icons/dwadz-icons.js'
 import { articleShareMessage, hashtagsArticle, ligneSuivre, texteACopier } from '@/lib/article-share'
 
@@ -60,11 +61,14 @@ export async function generateMetadata(
   }
 }
 
-/** **gras** et [texte](https://lien) dans un texte d'article. Les liens sortants portent rel="nofollow noopener". */
+/** **gras**, [texte](https://lien) et [texte](/chemin) dans un texte d'article.
+ *  Les liens sortants portent rel="nofollow noopener" ; un chemin du site (« /… ») est un lien interne. */
 function renderBold(text: string) {
-  return text.split(/(\*\*[^*]+\*\*|\[[^\]]+\]\(https?:\/\/[^)\s]+\))/g).map((part, i) => {
+  return text.split(/(\*\*[^*]+\*\*|\[[^\]]+\]\((?:https?:\/\/|\/(?!\/))[^)\s]*\))/g).map((part, i) => {
     const gras = /^\*\*([^*]+)\*\*$/.exec(part)
     if (gras) return <strong key={i}>{gras[1]}</strong>
+    const interne = /^\[([^\]]+)\]\((\/(?!\/)[^)\s]*)\)$/.exec(part)
+    if (interne) return <Link key={i} href={interne[2]} style={{ color: '#0284c7', fontWeight: 600 }}>{interne[1]}</Link>
     const lien = /^\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)$/.exec(part)
     if (lien) return <a key={i} href={lien[2]} target="_blank" rel="nofollow noopener noreferrer" style={{ color: '#0284c7' }}>{lien[1]}</a>
     return part
@@ -80,6 +84,10 @@ function RenderSection({ section, isRtl }: { section: ArticleSection; isRtl: boo
         {section.text ? renderBold(section.text) : null}
       </p>
     )
+  }
+
+  if (section.type === 'equivalents' && section.atc?.length) {
+    return <EquivalentsBlock atc={section.atc} dci={section.dci} isRtl={isRtl} />
   }
 
   if (section.type === 'image' && section.src) {
@@ -175,7 +183,7 @@ function RenderSection({ section, isRtl }: { section: ArticleSection; isRtl: boo
                     padding: '10px 14px', border: '1px solid #e2e8f0',
                     color: '#334155', textAlign: isRtl ? 'right' : 'left',
                   }}>
-                    {cell}
+                    {renderBold(cell)}
                   </td>
                 ))}
               </tr>
