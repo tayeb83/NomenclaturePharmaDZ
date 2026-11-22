@@ -40,7 +40,7 @@ import { getInteractionsAnsm } from '@/lib/interactions'
 import { allergiesDeDci } from '@/lib/allergies-core'
 import { AllergiesSection, libelleBandeau, nombreAllergies } from '@/components/drug/AllergiesSection'
 import { FicheSecurite, type SecuriteAllergies, type SecuriteInteractions } from '@/components/drug/FicheSecurite'
-import { AdInContent, AdSidebar } from '@/components/ads/AdBanner'
+import { AdInContent, AdMobile, AdSidebar } from '@/components/ads/AdBanner'
 
 const TYPE_LABELS: Record<string, { fr: string; ar: string }> = {
   GE: { fr: 'Générique', ar: 'جنيس' }, 'Gé': { fr: 'Générique', ar: 'جنيس' }, RE: { fr: 'Référence étrangère', ar: 'مرجعي أجنبي' },
@@ -720,6 +720,9 @@ export async function MedicamentDetail(
                 repères pendant toute la lecture de la fiche. */}
             <AdSidebar />
             </div>
+            {/* Pub mobile : sur une colonne, elle suit les repères (prix, DCI),
+                avant les encadrés de détail (voir .pub-mobile dans globals.css). */}
+            <AdMobile className="pub-mobile" />
           </div>
 
           {/* Pub juste après l'essentiel de la fiche : c'est là que le

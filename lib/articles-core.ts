@@ -323,3 +323,15 @@ export function rowToArticle(r: ArticleRow): Article {
     source: r.source_url || r.source_nom ? { nom: r.source_nom, url: r.source_url } : undefined,
   }
 }
+
+/**
+ * Où placer la pub dans le texte d'un article : juste avant le deuxième titre de partie (h2),
+ * c'est-à-dire après l'introduction et la première partie, quand le lecteur est entré dans l'article.
+ * Sans deuxième h2, après la section qui suit l'introduction, si l'article est assez long.
+ * Renvoie l'index de la section devant laquelle insérer la pub, ou -1 (pas de pub dans le texte).
+ */
+export function indexPubArticle(content: Pick<ArticleSection, 'type'>[]): number {
+  const h2 = content.reduce<number[]>((acc, s, i) => (s.type === 'h2' ? [...acc, i] : acc), [])
+  if (h2.length >= 2) return h2[1]
+  return content.length >= 5 ? 2 : -1
+}

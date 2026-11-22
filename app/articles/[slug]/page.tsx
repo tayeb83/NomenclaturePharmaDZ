@@ -1,10 +1,12 @@
 import { notFound } from 'next/navigation'
+import { Fragment } from 'react'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { isLang, pickLang, type Lang } from '@/lib/i18n'
 import { ARTICLES, type Article, type ArticleSection } from '@/lib/articles'
 import { findArticle, findArticleDraft, findTranslation, relatedArticles } from '@/lib/articles-db'
+import { indexPubArticle } from '@/lib/articles-core'
 import { isAdminSessionValid } from '@/lib/admin-auth'
 import { AdInContent } from '@/components/ads/AdBanner'
 import ShareBar from '@/components/drug/ShareBar'
@@ -298,6 +300,7 @@ export default async function ArticleDetailPage({ params }: { params: { slug: st
 
   const related = await relatedArticles(article)
   const isRtl = article.lang === 'ar'
+  const pubIndex = indexPubArticle(article.content)
   const altArticle = await findTranslation(article)
 
   const AUDIENCE_LABEL: Record<string, { fr: string; ar: string; color: string }> = {
@@ -425,7 +428,12 @@ export default async function ArticleDetailPage({ params }: { params: { slug: st
 
           <article lang={article.lang} dir={isRtl ? 'rtl' : 'ltr'} style={{ direction: isRtl ? 'rtl' : 'ltr' }}>
             {article.content.map((section, i) => (
-              <RenderSection key={i} section={section} isRtl={isRtl} />
+              <Fragment key={i}>
+                {/* Pub dans le texte, après l'introduction et la première partie : celle du bas de page,
+                    après les articles liés, n'était presque jamais vue. */}
+                {i === pubIndex && <AdInContent placement="top" />}
+                <RenderSection section={section} isRtl={isRtl} />
+              </Fragment>
             ))}
           </article>
 
