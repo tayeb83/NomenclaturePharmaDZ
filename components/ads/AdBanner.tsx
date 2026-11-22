@@ -165,6 +165,8 @@ export function AdInContent({ slot, placement = 'bottom', style }: { slot?: stri
 
 /** Écran assez large pour la mise en page à deux colonnes des fiches. */
 const SIDEBAR_QUERY = '(min-width: 861px)'
+/** L'inverse : la fiche passe sur une colonne (même seuil que .fiche-layout dans globals.css). */
+const MOBILE_QUERY = '(max-width: 860px)'
 /** Hauteur réservée au bloc (rectangle 250 px), espacement et marges compris. */
 const SIDEBAR_HAUTEUR = 250 + 14 + 24
 
@@ -194,6 +196,30 @@ export function AdSidebar({ slot }: { slot?: string }) {
   return (
     <div data-pub="sidebar" className="pub-cote" style={{ overflow: 'hidden' }}>
       <AdBanner slot={slot} placement="sidebar" format="rectangle" responsive={false} style={{ minHeight: 250 }} />
+    </div>
+  )
+}
+
+/**
+ * Pub réservée au mobile, placée haut dans la page. Sur une colonne, la pub
+ * « haut de fiche » arrive après tous les encadrés de détail, loin sous
+ * l'écran : celle-ci prend place juste après les repères (prix, DCI).
+ *
+ * Comme AdSidebar, le bloc n'est monté que si l'écran est bien un mobile :
+ * un <ins> masqué en CSS déclencherait une demande d'annonce invisible.
+ */
+export function AdMobile({ slot, placement = 'top', className }: { slot?: string; placement?: AdPlacement; className?: string }) {
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    // Décidé une fois au montage, pour ne pas démonter un bloc déjà rempli.
+    setVisible(window.matchMedia(MOBILE_QUERY).matches)
+  }, [])
+
+  if (!visible) return null
+  return (
+    <div data-pub={`${placement}-mobile`} className={className} style={{ overflow: 'hidden' }}>
+      <AdBanner slot={slot} placement={placement} format="auto" responsive style={{ minHeight: 100 }} />
     </div>
   )
 }

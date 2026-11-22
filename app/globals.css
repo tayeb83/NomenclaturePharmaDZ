@@ -717,13 +717,15 @@ a.fiche-atc:hover { text-decoration: underline; }
 @media (max-width: 860px) {
   .fiche-layout { grid-template-columns: 1fr; }
   .fiche-cote { position: static; order: -1; }
+  /* après les repères (même rang, ordre du DOM), avant les encadrés de détail */
+  .pub-mobile { order: -1; }
   .fiche-table th { width: 40%; }
 }
 @media print {
   .fiche-layout { grid-template-columns: 1fr 200pt; gap: 8pt; }
   .fiche-box { break-inside: avoid; page-break-inside: avoid; border: 1pt solid #bbb; }
   .fiche-cote { position: static; }
-  .pub-cote { display: none; }
+  .pub-cote, .pub-mobile { display: none; }
   .fiche-btn { display: none; }
 }
 
