@@ -11,6 +11,7 @@ import { isAdminSessionValid } from '@/lib/admin-auth'
 import { AdInContent } from '@/components/ads/AdBanner'
 import ShareBar from '@/components/drug/ShareBar'
 import EquivalentsBlock from '@/components/articles/EquivalentsBlock'
+import { DciGeneriquesBlock, TopLabosBlock } from '@/components/articles/ClassementBlocks'
 import DwaIcons from '@/lib/dwadz-icons/dwadz-icons.js'
 import { articleShareMessage, hashtagsArticle, ligneSuivre, texteACopier } from '@/lib/article-share'
 
@@ -86,6 +87,14 @@ function RenderSection({ section, isRtl }: { section: ArticleSection; isRtl: boo
         {section.text ? renderBold(section.text) : null}
       </p>
     )
+  }
+
+  if (section.type === 'top-labos') {
+    return <TopLabosBlock limite={section.limite} isRtl={isRtl} />
+  }
+
+  if (section.type === 'dci-generiques') {
+    return <DciGeneriquesBlock mode={section.mode ?? 'plus'} limite={section.limite} isRtl={isRtl} />
   }
 
   if (section.type === 'equivalents' && section.atc?.length) {

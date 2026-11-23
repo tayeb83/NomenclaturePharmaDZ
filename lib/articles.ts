@@ -29,7 +29,7 @@ export interface Article {
 }
 
 export interface ArticleSection {
-  type: 'intro' | 'h2' | 'h3' | 'paragraph' | 'list' | 'table' | 'qcm' | 'callout' | 'image' | 'devinette' | 'equivalents'
+  type: 'intro' | 'h2' | 'h3' | 'paragraph' | 'list' | 'table' | 'qcm' | 'callout' | 'image' | 'devinette' | 'equivalents' | 'top-labos' | 'dci-generiques'
   title?: string
   text?: string
   items?: string[]
@@ -43,6 +43,10 @@ export interface ArticleSection {
    *  (components/articles/EquivalentsBlock.tsx), et DCI pour le lien vers la recherche */
   atc?: string[]
   dci?: string
+  /** types « top-labos » et « dci-generiques » : nombre de lignes du classement (1 à 50, 20 par défaut),
+   *  et pour « dci-generiques » : 'plus' (le plus de génériques) ou 'aucun' (aucun générique) */
+  limite?: number
+  mode?: 'plus' | 'aucun'
   /** type « image » : fichier sous /public, texte alternatif (obligatoire), légende et dimensions réelles */
   src?: string
   alt?: string
@@ -83,6 +87,7 @@ import { ARTICLES_FICHE } from './articles-fiche'
 import { ARTICLES_JEU_ICONES } from './articles-jeu-icones'
 import { ARTICLES_RECHERCHE_FAUTES } from './articles-recherche-fautes'
 import { ARTICLES_EQUIVALENTS } from './articles-equivalents'
+import { ARTICLES_DONNEES } from './articles-donnees'
 
 export const ARTICLES: Article[] = [
   {
@@ -1201,6 +1206,7 @@ export const ARTICLES: Article[] = [
   ...ARTICLES_JEU_ICONES,
   ...ARTICLES_RECHERCHE_FAUTES,
   ...ARTICLES_EQUIVALENTS,
+  ...ARTICLES_DONNEES,
 ]
 
 export function getArticleBySlug(slug: string): Article | undefined {
