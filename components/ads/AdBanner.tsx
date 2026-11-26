@@ -62,19 +62,55 @@ type AdBannerProps = {
  *   3. Définir NEXT_PUBLIC_ADSENSE_CLIENT_ID=ca-pub-XXXXXXXXXXXXXXXX dans .env.local
  *   4. Remplacer le slot par l'ID de l'emplacement publicitaire créé dans AdSense
  */
+/**
+ * Distance avant l'écran à laquelle on demande l'annonce : assez tôt pour
+ * qu'elle soit remplie quand le visiteur arrive dessus, assez tard pour ne
+ * pas charger un bas de page que personne n'atteindra.
+ */
+const MARGE_CHARGEMENT = '400px 0px'
+
 export function AdBanner({ slot, placement, format = 'auto', responsive = true, style }: AdBannerProps) {
   const adRef = useRef<HTMLModElement>(null)
+  const ancreRef = useRef<HTMLDivElement>(null)
   const pushedRef = useRef(false)
+  // Chargement différé : le <ins> n'est monté qu'à l'approche de l'écran.
+  // Une annonce demandée mais jamais vue fait baisser le taux de visibilité
+  // (Active View) et, avec lui, les enchères sur toutes les impressions.
+  const [proche, setProche] = useState(false)
   const clientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID
   const adSlot = slot || (placement && PLACEMENT_SLOTS[placement]) || DEFAULT_SLOT
+  const actif = Boolean(clientId && adSlot)
 
   useEffect(() => {
-    if (!clientId || !adSlot) return
+    if (!actif || proche) return
+    const ancre = ancreRef.current
+    if (!ancre || typeof IntersectionObserver === 'undefined') {
+      setProche(true)
+      return
+    }
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries.some(e => e.isIntersecting)) {
+          setProche(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: MARGE_CHARGEMENT },
+    )
+    observer.observe(ancre)
+    return () => observer.disconnect()
+  }, [actif, proche])
+
+  useEffect(() => {
+    if (!actif || !proche) return
     // Une seule demande de remplissage par <ins>. Sans ce garde-fou, un
     // remontage (StrictMode) ou un re-rendu pousse plusieurs fois pour le même
     // emplacement et AdSense rejette le lot entier — « All ins elements
     // already have ads in them » — ce qui fait disparaître les pubs de toute
     // la page dès qu'il y en a plusieurs.
+    // Un <ins> non encore poussé n'est jamais présent dans le DOM (il n'est
+    // monté qu'ici, juste avant le push) : push({}) remplit le premier <ins>
+    // vide de la page, il ne peut donc pas « voler » un emplacement plus bas.
     if (pushedRef.current) return
     if (adRef.current?.getAttribute('data-adsbygoogle-status')) return
 
@@ -87,10 +123,10 @@ export function AdBanner({ slot, placement, format = 'auto', responsive = true, 
     } catch {
       // AdSense non chargé
     }
-  }, [clientId, adSlot])
+  }, [actif, proche])
 
   // Sans client ID ou sans emplacement configuré → placeholder en dev
-  if (!clientId || !adSlot) {
+  if (!actif) {
     if (process.env.NODE_ENV === 'development') {
       return (
         <div style={{
@@ -109,6 +145,12 @@ export function AdBanner({ slot, placement, format = 'auto', responsive = true, 
       )
     }
     return null
+  }
+
+  // En attendant : un bloc vide de même hauteur minimale, pour que l'arrivée
+  // de l'annonce ne décale pas la page (CLS).
+  if (!proche) {
+    return <div ref={ancreRef} aria-hidden="true" style={{ display: 'block', ...(style || {}) }} />
   }
 
   return (
