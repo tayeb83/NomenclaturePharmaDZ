@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Maquettes — RCP en synthèse</title>
+<style>
+:root{--navy:#12233f;--navyD:#0b1730;--blue:#1d4e9e;--blueL:#e4edf7;--brass:#b98425;--brassD:#8a5f12;--teal:#1e8e8a;--tealL:#e2f1ef;--cream:#fbf7ec;--edge:#efe4c8;--ink:#12233f;--muted:#5b6577;--s100:#f1f5f9;--s200:#e2e8f0;--s300:#cbd5e1;--rose:#9b1c3a;--roseL:#fbe7ea;--bg:#eef1f3;
+--ok:#15803d;--okL:#dcfce7;--warn:#a16207;--warnL:#fef3c7;--ko:#b91c1c;--koL:#fee2e2}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+header.top{background:var(--navy);color:#fff;padding:18px 24px}header.top h1{margin:0;font-size:20px}header.top p{margin:4px 0 0;color:#cbd5e1;font-size:14px}
+.sel{display:flex;gap:8px;flex-wrap:wrap;padding:12px 24px;background:#fff;border-bottom:1px solid var(--s200);position:sticky;top:0;z-index:20}
+.sel button{border:1.5px solid var(--s200);background:#fff;border-radius:10px;padding:8px 13px;font:inherit;font-weight:600;cursor:pointer;font-size:14px}
+.sel button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.sel button.reco::after{content:" ★";color:var(--brass)}
+main{max-width:1180px;margin:0 auto;padding:18px 16px 60px}
+.var{display:none}.var.on{display:block}
+.note{background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:10px;padding:10px 14px;font-size:14px;margin-bottom:14px;line-height:1.55}.note b{color:#78350f}
+.pair{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:18px;align-items:start}
+@media(max-width:1000px){.pair{grid-template-columns:1fr}}
+.lbl{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;margin:0 0 6px}
+.frame{height:700px;overflow:auto;background:#f1f4f4;border:1px solid var(--s300);border-radius:12px;container-type:inline-size;container-name:f}
+.phone{border:9px solid #1e293b;border-radius:30px;height:720px}
+.hero{background:linear-gradient(135deg,#0f172a,#0c2340);color:#fff;padding:16px 20px}
+.hero small{display:block;font:600 10.5px ui-monospace,monospace;letter-spacing:.08em;color:#94a3b8}
+.hero b{font-size:21px;display:block;margin:6px 0 4px;font-family:Georgia,serif}
+.hero i{font-style:normal;font-size:12px;background:#d1fae5;color:#065f46;border-radius:999px;padding:2px 10px;font-weight:700}
+.pad{padding:14px 16px}
+.ghost{background:#fff;border:1px solid #d6d6d6;margin-bottom:12px;border-radius:8px}
+.ghost h5{margin:0;background:#e8e8e8;padding:7px 12px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:#222;border-radius:8px 8px 0 0}
+.ghost div{padding:10px 12px;display:grid;gap:8px}.ghost span{height:9px;border-radius:5px;background:#e5e7eb;display:block}.ghost span:nth-child(2n){width:70%}
+.mono{font-family:ui-monospace,monospace}
+.pg{display:inline-block;border:1.5px solid #dbe3e8;background:#f6f8f9;border-radius:7px;padding:0 8px;font:12px/22px ui-monospace,monospace;color:var(--blue);text-decoration:none;white-space:nowrap}
+.chip{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid var(--s300);border-radius:999px;padding:2px 11px;font-size:13.5px;font-weight:650;color:var(--navy);white-space:nowrap}
+.chip.dci{background:var(--blueL);border-color:#c9d9ee;color:var(--blue)}
+.chip.cl{background:var(--tealL);border-color:#bfe1dc;color:var(--teal)}
+/* Carte RCP */
+.rcp{background:#fff;border:1px solid #dbe3e8;border-radius:14px;overflow:hidden;box-shadow:0 3px 12px rgba(18,35,63,.07);margin-bottom:14px}
+.src{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;background:var(--cream);border-bottom:1px solid var(--edge);padding:10px 14px;font-size:13px;color:var(--muted)}
+.src b{color:var(--navy);font-size:14px}
+.src .tag{background:var(--navy);color:#fff;border-radius:6px;padding:1px 8px;font-weight:700;font-size:11.5px;letter-spacing:.04em}
+.src a{color:var(--blue);font-weight:700;text-decoration:none}
+.avert{display:flex;gap:8px;background:#fff7ed;border-bottom:1px solid #fed7aa;color:#9a3412;font-size:12.5px;padding:7px 14px;line-height:1.45}
+.feux{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:12px 14px}
+@container f (max-width:560px){.feux{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.feu{border-radius:10px;padding:8px 10px;display:grid;gap:2px;border:1px solid transparent}
+.feu small{font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;opacity:.85}
+.feu b{font-size:14px}
+.feu span{font-size:12px;opacity:.9}
+.feu.ok{background:var(--okL);color:var(--ok);border-color:#bbf7d0}
+.feu.warn{background:var(--warnL);color:var(--warn);border-color:#fde68a}
+.feu.ko{background:var(--koL);color:var(--ko);border-color:#fecaca}
+.feu.na{background:var(--s100);color:#475569}
+.blk{border-top:1px solid #eef2f6;padding:11px 14px;display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:6px 14px;align-items:start}
+@container f (max-width:560px){.blk{grid-template-columns:minmax(0,1fr) auto}.blk h4{grid-column:1/-1}}
+.blk h4{margin:0;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:flex;gap:7px;align-items:center}
+.blk h4 i{width:10px;height:10px;border-radius:3px;display:inline-block;flex:none}
+.blk .c{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:14.5px;line-height:1.5}
+.dose{display:grid;gap:4px;width:100%}
+.dose div{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}
+.dose em{font-style:normal;font-size:12px;font-weight:700;color:var(--muted);min-width:76px}
+.freq{display:grid;gap:5px;width:100%}
+.freq div{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px;align-items:center;font-size:13.5px}
+.fbar{height:8px;border-radius:4px;background:var(--brass)}
+.conseil{background:var(--tealL);border-top:1px solid #bfe1dc;padding:11px 14px;display:grid;gap:6px}
+.conseil h4{margin:0;color:var(--teal);font-size:14px;display:flex;gap:8px;align-items:center;justify-content:space-between}
+.conseil ul{margin:0;padding-inline-start:18px;display:grid;gap:3px;font-size:14px}
+.btn{display:inline-flex;gap:6px;align-items:center;border:0;border-radius:8px;padding:6px 11px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;background:var(--blue);color:#fff;text-decoration:none}
+.btn.o{background:#fff;color:var(--blue);border:1.5px solid var(--blue)}.btn.t{background:var(--teal)}.btn.g{background:#16a34a}
+.foot{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:space-between;padding:9px 14px;border-top:1px solid #eef2f6;font-size:12px;color:var(--muted);background:#fafbfc}
+details summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--brassD)}
+/* B : onglet RCP complet */
+.tabs{display:flex;gap:4px;padding:0 16px;background:#fff;border-bottom:1px solid var(--s200);overflow-x:auto}
+.tabs span{padding:10px 12px;font-size:14px;font-weight:650;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap}
+.tabs span.on{color:var(--navy);border-color:var(--brass)}
+.lay{display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px;align-items:start}
+@container f (max-width:640px){.lay{grid-template-columns:1fr}.toc{display:none}}
+.toc{position:sticky;top:12px;background:#fff;border:1px solid var(--s200);border-radius:12px;padding:10px;display:grid;gap:2px;font-size:13px}
+.toc a{color:var(--navy);text-decoration:none;padding:5px 8px;border-radius:6px;display:flex;justify-content:space-between}
+.toc a:hover,.toc a.on{background:var(--cream)}
+.toc a span{color:var(--muted);font-family:ui-monospace,monospace;font-size:11.5px}
+.sect{background:#fff;border:1px solid var(--s200);border-radius:12px;margin-bottom:10px}
+.sect>summary{list-style:none;padding:11px 14px;display:flex;gap:10px;align-items:center;font-weight:750;font-size:15px}
+.sect>summary::-webkit-details-marker{display:none}
+.sect>summary .n{font:700 12px ui-monospace,monospace;color:#fff;background:var(--navy);border-radius:6px;padding:1px 7px}
+.sect>summary .cnt{margin-inline-start:auto;font-size:12px;color:var(--muted);font-weight:600}
+.sect .in{padding:0 14px 13px;display:grid;gap:8px;font-size:14.5px;line-height:1.5}
+.calc{background:var(--cream);border:1px solid var(--edge);border-radius:10px;padding:10px 12px;display:grid;gap:8px}
+.calc .f{display:flex;flex-wrap:wrap;gap:8px;align-items:end}
+.calc label{display:grid;gap:3px;font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.calc input,.calc select{font:inherit;font-size:14px;padding:5px 8px;border:1.5px solid var(--s300);border-radius:7px;width:92px;background:#fff}
+.calc .res{font-size:14px}.calc .res b{font-size:18px;color:var(--navy)}
+table.ren{width:100%;border-collapse:collapse;font-size:14px}
+table.ren td,table.ren th{padding:7px 9px;border-bottom:1px solid #eef2f6;text-align:start}
+table.ren th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+table.ren tr.hit td{background:#fff3c4;font-weight:700}
+table.ren tr.hit td:first-child{box-shadow:inset 4px 0 0 var(--brass)}
+/* C : résultats */
+.res-l{display:grid;gap:8px}
+.ri{background:#fff;border:1px solid var(--s200);border-radius:12px;padding:11px 14px;display:grid;gap:6px}
+.ri .h{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline}
+.ri .h b{font-size:16px;color:var(--navy)}.ri .h small{color:var(--muted);font-size:13px}
+.mini{display:inline-flex;gap:4px;align-items:center;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:700}
+.mini.ok{background:var(--okL);color:var(--ok)}.mini.warn{background:var(--warnL);color:var(--warn)}.mini.ko{background:var(--koL);color:var(--ko)}.mini.na{background:var(--s100);color:#475569}.mini.rcp{background:var(--navy);color:#fff}
+.searchbar{display:flex;gap:8px;background:#fff;border:2px solid var(--blue);border-radius:12px;padding:8px 12px;font-size:16px;margin-bottom:10px}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.filters span{border:1.5px solid var(--s300);background:#fff;border-radius:999px;padding:3px 11px;font-size:13px;font-weight:600}
+.filters span.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+/* Excipients */
+table.exc{width:100%;border-collapse:collapse;font-size:13.5px;background:#fff;border-radius:10px;overflow:hidden}
+table.exc th,table.exc td{padding:7px 9px;border-bottom:1px solid #eef2f6;text-align:center}
+table.exc th:first-child,table.exc td:first-child{text-align:start}
+table.exc thead th{background:var(--navy);color:#fff;font-size:12px}
+.y{color:var(--ko);font-weight:800}.n{color:#94a3b8}
+/* D : admin */
+.adm{background:#f8fafc;min-height:100%}
+.adm .bar{background:var(--navyD);color:#fff;padding:10px 16px;display:flex;gap:16px;align-items:center;font-size:14px}
+.adm .bar b{font-size:15px}.adm .bar span{color:#94a3b8}.adm .bar span.on{color:#fff;border-bottom:2px solid var(--brass);padding-bottom:2px}
+.steps{display:flex;gap:6px;padding:12px 16px 0;flex-wrap:wrap}
+.steps span{font-size:12.5px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--s200);color:#475569}
+.steps span.on{background:var(--brass);color:#fff}.steps span.done{background:var(--okL);color:var(--ok)}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;background:#fff;border:1px solid var(--s200);border-radius:12px;padding:14px;margin:12px 16px}
+.form .full{grid-column:1/-1}
+.form label{display:grid;gap:4px;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.form input,.form select{font:inherit;font-size:14px;padding:7px 9px;border:1.5px solid var(--s300);border-radius:8px;background:#fff;color:var(--ink);text-transform:none;letter-spacing:0;font-weight:400}
+.drop{border:2px dashed var(--s300);border-radius:10px;padding:16px;text-align:center;font-size:14px;color:var(--muted);background:#fbfcfd}
+.drop b{color:var(--navy)}
+.radio{display:flex;gap:6px;flex-wrap:wrap}
+.radio span{border:1.5px solid var(--s300);border-radius:8px;padding:5px 10px;font-size:13px;font-weight:600;color:var(--navy);text-transform:none;letter-spacing:0;background:#fff}
+.radio span.on{border-color:var(--blue);background:var(--blueL);color:var(--blue)}
+.rev{margin:0 16px 16px;background:#fff;border:1px solid var(--s200);border-radius:12px;overflow:hidden}
+.rev h4{margin:0;padding:10px 14px;font-size:14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--s200)}
+.rev table{width:100%;border-collapse:collapse;font-size:13.5px}
+.rev td,.rev th{padding:7px 10px;border-bottom:1px solid #eef2f6;text-align:start;vertical-align:top}
+.rev th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:#fafbfc}
+.rev td.ctx{color:#64748b;font-size:12.5px;font-style:italic;max-width:260px}
+.st{font-size:11.5px;font-weight:700;border-radius:999px;padding:1px 8px;white-space:nowrap}
+.st.b{background:var(--warnL);color:var(--warn)}.st.p{background:var(--okL);color:var(--ok)}.st.r{background:var(--s100);color:#64748b;text-decoration:line-through}
+.portee{font-size:11px;font-weight:700;border-radius:5px;padding:1px 6px}
+.portee.s{background:var(--blueL);color:var(--blue)}.portee.p{background:#f3e8ff;color:#7e22ce}
+/* E : comptoir */
+.wa{background:#e5ddd5;padding:14px;display:grid;gap:8px;min-height:100%}
+.bub{background:#fff;border-radius:10px;padding:10px 12px;max-width:92%;font-size:14.5px;line-height:1.6;box-shadow:0 1px 1px rgba(0,0,0,.1)}
+.bub.me{background:#dcf8c6;justify-self:end}
+.bub small{display:block;color:#64748b;font-size:11.5px;margin-top:6px}
+[dir=rtl] .conseil ul{padding-inline-start:18px}
+.ticket{background:#fff;border:1px solid var(--s300);border-radius:4px;padding:16px;font-size:14px;line-height:1.6;max-width:360px;margin:0 auto;box-shadow:0 4px 14px rgba(0,0,0,.08)}
+.ticket h5{margin:0 0 6px;font-size:16px;text-align:center}
+.ticket hr{border:0;border-top:1px dashed #94a3b8;margin:8px 0}
+.ticket .pic{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;font-size:12px}
+.ticket .pic div{border:1px solid var(--s200);border-radius:8px;padding:6px 2px}
+.ticket .pic b{font-size:20px;display:block}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
+@media(max-width:900px){.cols{grid-template-columns:1fr}}
+h2.t{font-size:17px;margin:20px 0 8px;color:var(--navy)}
+</style></head><body>
+<header class="top"><h1>Maquettes — le RCP en synthèse, source citée</h1>
+<p>Exemple : METFORMINE · RCP de référence déposé dans l'admin. <b style="color:#fde68a">Contenu illustratif : chiffres et pages à vérifier sur le RCP réel.</b></p></header>
+<nav class="sel" id="sel">
+<button data-v="a" class="on reco">A · Carte « RCP en 30 s »</button>
+<button data-v="b">B · Onglet RCP + calculateur rénal</button>
+<button data-v="c">C · Pastilles dans la recherche</button>
+<button data-v="d">D · Admin : déposer un RCP</button>
+<button data-v="e">E · Conseils au comptoir (FR/AR)</button>
+<button data-v="f">F · Excipients entre génériques</button>
+</nav>
+<main>
+
+<!-- ============ A ============ -->
+<section class="var on" id="v-a">
+<div class="note"><b>A · Carte « RCP en 30 s ».</b> Une seule carte sur la fiche, sous l'en-tête. En haut : <b>source, version, PDF, relecteur</b>. Puis 4 feux (grossesse, allaitement, conduite, rein) lisibles d'un coup d'œil, puis les rubriques utiles au comptoir, chacune avec son bouton <span class="pg">p.X ↗</span> vers le PDF. Le bandeau orange apparaît seulement quand le RCP vient d'un autre produit ou d'un autre pays.</div>
+<div class="pair">
+<div><p class="lbl">Bureau</p><div class="frame" id="fa"></div></div>
+<div><p class="lbl">Mobile</p><div class="frame phone" id="fa-m"></div></div>
+</div>
+</section>
+
+<!-- ============ B ============ -->
+<section class="var" id="v-b">
+<div class="note"><b>B · Onglet « RCP » complet.</b> Pour qui veut aller plus loin que la carte : un sommaire à gauche qui suit les rubriques officielles (4.1 à 6.6), en accordéons. La rubrique 4.2 intègre un <b>calculateur Cockcroft-Gault</b> : le pharmacien saisit âge, poids, sexe et créatinine, et la ligne du RCP qui correspond s'allume. <b>Essayez de changer les valeurs.</b></div>
+<div class="frame" style="height:760px">
+<div class="hero"><small>DCI · A10BA02</small><b>METFORMINE 850 mg, comprimé pelliculé</b><i>Fabriqué en Algérie</i></div>
+<div class="tabs"><span>Fiche</span><span>Équivalents</span><span>Interactions</span><span class="on">RCP</span><span>Prix</span></div>
+<div class="pad"><div class="lay">
+<nav class="toc">
+<a href="#" class="on">Indications <span>4.1</span></a>
+<a href="#">Posologie & rein <span>4.2</span></a>
+<a href="#">Contre-indications <span>4.3</span></a>
+<a href="#">Mises en garde <span>4.4</span></a>
+<a href="#">Interactions <span>4.5</span></a>
+<a href="#">Grossesse <span>4.6</span></a>
+<a href="#">Conduite <span>4.7</span></a>
+<a href="#">Effets indésirables <span>4.8</span></a>
+<a href="#">Surdosage <span>4.9</span></a>
+<a href="#">Excipients <span>6.1</span></a>
+<a href="#">Conservation <span>6.4</span></a>
+<hr style="border:0;border-top:1px solid var(--s200);width:100%">
+<a href="#" style="color:var(--blue);font-weight:700">PDF complet ↗</a>
+</nav>
+<div>
+<div class="rcp" style="margin-bottom:10px"><div class="src"><span class="tag">ANSM</span><b>RCP de référence : GLUCOPHAGE 850 mg</b><span>· révision 03/2025</span><span>· relu par Dr T. M., 14/11/2026</span><a href="#" style="margin-inline-start:auto">PDF ↗</a></div></div>
+<details class="sect"><summary><span class="n">4.1</span>Indications<span class="cnt">1 fait</span></summary><div class="in"><div>Diabète de type 2, surtout en cas de surpoids, quand régime et activité physique ne suffisent pas. Adulte et enfant dès 10 ans. <a class="pg" href="#">p.1 ↗</a></div></div></details>
+<details class="sect" open><summary><span class="n">4.2</span>Posologie & insuffisance rénale<span class="cnt">5 faits · calculateur</span></summary><div class="in">
+<div class="dose">
+<div><em>ADULTE</em><span class="chip">500 ou 850 mg × 2–3/j</span><span class="chip">max 3 g/j</span><a class="pg" href="#">p.2 ↗</a></div>
+<div><em>ENFANT ≥ 10 ANS</em><span class="chip">500 ou 850 mg × 1/j</span><span class="chip">max 2 g/j</span><a class="pg" href="#">p.2 ↗</a></div>
+<div><em>MODE</em><span>Pendant ou à la fin des repas · augmenter progressivement</span></div>
+</div>
+<div class="calc">
+<div style="font-weight:800;font-size:14px">🧮 Fonction rénale du patient</div>
+<div class="f">
+<label>Âge<input id="age" type="number" value="72"></label>
+<label>Poids (kg)<input id="poids" type="number" value="68"></label>
+<label>Sexe<select id="sexe"><option value="f">Femme</option><option value="h">Homme</option></select></label>
+<label>Créat. <span style="text-transform:none">(µmol/L)</span><input id="creat" type="number" value="115"></label>
+<div class="res">ClCr ≈ <b id="clcr">–</b> mL/min</div>
+</div>
+<table class="ren" id="ren">
+<tr><th>DFG / ClCr</th><th>Dose max par jour</th><th>À retenir</th></tr>
+<tr data-min="60" data-max="999"><td>≥ 60</td><td>3 000 mg</td><td>Dose habituelle, contrôle rénal annuel</td></tr>
+<tr data-min="45" data-max="59.99"><td>45–59</td><td>2 000 mg</td><td>Dose initiale ≤ ½ dose max</td></tr>
+<tr data-min="30" data-max="44.99"><td>30–44</td><td>1 000 mg</td><td>Dose initiale ≤ ½ dose max</td></tr>
+<tr data-min="0" data-max="29.99"><td>&lt; 30</td><td style="color:var(--ko)">Contre-indiquée</td><td>Ne pas délivrer sans avis médical</td></tr>
+</table>
+<div style="font-size:12px;color:var(--muted)">Le RCP raisonne en DFG ; Cockcroft-Gault est une estimation. Aide à la lecture, pas une prescription. <a class="pg" href="#">p.2 ↗</a></div>
+</div>
+</div></details>
+<details class="sect"><summary><span class="n">4.3</span>Contre-indications<span class="cnt">6 faits</span></summary><div class="in"><div class="c" style="display:flex;flex-wrap:wrap;gap:6px"><span class="chip">DFG &lt; 30</span><span class="chip">Acidocétose diabétique</span><span class="chip">Déshydratation, infection grave, choc</span><span class="chip">Hypoxie tissulaire (IC décompensée, IDM récent)</span><span class="chip">Insuffisance hépatique</span><span class="chip">Intoxication alcoolique aiguë</span><a class="pg" href="#">p.3 ↗</a></div></div></details>
+<details class="sect"><summary><span class="n">4.5</span>Interactions<span class="cnt">3 faits</span></summary><div class="in"><div>Voir l'onglet Interactions (Thesaurus ANSM + RCP).</div></div></details>
+<details class="sect"><summary><span class="n">4.8</span>Effets indésirables<span class="cnt">4 faits</span></summary><div class="in">…</div></details>
+<details class="sect"><summary><span class="n">4.9</span>Surdosage<span class="cnt">2 faits</span></summary><div class="in"><div><b>Risque :</b> acidose lactique. <b>Conduite :</b> hospitalisation, hémodialyse. <a class="pg" href="#">p.6 ↗</a></div></div></details>
+</div></div></div>
+</div>
+</section>
+
+<!-- ============ C ============ -->
+<section class="var" id="v-c">
+<div class="note"><b>C · Pastilles dans les résultats.</b> Les feux de la carte A remontent dans la recherche et le catalogue : le pharmacien voit <b>avant d'ouvrir la fiche</b> si le produit a un RCP synthétisé et s'il y a un point d'alerte. Un filtre « Avec RCP » donne envie de cliquer. Les pastilles neutres (gris) restent discrètes.</div>
+<div class="pair">
+<div><p class="lbl">Bureau</p><div class="frame"><div class="pad">
+<div class="searchbar">🔍 <span>metformine</span></div>
+<div class="filters"><span class="on">Tous (14)</span><span>📄 Avec RCP (9)</span><span>Fabriqué en Algérie</span><span>Comprimé</span></div>
+<div class="res-l" id="liste"></div>
+</div></div></div>
+<div><p class="lbl">Mobile</p><div class="frame phone"><div class="pad">
+<div class="searchbar" style="font-size:15px">🔍 metformine</div>
+<div class="res-l" id="liste-m"></div>
+</div></div></div>
+</div>
+</section>
+
+<!-- ============ D ============ -->
+<section class="var" id="v-d">
+<div class="note"><b>D · Admin → RCP → « Ajouter un RCP de référence ».</b> Quatre étapes : <b>1</b> déposer le PDF et décrire la source, <b>2</b> extraction automatique en brouillons, <b>3</b> relecture fait par fait (la phrase d'origine n'est visible qu'ici, jamais publiée), <b>4</b> publication avec relecteur. Chaque fait est marqué <span class="portee s">SUBSTANCE</span> (toutes les fiches de la DCI) ou <span class="portee p">PRODUIT</span> (seulement les fiches de même forme et dosage).</div>
+<div class="frame" style="height:820px"><div class="adm">
+<div class="bar"><b>DwaDZ · Admin</b><span>Nomenclature</span><span>Monographies</span><span class="on">RCP</span><span>Interactions</span><span>Articles</span></div>
+<div class="steps"><span class="done">1 · Source ✓</span><span class="done">2 · Extraction ✓</span><span class="on">3 · Relecture (14 brouillons)</span><span>4 · Publication</span></div>
+<div class="form">
+<label>Substance (DCI)<input value="METFORMINE"></label>
+<label>Produit de référence<input value="GLUCOPHAGE 850 mg, comprimé pelliculé"></label>
+<label class="full">Source
+<div class="radio"><span class="on">ANSM · BDPM</span><span>EMA · EPAR</span><span>ANPP</span><span>Laboratoire</span><span>Autre</span></div></label>
+<label>URL officielle<input value="https://base-donnees-publique.medicaments.gouv.fr/…"></label>
+<label>Date de révision du texte<input value="03/2025"></label>
+<label class="full">Portée
+<div class="radio"><span class="on">Toute la DCI (14 fiches)</span><span>Seulement certaines fiches…</span></div></label>
+<div class="drop full">📄 <b>glucophage-850-rcp.pdf</b> · 9 pages · 412 Ko · stocké (Vercel Blob) · <a href="#" style="color:var(--blue)">remplacer</a></div>
+</div>
+<div class="rev">
+<h4><span>Relecture · 14 faits proposés</span><span style="display:flex;gap:6px"><button class="btn o">Tout rejeter</button><button class="btn g">Publier les acceptés (relecteur : T. M.)</button></span></h4>
+<table>
+<tr><th>Type</th><th>Fait (public, modifiable)</th><th>Rub. · page</th><th>Portée</th><th>Phrase d'origine (admin seulement)</th><th>Statut</th></tr>
+<tr><td>Dose</td><td><b>Adulte : 500 ou 850 mg × 2–3/j, max 3 g/j</b></td><td class="mono">4.2 · <a class="pg" href="#">p.2</a></td><td><span class="portee s">SUBSTANCE</span></td><td class="ctx">« La posologie initiale usuelle est de 1 comprimé 2 ou 3 fois par jour… »</td><td><span class="st p">accepté</span></td></tr>
+<tr><td>Rein</td><td><b>DFG 30–44 : max 1 000 mg/j</b></td><td class="mono">4.2 · <a class="pg" href="#">p.2</a></td><td><span class="portee s">SUBSTANCE</span></td><td class="ctx">« DFG 30-44 mL/min : dose maximale quotidienne 1 000 mg… »</td><td><span class="st p">accepté</span></td></tr>
+<tr><td>Contre-ind.</td><td><b>Insuffisance hépatique</b></td><td class="mono">4.3 · <a class="pg" href="#">p.3</a></td><td><span class="portee s">SUBSTANCE</span></td><td class="ctx">« Insuffisance hépatique, intoxication alcoolique aiguë, alcoolisme. »</td><td><span class="st b">brouillon</span></td></tr>
+<tr><td>Grossesse</td><td><b>Grossesse : relais insuline</b></td><td class="mono">4.6 · <a class="pg" href="#">p.4</a></td><td><span class="portee s">SUBSTANCE</span></td><td class="ctx">« …il est recommandé de ne pas traiter le diabète par la metformine… »</td><td><span class="st b">brouillon</span></td></tr>
+<tr><td>Conseil</td><td><b>Prendre pendant ou à la fin des repas</b></td><td class="mono">4.2 · <a class="pg" href="#">p.2</a></td><td><span class="portee s">SUBSTANCE</span></td><td class="ctx">« Les comprimés doivent être pris au cours ou à la fin des repas. »</td><td><span class="st b">brouillon</span></td></tr>
+<tr><td>Excipient</td><td><b>Aucun excipient à effet notoire</b></td><td class="mono">6.1 · <a class="pg" href="#">p.7</a></td><td><span class="portee p">PRODUIT</span></td><td class="ctx">« Povidone K30, stéarate de magnésium, hypromellose. »</td><td><span class="st b">brouillon</span></td></tr>
+<tr><td>Effet</td><td><b>Troubles digestifs</b> · très fréquent</td><td class="mono">4.8 · <a class="pg" href="#">p.5</a></td><td><span class="portee s">SUBSTANCE</span></td><td class="ctx">« Troubles gastro-intestinaux tels que nausées, vomissements, diarrhées… »</td><td><span class="st b">brouillon</span></td></tr>
+<tr><td>Dose</td><td><b>Dose 3 × 1 000 mg</b></td><td class="mono">4.2 · <a class="pg" href="#">p.2</a></td><td><span class="portee p">PRODUIT</span></td><td class="ctx">« …pour le dosage à 1 000 mg… » (autre dosage)</td><td><span class="st r">rejeté</span></td></tr>
+</table>
+</div>
+</div></div>
+</section>
+
+<!-- ============ E ============ -->
+<section class="var" id="v-e">
+<div class="note"><b>E · Conseils au comptoir.</b> Les faits de type « conseil » (4.2 mode d'administration, 4.4, 4.7, 6.4) deviennent ce que le pharmacien dit au patient. Trois sorties : la carte sur la fiche, un <b>message WhatsApp</b> bilingue prêt à envoyer, et un <b>ticket imprimable</b> à agrafer sur la boîte. La source reste citée en bas.</div>
+<div class="cols">
+<div><p class="lbl">Partage WhatsApp (FR + AR)</p><div class="frame phone" style="height:640px"><div class="wa">
+<div class="bub me" dir="rtl" style="text-align:right"><b>💊 METFORMINE 850 mg</b><br>
+• يؤخذ الدواء أثناء الأكل أو في نهايته.<br>
+• أوقف الدواء واتصل بالطبيب في حالة قيء أو إسهال شديد أو جفاف.<br>
+• أخبر الطبيب قبل أي فحص بالأشعة مع مادة التباين.<br>
+• تجنّب الكحول.<br>
+<small>المصدر: RCP GLUCOPHAGE (ANSM، 03/2025) · DwaDZ</small></div>
+<div class="bub me"><b>💊 METFORMINE 850 mg</b><br>
+• À prendre pendant ou à la fin du repas.<br>
+• Arrêter et appeler le médecin si vomissements, diarrhée forte ou déshydratation.<br>
+• Prévenir avant tout examen avec produit de contraste iodé.<br>
+• Éviter l'alcool.<br>
+<small>Source : RCP GLUCOPHAGE (ANSM, 03/2025) · dwadz.com/dci/metformine</small></div>
+</div></div></div>
+<div><p class="lbl">Ticket imprimable</p>
+<div class="ticket">
+<h5>METFORMINE 850 mg</h5>
+<div style="text-align:center;font-size:12px;color:var(--muted)">Pharmacie ……………… · le ……/……/……</div><hr>
+<div class="pic"><div><b>🍽️</b>Pendant le repas</div><div><b>☀️🌙</b>Matin · soir</div><div><b>🚫🍷</b>Pas d'alcool</div></div><hr>
+<b>Arrêtez et consultez</b> si : vomissements, diarrhée forte, douleurs musculaires, essoufflement inhabituel.<hr>
+<div dir="rtl" style="text-align:right">يؤخذ أثناء الأكل · تجنّب الكحول · أوقف الدواء واستشر الطبيب عند القيء أو الإسهال الشديد</div><hr>
+<div style="font-size:11px;color:var(--muted)">Source : RCP GLUCOPHAGE 850 mg, ANSM, rév. 03/2025. Synthèse DwaDZ relue. Ne remplace pas l'avis du médecin.</div>
+<div style="display:flex;gap:6px;justify-content:center;margin-top:10px"><button class="btn o">🖨️ Imprimer</button><button class="btn g">WhatsApp</button></div>
+</div></div>
+</div>
+</section>
+
+<!-- ============ F ============ -->
+<section class="var" id="v-f">
+<div class="note"><b>F · Excipients à effet notoire entre génériques.</b> C'est l'information « produit » qui change d'une marque à l'autre : utile pour substituer chez un patient intolérant au lactose, diabétique (saccharose), enfant (alcool), phénylcétonurique (aspartame). Branché sur la page Équivalents et la section Allergies. <b>Les marques ci-dessous sont fictives.</b></div>
+<div class="frame" style="height:auto;padding:16px">
+<h2 class="t" style="margin-top:0">Équivalents de METFORMINE 850 mg cp · excipients à effet notoire</h2>
+<div class="filters"><span>Sans lactose</span><span>Sans sucre</span><span>Sans alcool</span><span class="on">Tout afficher</span></div>
+<table class="exc">
+<thead><tr><th>Présentation</th><th>Lactose</th><th>Saccharose</th><th>Sorbitol</th><th>Aspartame</th><th>Sodium</th><th>Source</th></tr></thead>
+<tr><td><b>MARQUE A 850 mg</b> · Labo 1</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td><a class="pg" href="#">RCP 6.1 ↗</a></td></tr>
+<tr><td><b>MARQUE B 850 mg</b> · Labo 2</td><td class="y">●</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td><a class="pg" href="#">RCP 6.1 ↗</a></td></tr>
+<tr><td><b>MARQUE C 850 mg</b> · Labo 3</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="y">●</td><td><a class="pg" href="#">RCP 6.1 ↗</a></td></tr>
+<tr><td><b>MARQUE D 850 mg</b> · Labo 4</td><td colspan="5" style="color:var(--muted);font-style:italic">RCP non disponible</td><td><span class="mini na">—</span></td></tr>
+</table>
+</div>
+</section>
+
+</main>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+function carte(mobile){return `
+<div class="hero"><small>DCI · METFORMINE · A10BA02</small><b>METFORMINE 850 mg, comprimé pelliculé</b><i>Fabriqué en Algérie</i></div>
+<div class="pad">
+<div class="rcp">
+ <div class="src"><span class="tag">ANSM</span><b>RCP de référence${mobile?'':' : GLUCOPHAGE 850 mg'}</b><span>rév. 03/2025</span><a href="#" style="margin-inline-start:auto">PDF ↗</a></div>
+ <div class="avert">⚠️ <span>RCP d'un produit de même substance, publié hors Algérie. Vérifiez dosage, forme et indications de votre produit. <a href="#" style="color:#9a3412;font-weight:700">RCP ANPP ?</a></span></div>
+ <div class="feux">
+  <div class="feu warn"><small>Grossesse</small><b>Déconseillée</b><span>relais insuline</span></div>
+  <div class="feu warn"><small>Allaitement</small><b>Déconseillé</b><span>4.6</span></div>
+  <div class="feu ok"><small>Conduite</small><b>Pas d'effet</b><span>seule ; hypo si associée</span></div>
+  <div class="feu ko"><small>Rein</small><b>DFG &lt; 30 : CI</b><span>ajuster dès 59</span></div>
+ </div>
+ <div class="blk"><h4><i style="background:#1d4e9e"></i>Posologie</h4>
+  <div class="c dose"><div><em>ADULTE</em><span class="chip">500–850 mg × 2–3/j</span><span class="chip">max 3 g/j</span></div><div><em>ENFANT ≥10 A</em><span class="chip">max 2 g/j</span></div></div>
+  <a class="pg" href="#">p.2 ↗</a></div>
+ <div class="blk"><h4><i style="background:#b91c1c"></i>Contre-indic.</h4>
+  <div class="c"><span class="chip">DFG &lt; 30</span><span class="chip">Acidocétose</span><span class="chip">Insuff. hépatique</span><span class="chip">Déshydratation, choc</span>${mobile?'':'<span class="chip">IC décompensée</span><span class="chip">Alcoolisme</span>'}</div>
+  <a class="pg" href="#">p.3 ↗</a></div>
+ <div class="blk"><h4><i style="background:#b98425"></i>Interactions</h4>
+  <div class="c"><a class="chip cl" href="#">◆ Produits de contraste iodés</a><a class="chip dci" href="#">● Alcool</a>${mobile?'':'<a class="chip cl" href="#">◆ Diurétiques de l\'anse</a>'}<span style="font-size:12.5px;color:var(--muted)">+ onglet Interactions</span></div>
+  <a class="pg" href="#">p.4 ↗</a></div>
+ <div class="blk"><h4><i style="background:#7e22ce"></i>Effets</h4>
+  <div class="c freq">
+   <div><span>Très fréquents</span><span><b>Troubles digestifs</b> (nausées, diarrhée) <span class="fbar" style="display:inline-block;width:60px;vertical-align:middle"></span></span></div>
+   <div><span>Fréquents</span><span>Troubles du goût <span class="fbar" style="display:inline-block;width:34px;vertical-align:middle;opacity:.7"></span></span></div>
+   <details><summary>Très rares (3) : acidose lactique, déficit B12…</summary></details>
+  </div>
+  <a class="pg" href="#">p.5 ↗</a></div>
+ <div class="conseil">
+  <h4><span>💬 Conseils au comptoir</span><span style="display:flex;gap:6px"><button class="btn t">WhatsApp</button>${mobile?'':'<button class="btn o">🖨️ Ticket</button>'}</span></h4>
+  <ul><li>Pendant ou à la fin du repas, augmenter progressivement</li><li>Arrêter si vomissements, diarrhée forte, déshydratation</li><li>Prévenir avant un examen avec produit de contraste iodé</li></ul>
+ </div>
+ <div class="foot"><span>Synthèse DwaDZ, relue par Dr T. M. le 14/11/2026 · 21 faits</span><a href="#" style="color:var(--blue);font-weight:700">RCP complet structuré →</a></div>
+</div>
+${mobile?'':'<div class="ghost"><h5>Équivalents</h5><div><span></span><span></span><span></span></div></div><div class="ghost"><h5>Prix & remboursement</h5><div><span></span><span></span></div></div>'}
+</div>`}
+$('#fa').innerHTML=carte(false);$('#fa-m').innerHTML=carte(true);
+
+const items=[
+ ['GLUMET 850 mg','cp pelliculé · Labo 1 · Fabriqué',['rcp','ko:Rein','warn:Grossesse','ok:Conduite']],
+ ['DIABEFORM 1000 mg','cp pelliculé · Labo 2 · Importé',['rcp','ko:Rein','warn:Grossesse','ok:Conduite']],
+ ['METFORMINE XR 500 mg','cp LP · Labo 3 · Fabriqué',['rcp','ko:Rein','warn:Grossesse']],
+ ['METFOR 500 mg','cp · Labo 4 · Fabriqué',[]],
+ ['METFORMINE/SITAGLIPTINE','cp · Labo 5 · Importé',['rcp','ko:Rein','warn:Grossesse','warn:Conduite']],
+];
+const ic={ko:'⛔',warn:'⚠️',ok:'✓'};
+function liste(m){return items.map(([n,d,t])=>`<div class="ri"><div class="h"><b>${n}</b><small>${d}</small></div><div style="display:flex;gap:5px;flex-wrap:wrap">${t.length?t.map(x=>x==='rcp'?'<span class="mini rcp">📄 RCP</span>':`<span class="mini ${x.split(':')[0]}">${ic[x.split(':')[0]]} ${x.split(':')[1]}</span>`).join(''):'<span class="mini na">RCP non disponible</span>'}</div></div>`).join('')}
+$('#liste').innerHTML=liste();$('#liste-m').innerHTML=liste(true);
+
+function calc(){const a=+$('#age').value,p=+$('#poids').value,c=+$('#creat').value,k=$('#sexe').value==='h'?1.23:1.04;
+ const v=c>0?((140-a)*p*k)/c:0;$('#clcr').textContent=v?Math.round(v):'–';
+ $$('#ren tr[data-min]').forEach(r=>r.classList.toggle('hit',v>=+r.dataset.min&&v<=+r.dataset.max+0.999));}
+['age','poids','sexe','creat'].forEach(i=>$('#'+i).addEventListener('input',calc));calc();
+
+function show(k){$$('.var').forEach(s=>s.classList.toggle('on',s.id==='v-'+k));$$('#sel button').forEach(b=>b.classList.toggle('on',b.dataset.v===k));history.replaceState(null,'','#'+k)}
+$$('#sel button').forEach(b=>b.onclick=()=>show(b.dataset.v));
+if(location.hash)show(location.hash.slice(1));
+</script></body></html>
